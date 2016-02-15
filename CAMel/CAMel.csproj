@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug32</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{8A5F215E-6A6B-4FC7-A26E-7D6141FC7C9F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CAMel</RootNamespace>
+    <AssemblyName>CAMel</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug64|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MIConvexHull">
+      <HintPath>..\packages\MIConvexHull.1.0.10.1021\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="RhinoCommon">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Rhinoceros 5.0\System\rhinocommon.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Grasshopper">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Common Files\McNeel\Rhinoceros\5.0\Plug-ins\Grasshopper (b45a29b1-4343-4035-989e-044e8580d9cf)\0.9.75.0\Grasshopper.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="GH_IO">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Common Files\McNeel\Rhinoceros\5.0\Plug-ins\Grasshopper (b45a29b1-4343-4035-989e-044e8580d9cf)\0.9.75.0\GH_IO.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="C_CreateMaterialTool.cs" />
+    <Compile Include="C_CreateMaterialForm.cs" />
+    <Compile Include="C_Create3AxisMachine.cs" />
+    <Compile Include="C_CreateOperation.cs" />
+    <Compile Include="C_CreateToolPath.cs" />
+    <Compile Include="CAMelInfo.cs" />
+    <Compile Include="C_CreateInstructions.cs" />
+    <Compile Include="C_Drill_Operation.cs" />
+    <Compile Include="C_Index3Axis.cs" />
+    <Compile Include="C_ReadCode.cs" />
+    <Compile Include="L_CodeInfo.cs" />
+    <Compile Include="L_CA_Base.cs" />
+    <Compile Include="L_ToolPointContainer.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="P_MachineInstructions.cs" />
+    <Compile Include="P_MachineOperation.cs" />
+    <Compile Include="P_MaterialForm.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="P_Machine.cs" />
+    <Compile Include="P_MaterialTool.cs" />
+    <Compile Include="P_ToolPoint.cs" />
+    <Compile Include="P_ToolPath.cs" />
+    <Compile Include="C_WriteCode.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="Resources\materialform.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\materialtool.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\toolpath.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cncreader.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cncwriter.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\create3axis.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\create5axis.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\createinstructions.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\creatematerialform.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\creatematerialtool.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\createoperations.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\createtoolpath.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\drilloperations.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\index3axis.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\machine.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\machineinstructions.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\machineoperations.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\machinetool.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\pathsurfacing.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\toolpoint.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="MIConvexHull.xml" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <PropertyGroup>
+    <PostBuildEvent>Copy "$(TargetPath)" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
+</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
+    <StartArguments>
+    </StartArguments>
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Program Files (x86)\Rhinoceros 5.0\System\Rhino4.exe</StartProgram>
+  </PropertyGroup>
+  <PropertyGroup>
+    <FallbackCulture>en-US</FallbackCulture>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug64|AnyCPU'">
+    <StartProgram>C:\Program Files\Rhinoceros 5.0 (64-bit)\System\Rhino.exe</StartProgram>
+    <StartArguments>
+    </StartArguments>
+    <StartAction>Program</StartAction>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+</Project>

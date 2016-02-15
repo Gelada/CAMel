@@ -1,0 +1,82 @@
+﻿using System;
+using System.Collections.Generic;
+
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
+using Rhino.Geometry;
+using CAMel.Types;
+
+namespace CAMel
+{
+    public class C_CreateMaterialForm : GH_Component
+    {
+        /// <summary>
+        /// Initializes a new instance of the Create3AxisMachine class.
+        /// </summary>
+        public C_CreateMaterialForm()
+            : base("Create Material Form", "MaterialForm",
+                "Give details of the position of material to cut",
+                "CAMel", " Utilities")
+        {
+        }
+
+        /// <summary>
+        /// Registers all the input parameters for this component.
+        /// </summary>
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            pManager.AddPlaneParameter("Plane", "Pl", "Plane positions so that all material is on the negative side", GH_ParamAccess.item, Plane.WorldXY);
+            pManager.AddNumberParameter("Safe Distance", "SD", "Safe distance away from material", GH_ParamAccess.item, 1);
+            pManager.AddNumberParameter("Tolerance", "T", "Tolerance of material positioning", GH_ParamAccess.item, .1);
+        }
+
+        /// <summary>
+        /// Registers all the output parameters for this component.
+        /// </summary>
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+            pManager.AddGenericParameter("MaterialForm", "MF", "Details of material position", GH_ParamAccess.item);
+        }
+
+        /// <summary>
+        /// This is the method that actually does the work.
+        /// </summary>
+        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            List<MachineOperation> MO = new List<MachineOperation>();
+
+            Plane Pl = Plane.WorldXY;
+            double SD = 0, T=0;
+
+            if (!DA.GetData(0, ref Pl)) return;
+            if (!DA.GetData(1, ref SD)) return;
+            if (!DA.GetData(2, ref T)) return;
+
+            MaterialForm MF = new MaterialForm(Pl, SD, T);
+
+            DA.SetData(0, MF);
+        }
+
+        /// <summary>
+        /// Provides an Icon for the component.
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                //You can add image files to your project resources and access them like this:
+                // return Resources.IconForThisComponent;
+                return Properties.Resources.creatematerialform;
+            }
+        }
+
+        /// <summary>
+        /// Gets the unique ID for this component. Do not change this ID after release.
+        /// </summary>
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{91182D6D-3BE6-4B46-AFE7-3DFDD947CBCE}"); }
+        }
+    }
+}
