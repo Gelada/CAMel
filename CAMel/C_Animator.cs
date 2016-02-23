@@ -28,6 +28,8 @@ namespace CAMel
             pManager.AddGenericParameter("Tool", "T", "The tool that will be used to cut the material.", GH_ParamAccess.item);
             pManager.AddGenericParameter("MaterialForm", "MF", "The shape of the material to cut.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Tool Path", "TP", "The path the tool will follow.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Step Number", "SN", "The iteration step of that machining animation to view", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("Path Division", "PD", "The number of divisions to seperate the path into for the animation.", GH_ParamAccess.item, 1000);
         }
 
         /// <summary>
@@ -72,6 +74,8 @@ namespace CAMel
                 return;
             }
 
+            int meshDivisions = 50;
+
             //plane orthogonal to the tool direction
             Plane toolOPlane = new Plane(new Point3d(0.0, 0.0, 5.0), D);
 
@@ -82,10 +86,26 @@ namespace CAMel
             Cylinder toolCylinder = new Cylinder(toolCircle, MT.toolLength);
 
             //Mesh representation of the tool
-            Mesh toolMesh = Mesh.CreateFromCylinder(toolCylinder, 50, 50);
+            Mesh toolMeshBase = Mesh.CreateFromCylinder(toolCylinder, meshDivisions, meshDivisions);
+
+
+            //Temporary material form for testing
+
+            Box tempBox = new Box(MF.Pl, new Interval(-5, 0), new Interval(-5, 0), new Interval(-5, 0));
+            SortedSet<Mesh> matMeshSet = new SortedSet<Mesh>();
+            matMeshSet.Add( Mesh.CreateFromBox(tempBox, meshDivisions, meshDivisions, meshDivisions));
+
+            SortedSet<Mesh> toolMeshSet = new SortedSet<Mesh>();
+            for(int i = 0; i < SN; i++)
+            {
+                toolMeshSet.Add()
+            }
+
+            tempMat = Mesh.CreateBooleanDifference(matMeshSet, toolMeshCopies);
+
 
             //Set the output to be the tool mesh
-            DA.SetData(0, toolMesh);
+            DA.SetData(0, toolMeshBase);
         }
 
         /// <summary>

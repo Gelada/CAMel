@@ -32,7 +32,7 @@ namespace CAMel.Types
     // with different ways of describing materials inheriting it. 
     public class MaterialForm : CA_base
     {
-        private Plane Pl;
+        public Plane Pl;
         public double safeDistance;
         public double materialTolerance;
         private Brep Shape;
