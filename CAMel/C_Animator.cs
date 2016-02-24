@@ -37,8 +37,8 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            pManager.AddMeshParameter("Material Shape", "MS", "The shape of the material as it is cut", GH_ParamAccess.item);
             pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.item);
-
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace CAMel
             int meshDivisions = 50;
 
             //plane orthogonal to the tool direction
-            Plane toolOPlane = new Plane(new Point3d(0.0, 0.0, 5.0), D);
+            Plane toolOPlane = new Plane(new Point3d(0.0, 0.0, 0.0), D);
 
             //circle to be made into the tool shape
             Circle toolCircle = new Circle(toolOPlane, (MT.toolWidth / 2));
@@ -91,21 +91,24 @@ namespace CAMel
 
             //Temporary material form for testing
 
-            Box tempBox = new Box(MF.Pl, new Interval(-5, 0), new Interval(-5, 0), new Interval(-5, 0));
+            Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
             SortedSet<Mesh> matMeshSet = new SortedSet<Mesh>();
             matMeshSet.Add( Mesh.CreateFromBox(tempBox, meshDivisions, meshDivisions, meshDivisions));
 
             SortedSet<Mesh> toolMeshSet = new SortedSet<Mesh>();
-            for(int i = 0; i < SN; i++)
+            //toolMeshSet.Add(toolMeshBase);
+            for(int i = 0; i < TP.Pts.Count; i++)
             {
-                toolMeshSet.Add()
+                toolMeshBase.Translate(new Vector3d(TP.Pts[0].Pt));
+                toolMeshSet.Add(toolMeshBase);
             }
 
-            tempMat = Mesh.CreateBooleanDifference(matMeshSet, toolMeshCopies);
+            Mesh[] tempMat = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
 
 
             //Set the output to be the tool mesh
-            DA.SetData(0, toolMeshBase);
+            if (tempMat[0] != null) DA.SetData(0, tempMat[0]);
+            DA.SetData(1, toolMeshBase);
         }
 
         /// <summary>
