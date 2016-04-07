@@ -20,6 +20,10 @@ namespace CAMel.Types
         public double toolWidth;   // width of tool (assumed unset for negative values)
         public double toolLength;  // length from the tip of the tool to the spindle
         //TODO endshape
+        public Mesh toolShape;
+
+        //default tool shape
+        private static Mesh defaultShape = new Mesh();
 
         // settings for curve approximation
 
@@ -39,6 +43,7 @@ namespace CAMel.Types
             this.toolLength = 0;
             this.tolerance = 0;
             this.minStep = 0;
+            this.toolShape = defaultShape;
         }
         // Just names.
         public MaterialTool(string Mat, string Tool)
@@ -54,6 +59,7 @@ namespace CAMel.Types
             this.toolLength = 0;
             this.tolerance = 0;
             this.minStep = 0;
+            this.toolShape = defaultShape;
         }
         // Everything, with defaults
         public MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double tol = 0, double mS = 0, double width = -1, double tL = 0)
@@ -69,6 +75,7 @@ namespace CAMel.Types
             this.toolLength = tL;
             this.tolerance = tol;
             this.minStep = mS;
+            this.toolShape = defaultShape;
         }
         // Copy Constructor
         public MaterialTool(MaterialTool MT)

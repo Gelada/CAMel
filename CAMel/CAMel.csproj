@@ -20,7 +20,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\</OutputPath>
+    <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\CAMel capstone\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -67,6 +67,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="C_Animator.cs" />
     <Compile Include="C_CreateMaterialTool.cs" />
     <Compile Include="C_CreateMaterialForm.cs" />
     <Compile Include="C_Create3AxisMachine.cs" />
@@ -77,9 +78,11 @@
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_Index3Axis.cs" />
     <Compile Include="C_ReadCode.cs" />
+    <Compile Include="graphicsTest.cs" />
     <Compile Include="L_CodeInfo.cs" />
     <Compile Include="L_CA_Base.cs" />
     <Compile Include="L_ToolPointContainer.cs" />
+    <Compile Include="MyComponent1.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -175,7 +178,9 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
+    <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
+
+Erase "$(TargetPath)"
 </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
