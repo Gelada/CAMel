@@ -29,6 +29,8 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
+            pManager.AddMeshParameter("Mesh set 1", "M1", "meshs 1", GH_ParamAccess.list);
+            pManager.AddMeshParameter("Mesh set 2", "M2", "meshs 2", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -36,6 +38,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            pManager.AddMeshParameter("output", "o", "output", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -44,6 +47,17 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            List<Mesh> m1 = new List<Mesh>();
+            List<Mesh> m2 = new List<Mesh>();
+            if (!DA.GetDataList(0, m1)) return;
+            if (!DA.GetDataList(1, m2)) return;
+
+            Mesh[] returnMesh = Mesh.CreateBooleanDifference(m1, m2);
+            List<Mesh> returnM = new List<Mesh>();
+            foreach(Mesh m in returnMesh){
+                returnM.Add(m);
+            }
+            DA.SetDataList(0, returnM);
         }
 
         /// <summary>

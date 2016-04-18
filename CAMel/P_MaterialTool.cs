@@ -20,10 +20,13 @@ namespace CAMel.Types
         public double toolWidth;   // width of tool (assumed unset for negative values)
         public double toolLength;  // length from the tip of the tool to the spindle
         //TODO endshape
+        private static Mesh defaultShape = null;
+        private static Point3d defaultPoint = new Point3d(0,0,0);
         public Mesh toolShape;
+        public Point3d toolCenter;
 
         //default tool shape
-        private static Mesh defaultShape = new Mesh();
+        //private static Mesh defaultShape = new Mesh();
 
         // settings for curve approximation
 
@@ -44,6 +47,7 @@ namespace CAMel.Types
             this.tolerance = 0;
             this.minStep = 0;
             this.toolShape = defaultShape;
+            this.toolCenter = defaultPoint;
         }
         // Just names.
         public MaterialTool(string Mat, string Tool)
@@ -60,9 +64,10 @@ namespace CAMel.Types
             this.tolerance = 0;
             this.minStep = 0;
             this.toolShape = defaultShape;
+            this.toolCenter = defaultPoint;
         }
         // Everything, with defaults
-        public MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double tol = 0, double mS = 0, double width = -1, double tL = 0)
+        public MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, Mesh TS, Point3d TC, double finishDepth =0, double tol = 0, double mS = 0, double width = -1, double tL = 0)
         {
             this.Mat_name = Mat;
             this.Tool_name = Tool;
@@ -75,7 +80,8 @@ namespace CAMel.Types
             this.toolLength = tL;
             this.tolerance = tol;
             this.minStep = mS;
-            this.toolShape = defaultShape;
+            this.toolShape = TS;
+            this.toolCenter = TC;
         }
         // Copy Constructor
         public MaterialTool(MaterialTool MT)
@@ -91,6 +97,8 @@ namespace CAMel.Types
             this.toolLength = MT.toolLength;
             this.tolerance = MT.tolerance;
             this.minStep = MT.minStep;
+            this.toolShape = MT.toolShape;
+            this.toolCenter = MT.toolCenter;
         }
         // Duplicate
         public MaterialTool Duplicate()
@@ -144,6 +152,12 @@ namespace CAMel.Types
             return osTp;
         }
 
+        public bool isToolShapeSet()
+        {
+            if (this.toolShape != null) return true;
+            else return false;
+        }
+
     }
 
     // Grasshopper Type Wrapper
@@ -160,9 +174,9 @@ namespace CAMel.Types
             this.Value = new MaterialTool(Mat, Tool);
         }
         // Name, speed, feed and cut
-        public GH_MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0,double tolerance= 0, double minStep =0,double width = 0, double length = 0)
+        public GH_MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, Mesh TS, Point3d TC, double finishDepth = 0,double tolerance= 0, double minStep =0,double width = 0, double length = 0)
         {
-            this.Value = new MaterialTool(Mat, Tool, speed, feedCut,feedPlunge,cutDepth, finishDepth, tolerance, minStep,width, length);
+            this.Value = new MaterialTool(Mat, Tool, speed, feedCut,feedPlunge,cutDepth, TS, TC, finishDepth, tolerance, minStep,width, length);
         }
         // construct from unwrapped type
         public GH_MaterialTool(MaterialTool MT)
@@ -180,12 +194,12 @@ namespace CAMel.Types
             return new GH_MaterialTool(this);
         }
 
-        // Valid if speed, feeds, and cut depth are set
+        // Valid if speed, feeds, and cut depth, and tool shape are set
         public override bool IsValid
         {
             get 
             { 
-                if(this.Value.speed >=0 && this.Value.feedCut >=0 && this.Value.feedPlunge >= 0 && this.Value.cutDepth >= 0)
+                if(this.Value.speed >=0 && this.Value.feedCut >=0 && this.Value.feedPlunge >= 0 && this.Value.cutDepth >= 0 && this.Value.toolShape != null)
                 {
                     return true;
                 } 

@@ -24,9 +24,12 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddVectorParameter("MachineInstruction", "MI", "Machine instruction describing the process.", GH_ParamAccess.item);
+            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
+            pManager.AddGenericParameter("Tool", "T", "The tool that will be used to cut the material.", GH_ParamAccess.item);
+            pManager.AddGenericParameter("MaterialForm", "MF", "The shape of the material to cut.", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Tool Path", "TP", "The path the tool will follow.", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Step Number", "SN", "The iteration step of that machining animation to view", GH_ParamAccess.item, 0);
-            pManager.AddIntegerParameter("Granularity", "G", "How small each step should be.", GH_ParamAccess.item, 1000);
+            pManager.AddIntegerParameter("Path Division", "PD", "The number of divisions to seperate the path into for the animation.", GH_ParamAccess.item, 1000);
         }
 
         /// <summary>
@@ -45,98 +48,96 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //containers for inputs
-            MachineInstruction MI = new MachineInstruction();
-            //List<MachineOperation> MOs = new List<MachineOperation>();
-            //MaterialTool MT = new MaterialTool();
-            //MaterialForm MF = new MaterialForm();
-            //ToolPath TP = new ToolPath();
+            Vector3d D = new Vector3d();
+            MaterialTool MT = new MaterialTool();
+            MaterialForm MF = new MaterialForm();
+            ToolPath TP = new ToolPath();
 
-            int stepNumber = 1;
+            int stepNumber = 0;
             int pathDivision = 0;
 
             //retrieve inputs, if nothing is retrieved return
-            if (!DA.GetData(0, ref MI)) return;
-            if (!DA.GetData(1, ref stepNumber)) return;
-            if (!DA.GetData(2, ref pathDivision)) return;
+            if (!DA.GetData(0, ref D)) return;
+            if (!DA.GetData(1, ref MT)) return;
+            if (!DA.GetData(2, ref MF)) return;
+            if (!DA.GetData(3, ref TP)) return;
+            if (!DA.GetData(4, ref stepNumber)) return;
+            if (!DA.GetData(5, ref pathDivision)) return;
 
-            //MOs = MI.MOs;
+            //%%%%%%%% Will require TP to add get methods for matTool and MatForm
+            //Retrieve directions, tool, and material form information from the tool path
+            //D = TP.GetDirs();
+            //MT = TP.MatTool();
+            //MF = TP.MatForm();
 
-            //for each machine operation in the Machine instruction
-            foreach (MachineOperation MO in MI.MOs)
+            //stepNumber = pathDivision - 1;
+
+            //If the tool width is negative it hasn't been set and we should exit and warn the user
+            if (MT.toolWidth < 0)
             {
-                //for each toolpath in the machine operation
-                foreach (ToolPath TP in MO.TPs)
-                {
-                    //If the tool width is negative it hasn't been set and we should exit and warn the user
-                    if (TP.MatTool.toolWidth < 0)
-                    {
-                        //output a warning message
-                        return;
-                    }
-
-                    int meshDivisions = 25;
-
-                    //Starting point of the tool
-                    Point3d toolCenterPoint = new Point3d(0, 0, 0);
-
-                    //plane orthogonal to the tool direction
-                    Plane toolOPlane = new Plane(toolCenterPoint, D);
-
-                    //circle to be made into the tool shape
-                    Circle toolCircle = new Circle(toolOPlane, (MT.toolWidth / 2));
-
-                    //cylinder to create a mesh from
-                    Cylinder toolCylinder = new Cylinder(toolCircle, MT.toolLength);
-
-                    //Mesh representation of the tool
-                    Mesh toolMeshBase = Mesh.CreateFromCylinder(toolCylinder, meshDivisions, meshDivisions);
-
-
-                    //Temporary material form for testing
-
-                    Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
-                    Mesh[] matMeshSet = new Mesh[1];
-                    matMeshSet[0] = Mesh.CreateFromBox(tempBox, meshDivisions, meshDivisions, meshDivisions);
-
-                    Queue<Mesh> toolMeshSet = new Queue<Mesh>();
-                    //toolMeshSet.Add(toolMeshBase);
-                    for (int i = 0; i < TP.Pts.Count; i++)
-                    {
-                        double x = TP.Pts[0].Pt.X;
-                        double y = TP.Pts[0].Pt.Y;
-                        double z = TP.Pts[0].Pt.Z;
-
-                        //total distance to cover to the next tool point
-                        double dx = x - toolCenterPoint.X;
-                        double dy = y - toolCenterPoint.Y;
-                        double dz = z - toolCenterPoint.Z;
-
-                        //incremental distance to cover at each step
-                        dx = dx / pathDivision;
-                        dy = dy / pathDivision;
-                        dz = dz / pathDivision;
-
-                        for (int j = 0; j < stepNumber; j++)
-                        {
-                            toolMeshBase.Translate(new Vector3d(dx, dy, dz));
-                            toolMeshSet.Enqueue(toolMeshBase);
-                            matMeshSet = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
-                            toolMeshSet.Clear();
-                        }
-
-                    }
-
-                    //Mesh[] tempMat = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
-
-
-                    //Set the output to be the tool mesh
-                    if (matMeshSet[0] != null) DA.SetData(0, matMeshSet[0]);
-                    //if (tempMat[1] != null) DA.SetData(1, tempMat[1]);
-                }
+                //output a warning message
+                return;
             }
-            
 
-            
+            int meshDivisions = 200;
+
+            //Starting point of the tool
+            Point3d toolCenterPoint = new Point3d(0, 0, 0);
+
+            //plane orthogonal to the tool direction
+            Plane toolOPlane = new Plane(toolCenterPoint, D);
+
+            //circle to be made into the tool shape
+            Circle toolCircle = new Circle(toolOPlane, (MT.toolWidth / 2));
+
+            //cylinder to create a mesh from
+            Cylinder toolCylinder = new Cylinder(toolCircle, MT.toolLength);
+
+            //Mesh representation of the tool
+            Mesh toolMeshBase = Mesh.CreateFromCylinder(toolCylinder, meshDivisions, meshDivisions);
+
+
+            //Temporary material form for testing
+
+            Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
+            Mesh[] matMeshSet = new Mesh[1];
+            matMeshSet[0] = Mesh.CreateFromBox(tempBox, meshDivisions, meshDivisions, meshDivisions);
+
+            Queue<Mesh> toolMeshSet = new Queue<Mesh>();
+            //toolMeshSet.Add(toolMeshBase);
+            for (int i = 0; i < TP.Pts.Count; i++)
+            {
+                double x = TP.Pts[0].Pt.X;
+                double y = TP.Pts[0].Pt.Y;
+                double z = TP.Pts[0].Pt.Z;
+
+                //total distance to cover to the next tool point
+                double dx = x - toolCenterPoint.X;
+                double dy = y - toolCenterPoint.Y;
+                double dz = z - toolCenterPoint.Z;
+
+                //incremental distance to cover at each step
+                dx = dx / pathDivision;
+                dy = dy / pathDivision;
+                dz = dz / pathDivision;
+
+                for (int j = 0; j < stepNumber; j++)
+                {
+                    toolMeshBase.Translate(new Vector3d(dx, dy, dz));
+                    toolMeshSet.Enqueue(toolMeshBase);
+                    matMeshSet = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
+                    toolMeshSet.Clear();
+                }
+
+            }
+
+            //Mesh[] tempMat = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
+
+
+            //Set the output to be the tool mesh
+            if( matMeshSet != null)
+                if (matMeshSet[0] != (null)) DA.SetData(0, matMeshSet[0]);
+            if (toolMeshSet.Peek() != null) DA.SetData(1, toolMeshSet.Peek());
         }
 
         /// <summary>
@@ -161,3 +162,9 @@ namespace CAMel
         }
     }
 }
+
+
+
+
+
+

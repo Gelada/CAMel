@@ -11,7 +11,8 @@ namespace CAMel.Types
     public enum FormType 
     {
         Plane,
-        Brep
+        Brep,
+        Mesh
     }
 
     public enum hs
@@ -35,6 +36,8 @@ namespace CAMel.Types
         public Plane Pl;
         public double safeDistance;
         public double materialTolerance;
+        private static Mesh defaultShape = null;
+        public Mesh materialShape;
         private Brep Shape;
         private FormType FT; // Track how we are establishing material
 
@@ -46,6 +49,7 @@ namespace CAMel.Types
             this.Shape = null;
             this.safeDistance = 1;
             this.materialTolerance = 0;
+            this.materialShape = defaultShape;
         }
         // Plane
         public MaterialForm(Plane surfaceP,double safeD,double matTolerance)
@@ -55,6 +59,17 @@ namespace CAMel.Types
             this.safeDistance = safeD;
             this.materialTolerance = matTolerance;
             this.Shape = null;
+            this.materialShape = null;
+        }
+        // Mesh
+        public MaterialForm(Mesh MS, double safeD, double matTolerance)
+        {
+            //this.Pl = null;
+            FT = FormType.Plane;
+            this.safeDistance = safeD;
+            this.materialTolerance = matTolerance;
+            this.Shape = null;
+            this.materialShape = MS;
         }
         // Brep
         public MaterialForm(Brep S, double sD, double matTolerance)
@@ -64,6 +79,7 @@ namespace CAMel.Types
             this.Pl = Plane.WorldXY;
             this.safeDistance = sD;
             this.materialTolerance = matTolerance;
+            this.materialShape = Mesh.CreateFromBrep(S)[0];
         }
         // Copy Constructor
         public MaterialForm(MaterialForm MF)
@@ -73,6 +89,7 @@ namespace CAMel.Types
             this.safeDistance = MF.safeDistance;
             this.materialTolerance = MF.materialTolerance;
             this.Shape = MF.Shape;
+            this.materialShape = MF.materialShape;
         }
         // Duplicate
         public MaterialForm Duplicate()
@@ -114,6 +131,18 @@ namespace CAMel.Types
         public FormType GetFormType()
         {
             return this.FT;
+        }
+
+        public Mesh GetMaterialShape()
+        {
+            if(FT == FormType.Mesh)
+            {
+                return materialShape;
+            }
+            else
+            {
+                throw new InvalidOperationException("Material not currently described by a Mesh.");
+            }
         }
 
         public Brep GetShape()
@@ -161,6 +190,9 @@ namespace CAMel.Types
                 case FormType.Brep:
                     txt = "Material Brep, safe distance: " + this.safeDistance.ToString(); 
                     break;
+                case FormType.Mesh:
+                    txt = "Material Mesh, safe distance: " + this.safeDistance.ToString();
+                    break;
                 default:
                     txt = "Unknown state encountered.";
                     break;
@@ -187,6 +219,9 @@ namespace CAMel.Types
                     }
                     // if dist is negative we are outside the material, set to 0;
                     //if(dist < 0) dist = 0;
+                    break;
+                case FormType.Mesh:
+                   
                     break;
                 case FormType.Brep:
                     
@@ -285,9 +320,11 @@ namespace CAMel.Types
             switch (this.FT)
 	            {
 		        case FormType.Plane:
-                    return this.Refine_Plane(TP, M);;
+                    return this.Refine_Plane(TP, M);
                 case FormType.Brep:
                     return this.Refine_Shape(TP, M);
+                case FormType.Mesh:
+                    return TP;
                 default:
                     throw new NotImplementedException("Unknown FormType for material Form.");
 	            }

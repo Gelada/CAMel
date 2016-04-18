@@ -36,6 +36,8 @@ namespace CAMel
             pManager.AddNumberParameter("minStep", "mS", "Minimum distance between machine positions", GH_ParamAccess.item);
             pManager.AddNumberParameter("Tool Width", "TW", "Width of tool", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis)", GH_ParamAccess.item, 0);
+            pManager.AddMeshParameter("Tool Shape", "TS", "Shape of the tool for cutting", GH_ParamAccess.item);
+            pManager.AddPointParameter("Tool Center", "TC", "Center of the tool", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -57,6 +59,9 @@ namespace CAMel
 
             double S = 0, CF = 0, PF = 0, CD = 0, FD = 0, T = 0, mS = 0, TW = 0, TL = 0;
 
+            Mesh TS = null;
+            Point3d TC = new Point3d(0,0,0);
+
             if (!DA.GetData(0, ref matName)) return;
             if (!DA.GetData(1, ref toolName)) return;
             if (!DA.GetData(2, ref S)) return;
@@ -68,8 +73,10 @@ namespace CAMel
             if (!DA.GetData(8, ref mS)) return;
             if (!DA.GetData(9, ref TW)) return;
             if (!DA.GetData(10, ref TL)) return;
+            if (!DA.GetData(11, ref TS)) return;
+            if (!DA.GetData(12, ref TC)) return;
 
-            MaterialTool MT = new MaterialTool(matName, toolName, S, CF, PF, CD, FD, T, mS, TW, TL);
+            MaterialTool MT = new MaterialTool(matName, toolName, S, CF, PF, CD, TS, TC, FD, T, mS, TW, TL);
 
             DA.SetData(0, MT);
         }

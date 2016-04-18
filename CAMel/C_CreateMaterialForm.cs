@@ -28,6 +28,7 @@ namespace CAMel
             pManager.AddPlaneParameter("Plane", "Pl", "Plane positions so that all material is on the negative side", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddNumberParameter("Safe Distance", "SD", "Safe distance away from material", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("Tolerance", "T", "Tolerance of material positioning", GH_ParamAccess.item, .1);
+            pManager.AddMeshParameter("MaterialShape", "MS", "The shape of the material to be cut", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -48,12 +49,14 @@ namespace CAMel
 
             Plane Pl = Plane.WorldXY;
             double SD = 0, T=0;
+            Mesh MS = null;
 
             if (!DA.GetData(0, ref Pl)) return;
             if (!DA.GetData(1, ref SD)) return;
             if (!DA.GetData(2, ref T)) return;
+            if (!DA.GetData(3, ref MS)) return;
 
-            MaterialForm MF = new MaterialForm(Pl, SD, T);
+            MaterialForm MF = new MaterialForm(MS, SD, T);
 
             DA.SetData(0, MF);
         }
