@@ -14,8 +14,12 @@ namespace CAMel
 {
     public class graphicsTest : GH_Component
     {
-        public graphicsTest() : base("Curve Tangents", "CT", "Create a bunch of curve tangent lines", "CAMel", "Utilities")
+        public graphicsTest() //: base("Curve Tangents", "CT", "Create a bunch of curve tangent lines", "CAMel", "Utilities")
+            : base("Animator", "Animator",
+              "Animates the paths of G-Code input to this component.",
+              "CAMel", "Utilities")
         {
+
             SampleCount = 10;
         }
         public override void CreateAttributes()
@@ -25,12 +29,17 @@ namespace CAMel
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddCurveParameter("Curve", "C", "Curve to divide", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Length", "L", "Length of tangent lines", GH_ParamAccess.item, 10.0);
+            //  pManager.AddCurveParameter("Curve", "C", "Curve to divide", GH_ParamAccess.item);
+            //pManager.AddNumberParameter("Length", "L", "Length of tangent lines", GH_ParamAccess.item, 10.0);
+            pManager.AddGenericParameter("Machine Instruction", "MI", "placeholder", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Step Number", "SN", "The iteration step of that machining animation to view", GH_ParamAccess.item, 0);
+            pManager.AddIntegerParameter("Path Division", "PD", "The number of divisions to seperate the path into for the animation.", GH_ParamAccess.item, 1000);
         }
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddLineParameter("Tangents", "T", "Tangent lines", GH_ParamAccess.list);
+            // pManager.AddLineParameter("Tangents", "T", "Tangent lines", GH_ParamAccess.list);
+            pManager.AddMeshParameter("Material Shape", "MS", "The shape of the material as it is cut", GH_ParamAccess.item);
+            pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.item);
         }
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -76,17 +85,17 @@ namespace CAMel
 
             #region Custom layout logic
             private RectangleF SamplesFewBounds { get; set; }
-            private RectangleF SamplesSomeBounds { get; set; }
-            private RectangleF SamplesManyBounds { get; set; }
+ //           private RectangleF SamplesSomeBounds { get; set; }
+ //          private RectangleF SamplesManyBounds { get; set; }
 
             protected override void Layout()
             {
                 base.Layout();
                 //We'll extend the basic layout by adding three regions to the bottom of this component,
                 SamplesFewBounds = new RectangleF(Bounds.X, Bounds.Bottom, Bounds.Width, 20);
-                SamplesSomeBounds = new RectangleF(Bounds.X, Bounds.Bottom + 20, Bounds.Width, 20);
-                SamplesManyBounds = new RectangleF(Bounds.X, Bounds.Bottom + 40, Bounds.Width, 20);
-                Bounds = new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height + 60);
+  //              SamplesSomeBounds = new RectangleF(Bounds.X, Bounds.Bottom + 20, Bounds.Width, 20);
+  //              SamplesManyBounds = new RectangleF(Bounds.X, Bounds.Bottom + 40, Bounds.Width, 20);
+                Bounds = new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height + 20);
             }
             #endregion
 
@@ -106,23 +115,23 @@ namespace CAMel
                         return GH_ObjectResponse.Handled;
                     }
 
-                    if (SamplesSomeBounds.Contains(e.CanvasLocation))
-                    {
-                        if (comp.SampleCount == 100) return GH_ObjectResponse.Handled;
-                        comp.RecordUndoEvent("Some Samples");
-                        comp.SampleCount = 100;
-                        comp.ExpireSolution(true);
-                        return GH_ObjectResponse.Handled;
-                    }
+  //                  if (SamplesSomeBounds.Contains(e.CanvasLocation))
+    //                {
+      //                  if (comp.SampleCount == 100) return GH_ObjectResponse.Handled;
+        //                comp.RecordUndoEvent("Some Samples");
+          ///              comp.SampleCount = 100;
+             //           comp.ExpireSolution(true);
+               //         return GH_ObjectResponse.Handled;
+                 //   }
 
-                    if (SamplesManyBounds.Contains(e.CanvasLocation))
-                    {
-                        if (comp.SampleCount == 1000) return GH_ObjectResponse.Handled;
-                        comp.RecordUndoEvent("Many Samples");
-                        comp.SampleCount = 1000;
-                        comp.ExpireSolution(true);
-                        return GH_ObjectResponse.Handled;
-                    }
+  //                  if (SamplesManyBounds.Contains(e.CanvasLocation))
+    //               {
+     //                  if (comp.SampleCount == 1000) return GH_ObjectResponse.Handled;
+     //                   comp.RecordUndoEvent("Many Samples");
+       //                 comp.SampleCount = 1000;
+         //               comp.ExpireSolution(true);
+           //             return GH_ObjectResponse.Handled;
+             //       }
                 }
                 return base.RespondToMouseDown(sender, e);
             }
@@ -139,21 +148,21 @@ namespace CAMel
 
                         graphicsTest comp = Owner as graphicsTest;
 
-                        GH_Capsule buttonFew = GH_Capsule.CreateCapsule(SamplesFewBounds, comp.SampleCount == 10 ? GH_Palette.Black : GH_Palette.White);
+                        GH_Capsule buttonFew = GH_Capsule.CreateCapsule(SamplesFewBounds, comp.SampleCount == 100 ? GH_Palette.Black : GH_Palette.White);
                         buttonFew.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);
                         buttonFew.Dispose();
 
-                        GH_Capsule buttonSome = GH_Capsule.CreateCapsule(SamplesSomeBounds, comp.SampleCount == 100 ? GH_Palette.Black : GH_Palette.White);
-                        buttonSome.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);
-                        buttonSome.Dispose();
+               //         GH_Capsule buttonSome = GH_Capsule.CreateCapsule(SamplesSomeBounds, comp.SampleCount == 100 ? GH_Palette.Black : GH_Palette.White);
+                 //       buttonSome.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);
+                   ///     buttonSome.Dispose();
 
-                        GH_Capsule buttonMany = GH_Capsule.CreateCapsule(SamplesManyBounds, comp.SampleCount == 1000 ? GH_Palette.Black : GH_Palette.White);
-                        buttonMany.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);
-                        buttonMany.Dispose();
+               //         GH_Capsule buttonMany = GH_Capsule.CreateCapsule(SamplesManyBounds, comp.SampleCount == 1000 ? GH_Palette.Black : GH_Palette.White);
+                 //       buttonMany.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);
+                   //     buttonMany.Dispose();
 
-                        graphics.DrawString("Few", GH_FontServer.Standard, comp.SampleCount == 10 ? Brushes.White : Brushes.Black, SamplesFewBounds, GH_TextRenderingConstants.CenterCenter);
-                        graphics.DrawString("Some", GH_FontServer.Standard, comp.SampleCount == 100 ? Brushes.White : Brushes.Black, SamplesSomeBounds, GH_TextRenderingConstants.CenterCenter);
-                        graphics.DrawString("Many", GH_FontServer.Standard, comp.SampleCount == 1000 ? Brushes.White : Brushes.Black, SamplesManyBounds, GH_TextRenderingConstants.CenterCenter);
+                        graphics.DrawString("▶", GH_FontServer.Standard, comp.SampleCount == 10 ? Brushes.White : Brushes.Black, SamplesFewBounds, GH_TextRenderingConstants.CenterCenter);
+                 //       graphics.DrawString("Some", GH_FontServer.Standard, comp.SampleCount == 100 ? Brushes.White : Brushes.Black, SamplesSomeBounds, GH_TextRenderingConstants.CenterCenter);
+                 //       graphics.DrawString("Many", GH_FontServer.Standard, comp.SampleCount == 1000 ? Brushes.White : Brushes.Black, SamplesManyBounds, GH_TextRenderingConstants.CenterCenter);
 
                         break;
                     default:
