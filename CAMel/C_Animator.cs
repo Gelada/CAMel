@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Grasshopper.Kernel;
 using Rhino.Geometry;
+using Rhino.Display;
 using CAMel.Types;
 
 namespace CAMel
@@ -29,8 +30,8 @@ namespace CAMel
                       pManager.AddGenericParameter("MaterialForm", "MF", "The shape of the material to cut.", GH_ParamAccess.item);
                    pManager.AddGenericParameter("Tool Path", "TP", "The path the tool will follow.", GH_ParamAccess.item);
     //        pManager.AddGenericParameter("Machine Instruction", "MI", "placeholder", GH_ParamAccess.item);
-            pManager.AddIntegerParameter("Step Number", "SN", "The iteration step of that machining animation to view", GH_ParamAccess.item, 0);
-            pManager.AddIntegerParameter("Path Division", "PD", "The number of divisions to seperate the path into for the animation.", GH_ParamAccess.item, 1000);
+            pManager.AddIntegerParameter("Machining percentage", "MP", "The percentage of the way through the machining process", GH_ParamAccess.item, 0);
+           // pManager.AddNumberParameter("Step Size", "SS", "The maximum step size for the tool path stepping", GH_ParamAccess.item, 0.5f);
         }
 
         /// <summary>
@@ -39,8 +40,8 @@ namespace CAMel
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddMeshParameter("Material Shape base", "MS", "The shape of the material", GH_ParamAccess.list);
-            pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.list);
-            pManager.AddMeshParameter("Render", "E", "Shape post machining", GH_ParamAccess.list);
+            pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.item);
+            pManager.AddMeshParameter("Render", "R", "Shape post machining", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -55,16 +56,16 @@ namespace CAMel
             MaterialForm MF = new MaterialForm();
             ToolPath TP = new ToolPath();
 
-            int stepNumber = 0;
-            int pathDivision = 0;
+            int machiningPercentage = 0;
+            float stepSize = 0;
 
             //retrieve inputs, if nothing is retrieved return
             if (!DA.GetData(0, ref D)) return;
             if (!DA.GetData(1, ref MT)) return;
             if (!DA.GetData(2, ref MF)) return;
             if (!DA.GetData(3, ref TP)) return;
-            if (!DA.GetData(4, ref stepNumber)) return;
-            if (!DA.GetData(5, ref pathDivision)) return;
+            if (!DA.GetData(4, ref machiningPercentage)) return;
+            //if (!DA.GetData(5, ref stepSize)) return;
 
             //%%%%%%%% Will require TP to add get methods for matTool and MatForm
             //Retrieve directions, tool, and material form information from the tool path
@@ -72,7 +73,7 @@ namespace CAMel
             //MT = TP.MatTool();
             //MF = TP.MatForm();
 
-            //stepNumber = pathDivision - 1;
+            //machiningPercentage = stepSize - 1;
 
             //If the tool width is negative it hasn't been set and we should exit and warn the user
             if (MT.toolWidth < 0)
@@ -81,10 +82,10 @@ namespace CAMel
                 return;
             }
 
-            int meshDivisions = 50;
+            int meshDivisions = 25;
 
             //Starting point of the tool
-            Point3d toolCenterPoint = new Point3d(0, 0, 1);
+            Point3d toolCenterPoint = new Point3d(TP.Pts[0].Pt.X, TP.Pts[0].Pt.Y, TP.Pts[0].Pt.Z);
 
             //plane orthogonal to the tool direction
             Plane toolOPlane = new Plane(toolCenterPoint, D);
@@ -101,33 +102,82 @@ namespace CAMel
 
             //Temporary material form for testing
 
-            Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
-            Mesh[] matMeshSet = new Mesh[1];
-            matMeshSet[0] = Mesh.CreateFromBox(tempBox, meshDivisions, meshDivisions, meshDivisions);
+            //Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
+            Brep[] matMeshSet = new Brep[1];
+            matMeshSet[0] = Brep.CreateFromBox(new BoundingBox(-5,-5,-5,5,5,0));
+            if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
 
-            Mesh[] toolMeshSet = new Mesh[1];
-            toolMeshSet[0] = new Mesh();
+
+            Brep[] toolMeshSet = new Brep[1];
+            toolMeshSet[0] = new Brep();
             //toolMeshSet[1] = new Mesh();
-            if(toolMeshBase != null) toolMeshSet[0].CopyFrom(toolMeshBase);
+            //if(toolMeshBase != null) toolMeshSet[0].CopyFrom(toolMeshBase);
             Mesh[] temp = new Mesh[0];
-            Mesh[] tempMat = new Mesh[0];
-            for (int i = 0; i < TP.Pts.Count; i++)
+            //Mesh[] tempMat = new Mesh[0];
+            Brep extrusionTest = new Brep();
+            Extrusion extruder = new Extrusion();
+            List<Curve> debugginCurves = new List<Curve>();
+
+            //Surface cuttingExtrusion = new Surface();
+            int i = 1;
+            do
             {
-                double x = TP.Pts[0].Pt.X;
-                double y = TP.Pts[0].Pt.Y;
-                double z = TP.Pts[0].Pt.Z;
+
+
+
+
+
+
+
+
+
+                double x = TP.Pts[i].Pt.X;
+                double y = TP.Pts[i].Pt.Y;
+                double z = TP.Pts[i].Pt.Z;
 
                 //total distance to cover to the next tool point
-                double dx = x - toolCenterPoint.X;
-                double dy = y - toolCenterPoint.Y;
-                double dz = z - toolCenterPoint.Z;
+                double dx = x - TP.Pts[i - 1].Pt.X;
+                double dy = y - TP.Pts[i - 1].Pt.Y;
+                double dz = z - TP.Pts[i - 1].Pt.Z;
+                double totalD = (Math.Sqrt(dx * dx + dy * dy + dz * dz));
+                //double numDivisions = 1;
 
-                //incremental distance to cover at each step
-                dx = dx / pathDivision;
-                dy = dy / pathDivision;
-                dz = dz / pathDivision;
 
-                for (int j = 0; j < stepNumber; j++)
+
+                Vector3d toolPointDirection = new Vector3d(dx, dy, dz);
+
+
+                //debugging, looking at all the toolPointDirections
+                debugginCurves.Add((toolPointDirection));
+
+
+                Plane toolPointOrientation = new Plane(toolCenterPoint, toolPointDirection);
+                RhinoViewport viewPort = new RhinoViewport();
+                viewPort.SetCameraLocation(TP.Pts[i].Pt, false);
+                viewPort.SetCameraDirection(toolPointDirection, false);
+                //Rectangle3d toolOutline = new Rectangle3d(new Plane(new Point3d(0,0,0), toolPointDirection),MT.toolWidth, MT.toolLength);
+                //cuttingExtrusion.create
+                Polyline[] outlines = toolMeshBase.GetOutlines(toolPointOrientation);
+                //Surface cuttingExtrusion = Surface.CreateExtrusion(toolOutline.ToNurbsCurve(), toolPointDirection);
+                //extruder.SetOuterProfile(outlines[0].ToNurbsCurve(), true);
+                extruder = Extrusion.Create(outlines[0].ToNurbsCurve(), totalD, true);
+                toolMeshSet[0] = extruder.ToBrep();
+                extrusionTest = toolMeshSet[0];
+                matMeshSet = Brep.CreateBooleanDifference(matMeshSet, toolMeshSet, 0.01);
+
+                //Update stuff for the next round
+                toolMeshBase.Translate(new Vector3d(dx, dy, dz));
+                i++;
+                /*//incremental distance to cover at each step
+                while(totalD > stepSize){
+                    dx = dx / 2;
+                    dy = dy / 2;
+                    dz = dz / 2;
+                    totalD = (Math.Sqrt(dx * dx + dy * dy + dz * dz));
+                    numDivisions *= 2;
+                }
+
+                for (int j = 0; j < numDivisions; j++)
                 {
                     toolMeshSet[0].Translate(new Vector3d(dx, dy, dz));
                     //toolMeshBase.Translate(new Vector3d(dx, dy, dz));
@@ -138,16 +188,18 @@ namespace CAMel
                     //matMeshSet = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
                     //toolMeshSet.Clear();
                 }
+                */
 
-            }
+            } while (i < TP.Pts.Count);
 
             //Mesh[] tempMat = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
             //matMeshSet = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
 
             //Set the output to be the tool mesh
             if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
-            if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
-            if (tempMat != null) DA.SetDataList(2, tempMat);
+            //if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
+            if (matMeshSet != null) DA.SetDataList(2, matMeshSet);
+            if (extrusionTest != null) DA.SetData(1, extrusionTest);
 
         }
 
