@@ -39,9 +39,10 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddMeshParameter("Material Shape base", "MS", "The shape of the material", GH_ParamAccess.list);
-            pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.item);
+            pManager.AddLineParameter("Material Shape base", "MS", "The shape of the material", GH_ParamAccess.list);
+            pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.list);
             pManager.AddMeshParameter("Render", "R", "Shape post machining", GH_ParamAccess.list);
+            pManager.AddGenericParameter("outlines", "o", "outlines", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -104,19 +105,25 @@ namespace CAMel
 
             //Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
             Brep[] matMeshSet = new Brep[1];
-            matMeshSet[0] = Brep.CreateFromBox(new BoundingBox(-5,-5,-5,5,5,0));
-            if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
+            matMeshSet[0] = Brep.CreateFromBox(new BoundingBox(-6,-6,-6,6,6,0));
+            //if (matMeshSet != null) DA.SetDataList(2, matMeshSet);
 
 
             Brep[] toolMeshSet = new Brep[1];
-            toolMeshSet[0] = new Brep();
+            
+
+            toolMeshSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
+            matMeshSet = Brep.CreateBooleanDifference(matMeshSet, toolMeshSet, 0.01);
+            if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
+
             //toolMeshSet[1] = new Mesh();
             //if(toolMeshBase != null) toolMeshSet[0].CopyFrom(toolMeshBase);
             Mesh[] temp = new Mesh[0];
             //Mesh[] tempMat = new Mesh[0];
-            Brep extrusionTest = new Brep();
+            List<Brep> extrusionTest = new List<Brep>();
             Extrusion extruder = new Extrusion();
-            List<Curve> debugginCurves = new List<Curve>();
+            List<Line> debugginLines = new List<Line>();
+            Polyline[] outlines = new Polyline[0];
 
             //Surface cuttingExtrusion = new Surface();
             int i = 1;
@@ -146,27 +153,32 @@ namespace CAMel
 
                 Vector3d toolPointDirection = new Vector3d(dx, dy, dz);
 
-
+                
+                
                 //debugging, looking at all the toolPointDirections
-                debugginCurves.Add((toolPointDirection));
+                debugginLines.Add(new Line(TP.Pts[i-1].Pt, TP.Pts[i].Pt));
 
-
-                Plane toolPointOrientation = new Plane(toolCenterPoint, toolPointDirection);
-                RhinoViewport viewPort = new RhinoViewport();
-                viewPort.SetCameraLocation(TP.Pts[i].Pt, false);
-                viewPort.SetCameraDirection(toolPointDirection, false);
-                //Rectangle3d toolOutline = new Rectangle3d(new Plane(new Point3d(0,0,0), toolPointDirection),MT.toolWidth, MT.toolLength);
-                //cuttingExtrusion.create
-                Polyline[] outlines = toolMeshBase.GetOutlines(toolPointOrientation);
+                //Plane orthogonal to next movemant
+                Plane toolPointOrientation = new Plane(TP.Pts[i - 1].Pt, toolPointDirection);
+                
+                //Outline of the tool from the plane's perspective
+                outlines = toolMeshBase.GetOutlines(toolPointOrientation);
+                if (outlines != null) DA.SetDataList(3, outlines);
                 //Surface cuttingExtrusion = Surface.CreateExtrusion(toolOutline.ToNurbsCurve(), toolPointDirection);
                 //extruder.SetOuterProfile(outlines[0].ToNurbsCurve(), true);
                 extruder = Extrusion.Create(outlines[0].ToNurbsCurve(), totalD, true);
                 toolMeshSet[0] = extruder.ToBrep();
-                extrusionTest = toolMeshSet[0];
+                extrusionTest.Add(toolMeshSet[0]);
                 matMeshSet = Brep.CreateBooleanDifference(matMeshSet, toolMeshSet, 0.01);
+               
 
                 //Update stuff for the next round
-                toolMeshBase.Translate(new Vector3d(dx, dy, dz));
+                toolMeshBase.Translate(toolPointDirection);
+
+                //Remove the Tool shape from the next toolpoint
+                toolMeshSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
+                matMeshSet = Brep.CreateBooleanDifference(matMeshSet, toolMeshSet, 0.01);
+                if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
                 i++;
                 /*//incremental distance to cover at each step
                 while(totalD > stepSize){
@@ -196,12 +208,29 @@ namespace CAMel
             //matMeshSet = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet);
 
             //Set the output to be the tool mesh
-            if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
+            if (debugginLines != null) DA.SetDataList(0, debugginLines);
             //if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
+            if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
             if (matMeshSet != null) DA.SetDataList(2, matMeshSet);
-            if (extrusionTest != null) DA.SetData(1, extrusionTest);
+            
 
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         /// <summary>
         /// Provides an Icon for the component.
