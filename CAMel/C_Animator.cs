@@ -97,7 +97,7 @@ namespace CAMel
                 //MaterialForm MF = new MaterialForm();
                 //ToolPath TP = new ToolPath();
                 MachineInstruction MI = new MachineInstruction();
-
+                
                 int machiningPercentage = 0;
                 int meshDivisions = 15;
 
@@ -124,6 +124,12 @@ namespace CAMel
                 matBrepSet[0] = Brep.CreateFromBox(new BoundingBox(-6, -6, -6, 6, 6, 0));
                 if (matBrepSet != null) DA.SetDataList(5, matBrepSet);
                 List<MachineOperation> MOs = MI.MOs;
+
+
+                List<Brep> toolUnionSet = new List<Brep>();
+                Brep[] a = new Brep[1];
+
+
                 foreach (MachineOperation MO in MOs)
                 {
                     foreach (ToolPath TP in MO.TPs)
@@ -156,12 +162,16 @@ namespace CAMel
 
 
                         Brep[] toolBrepSet = new Brep[1];
+                        
 
 
                         toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
-                        matBrepSet = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.01);
-                        if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
-                        if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
+                        a[0] = toolBrepSet[0];
+                        toolUnionSet.Add(toolBrepSet[0]);
+
+                       // matBrepSet = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.01);
+                       // if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
+                       // if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
 
                         //toolBrepSet[1] = new Mesh();
                         //if(toolMeshBase != null) toolBrepSet[0].CopyFrom(toolMeshBase);
@@ -175,6 +185,8 @@ namespace CAMel
 
                         //Surface cuttingExtrusion = new Surface();
                         int i = 1;
+                        if (machiningPercentage >= TP.Pts.Count)
+                            machiningPercentage = TP.Pts.Count - 1;
                         do
                         {
 
@@ -182,16 +194,18 @@ namespace CAMel
                             //-----------------------------------------------------
                             //Method to call for differencing between two points
                             //-----------------------------------------------------
-                            matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt);
-                            if (matBrepSet != null)
-                                matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
+                            // matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt);
+                            // if (matBrepSet != null)
+                            //     matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
+
+                            
+                            a[0].Append(generateExtrusion(toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
+                            //Brep[] tempToolSet = Brep.CreateBooleanUnion(toolUnionSet, 0.01);
+                            //if (tempToolSet != null)
+                            //    toolUnionSet.Add(tempToolSet[0]);
 
 
-
-
-
-
-
+                            
 
 
 
@@ -218,34 +232,44 @@ namespace CAMel
 
                             //Remove the Tool shape from the next toolpoint
                             toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
-                            tempMat = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.005);
-                            if (tempMat != null)
-                                matBrepSet = tempMat;
-                            //if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
-                            if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
-                            i++;
-                       
 
-                        } while (i < TP.Pts.Count);
+                            a[0].Append(toolBrepSet[0]);
+                            
+                            // tempMat = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.005);
+                            // if (tempMat != null)
+                            //     matBrepSet = tempMat;
+                            //if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
+                            // if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
+                            i++;
+
+                            
+                        } while (i < machiningPercentage);
                         if (debugginLines != null) DA.SetDataList(0, debugginLines);
                 //if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
                 if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
                     }
                 }
 
-            
 
-            
+                
 
-            
+                //if (toolUnionSet != null) DA.SetDataList(1, toolUnionSet);
+                /*Brep[] temptoolBrep = new Brep[1];
+                Brep temptool = Brep.MergeBreps(toolUnionSet, 0.001);
 
-                //Mesh[] tempMat = Mesh.CreateBooleanDifference(matBrepSet, toolBrepSet);
-                //matBrepSet = Mesh.CreateBooleanDifference(matBrepSet, toolBrepSet);
+                Brep[] a = new Brep[1];
+                a[0] = toolUnionSet[0];
+                a[0].Append(toolUnionSet[1]);
+                toolUnionSet[0].Append(toolUnionSet[1]);*/
+                //toolUnionSet.Clear();
+                //toolUnionSet.Add(temptool);
+                //temptoolBrep[0] = temptool;
+                matBrepSet = Brep.CreateBooleanDifference(matBrepSet, a, 0.001);
 
                 //Set the output to be the tool mesh
-            
+                if (a != null) DA.SetDataList(1, a);
                 if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
-
+                
                 run = false;
                 hasRun = true;
             }
@@ -312,7 +336,40 @@ namespace CAMel
 
 
 
+        //--------------------------------------------------------------------------------------------------------------------------------------
+        //Method to take some extrusion of a tool and remove it from the material, and then return the result
+        //if the removal results in a null value for the material, then return the original thing? consider other ways of handling this error
+        //--------------------------------------------------------------------------------------------------------------------------------------
+        private Brep generateExtrusion(Mesh toolShape, Point3d point1, Point3d point2)
+        {
+            //--------------------------------------------------------------
+            //Building the vector that goes from point 1 to point 2
+            //--------------------------------------------------------------
+            double dx = point2.X - point1.X;
+            double dy = point2.Y - point1.Y;
+            double dz = point2.Z - point1.Z;
+            double totalD = (Math.Sqrt(dx * dx + dy * dy + dz * dz));
+            Vector3d toolPointDirection = new Vector3d(dx, dy, dz);
 
+
+            //Plane orthogonal to next movemant, this will be used to project the toolshape at the proper orientation, and it will be centered around point 1
+            Plane toolPointOrientation = new Plane(point1, toolPointDirection);
+
+
+            //Outline of the tool from the plane's perspective
+            Polyline[] outlines = toolShape.GetOutlines(toolPointOrientation);
+
+            //Extrusion of the outline that is the length of the vector between point1 and point2
+            //This extrusion uses the direction of the plane used to create the outlines
+            Extrusion extruder = Extrusion.Create(outlines[0].ToNurbsCurve(), totalD, true);
+
+
+            //------------------------------------------------------------------------------
+            //container to be used for boolean operations
+            //set the object in the container to be a brep representation of the extrusion
+            //------------------------------------------------------------------------------
+            return extruder.ToBrep();
+        }
 
 
 
