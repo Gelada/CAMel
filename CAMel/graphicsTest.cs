@@ -164,6 +164,9 @@ namespace CAMel
 
                     graphicsTest comp = Owner as graphicsTest;
 
+                    var Center = new PointF(Bounds.X+25, Bounds.Bottom-30);
+                    DrawRadioButton(graphics, Center, comp.hasRun);
+
                     GH_Capsule buttonFew = GH_Capsule.CreateCapsule(PlayBounds, comp.hasRun == true ? GH_Palette.Blue : GH_Palette.Pink);
                     buttonFew.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);
                     buttonFew.Dispose();
@@ -188,6 +191,18 @@ namespace CAMel
         }
         #endregion
 
+
+        private void DrawRadioButton(Graphics graphics, PointF center, bool check)
+        {
+            if (check){
+                graphics.FillEllipse(Brushes.Black, center.X - 6, center.Y - 6, 12, 12);
+            }
+            else
+            {
+                graphics.FillEllipse(Brushes.Black, center.X - 6, center.Y - 6, 12, 12);
+                graphics.FillEllipse(Brushes.White, center.X - 4, center.Y - 4, 8, 8);
+            }
+        }
     }
 
 }
