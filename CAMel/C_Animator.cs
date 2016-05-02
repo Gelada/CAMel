@@ -89,7 +89,11 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            if(run)
+            //differenceAtEnd(DA);
+            //mixedDifferences(DA);
+            //fineThenRoughDifferences(DA);
+
+            if (run)
             { 
                 //containers for inputs
                 //Vector3d D = new Vector3d();
@@ -121,8 +125,9 @@ namespace CAMel
 
                 //Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
                 Brep[] matBrepSet = new Brep[1];
-                matBrepSet[0] = Brep.CreateFromBox(new BoundingBox(-6, -6, -6, 6, 6, 0));
+                matBrepSet[0] = Brep.CreateFromBox(new BoundingBox(-0.5, -0.5, -0.75, 6.5, 6.5, 0));
                 if (matBrepSet != null) DA.SetDataList(5, matBrepSet);
+                int totalSteps = 0;
                 List<MachineOperation> MOs = MI.MOs;
                 foreach (MachineOperation MO in MOs)
                 {
@@ -175,9 +180,16 @@ namespace CAMel
 
                         //Surface cuttingExtrusion = new Surface();
                         int i = 1;
-                        if (machiningPercentage >= TP.Pts.Count)
+                        //Increment here for the default difference
+                        totalSteps++;
+
+                        //TODO: Add proper checks for boundary cases on percentage (like negative and whatnot)
+                        //TODO: Refactor to allow the followthrough to work properly when percentage has been exceeded
+                        int tempPercent = machiningPercentage - totalSteps;
+                        if (tempPercent < 1) tempPercent = 1;
+                        if ( tempPercent >= TP.Pts.Count)
                         {
-                            machiningPercentage = TP.Pts.Count - 1;
+                            tempPercent = TP.Pts.Count - 1;
                         }
                         do
                         {
@@ -189,17 +201,6 @@ namespace CAMel
                             matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt);
                             if (matBrepSet != null)
                                 matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
-
-
-
-
-
-
-
-
-
-
-
 
 
                             //debugging, looking at all the toolPointDirections
@@ -228,20 +229,16 @@ namespace CAMel
                             //if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
                             if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
                             i++;
+                            totalSteps++;
                        
 
                         } while (i < machiningPercentage);
+
                         if (debugginLines != null) DA.SetDataList(0, debugginLines);
-                //if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
-                if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
+                        //if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
+                        if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
                     }
                 }
-
-            
-
-            
-
-            
 
                 //Mesh[] tempMat = Mesh.CreateBooleanDifference(matBrepSet, toolBrepSet);
                 //matBrepSet = Mesh.CreateBooleanDifference(matBrepSet, toolBrepSet);
@@ -249,14 +246,12 @@ namespace CAMel
                 //Set the output to be the tool mesh
             
                 if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
-
                 run = false;
                 hasRun = true;
             }
 
             else
                 hasRun = false;
-
         }
 
 
