@@ -167,6 +167,9 @@ namespace CAMel
 
                         toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
                         a[0] = toolBrepSet[0];
+                        //if (a != null) DA.SetDataList(1, a);
+                        matBrepSet = Brep.CreateBooleanDifference(matBrepSet, a, 0.001);
+
                         toolUnionSet.Add(toolBrepSet[0]);
 
                        // matBrepSet = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.01);
@@ -199,13 +202,11 @@ namespace CAMel
                             //     matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
 
                             
-                            a[0].Append(generateExtrusion(toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
+                            a[0]= (generateExtrusion(toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
                             //Brep[] tempToolSet = Brep.CreateBooleanUnion(toolUnionSet, 0.01);
                             //if (tempToolSet != null)
                             //    toolUnionSet.Add(tempToolSet[0]);
 
-
-                            
 
 
 
@@ -231,9 +232,14 @@ namespace CAMel
                             toolMeshBase.Translate(new Vector3d(TP.Pts[i].Pt.X - TP.Pts[i-1].Pt.X, TP.Pts[i].Pt.Y - TP.Pts[i - 1].Pt.Y, TP.Pts[i].Pt.Z - TP.Pts[i- 1 ].Pt.Z));
 
                             //Remove the Tool shape from the next toolpoint
-                            toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
+                            a[0].Append(Brep.CreateFromMesh(toolMeshBase, true));
 
-                            a[0].Append(toolBrepSet[0]);
+                            //if (a != null) DA.SetDataList(1, a);
+                            Brep[] tempMatSet = Brep.CreateBooleanDifference(matBrepSet, a, 0.001);
+                            if (tempMatSet != null)
+                                matBrepSet = tempMatSet;
+
+                            
                             
                             // tempMat = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.005);
                             // if (tempMat != null)
@@ -251,7 +257,7 @@ namespace CAMel
                 }
 
 
-                
+
 
                 //if (toolUnionSet != null) DA.SetDataList(1, toolUnionSet);
                 /*Brep[] temptoolBrep = new Brep[1];
@@ -264,10 +270,11 @@ namespace CAMel
                 //toolUnionSet.Clear();
                 //toolUnionSet.Add(temptool);
                 //temptoolBrep[0] = temptool;
-                matBrepSet = Brep.CreateBooleanDifference(matBrepSet, a, 0.001);
+                //a[0].Compact();
+                //matBrepSet = Brep.CreateBooleanDifference(matBrepSet, a, 0.001);
 
                 //Set the output to be the tool mesh
-                if (a != null) DA.SetDataList(1, a);
+                //if (a != null) DA.SetDataList(1, a);
                 if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
                 
                 run = false;
