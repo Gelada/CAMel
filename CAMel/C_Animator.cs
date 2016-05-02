@@ -133,110 +133,113 @@ namespace CAMel
                 {
                     foreach (ToolPath TP in MO.TPs)
                     {
-                        //If tool isn't set don't run
-                        if (TP.MatTool.toolWidth < 0) return;
-
-
-                        //-------------------------------------------------------------------------------------
-                        //Construct the tool  Mesh, to be replaced by user input
-                        //-------------------------------------------------------------------------------------
-                        //Starting point of the tool
-                        Point3d toolCenterPoint = new Point3d(TP.Pts[0].Pt.X, TP.Pts[0].Pt.Y, TP.Pts[0].Pt.Z);
-
-                        //plane orthogonal to the tool direction
-                        Plane toolOPlane = new Plane(toolCenterPoint, new Vector3d(0,0,1));
-
-                        //circle to be made into the tool shape
-                        Circle toolCircle = new Circle(toolOPlane, (TP.MatTool.toolWidth / 2));
-
-                        //cylinder to create a mesh from
-                        Cylinder toolCylinder = new Cylinder(toolCircle, TP.MatTool.toolLength);
-
-                        //Mesh representation of the tool
-                        Mesh toolMeshBase = Mesh.CreateFromCylinder(toolCylinder, meshDivisions, meshDivisions);
-                        if (toolMeshBase != null) DA.SetData(4, toolMeshBase);
-                        //--------------------------------------------------------------------------------------
-
-
-
-
-                        Brep[] toolBrepSet = new Brep[1];
-
-
-                        toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
-                        matBrepSet = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.01);
-                        if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
-                        if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
-
-                        //toolBrepSet[1] = new Mesh();
-                        //if(toolMeshBase != null) toolBrepSet[0].CopyFrom(toolMeshBase);
-                        //Mesh[] temp = new Mesh[0];
-                        Brep[] tempMat = new Brep[0];
-                        List<Brep> extrusionTest = new List<Brep>();
-
-                        Extrusion extruder = new Extrusion();
-                        List<Line> debugginLines = new List<Line>();
-                        Polyline[] outlines = new Polyline[0];
-
-                        //Surface cuttingExtrusion = new Surface();
-                        int i = 1;
-                        //Increment here for the default difference
-                        totalSteps++;
-
-                        //TODO: Add proper checks for boundary cases on percentage (like negative and whatnot)
-                        //TODO: Refactor to allow the followthrough to work properly when percentage has been exceeded
-                        int tempPercent = machiningPercentage - totalSteps;
-                        if (tempPercent < 1) tempPercent = 1;
-                        if ( tempPercent >= TP.Pts.Count)
+                        if (totalSteps < machiningPercentage)
                         {
-                            tempPercent = TP.Pts.Count - 1;
-                        }
-                        do
-                        {
+                            //If tool isn't set don't run
+                            if (TP.MatTool.toolWidth < 0) return;
 
 
-                            //-----------------------------------------------------
-                            //Method to call for differencing between two points
-                            //-----------------------------------------------------
-                            matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt);
-                            if (matBrepSet != null)
-                                matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
+                            //-------------------------------------------------------------------------------------
+                            //Construct the tool  Mesh, to be replaced by user input
+                            //-------------------------------------------------------------------------------------
+                            //Starting point of the tool
+                            Point3d toolCenterPoint = new Point3d(TP.Pts[0].Pt.X, TP.Pts[0].Pt.Y, TP.Pts[0].Pt.Z);
+
+                            //plane orthogonal to the tool direction
+                            Plane toolOPlane = new Plane(toolCenterPoint, new Vector3d(0, 0, 1));
+
+                            //circle to be made into the tool shape
+                            Circle toolCircle = new Circle(toolOPlane, (TP.MatTool.toolWidth / 2));
+
+                            //cylinder to create a mesh from
+                            Cylinder toolCylinder = new Cylinder(toolCircle, TP.MatTool.toolLength);
+
+                            //Mesh representation of the tool
+                            Mesh toolMeshBase = Mesh.CreateFromCylinder(toolCylinder, meshDivisions, meshDivisions);
+                            if (toolMeshBase != null) DA.SetData(4, toolMeshBase);
+                            //--------------------------------------------------------------------------------------
 
 
-                            //debugging, looking at all the toolPointDirections
-                            debugginLines.Add(new Line(TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
 
 
+                            Brep[] toolBrepSet = new Brep[1];
 
-                            //outlines for debugging
-                            //if (outlines != null) DA.SetDataList(3, outlines);
 
-                            //Old extrusion technique
-                            //Surface cuttingExtrusion = Surface.CreateExtrusion(toolOutline.ToNurbsCurve(), toolPointDirection);
-                            //extruder.SetOuterProfile(outlines[0].ToNurbsCurve(), true);
-
-                        
-                      
-
-                            //Update stuff for the next round
-                            toolMeshBase.Translate(new Vector3d(TP.Pts[i].Pt.X - TP.Pts[i-1].Pt.X, TP.Pts[i].Pt.Y - TP.Pts[i - 1].Pt.Y, TP.Pts[i].Pt.Z - TP.Pts[i- 1 ].Pt.Z));
-
-                            //Remove the Tool shape from the next toolpoint
                             toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
-                            tempMat = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.005);
-                            if (tempMat != null)
-                                matBrepSet = tempMat;
-                            //if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
+                            matBrepSet = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.01);
+                            if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
                             if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
-                            i++;
+
+                            //toolBrepSet[1] = new Mesh();
+                            //if(toolMeshBase != null) toolBrepSet[0].CopyFrom(toolMeshBase);
+                            //Mesh[] temp = new Mesh[0];
+                            Brep[] tempMat = new Brep[0];
+                            List<Brep> extrusionTest = new List<Brep>();
+
+                            Extrusion extruder = new Extrusion();
+                            List<Line> debugginLines = new List<Line>();
+                            Polyline[] outlines = new Polyline[0];
+
+                            //Surface cuttingExtrusion = new Surface();
+                            int i = 1;
+                            //Increment here for the default difference
                             totalSteps++;
-                       
 
-                        } while (i < machiningPercentage);
+                            //TODO: Add proper checks for boundary cases on percentage (like negative and whatnot)
+                            //TODO: Refactor to allow the followthrough to work properly when percentage has been exceeded
+                            int tempPercent = machiningPercentage - totalSteps;
+                            if (tempPercent < 0) tempPercent = 1;
+                            if (tempPercent >= TP.Pts.Count)
+                            {
+                                tempPercent = TP.Pts.Count - 1;
+                            }
+                            while (i < tempPercent)
+                            {
 
-                        if (debugginLines != null) DA.SetDataList(0, debugginLines);
-                        //if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
-                        if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
+
+                                //-----------------------------------------------------
+                                //Method to call for differencing between two points
+                                //-----------------------------------------------------
+                                matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt);
+                                if (matBrepSet != null)
+                                    matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
+
+
+                                //debugging, looking at all the toolPointDirections
+                                debugginLines.Add(new Line(TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
+
+
+
+                                //outlines for debugging
+                                //if (outlines != null) DA.SetDataList(3, outlines);
+
+                                //Old extrusion technique
+                                //Surface cuttingExtrusion = Surface.CreateExtrusion(toolOutline.ToNurbsCurve(), toolPointDirection);
+                                //extruder.SetOuterProfile(outlines[0].ToNurbsCurve(), true);
+
+
+
+
+                                //Update stuff for the next round
+                                toolMeshBase.Translate(new Vector3d(TP.Pts[i].Pt.X - TP.Pts[i - 1].Pt.X, TP.Pts[i].Pt.Y - TP.Pts[i - 1].Pt.Y, TP.Pts[i].Pt.Z - TP.Pts[i - 1].Pt.Z));
+
+                                //Remove the Tool shape from the next toolpoint
+                                toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
+                                tempMat = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.005);
+                                if (tempMat != null)
+                                    matBrepSet = tempMat;
+                                //if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
+                                if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
+                                i++;
+                                totalSteps++;
+
+
+                            }
+
+                            if (debugginLines != null) DA.SetDataList(0, debugginLines);
+                            //if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
+                            if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
+                        }
                     }
                 }
 
