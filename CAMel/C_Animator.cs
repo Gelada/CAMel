@@ -175,6 +175,10 @@ namespace CAMel
 
                         //Surface cuttingExtrusion = new Surface();
                         int i = 1;
+                        if (machiningPercentage >= TP.Pts.Count)
+                        {
+                            machiningPercentage = TP.Pts.Count - 1;
+                        }
                         do
                         {
 
@@ -226,7 +230,7 @@ namespace CAMel
                             i++;
                        
 
-                        } while (i < TP.Pts.Count);
+                        } while (i < machiningPercentage);
                         if (debugginLines != null) DA.SetDataList(0, debugginLines);
                 //if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
                 if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
