@@ -200,10 +200,11 @@ namespace CAMel
                                 //-----------------------------------------------------
                                 //Method to call for differencing between two points
                                 //-----------------------------------------------------
-                                matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt);
-                                if (matBrepSet != null)
-                                    matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
-
+                                
+                                matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt, extrusionTest);
+                                if (null == matBrepSet)
+                                    matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i].Pt, TP.Pts[i-1].Pt, extrusionTest); ;
+                                
 
                                 //debugging, looking at all the toolPointDirections
                                 debugginLines.Add(new Line(TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
@@ -263,7 +264,7 @@ namespace CAMel
         //Method to take some extrusion of a tool and remove it from the material, and then return the result
         //if the removal results in a null value for the material, then return the original thing? consider other ways of handling this error
         //--------------------------------------------------------------------------------------------------------------------------------------
-        private Brep[] removeLine(Brep[] inputMaterial, Mesh toolShape, Point3d point1, Point3d point2)
+        private Brep[] removeLine(Brep[] inputMaterial, Mesh toolShape, Point3d point1, Point3d point2, List<Brep> extrusionTest)
         {
             //--------------------------------------------------------------
             //Building the vector that goes from point 1 to point 2
@@ -284,7 +285,8 @@ namespace CAMel
 
             //Extrusion of the outline that is the length of the vector between point1 and point2
             //This extrusion uses the direction of the plane used to create the outlines
-            Extrusion extruder = Extrusion.Create(outlines[0].ToNurbsCurve(), totalD, true);
+            //Extrusion extruder = Extrusion.Create(outlines[0].ToNurbsCurve(), totalD, true);
+            Surface extruded = Surface.CreateExtrusion(outlines[0].ToNurbsCurve(), toolPointDirection);
 
 
             //------------------------------------------------------------------------------
@@ -292,7 +294,13 @@ namespace CAMel
             //set the object in the container to be a brep representation of the extrusion
             //------------------------------------------------------------------------------
             Brep[] toolBrepSet = new Brep[1];
-            toolBrepSet[0] = extruder.ToBrep();
+            //toolBrepSet[0] = extruder.ToBrep();
+            toolBrepSet[0] = extruded.ToBrep();
+            Brep tempBrep = toolBrepSet[0].CapPlanarHoles(0.001);
+            if (null != tempBrep) toolBrepSet[0] = tempBrep;
+            Brep[] tempBrepSet = Brep.CreateSolid(toolBrepSet, 0.001);
+            if (null != tempBrepSet && tempBrepSet.GetLength(0) > 0) toolBrepSet = tempBrepSet;
+            extrusionTest.Add(toolBrepSet[0]);
 
 
             //Output used for testing
