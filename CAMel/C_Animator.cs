@@ -46,7 +46,7 @@ namespace CAMel
         //private Polyline[] outlines = new Polyline[0];
 
 
-        private Mesh[] storedMeshes = new Mesh[200];
+        private Mesh[] storedMeshes = new Mesh[300];
 
         //Variables for the play button, run checks to see if the component should run solve instance again, hasRun checks if anything has changed
         public bool run = true;
@@ -69,7 +69,7 @@ namespace CAMel
     //                  pManager.AddGenericParameter("MaterialForm", "MF", "The shape of the material to cut.", GH_ParamAccess.item);
     //               pManager.AddGenericParameter("Tool Path", "TP", "The path the tool will follow.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Machine Instruction", "MI", "placeholder", GH_ParamAccess.item);
-            pManager.AddIntegerParameter("Machining percentage", "MP", "The percentage of the way through the machining process", GH_ParamAccess.item, 0);
+            pManager.AddIntegerParameter("Machining step", "MS", "The step of the way through the machining process", GH_ParamAccess.item, 0);
            // pManager.AddNumberParameter("Step Size", "SS", "The maximum step size for the tool path stepping", GH_ParamAccess.item, 0.5f);
         }
 
@@ -78,12 +78,12 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddLineParameter("Material Shape base", "MS", "The shape of the material", GH_ParamAccess.list);
-            pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.list);
+            //pManager.AddLineParameter("Material Shape base", "MS", "The shape of the material", GH_ParamAccess.list);
+            //pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.list);
             pManager.AddMeshParameter("Render", "R", "Shape post machining", GH_ParamAccess.list);
-            pManager.AddGenericParameter("outlines", "o", "outlines", GH_ParamAccess.list);
-            pManager.AddMeshParameter("ToolBase", "TB", "Toolbase", GH_ParamAccess.item);
-            pManager.AddMeshParameter("MeshBase", "MB", "meshbase", GH_ParamAccess.item);
+            //pManager.AddGenericParameter("outlines", "o", "outlines", GH_ParamAccess.list);
+            //pManager.AddMeshParameter("ToolBase", "TB", "Toolbase", GH_ParamAccess.item);
+            //pManager.AddMeshParameter("MeshBase", "MB", "meshbase", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -94,6 +94,7 @@ namespace CAMel
         {
             if (run)
             {
+                storedMeshes = new Mesh[200];
                 //containers for inputs
                 //Vector3d D = new Vector3d();
                 //MaterialTool MT = new MaterialTool();
@@ -125,7 +126,7 @@ namespace CAMel
                 //Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
                 Mesh[] matMeshSet = new Mesh[1];
                 matMeshSet[0] = Mesh.CreateFromBox(new BoundingBox(-6, -6, -6, 6, 6, 0), meshDivisions, meshDivisions, meshDivisions);
-                if (matMeshSet != null) DA.SetDataList(5, matMeshSet);
+               // if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
                 List<MachineOperation> MOs = MI.MOs;
 
 
@@ -133,7 +134,7 @@ namespace CAMel
                 Mesh[] a = new Mesh[1];
 
                 int totalSteps = 0;
-
+                int j = 0;
                 foreach (MachineOperation MO in MOs)
                 {
                     foreach (ToolPath TP in MO.TPs)
@@ -162,7 +163,7 @@ namespace CAMel
 
                             //Mesh representation of the tool
                             Mesh toolMeshBase = Mesh.CreateFromCylinder(toolCylinder, meshDivisions, meshDivisions);
-                            if (toolMeshBase != null) DA.SetData(4, toolMeshBase);
+                            //if (toolMeshBase != null) DA.SetData(4, toolMeshBase);
                             //--------------------------------------------------------------------------------------
 
 
@@ -202,8 +203,8 @@ namespace CAMel
                             {
                                 tempPercent = TP.Pts.Count - 1;
                             }
-                            int j = 0;
-                            while (i < tempPercent)
+                            
+                            while (i < TP.Pts.Count-1)
                             {
 
 
@@ -254,16 +255,17 @@ namespace CAMel
                                 if (tempMatSet != null)
                                 {
                                     matMeshSet = tempMatSet;
-                                    if ((i-1) % 5 ==0)
+                                    if ((j) % 3 ==0)
                                     {
-                                        int k = (i - 1) / 5;
+                                        double c = i;
+                                        int k =(int) Math.Floor((c) / 3);
                                         storedMeshes[k] = tempMatSet[0];
-                                        j++;
+                                        
                                     }
                                 }
 
 
-
+                                j++;
                                 i++;
                                 totalSteps++;
 
@@ -294,7 +296,7 @@ namespace CAMel
 
                 //Set the output to be the tool mesh
                 //if (a != null) DA.SetDataList(1, a);
-                if (matMeshSet != null) DA.SetDataList(2, matMeshSet);
+                if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
 
                 run = false;
                 hasRun = true;
@@ -307,12 +309,12 @@ namespace CAMel
                 if (!DA.GetData(1, ref machiningPercentage)) return;
 
                 int outputNum = 0;
-                while (outputNum * 5 <= machiningPercentage) outputNum++;
-
+                //while (outputNum * 5 <= machiningPercentage) outputNum++;
+                while (storedMeshes[machiningPercentage] == null) machiningPercentage--;
 
                 Mesh[] matMeshSet = new Mesh[1];
-                matMeshSet[0] = storedMeshes[outputNum];
-                if (matMeshSet != null) DA.SetDataList(2, matMeshSet);
+                matMeshSet[0] = storedMeshes[machiningPercentage];
+                if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
             }
 
             else
@@ -374,7 +376,6 @@ namespace CAMel
 
 
 
-        Grasshopper.Kernel.Geometry.ConvexHull.Solver
 
 
         //--------------------------------------------------------------------------------------------------------------------------------------

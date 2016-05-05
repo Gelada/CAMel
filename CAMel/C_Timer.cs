@@ -25,7 +25,8 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Machine Instruction", "MI", "Machine Instruction to be estimated.", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Point List", "PL", "List of points", GH_ParamAccess.list);
+            pManager.AddGenericParameter("MatTool", "MT", "Material tool", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -34,6 +35,8 @@ namespace CAMel
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddTextParameter("Time Estimation", "T", "An estimate of the cut time of the supplied machine operation.", GH_ParamAccess.item);
+            pManager.AddTextParameter("Length", "L", "Length", GH_ParamAccess.item);
+
         }
 
         /// <summary>
@@ -43,12 +46,20 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             Double timeEstimate = 0;
-            MachineInstruction MI = new MachineInstruction();
+            List<Point3d> points = new List<Point3d>();
+            MaterialTool MT = new MaterialTool();
 
-            if (!DA.GetData(0, ref MI)) return;
+            Double plungeSpeed = 0;
+            Double cutSpeed = 0;
+
+            if (!DA.GetDataList(0, points)) return;
+            if (!DA.GetData(1, ref MT)) return;
+            plungeSpeed = MT.feedPlunge;
+            cutSpeed = MT.feedCut;
             timeEstimate = 0;
+            Double totalLength = 0;
             //for each machine operation in the Machine Instruction
-            foreach (MachineOperation MO in MI.MOs)
+            /*foreach (MachineOperation MO in MI.MOs)
             {
                 //for each toolpath in the Machine operation
                 foreach (ToolPath TP in MO.TPs)
@@ -57,6 +68,7 @@ namespace CAMel
                     {
                         Vector3d nextDirection = new Vector3d((TP.Pts[i + 1].Pt.X - TP.Pts[i].Pt.X), (TP.Pts[i + 1].Pt.Y - TP.Pts[i].Pt.Y), (TP.Pts[i + 1].Pt.Z - TP.Pts[i].Pt.Z));
                         //if plunging do plunge feed
+                        totalLength += nextDirection.Length;
                         if (nextDirection.X == 0 && nextDirection.Y == 0)
                         {
                             timeEstimate += nextDirection.Length / TP.MatTool.feedPlunge;
@@ -69,7 +81,28 @@ namespace CAMel
                         }
                     }
                 }
+            }*/
+
+            
+
+            for (int i = 0; i < points.Count - 1; i++ )
+            {
+                Vector3d nextDirection = new Vector3d((points[i + 1].X - points[i].X), (points[i + 1].Y - points[i].Y), (points[i + 1].Z - points[i].Z));
+                //if plunging do plunge feed
+                totalLength += nextDirection.Length;
+                if (nextDirection.X == 0 && nextDirection.Y == 0)
+                {
+                    timeEstimate += nextDirection.Length / plungeSpeed;
+                }
+
+                //else cutting so do cut feed
+                else
+                {
+                    timeEstimate += nextDirection.Length / cutSpeed;
+                }
             }
+
+            DA.SetData(1, totalLength);
 
             if (timeEstimate < 0) DA.SetData(0, "Time not computed");
             else if (timeEstimate >= 0) DA.SetData(0, timeEstimate.ToString());
