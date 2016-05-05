@@ -46,9 +46,12 @@ namespace CAMel
         //private Polyline[] outlines = new Polyline[0];
 
 
+        private Mesh[] storedMeshes = new Mesh[200];
+
         //Variables for the play button, run checks to see if the component should run solve instance again, hasRun checks if anything has changed
         public bool run = true;
         public bool hasRun = false;
+        public bool hasCache = false;
 
 
         public override void CreateAttributes()
@@ -89,15 +92,15 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            if(run)
-            { 
+            if (run)
+            {
                 //containers for inputs
                 //Vector3d D = new Vector3d();
                 //MaterialTool MT = new MaterialTool();
                 //MaterialForm MF = new MaterialForm();
                 //ToolPath TP = new ToolPath();
                 MachineInstruction MI = new MachineInstruction();
-                
+
                 int machiningPercentage = 0;
                 int meshDivisions = 15;
 
@@ -135,7 +138,7 @@ namespace CAMel
                 {
                     foreach (ToolPath TP in MO.TPs)
                     {
-                        if (totalSteps < machiningPercentage)
+                        if (totalSteps < 2000)
                         {
 
                             //If tool isn't set don't run
@@ -199,6 +202,7 @@ namespace CAMel
                             {
                                 tempPercent = TP.Pts.Count - 1;
                             }
+                            int j = 0;
                             while (i < tempPercent)
                             {
 
@@ -248,8 +252,15 @@ namespace CAMel
                                 //if (a != null) DA.SetDataList(1, a);
                                 Mesh[] tempMatSet = Mesh.CreateBooleanDifference(matMeshSet, a);
                                 if (tempMatSet != null)
+                                {
                                     matMeshSet = tempMatSet;
-
+                                    if ((i-1) % 5 ==0)
+                                    {
+                                        int k = (i - 1) / 5;
+                                        storedMeshes[k] = tempMatSet[0];
+                                        j++;
+                                    }
+                                }
 
 
 
@@ -259,8 +270,8 @@ namespace CAMel
                             }
                         }
                         //if (debugginLines != null) DA.SetDataList(0, debugginLines);
-                //if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
-                //if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
+                        //if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
+                        //if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
                     }
                 }
 
@@ -284,9 +295,24 @@ namespace CAMel
                 //Set the output to be the tool mesh
                 //if (a != null) DA.SetDataList(1, a);
                 if (matMeshSet != null) DA.SetDataList(2, matMeshSet);
-                
+
                 run = false;
                 hasRun = true;
+                hasCache = true;
+            }
+
+            else if (hasCache)
+            {
+                int machiningPercentage = 0;
+                if (!DA.GetData(1, ref machiningPercentage)) return;
+
+                int outputNum = 0;
+                while (outputNum * 5 <= machiningPercentage) outputNum++;
+
+
+                Mesh[] matMeshSet = new Mesh[1];
+                matMeshSet[0] = storedMeshes[outputNum];
+                if (matMeshSet != null) DA.SetDataList(2, matMeshSet);
             }
 
             else
@@ -348,7 +374,7 @@ namespace CAMel
 
 
 
-
+        Grasshopper.Kernel.Geometry.ConvexHull.Solver
 
 
         //--------------------------------------------------------------------------------------------------------------------------------------
