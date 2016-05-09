@@ -29,29 +29,20 @@ namespace CAMel
         /// Variables used to calculate the rendering
         /// </summary>
 
-        //Holds the material to be differenced from, potentialy remove this and only use renderSavedSet
-        //private Mesh[] matMeshSet;
-
-        //Stores the set of renderings at successive steps so that movement can occur more quickly
-        //private Mesh[][] renderSavedSet;
-
-        //Stores the basic shape of the tool. This will be transformed to get the shape we want at each differencing step.
-        //This will probably be removed when we take user input for tool shape
-        //private Mesh toolMeshBase;
-
-        //Debugging stuff
-        //private List<Mesh> extrusionTest = new List<Mesh>();
-        //private Extrusion extruder = new Extrusion();
-        //private List<Line> debugginLines = new List<Line>();
-        //private Polyline[] outlines = new Polyline[0];
+        
 
 
-        private Mesh[] storedMeshes = new Mesh[300];
+        
 
-        //Variables for the play button, run checks to see if the component should run solve instance again, hasRun checks if anything has changed
-        public bool run = true;
-        public bool hasRun = false;
-        public bool hasCache = false;
+        
+
+        //this is the variable the stores the cached meshes, in the future the size of this should probably be user defined
+        private Mesh[] storedMeshes;
+
+        //Variables for the play button, run checks to see if the component should run solve instance again, hasRun checks if anything has changed, hasCache might be used to give better user friendliness
+        private bool run = true;
+        private bool hasRun = false;
+        private bool hasCache = false;
 
 
         public override void CreateAttributes()
@@ -64,13 +55,8 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-    //                    pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
-    //                   pManager.AddGenericParameter("Tool", "T", "The tool that will be used to cut the material.", GH_ParamAccess.item);
-    //                  pManager.AddGenericParameter("MaterialForm", "MF", "The shape of the material to cut.", GH_ParamAccess.item);
-    //               pManager.AddGenericParameter("Tool Path", "TP", "The path the tool will follow.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Machine Instruction", "MI", "placeholder", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Machining step", "MS", "The step of the way through the machining process", GH_ParamAccess.item, 0);
-           // pManager.AddNumberParameter("Step Size", "SS", "The maximum step size for the tool path stepping", GH_ParamAccess.item, 0.5f);
         }
 
         /// <summary>
@@ -78,12 +64,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            //pManager.AddLineParameter("Material Shape base", "MS", "The shape of the material", GH_ParamAccess.list);
-            //pManager.AddMeshParameter("ToolShape", "TS", "The mesh that will form the shape of the tool.", GH_ParamAccess.list);
             pManager.AddMeshParameter("Render", "R", "Shape post machining", GH_ParamAccess.list);
-            //pManager.AddGenericParameter("outlines", "o", "outlines", GH_ParamAccess.list);
-            //pManager.AddMeshParameter("ToolBase", "TB", "Toolbase", GH_ParamAccess.item);
-            //pManager.AddMeshParameter("MeshBase", "MB", "meshbase", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -94,12 +75,8 @@ namespace CAMel
         {
             if (run)
             {
+                //Set the size of the cached meshes
                 storedMeshes = new Mesh[200];
-                //containers for inputs
-                //Vector3d D = new Vector3d();
-                //MaterialTool MT = new MaterialTool();
-                //MaterialForm MF = new MaterialForm();
-                //ToolPath TP = new ToolPath();
                 MachineInstruction MI = new MachineInstruction();
 
                 int machiningPercentage = 0;
@@ -107,29 +84,20 @@ namespace CAMel
 
                 //retrieve inputs, if nothing is retrieved return
                 if (!DA.GetData(0, ref MI)) return;
-                //if (!DA.GetData(1, ref MT)) return;
-                //if (!DA.GetData(2, ref MF)) return;
-                //if (!DA.GetData(3, ref TP)) return;
                 if (!DA.GetData(1, ref machiningPercentage)) return;
-                //if (!DA.GetData(5, ref stepSize)) return;
 
-                //%%%%%%%% Will require TP to add get methods for matTool and MatForm
-                //Retrieve directions, tool, and material form information from the tool path
-                //D = TP.GetDirs();
-                //MT = TP.MatTool();
-                //MF = TP.MatForm();
 
-                //machiningPercentage = stepSize - 1;
+             
 
-                //Temporary material form for testing
+                //Temporary material form for testing, TODO: Take in a user defined material shape
 
-                //Box tempBox = new Box(MF.Pl, new Interval(-5, 5), new Interval(-5, 5), new Interval(-5, 0));
                 Mesh[] matMeshSet = new Mesh[1];
                 matMeshSet[0] = Mesh.CreateFromBox(new BoundingBox(-6, -6, -6, 6, 6, 0), meshDivisions, meshDivisions, meshDivisions);
-               // if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
+
+                //List of the Machine operations to iterate through
                 List<MachineOperation> MOs = MI.MOs;
 
-
+                //Meshees to be grouped together, thsi is a list because boolean operations take in an enumerable 
                 List<Mesh> toolUnionSet = new List<Mesh>();
                 Mesh[] a = new Mesh[1];
 
@@ -139,9 +107,195 @@ namespace CAMel
                 {
                     foreach (ToolPath TP in MO.TPs)
                     {
-                        if (totalSteps < 2000)
+
+                        //If tool isn't set don't run
+                        if (TP.MatTool.toolWidth < 0) return;
+
+
+                        //-------------------------------------------------------------------------------------
+                        //Construct the tool  Mesh, to be replaced by user input
+                        //-------------------------------------------------------------------------------------
+                        //Starting point of the tool
+                        Point3d toolCenterPoint = new Point3d(TP.Pts[0].Pt.X, TP.Pts[0].Pt.Y, TP.Pts[0].Pt.Z);
+
+                        //plane orthogonal to the tool direction
+                        Plane toolOPlane = new Plane(toolCenterPoint, new Vector3d(0, 0, 1));
+
+                        //circle to be made into the tool shape
+                        Circle toolCircle = new Circle(toolOPlane, (TP.MatTool.toolWidth / 2));
+
+                        //cylinder to create a mesh from
+                        Cylinder toolCylinder = new Cylinder(toolCircle, TP.MatTool.toolLength);
+
+                        //Mesh representation of the tool
+                        Mesh toolMeshBase = Mesh.CreateFromCylinder(toolCylinder, meshDivisions, meshDivisions);
+                        //if (toolMeshBase != null) DA.SetData(4, toolMeshBase);
+                        //--------------------------------------------------------------------------------------
+
+
+
+                        //Set to be used with boolean differences
+                        Mesh[] toolMeshSet = new Mesh[1];
+
+
+                            
+                        //toolMeshSet[0] = toolMeshBase;
+                        a[0] = toolMeshBase;
+                        //if (a != null) DA.SetDataList(1, a);
+                        Mesh[] tempMatSet = Mesh.CreateBooleanDifference(matMeshSet, a);
+
+                        if (tempMatSet != null)
+                        {
+                            matMeshSet = tempMatSet;
+                        }
+
+                        //This would be used in an implementation where we want the total "negative space"
+                        toolUnionSet.Add(toolMeshSet[0]);
+
+                        
+
+                        
+                        Mesh[] tempMat = new Mesh[0];
+                          
+
+                        int i = 1;
+                        totalSteps++;
+                        int tempPercent = machiningPercentage - totalSteps;
+                        if (tempPercent < 0) tempPercent = 1;
+                        if (tempPercent >= TP.Pts.Count)
+                        {
+                            tempPercent = TP.Pts.Count - 1;
+                        }
+                            
+                        while (i < TP.Pts.Count-1)
                         {
 
+
+                            //-----------------------------------------------------
+                            //Method to call for generating an extrusion
+                            //-----------------------------------------------------
+                           
+                            //a[1] = (generateExtrusion(toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
+                            
+                           
+                            //Mesh[] tempToolSet = Mesh.CreateBooleanUnion(toolUnionSet, 0.01);
+                            //if (tempToolSet != null)
+                            //    toolUnionSet.Add(tempToolSet[0]);
+
+
+
+
+
+
+                            //Update toolMeshBase loccation for the next round
+                            toolMeshBase.Translate(new Vector3d(TP.Pts[i].Pt.X - TP.Pts[i - 1].Pt.X, TP.Pts[i].Pt.Y - TP.Pts[i - 1].Pt.Y, TP.Pts[i].Pt.Z - TP.Pts[i - 1].Pt.Z));
+
+                            //Remove the Tool shape from the next toolpoint
+
+                            //if(i%3 == 1)
+                            a[0] = toolMeshBase;
+                            //else
+                            //    a[0].Append(toolMeshBase);
+                            //if (a != null) DA.SetDataList(1, a);
+
+                            //remove the tool from the material
+                            tempMatSet = Mesh.CreateBooleanDifference(matMeshSet, a);
+
+                            //if the removal didn't result in an error then set the result, otherwise ignore the result
+                            if (tempMatSet != null)
+                            {
+                                matMeshSet = tempMatSet;
+
+                                //Caching stuff, every third mesh we save to the set of stored meshes
+                                if ((j) % 3 ==0)
+                                {
+                                    double c = i;
+                                    int k =(int) Math.Floor((c) / 3);
+                                    storedMeshes[k] = tempMatSet[0];
+                                        
+                                }
+                            }
+
+
+                            j++;
+                            i++;
+                            totalSteps++;
+                        }
+                    }
+                }
+
+
+
+
+               //set the output render
+                if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
+
+
+                //set the control variables to know that we have computed the solution
+                run = false;
+                hasRun = true;
+                hasCache = true;
+            }
+
+            else if (hasCache)
+            {
+                int machiningPercentage = 0;
+                if (!DA.GetData(1, ref machiningPercentage)) return;
+
+                //int outputNum = 0;
+                //while (outputNum * 5 <= machiningPercentage) outputNum++;
+
+                //This implementation will take the cached mesh that is closest to the machining percentage without going past it
+
+                //This will make sure that if the user inputs a number larger than the machining percentage, it will still output something
+                //This may not be necessary when the switch is made to an actual percentage
+                while (storedMeshes[machiningPercentage] == null) machiningPercentage--;
+
+                Mesh[] matMeshSet = new Mesh[1];
+
+                //set the output to be the desired cached mesh number
+                matMeshSet[0] = storedMeshes[machiningPercentage];
+
+
+
+
+
+
+
+
+
+
+
+                //-----------------------------------------------------------------------------------------------------------
+                //This implementation will need to be edited but it is the foundation for computing to a machine percentage,
+                //rather than the first cache before the target
+                //This also still utilizes breps
+                //-----------------------------------------------------------------------------------------------------------
+                /*
+
+                MachineInstruction MI = new MachineInstruction();
+
+                
+                int meshDivisions = 15;
+
+                //retrieve inputs, if nothing is retrieved return
+                if (!DA.GetData(0, ref MI)) return;
+                
+
+                //Temporary material form for testing
+
+               
+                Brep[] matBrepSet = new Brep[1];
+                matBrepSet[0] = Brep.CreateFromBox(new BoundingBox(-0.5, -0.5, -0.75, 6.5, 6.5, 0));
+                if (matBrepSet != null) DA.SetDataList(5, matBrepSet);
+                int totalSteps = 0;
+                List<MachineOperation> MOs = MI.MOs;
+                foreach (MachineOperation MO in MOs)
+                {
+                    foreach (ToolPath TP in MO.TPs)
+                    {
+                        if (totalSteps < machiningPercentage)
+                        {
                             //If tool isn't set don't run
                             if (TP.MatTool.toolWidth < 0) return;
 
@@ -163,32 +317,25 @@ namespace CAMel
 
                             //Mesh representation of the tool
                             Mesh toolMeshBase = Mesh.CreateFromCylinder(toolCylinder, meshDivisions, meshDivisions);
-                            //if (toolMeshBase != null) DA.SetData(4, toolMeshBase);
+                            if (toolMeshBase != null) DA.SetData(4, toolMeshBase);
                             //--------------------------------------------------------------------------------------
 
 
 
 
-                            Mesh[] toolMeshSet = new Mesh[1];
+                            Brep[] toolBrepSet = new Brep[1];
 
 
+                            toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
+                            matBrepSet = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.01);
+                            if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
+                            if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
 
-                            toolMeshSet[0] = toolMeshBase;
-                            a[0] = toolMeshSet[0];
-                            //if (a != null) DA.SetDataList(1, a);
-                            matMeshSet = Mesh.CreateBooleanDifference(matMeshSet, a);
-
-                            toolUnionSet.Add(toolMeshSet[0]);
-
-                            // matMeshSet = Mesh.CreateBooleanDifference(matMeshSet, toolMeshSet, 0.01);
-                            // if (matMeshSet != null) DA.SetDataList(2, matMeshSet);
-                            // if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
-
-                            //toolMeshSet[1] = new Mesh();
-                            //if(toolMeshBase != null) toolMeshSet[0].CopyFrom(toolMeshBase);
+                            //toolBrepSet[1] = new Mesh();
+                            //if(toolMeshBase != null) toolBrepSet[0].CopyFrom(toolMeshBase);
                             //Mesh[] temp = new Mesh[0];
-                            Mesh[] tempMat = new Mesh[0];
-                            List<Mesh> extrusionTest = new List<Mesh>();
+                            Brep[] tempMat = new Brep[0];
+                            List<Brep> extrusionTest = new List<Brep>();
 
                             Extrusion extruder = new Extrusion();
                             List<Line> debugginLines = new List<Line>();
@@ -196,47 +343,40 @@ namespace CAMel
 
                             //Surface cuttingExtrusion = new Surface();
                             int i = 1;
+                            //Increment here for the default difference
                             totalSteps++;
+
+                            //TODO: Add proper checks for boundary cases on percentage (like negative and whatnot)
+                            //TODO: Refactor to allow the followthrough to work properly when percentage has been exceeded
                             int tempPercent = machiningPercentage - totalSteps;
                             if (tempPercent < 0) tempPercent = 1;
                             if (tempPercent >= TP.Pts.Count)
                             {
                                 tempPercent = TP.Pts.Count - 1;
                             }
-                            
-                            while (i < TP.Pts.Count-1)
+                            while (i < tempPercent)
                             {
 
 
                                 //-----------------------------------------------------
                                 //Method to call for differencing between two points
                                 //-----------------------------------------------------
-                                // matMeshSet = removeLine(matMeshSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt);
-                                // if (matMeshSet != null)
-                                //     matMeshSet = removeLine(matMeshSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
-
-
-                                //a[1] = (generateExtrusion(toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
-                                //if (a != null) DA.SetDataList(1, a);
-                                //Mesh[] tempToolSet = Mesh.CreateBooleanUnion(toolUnionSet, 0.01);
-                                //if (tempToolSet != null)
-                                //    toolUnionSet.Add(tempToolSet[0]);
-
-
-
-
-
+                                matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt);
+                                if (matBrepSet != null)
+                                    matBrepSet = removeLine(matBrepSet, toolMeshBase, TP.Pts[i - 1].Pt, TP.Pts[i].Pt); ;
 
 
                                 //debugging, looking at all the toolPointDirections
-                                // debugginLines.Add(new Line(TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
+                                debugginLines.Add(new Line(TP.Pts[i - 1].Pt, TP.Pts[i].Pt));
 
 
 
                                 //outlines for debugging
                                 //if (outlines != null) DA.SetDataList(3, outlines);
 
-
+                                //Old extrusion technique
+                                //Surface cuttingExtrusion = Surface.CreateExtrusion(toolOutline.ToNurbsCurve(), toolPointDirection);
+                                //extruder.SetOuterProfile(outlines[0].ToNurbsCurve(), true);
 
 
 
@@ -245,75 +385,27 @@ namespace CAMel
                                 toolMeshBase.Translate(new Vector3d(TP.Pts[i].Pt.X - TP.Pts[i - 1].Pt.X, TP.Pts[i].Pt.Y - TP.Pts[i - 1].Pt.Y, TP.Pts[i].Pt.Z - TP.Pts[i - 1].Pt.Z));
 
                                 //Remove the Tool shape from the next toolpoint
-
-                                //if(i%3 == 1)
-                                a[0] = toolMeshBase;
-                                //else
-                                //    a[0].Append(toolMeshBase);
-                                //if (a != null) DA.SetDataList(1, a);
-                                Mesh[] tempMatSet = Mesh.CreateBooleanDifference(matMeshSet, a);
-                                if (tempMatSet != null)
-                                {
-                                    matMeshSet = tempMatSet;
-                                    if ((j) % 3 ==0)
-                                    {
-                                        double c = i;
-                                        int k =(int) Math.Floor((c) / 3);
-                                        storedMeshes[k] = tempMatSet[0];
-                                        
-                                    }
-                                }
-
-
-                                j++;
+                                toolBrepSet[0] = Brep.CreateFromMesh(toolMeshBase, true);
+                                tempMat = Brep.CreateBooleanDifference(matBrepSet, toolBrepSet, 0.005);
+                                if (tempMat != null)
+                                    matBrepSet = tempMat;
+                                //if (matBrepSet != null) DA.SetDataList(2, matBrepSet);
+                                if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
                                 i++;
                                 totalSteps++;
 
+
                             }
+
+                            if (debugginLines != null) DA.SetDataList(0, debugginLines);
+                            //if (toolBrepSet != null) DA.SetDataList(1, toolBrepSet);
+                            if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
                         }
-                        //if (debugginLines != null) DA.SetDataList(0, debugginLines);
-                        //if (toolMeshSet != null) DA.SetDataList(1, toolMeshSet);
-                        //if (extrusionTest != null) DA.SetDataList(1, extrusionTest);
                     }
                 }
 
+                 */
 
-
-
-                //if (toolUnionSet != null) DA.SetDataList(1, toolUnionSet);
-                /*Mesh[] temptoolMesh = new Mesh[1];
-                Mesh temptool = Mesh.MergeMeshs(toolUnionSet, 0.001);
-
-                Mesh[] a = new Mesh[1];
-                a[0] = toolUnionSet[0];
-                a[0].Append(toolUnionSet[1]);
-                toolUnionSet[0].Append(toolUnionSet[1]);*/
-                //toolUnionSet.Clear();
-                //toolUnionSet.Add(temptool);
-                //temptoolMesh[0] = temptool;
-                //a[0].Compact();
-                //matMeshSet = Mesh.CreateBooleanDifference(matMeshSet, a, 0.001);
-
-                //Set the output to be the tool mesh
-                //if (a != null) DA.SetDataList(1, a);
-                if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
-
-                run = false;
-                hasRun = true;
-                hasCache = true;
-            }
-
-            else if (hasCache)
-            {
-                int machiningPercentage = 0;
-                if (!DA.GetData(1, ref machiningPercentage)) return;
-
-                int outputNum = 0;
-                //while (outputNum * 5 <= machiningPercentage) outputNum++;
-                while (storedMeshes[machiningPercentage] == null) machiningPercentage--;
-
-                Mesh[] matMeshSet = new Mesh[1];
-                matMeshSet[0] = storedMeshes[machiningPercentage];
                 if (matMeshSet != null) DA.SetDataList(0, matMeshSet);
             }
 
