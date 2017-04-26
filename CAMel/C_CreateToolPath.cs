@@ -30,13 +30,14 @@ namespace CAMel
             pManager.AddPointParameter("Path", "P", "List of toolpoint locations", GH_ParamAccess.list);
             pManager.AddVectorParameter("Directions", "D", "List of vectors giving tool direction", GH_ParamAccess.list,new Vector3d(0,0,1));
             pManager.AddVectorParameter("Speed and Feed", "SF", "List of vectors giving speed (X) and feed (Y) at each toolpoint.", GH_ParamAccess.list, new Vector3d(-1, -1, 0));
+            pManager.AddTextParameter("Point Code", "C1", "List of additional CNC codes to run with each point. The code will run on the same line. Use a newline to run on the next line, but this will mess with line numbering.", GH_ParamAccess.list,"");
             pManager.AddTextParameter("Name", "N", "Name of path", GH_ParamAccess.item,"");
             pManager.AddGenericParameter("Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             pManager.AddGenericParameter("Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
             pManager.AddNumberParameter("Additions", "TPA", "Additional operations to apply to the path, given by a list of numbers:\n"+
                 "{Insert, Retract, Stepdown, Drop Start, Drop Middle, Drop End, 3Axis Height Offset}\n" +
                 "all but drop middle are boolean with 0 being false.", GH_ParamAccess.list, TPAdef);
-            pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item,"");
+            pManager.AddTextParameter("Code", "C2", "Addition CNC code to run before this path.", GH_ParamAccess.item,"");
 
         }
 
@@ -57,20 +58,22 @@ namespace CAMel
             List<Point3d> pts = new List<Point3d>();
             List<Vector3d> dirs = new List<Vector3d>();
             List<Vector3d> SF = new List<Vector3d>();
+            List<String> Co1 = new List<String>();
             string name = "";
             MaterialTool MT = new MaterialTool();
             MaterialForm MF = new MaterialForm();
-            string Co = "";
+            string Co2 = "";
             List<double> TPAd = new List<double>();
 
             if (!DA.GetDataList(0, pts)) return;
             if (!DA.GetDataList(1, dirs)) return;
             if (!DA.GetDataList(2, SF)) return;
-            if (!DA.GetData(3, ref name)) return;
-            if (!DA.GetData(4, ref MT)) return;
-            if (!DA.GetData(5, ref MF)) return;
-            if (!DA.GetDataList(6, TPAd)) return; 
-            if (!DA.GetData(7, ref Co)) return;
+            if (!DA.GetDataList(3, Co1)) return;
+            if (!DA.GetData(4, ref name)) return;
+            if (!DA.GetData(5, ref MT)) return;
+            if (!DA.GetData(6, ref MF)) return;
+            if (!DA.GetDataList(7, TPAd)) return; 
+            if (!DA.GetData(8, ref Co2)) return;
 
             // Process the TPA vector
 
@@ -94,20 +97,20 @@ namespace CAMel
             switch (TPAd.Count)
             {
                 case 7:
-                    if (TPAd[3] > 0) TPA.threeAxisHeightOffset = true;
+                    if (TPAd[6] > 0) TPA.threeAxisHeightOffset = true;
                     else TPA.threeAxisHeightOffset = false;
-                    goto case 3;
-                case 6:
-                    if (TPAd[6] > 0) TPA.sdDropEnd = true;
-                    else TPA.sdDropEnd = false;
                     goto case 6;
-                case 5:
-                    TPA.sdDropMiddle = TPAd[5];
+                case 6:
+                    if (TPAd[5] > 0) TPA.sdDropEnd = true;
+                    else TPA.sdDropEnd = false;
                     goto case 5;
-                case 4:
-                    if (TPAd[4] > 0) TPA.sdDropStart = true;
-                    else TPA.sdDropStart = false;
+                case 5:
+                    TPA.sdDropMiddle = TPAd[4];
                     goto case 4;
+                case 4:
+                    if (TPAd[3] > 0) TPA.sdDropStart = true;
+                    else TPA.sdDropStart = false;
+                    goto case 3;
                 case 3:
                     if (TPAd[2] > 0) TPA.stepDown = true;
                     else TPA.stepDown = false;
@@ -122,29 +125,35 @@ namespace CAMel
                     break;
             }
 
-            ToolPath TP = new ToolPath(name, MT, MF, TPA, Co);
+            ToolPath TP = new ToolPath(name, MT, MF, TPA, Co2);
 
-            if (dirs.Count == 1 && SF.Count == 1)
+            Vector3d usedir;
+            Vector3d useSF;
+            String useCo;
+
+            if ((dirs.Count == 1 || dirs.Count == pts.Count) &&
+                (SF.Count == 1 || SF.Count == pts.Count) &&
+                (Co1.Count == 1 || Co1.Count == pts.Count))
             {
-                foreach (Point3d pt in pts) TP.Pts.Add(new ToolPoint(pt, dirs[0],SF[0].X,SF[0].Y));
-            }
-            else if (dirs.Count == pts.Count && SF.Count == 1)
-            {
-                for (int i = 0; i < dirs.Count; i++) TP.Pts.Add(new ToolPoint(pts[i], dirs[i], SF[0].X, SF[0].Y));
-            }
-            else if (dirs.Count == 1 && SF.Count == pts.Count)
-            {
-                for (int i = 0; i < dirs.Count; i++) TP.Pts.Add(new ToolPoint(pts[i], dirs[0], SF[i].X, SF[i].Y));
-            }
-            else if (dirs.Count == pts.Count && SF.Count == pts.Count)
-            {
-                for (int i = 0; i < dirs.Count; i++) TP.Pts.Add(new ToolPoint(pts[i], dirs[i], SF[i].X, SF[i].Y));
+                for (int i = 0; i < pts.Count; i++)
+                {
+                    if (dirs.Count == 1) usedir = dirs[0];
+                    else usedir = dirs[i];
+
+                    if (SF.Count == 1) useSF = SF[0];
+                    else useSF = SF[i];
+
+                    if (Co1.Count == 1) useCo = Co1[0];
+                    else useCo = Co1[i];
+
+                    TP.Pts.Add(new ToolPoint(pts[i], usedir, useCo, useSF.X, useSF.Y));
+                }
+
             }
             else
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists of directions and speeds/feeds must be a single item or the same length as the list of points.");
             }
-
 
             DA.SetData(0, TP);
         }

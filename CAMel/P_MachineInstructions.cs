@@ -105,13 +105,13 @@ namespace CAMel.Types
         {
             DateTime thisDay = DateTime.Now;
             Co.AppendLine(this.Mach.SectionBreak);
-            if (this.name != "") Co.AppendLine(this.Mach.CommentChar + " " + this.name);
-            Co.AppendLine(this.Mach.CommentChar.ToString());
-            Co.AppendLine(this.Mach.CommentChar+ " Machine Instructions Created " + thisDay.ToString("f"));
-            Co.AppendLine(this.Mach.CommentChar + " by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " " 
-                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
-            if (this.Mach.name != "") Co.AppendLine(this.Mach.CommentChar + " for " + this.Mach.name);
-            Co.AppendLine(this.Mach.CommentChar.ToString());
+            if (this.name != "") Co.AppendLine(this.Mach.CommentChar + " " + this.name + this.Mach.endCommentChar);
+            Co.AppendLine(this.Mach.CommentChar.ToString() + this.Mach.endCommentChar);
+            Co.AppendLine(this.Mach.CommentChar + " Machine Instructions Created " + thisDay.ToString("f") + this.Mach.endCommentChar);
+            Co.AppendLine(this.Mach.CommentChar + " by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
+                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + this.Mach.endCommentChar);
+            if (this.Mach.name != "") Co.AppendLine(this.Mach.CommentChar + " for " + this.Mach.name + this.Mach.endCommentChar);
+            Co.AppendLine(this.Mach.CommentChar.ToString() + this.Mach.endCommentChar);
             Co.AppendLine(this.Mach.SectionBreak);
             Co.Append(this.Mach.header);
             Co.Append(this.localCode);
@@ -127,7 +127,7 @@ namespace CAMel.Types
 
 
             Co.AppendLine(this.Mach.SectionBreak);
-            Co.AppendLine(this.Mach.CommentChar + " End of ToolPaths");
+            Co.AppendLine(this.Mach.CommentChar + " End of ToolPaths" + this.Mach.endCommentChar);
             Co.AppendLine(this.Mach.SectionBreak);
 
             Co.Append(this.Mach.footer);

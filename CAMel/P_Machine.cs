@@ -11,7 +11,8 @@ namespace CAMel.Types
     public enum MachineTypes {
         ThreeAxis,
         FiveAxisBCHead,
-        FiveAxisACHead
+        FiveAxisACHead,
+        PocketNC
     }
 
     // Settings for a machine (this is the POST!)
@@ -19,18 +20,24 @@ namespace CAMel.Types
     // So other languages can be used.
     // 
     // TODO This is not the right way to do it. 
-    // Should be reimplemented as an interface 
-    // with each machine type being a subclass.
+    //  Should be reimplemented as an interface 
+    //  with each machine type being a subclass.
+    // TODO create a machine state class for each machine
+    //  currently using CodeInfo to store a dictionary of values. 
+    //  a bespoke version for each machine type would be better
+
     public class Machine : CA_base
     {
         public string name;
         public MachineTypes type;
         public string header;
         public string footer;
-        public char CommentChar; 
+        public char CommentChar;
+        public char endCommentChar;
         public string SpeedChangeCommand;
         public double PathJump; // Max distance allowed between paths in material.
         public string SectionBreak { get; set; }
+        public Vector3d Pivot;
 
         // Default Constructor (un-named 3 Axis)
         public Machine()
@@ -39,10 +46,12 @@ namespace CAMel.Types
             this.type = MachineTypes.ThreeAxis;
             this.header = "";
             this.footer = "";
-            this.CommentChar = '%';
-            this.SectionBreak = "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+            this.CommentChar = '(';
+            this.endCommentChar = ')';
+            this.SectionBreak = "(------------------------------------------)";
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
+            this.Pivot = Vector3d.Zero;
         }
         // Just name.
         public Machine(string Name)
@@ -51,10 +60,12 @@ namespace CAMel.Types
             this.type = MachineTypes.ThreeAxis;
             this.header = "";
             this.footer = "";
-            this.CommentChar = '%';
-            this.SectionBreak = "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+            this.CommentChar = '(';
+            this.endCommentChar = ')';
+            this.SectionBreak = "(------------------------------------------)";
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
+            this.Pivot = Vector3d.Zero;
         }
         // All details
         public Machine(string Name, MachineTypes Type, string Header, string Footer)
@@ -63,11 +74,14 @@ namespace CAMel.Types
             this.type = Type;
             this.header = Header;
             this.footer = Footer;
-            this.CommentChar = '%';
-            this.SectionBreak = "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+            this.CommentChar = '(';
+            this.endCommentChar = ')';
+            this.SectionBreak = "(------------------------------------------)";
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
+            this.Pivot = Vector3d.Zero;
         }
+
         // Copy Constructor
         public Machine(Machine M)
         {
@@ -76,9 +90,11 @@ namespace CAMel.Types
             this.header = M.header;
             this.footer = M.footer;
             this.CommentChar = M.CommentChar;
+            this.endCommentChar = M.endCommentChar;
             this.SectionBreak = M.SectionBreak;
             this.SpeedChangeCommand = M.SpeedChangeCommand;
             this.PathJump = M.PathJump;
+            this.Pivot = M.Pivot;
         }
         // Duplicate
         public Machine Duplicate()
@@ -112,9 +128,6 @@ namespace CAMel.Types
                 case MachineTypes.ThreeAxis:
                     GPoint = this.IK_ThreeAxis(TP, MT);
                         break;
-                case MachineTypes.FiveAxisBCHead:
-                    GPoint = this.IK_FiveAxisBC(TP, MT);
-                    break;
                 default:
                     throw new System.NotImplementedException("Machine Type has not implemented Inverse Kinematics.");
             }
@@ -148,11 +161,57 @@ namespace CAMel.Types
             String GPoint = "";
             GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000") + " Z" + OP.Z.ToString("0.000") + " ";
             GPoint += "B" + (180 * Bo / Math.PI).ToString("0.000") + " C" + (180 * Co / Math.PI).ToString("0.000");
-            GPoint += "% " + "Vector: " + UV.ToString();
 
             return GPoint;
         }
 
+        private string IK_PocketNC(ToolPoint TP, MaterialTool MT, Vector2d AB, ref Point3d machinePt)
+        {
+            Point3d OP = TP.Pt;
+
+            // rotate from material orientation to machine orientation
+            OP.Transform(Transform.Rotation(AB.Y, Vector3d.YAxis, Point3d.Origin));
+            OP.Transform(Transform.Rotation(AB.X, Vector3d.XAxis, Point3d.Origin));
+
+            // translate from origin at pivot to origin set so that the tooltip is at machine origin
+            OP = OP - this.Pivot + Vector3d.ZAxis * MT.toolLength;
+            //HACK!
+            if (OP.Z > 0.02) OP.Z = 0.02;
+            //if (OP.X < -2.0) OP.X = -2.0;
+            //if (OP.X > 2.4) OP.X = 2.4;
+
+            String GPoint = "";
+            GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000") + " Z" + OP.Z.ToString("0.000") + " ";
+            GPoint += "A" + (180 * AB.X / Math.PI).ToString("0.000") + " B" + (180 * AB.Y / Math.PI).ToString("0.000");
+
+            machinePt = OP;
+            return GPoint;
+        }
+
+        // Always gives B from -pi to pi and A from -pi/2 to pi/2.
+        private Vector2d Orient_FiveAxisABP(ToolPoint TP)
+        {
+            Vector3d UV = TP.Dir;
+
+            double Ao = Math.Asin(-UV.Y);
+            double Bo = Math.Atan2(UV.X, -UV.Z);
+
+            if (Ao > Math.PI/2.0)
+            {
+                Ao = Math.PI-Ao;
+                Bo = Bo - Math.PI;
+                if (Bo < 0) Bo = Bo + 2.0 * Math.PI;
+            }
+
+            if (Ao < -Math.PI/2.0)
+            {
+                Ao = Math.PI - Ao;
+                Bo = Bo - Math.PI;
+                if (Bo < 0) Bo = Bo + 2.0 * Math.PI;
+            }
+
+            return new Vector2d(Ao, Bo);
+        }
 
         // Call the correct Code Writer
 
@@ -164,8 +223,8 @@ namespace CAMel.Types
                 case MachineTypes.ThreeAxis:
                     lastPoint = this.WriteCode_ThreeAxis(ref Co,TP,beforePoint);
                         break;
-                case MachineTypes.FiveAxisBCHead:
-                    lastPoint = this.WriteCode_FiveAxisBC(ref Co,TP,beforePoint);
+                case MachineTypes.PocketNC:
+                    lastPoint = this.WriteCode_PocketNC(ref Co,TP,beforePoint);
                     break;
                 default:
                     throw new System.NotImplementedException("Machine Type has not implemented Code Writing");
@@ -178,6 +237,8 @@ namespace CAMel.Types
         //  if > 0 use value
         //  if < 0 use Material Cut Value
 
+        // TODO replace beforePoint with a machine state. 
+        // In general need to add in a strong concept of machine state. 
         private ToolPoint WriteCode_ThreeAxis(ref CodeInfo Co, ToolPath TP, ToolPoint beforePoint)
         {
             // 3 Axis is just a list of instructions...
@@ -218,17 +279,16 @@ namespace CAMel.Types
 
             foreach(ToolPoint Pt in TP.Pts)
             {
-                if(Pt.localCode != "")
-                    Co.Append(Pt.localCode);
+                
                 foreach(string err in Pt.error)
                 {
                     Co.AddError(err);
-                    Co.AppendLine(this.CommentChar + err);
+                    Co.AppendLine(this.CommentChar + err + this.endCommentChar);
                 }
                 foreach (string warn in Pt.warning)
                 {
                     Co.AddWarning(warn);
-                    Co.AppendLine(this.CommentChar + warn);
+                    Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
                 }
                     
 
@@ -277,9 +337,14 @@ namespace CAMel.Types
                 }
                 SChange = false;
 
+                if(Pt.localCode != "")
+                {
+                    PtCode = PtCode + Pt.localCode;
+                }
+
                 if(Pt.name != "")
                 {
-                    PtCode = PtCode + "% " + Pt.name;
+                    PtCode = PtCode + " " + this.CommentChar + Pt.name + this.endCommentChar;
                 }
                 Co.AppendLine(PtCode);
 
@@ -306,10 +371,258 @@ namespace CAMel.Types
 
         }
 
-        private ToolPoint WriteCode_FiveAxisBC(ref CodeInfo Co, ToolPath TP, ToolPoint beforePoint)
+        private ToolPoint WriteCode_PocketNC(ref CodeInfo Co, ToolPath TP, ToolPoint beforePoint)
         {
-            //TODO: 5-Axis WriteCode
-            throw new NotImplementedException("Cannot write 5-Axis Code yet. ");
+            double AngleAcc = 0.0001; // accuracy of angles to assume we lie on the cusp.
+
+            // We will watch for speed and feed changes.
+            // We will adjust A and B as best as possible and otherwise throw errors.
+            // Manual unwinding Grrrr!
+
+            // work out initial values of feed. 
+
+            bool FChange = false;
+            bool SChange = false;
+
+            double feed;
+            double speed;
+            Vector2d AB,newAB;
+            double Bto = 0;  // Allow for smooth adjustment through the cusp with A at 90.
+            int Bsteps = 0;  //
+           
+            if (beforePoint == null) // There were no previous points
+            {
+                if (TP.Pts.Count > 0)
+                {
+                    feed = TP.Pts[0].feed;
+                    speed = TP.Pts[0].speed;
+                    AB = this.Orient_FiveAxisABP(TP.Pts[0]);
+                    FChange = true;
+                    SChange = true;
+                }
+                else
+                {
+                    feed = -1;
+                    speed = -1;
+                    AB = new Vector2d(Math.PI/2.0, 0);
+                }
+            }
+            else
+            {
+                feed = beforePoint.feed;
+                speed = beforePoint.speed;
+                AB = new Vector2d(Co.MachineState["A"], Co.MachineState["B"]);
+            }
+
+            if (feed < 0) feed = TP.MatTool.feedCut;
+            if (speed < 0) speed = TP.MatTool.speed;
+            string PtCode;
+            int i,j;
+            ToolPoint Pt;
+            Point3d MachPos = new Point3d(0,0,0);
+            for(i=0;i<TP.Pts.Count;i++)
+            {
+                Pt = TP.Pts[i];
+
+                foreach (string err in Pt.error)
+                {
+                    Co.AddError(err);
+                    Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                }
+                foreach (string warn in Pt.warning)
+                {
+                    Co.AddWarning(warn);
+                    Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                }
+
+                // Establish new feed value
+                if (Pt.feed != feed)
+                {
+                    if (Pt.feed >= 0)
+                    {
+                        FChange = true;
+                        feed = Pt.feed;
+                    }
+                    else if (feed != TP.MatTool.feedCut) // Default to the cut feed rate.
+                    {
+                        FChange = true;
+                        feed = TP.MatTool.feedCut;
+                    }
+                }
+
+                // Establish new speed value
+                if (Pt.speed != speed)
+                {
+                    if (Pt.speed > 0)
+                    {
+                        SChange = true;
+                        speed = Pt.speed;
+                    }
+                }
+
+                // Work on tool orientation
+
+                // get naive orientation
+                newAB = Orient_FiveAxisABP(Pt);
+                int u;
+                if (newAB.Y < -2 && AB.Y > 2)
+                {
+                    u = 7;
+                }
+
+                // adjust B to correct period
+                newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((AB.Y-newAB.Y)/(2.0*Math.PI));
+
+
+
+                // set A to 90 if it is close (to avoid a lot of messing with B for no real reason)
+
+                if (Math.Abs(newAB.X - Math.PI) < AngleAcc) newAB.X = Math.PI/2.0;
+
+                // take advantage of the small double stance for A between 85 and 90 degrees
+
+                if (newAB.X > (Math.PI / 2.0 - Math.PI / 36.0))
+                    if ((newAB.Y - AB.Y) > Math.PI)
+                    {
+                        newAB.X = Math.PI - newAB.X; 
+                        newAB.Y = newAB.Y - Math.PI;
+                    } else if ((newAB.Y - AB.Y) < -Math.PI)
+                    {
+                        newAB.X = Math.PI - newAB.X; 
+                        newAB.Y = newAB.Y + Math.PI;
+                    }
+
+                // adjust through cusp
+
+                if ( newAB.X == Math.PI/2.0) // already set if nearly there. 
+                {
+                    // detect that we are already moving
+                    if(Bsteps > 0)
+                    {
+                        newAB.Y = AB.Y + (Bto-AB.Y) / Bsteps;
+                        Bsteps--;
+                    }
+                    else // head forward to next non-vertical point or the end. 
+                    {
+                        j = i+1;
+
+                        while (j < (TP.Pts.Count-1) && Math.Abs(Orient_FiveAxisABP(TP.Pts[j]).X - Math.PI/2.0) < AngleAcc) j++;
+
+                        // If we are at the start of a path and vertical then we can just use the first non-vertical 
+                        // position for the whole run. 
+                        if (Math.Abs(AB.X - Math.PI / 2.0) < AngleAcc) 
+                        {
+                            Bto = Orient_FiveAxisABP(TP.Pts[j]).Y;
+                            Bsteps = j - i;
+                            newAB.Y = Bto;
+                        }
+                        // if we get to the end and it is still vertical we do not need to rotate.
+                        else if (Math.Abs(Orient_FiveAxisABP(TP.Pts[j]).X) < AngleAcc)
+                        {
+                            Bto = AB.X;
+                            Bsteps = j - i;
+                            newAB.Y = Bto;
+                        }
+                        else
+                        {
+                            Bto = Orient_FiveAxisABP(TP.Pts[j]).Y;
+                            Bsteps = j - i;
+                            newAB.Y = AB.Y;
+                        }
+                    }
+                }
+
+                // (throw bounds error if B goes past +-9999 degrees or A is not between -5 and 95)
+
+                if (Math.Abs(180.0*newAB.Y/(Math.PI)) > 9999)
+                {
+                    Co.AddError("Out of bounds on B");
+                    Co.AppendLine(this.CommentChar + "Out of bounds on B" + this.endCommentChar);
+                }
+                if ((180.0 * newAB.X / Math.PI > 95) || (180.0 * newAB.X / Math.PI < -5))
+                {
+                    Co.AddError("Out of bounds on A");
+                    Co.AppendLine(this.CommentChar + "Out of bounds on A" + this.endCommentChar);
+                }
+                
+                // update AB value
+
+                AB = newAB;
+
+                // Add the position information
+
+                //Pt.Pt = new Point3d(0, 0, 0);
+                //Pt.Dir = new Vector3d(-2, 1, -1);
+                //AB = Orient_FiveAxisABP(Pt);
+
+                PtCode = IK_PocketNC(Pt, TP.MatTool,AB, ref MachPos);
+
+                //Pt.Pt = Pt.Pt - Pt.Dir;
+
+                string PtCode2 = IK_PocketNC(Pt, TP.MatTool, AB, ref MachPos);
+                u = 7;
+
+                // Act if feed has changed
+                // HACK!
+                // Add the start instruction every time as we are dropping lines.
+                if (true)
+                {
+                    if (feed == 0)
+                        PtCode = "G00 " + PtCode;
+                    else
+                        PtCode = "G01 " + PtCode + " F" + feed.ToString("0.00");
+                }
+                FChange = false;
+
+                // Act if speed has changed
+                if (SChange)
+                {
+                    PtCode = this.SpeedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode;
+                }
+                SChange = false;
+
+                if (Pt.localCode != "")
+                {
+                    PtCode = PtCode + Pt.localCode;
+                }
+
+                if (Pt.name != "")
+                {
+                    PtCode = PtCode + this.CommentChar + Pt.name + this.endCommentChar;
+                }
+                //Bad Hack, DANGER!!!!
+                //if(MachPos.Z<0) Co.Append(PtCode);
+                Co.Append(PtCode);
+                // Adjust ranges
+
+                Co.GrowRange("X", MachPos.X);
+                Co.GrowRange("Y", MachPos.Y);
+                Co.GrowRange("Z", MachPos.Z);
+                Co.GrowRange("A", AB.X);
+                Co.GrowRange("B", AB.Y);
+            }
+
+            // return the last point or the beforePoint if the path had no elements
+            ToolPoint PtOut;
+
+            if (TP.Pts.Count > 0)
+            {
+                PtOut = new ToolPoint(TP.Pts[TP.Pts.Count - 1]);
+                PtOut.feed = feed;
+                PtOut.speed = speed;
+
+                // Pass machine state information
+
+                Co.MachineState.Clear();
+                Co.MachineState.Add("X", MachPos.X);
+                Co.MachineState.Add("Y", MachPos.Y);
+                Co.MachineState.Add("Z", MachPos.Z);
+                Co.MachineState.Add("A", AB.X);
+                Co.MachineState.Add("B", AB.Y);
+            }
+            else PtOut = beforePoint;
+
+            return PtOut;
         }
 
         public Vector3d ToolDir(ToolPoint TP)
@@ -317,10 +630,12 @@ namespace CAMel.Types
             switch (this.type)
             {
                 case MachineTypes.ThreeAxis:
-                    return Vector3d.ZAxis;
-                    case MachineTypes.FiveAxisBCHead:
+                    return -Vector3d.ZAxis;
+                case MachineTypes.FiveAxisBCHead:
                     return TP.Dir;
                 case MachineTypes.FiveAxisACHead:
+                    return TP.Dir;
+                case MachineTypes.PocketNC:
                     return TP.Dir;
                 default:
                     throw new System.NotImplementedException("Machine Type has not implemented Tool Direction.");
@@ -328,6 +643,106 @@ namespace CAMel.Types
         }
 
         public ToolPath ReadCode(string Code)
+        {
+            switch (this.type)
+            {
+                case MachineTypes.ThreeAxis:
+                    return ReadCode_ThreeAxis(Code);
+                case MachineTypes.PocketNC:
+                    return ReadCode_PocketNC(Code);
+                default:
+                    throw new System.NotImplementedException("Machine Type has not implemented ReadCode.");
+            }
+        }
+        // TODO PocketNC read
+        private ToolPath ReadCode_PocketNC(string Code)
+        {
+            ToolPath TP = new ToolPath();
+
+            double toolLength = 1;
+
+            double X = 0, Y = 0, Z = 0, A = 0, B = 0, F = -1, S = -1;
+            bool changed, found, Fchanged, feedfound, Schanged, speedfound;
+
+            System.Text.StringBuilder OutputCode = new System.Text.StringBuilder();
+
+            string Xpattern = @".*X([0-9\-.]+).*";
+            string Ypattern = @".*Y([0-9\-.]+).*";
+            string Zpattern = @".*Z([0-9\-.]+).*";
+            string Apattern = @".*A([0-9\-.]+).*";
+            string Bpattern = @".*B([0-9\-.]+).*";
+            string Fpattern = @".*F([0-9\-.]+).*";
+            string Spattern = @".*S([0-9\-.]+).*";
+            string G0pattern = @"G0.*";
+            string LinePattern = @".*";
+
+            System.Text.RegularExpressions.MatchCollection Lines;
+
+            Lines = System.Text.RegularExpressions.Regex.Matches(Code, LinePattern);
+
+            int i = 0;
+
+            foreach (System.Text.RegularExpressions.Match line in Lines)
+            {
+                changed = false;
+                Fchanged = false;
+                Schanged = false;
+                found = false;
+                feedfound = false;
+                speedfound = false;
+
+                X = GetValue(line.ToString(), Xpattern, X, ref found, ref changed);
+                Y = GetValue(line.ToString(), Ypattern, Y, ref found, ref changed);
+                Z = GetValue(line.ToString(), Zpattern, Z, ref found, ref changed);
+                A = GetValue(line.ToString(), Apattern, A, ref found, ref changed);
+                B = GetValue(line.ToString(), Bpattern, B, ref found, ref changed);
+                F = GetValue(line.ToString(), Fpattern, F, ref feedfound, ref Fchanged);
+                S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
+
+                //interpret a G0 command.
+                if (System.Text.RegularExpressions.Regex.IsMatch(line.ToString(), G0pattern))
+                {
+                    feedfound = true;
+                    if (F != 0)
+                    {
+                        Fchanged = true;
+                        F = 0;
+                    }
+                }
+
+                // If A, B, X, Y or Z changed or Fchanged in a line containing a coordinate
+                // add a new point. 
+                if (changed || (found && Fchanged))
+                {
+                    TP.Pts.Add(ReadTP_PocketNC(X,Y,Z,A,B,F,S,toolLength));
+                    i++;
+                }
+                ToolPoint Test = ReadTP_PocketNC(0, 0, -1, 45, 45, 8500, 1, 1);
+                int u = 7;
+            }
+
+            return TP;
+        }
+
+        private ToolPoint ReadTP_PocketNC(double X, double Y, double Z, double A, double B, double F, double S,double toolLength)
+        {
+            Point3d OP = new Point3d(X,Y,Z);
+            // translate from the tooltip at machine origin origin to pivot at origin
+            OP = OP + this.Pivot - Vector3d.ZAxis * toolLength;
+
+            // rotate from machine orientation to material orientation
+            OP.Transform(Transform.Rotation(-Math.PI*A/180.0, Vector3d.XAxis, Point3d.Origin));
+            OP.Transform(Transform.Rotation(-Math.PI*B/180.0, Vector3d.YAxis, Point3d.Origin));
+
+            Vector3d Dir = Vector3d.ZAxis;
+            // rotate from machine orientation to material orientation
+            Dir.Transform(Transform.Rotation(-Math.PI*A/180.0, Vector3d.XAxis, Point3d.Origin));
+            Dir.Transform(Transform.Rotation(-Math.PI*B/180.0, Vector3d.YAxis, Point3d.Origin));
+
+            return new ToolPoint(OP, Dir, S, F);
+        }
+
+        private ToolPath ReadCode_ThreeAxis(string Code)
         {
             ToolPath TP = new ToolPath();
 
@@ -387,8 +802,7 @@ namespace CAMel.Types
 
             return TP;
         }
-
-          
+         
         private double GetValue(string line, string pattern, double old, ref bool found, ref bool changed)
         {
             double val = old;
@@ -403,6 +817,7 @@ namespace CAMel.Types
         }
 
         // Give the machine position somewhere on the move from one toolPoint to another.
+        // TODO PocketNC interpolate
         public ToolPoint Interpolate(ToolPoint toolPoint1, ToolPoint toolPoint2, double par)
         {
             ToolPoint TPo = new ToolPoint(toolPoint1);
@@ -506,6 +921,61 @@ namespace CAMel.Types
                     }
 
                     break;
+
+                case MachineTypes.PocketNC:
+
+                    // Start with a straight line, with a maximum rotation of pi/30 between points, 
+                    // see how close it comes to danger. If its too close add a new
+                    // point and try again.
+
+                    route = new List<Point3d>();
+                    route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
+
+                    route.Add(TPto.Pts[0].Pt);
+                   
+                    dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
+                    safeD = Math.Max(TPfrom.MatForm.safeDistance, TPto.MatForm.safeDistance);
+
+                    // loop through adding points at problem places until we have 
+                    // everything sorted!
+                    // Warning this could race, it shouldn't though.
+                    int checker = 0;
+                    while (dist < safeD && checker < 100)
+                    {
+                        checker++;
+                        // add or edit a point by pushing it to safeD plus a little
+
+                        route.Insert(i + 1, cPt + (safeD - dist + .125) * away);
+
+                        dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
+                    }
+
+                    // add extra points if the angle change between steps is too large (pi/30)
+
+                    Vector3d fromDir = TPfrom.Pts[TPfrom.Pts.Count - 1].Dir;
+                    Vector3d toDir = TPto.Pts[0].Dir;
+                    Vector3d mixDir;
+                    double angSpread = Vector3d.VectorAngle(fromDir,toDir);
+
+                    int steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
+                    if (steps == 0) steps = 1; // Need to add at least one point even if angSpread is 0
+                    int j;
+                    Vector3d angShifttest = this.angShift(fromDir, toDir, 1.0);
+
+                    for(i=0; i<(route.Count-1);i++)
+                    {
+                        // add new point at speed 0 to describe rapid move.
+                        for(j=0;j<steps;j++)
+                        {
+                            mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*route.Count));
+                            Move.Pts.Add(new ToolPoint((j*route[i+1]+(steps-j)*route[i])/steps, mixDir, "", -1, 0));
+                        }
+                    }
+                    // get rid of start point that was already in the paths
+                    Move.Pts.RemoveAt(0);
+
+                    break;
+
                 case MachineTypes.FiveAxisBCHead:
                     //TODO: 5-Axis SafeMove
                     // The method above will work, but we need to add 
@@ -517,6 +987,15 @@ namespace CAMel.Types
             }
 
             return Move;
+        }
+
+        // Create a vector a proportion p of the rotation between two vectors.
+        private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p)
+        {
+            double ang = Vector3d.VectorAngle(fromDir, toDir);
+            Vector3d newDir = fromDir;
+            newDir.Rotate(ang*p,Vector3d.CrossProduct(fromDir,toDir));
+            return newDir;
         }
 
         private Point3d missSphere(Point3d pPt, Point3d cPt, Vector3d away, double safeD, out double d)

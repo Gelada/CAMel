@@ -19,6 +19,7 @@ namespace CAMel.Types
     public class CodeInfo
     {
         private StringBuilder Code;
+        public Dictionary<string, double> MachineState; // Data version of last written instruction to use between write calls
         private Dictionary<string, Interval> Ranges; // Highest and lowest value for each coordinate
         private Dictionary<string, int> Warnings; // Warning text and number of occurences
         private Dictionary<string, int> Errors; // Error text and number of occurences
@@ -31,7 +32,8 @@ namespace CAMel.Types
             this.Mach = new Machine();
             this.Ranges = new Dictionary<string,Interval>();
             this.Errors = new Dictionary<string,int>();
-            this.Warnings = new Dictionary<string,int>();
+            this.Warnings = new Dictionary<string, int>();
+            this.MachineState = new Dictionary<string, double>();
             this.lines = 0;
         }
 
@@ -42,6 +44,7 @@ namespace CAMel.Types
             this.Ranges = new Dictionary<string, Interval>();
             this.Errors = new Dictionary<string, int>();
             this.Warnings = new Dictionary<string, int>();
+            this.MachineState = new Dictionary<string, double>();
             this.lines = 0;
         }
 

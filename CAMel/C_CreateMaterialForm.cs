@@ -25,7 +25,10 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
+            // TODO This needs to be replaced with the new material form accepting either a list of boxes, 
+            // a plane, or a list of box unions (need good name) all into one parameter
             pManager.AddPlaneParameter("Plane", "Pl", "Plane positions so that all material is on the negative side", GH_ParamAccess.item, Plane.WorldXY);
+            pManager.AddBoxParameter("Box", "Bx", "Box containing material", GH_ParamAccess.item);
             pManager.AddNumberParameter("Safe Distance", "SD", "Safe distance away from material", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("Tolerance", "T", "Tolerance of material positioning", GH_ParamAccess.item, .1);
         }
@@ -47,13 +50,22 @@ namespace CAMel
             List<MachineOperation> MO = new List<MachineOperation>();
 
             Plane Pl = Plane.WorldXY;
+            Box Bx = new Box();
             double SD = 0, T=0;
+            bool haveBx = true;
 
             if (!DA.GetData(0, ref Pl)) return;
-            if (!DA.GetData(1, ref SD)) return;
-            if (!DA.GetData(2, ref T)) return;
-
-            MaterialForm MF = new MaterialForm(Pl, SD, T);
+            if (!DA.GetData(1, ref Bx)) haveBx=false;
+            if (!DA.GetData(2, ref SD)) return;
+            if (!DA.GetData(3, ref T)) return;
+            MaterialForm MF;
+            if (haveBx)
+            {
+                MF = new MaterialForm(Bx, SD, T);
+            } else
+            {
+                MF = new MaterialForm(Pl, SD, T);
+            }
 
             DA.SetData(0, MF);
         }

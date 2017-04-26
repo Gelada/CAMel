@@ -57,7 +57,7 @@ namespace CAMel
 
             if (!DA.GetDataList(1, ignore)) return;
 
-            CodeInfo Code = new CodeInfo();
+            CodeInfo Code = new CodeInfo(MI.Mach);
 
             MachineInstruction procMI = MI.ProcessAdditions();
 
@@ -94,7 +94,7 @@ namespace CAMel
         {
             get
             {
-                //You can add image files to your project resources and access them like this:
+                // You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
                 return Properties.Resources.cncwriter;
             }

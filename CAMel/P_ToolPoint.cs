@@ -125,9 +125,9 @@ namespace CAMel.Types
             string outp = "";
             if (name != "")
                 outp = outp + name;
-            if (localCode != "")
-                outp = outp + localCode + "\n";
             outp = outp + "Pt: " + this.Pt.ToString() + " Dir: " + this.Dir.ToString();
+            if (localCode != "")
+                outp = outp + "\n" + localCode;
             if (speed >= 0 || feed >= 0)
                 outp = "\n" + outp + "Speed: " + this.speed.ToString() + " Feed: " + this.feed.ToString();
             return outp;
