@@ -118,7 +118,7 @@ namespace CAMel.Types
         }
 
         // Real functions
-
+        // TODO Bring PocketNC into this!
         // Call the correct IK function
         public string InverseKinematics (ToolPoint TP, MaterialTool MT)
         {
@@ -590,8 +590,7 @@ namespace CAMel.Types
                 {
                     PtCode = PtCode + this.CommentChar + Pt.name + this.endCommentChar;
                 }
-                //Bad Hack, DANGER!!!!
-                //if(MachPos.Z<0) Co.Append(PtCode);
+                
                 Co.Append(PtCode);
                 // Adjust ranges
 
@@ -955,12 +954,12 @@ namespace CAMel.Types
                     Vector3d fromDir = TPfrom.Pts[TPfrom.Pts.Count - 1].Dir;
                     Vector3d toDir = TPto.Pts[0].Dir;
                     Vector3d mixDir;
-                    double angSpread = Vector3d.VectorAngle(fromDir,toDir);
+                    // ask machine how far it has to move in angle. 
+                    double angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.Pts[0]);
 
                     int steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
                     if (steps == 0) steps = 1; // Need to add at least one point even if angSpread is 0
                     int j;
-                    Vector3d angShifttest = this.angShift(fromDir, toDir, 1.0);
 
                     for(i=0; i<(route.Count-1);i++)
                     {
@@ -987,6 +986,24 @@ namespace CAMel.Types
             }
 
             return Move;
+        }
+        // find the (maximum absolute) angular movement between too toolpoints
+
+        private double angDiff(ToolPoint tpFrom, ToolPoint tpTo)
+        {
+            if (this.type == MachineTypes.PocketNC)
+            {
+                Vector2d ang1 = this.Orient_FiveAxisABP(tpFrom);
+                Vector2d ang2 = this.Orient_FiveAxisABP(tpTo);
+
+                Vector2d diff = new Vector2d();
+                diff.X = Math.Abs(ang1.X - ang2.X);
+                diff.Y = Math.Min(Math.Min(Math.Abs(ang1.Y-ang2.Y),Math.Abs(2*Math.PI+ang1.Y-ang2.Y)),Math.Abs(2*Math.PI-ang1.Y+ang2.Y));
+                return Math.Max(diff.X,diff.Y);
+            } else
+            {
+                throw new System.NotImplementedException("Machine has no rotation or has not implemented a calculation of rotation.");
+            }
         }
 
         // Create a vector a proportion p of the rotation between two vectors.
