@@ -78,7 +78,7 @@ namespace CAMel
 
             int Invalids = 0;
 
-            if (!hasMO) // Process a list of ToolPaths into a Machine Operation
+            if (!hasMO && hasTP) // Process a list of ToolPaths into a Machine Operation
             {
                 foreach (ToolPointContainer tpc in tempMO)
                 {
@@ -88,7 +88,7 @@ namespace CAMel
                 }
                 if (op.TPs.Count > 0) MO.Add(op);
             }
-            else // Mix Machine operations and toolpaths each turned into their own operation. 
+            else if (hasTP) // Mix Machine operations and toolpaths each turned into their own operation. 
             {
                 foreach (ToolPointContainer tpc in tempMO)
                 {
