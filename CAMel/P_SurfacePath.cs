@@ -88,17 +88,17 @@ namespace CAMel.Types
             return "Surfacing Path";
         }
 
-        public ToolPath GenerateToolPath(Surface S)
+        public MachineOperation GenerateOperation(Surface S, double offset, MaterialTool MT,MaterialForm MF, ToolPathAdditions TPA)
         {
             throw new System.NotImplementedException("");
         }
 
-        public ToolPath GenerateToolPath(Brep B)
+        public MachineOperation GenerateOperation(Brep B, double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
         {
             throw new System.NotImplementedException("");
         }
 
-        public ToolPath GenerateToolPath(Mesh M)
+        public MachineOperation GenerateOperation(Mesh M, double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
         {
             throw new System.NotImplementedException("");
         }

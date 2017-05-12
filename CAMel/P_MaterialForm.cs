@@ -714,7 +714,6 @@ namespace CAMel.Types
                     break;
                 default:
                     throw new System.NotImplementedException("TPRayIntersect not implemented for Planes or Breps");
-                    break;
             }
             return inter;
         }

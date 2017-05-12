@@ -464,11 +464,6 @@ namespace CAMel.Types
 
                 // get naive orientation
                 newAB = Orient_FiveAxisABP(Pt);
-                int u;
-                if (newAB.Y < -2 && AB.Y > 2)
-                {
-                    u = 7;
-                }
 
                 // adjust B to correct period
                 newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((AB.Y-newAB.Y)/(2.0*Math.PI));
@@ -560,7 +555,6 @@ namespace CAMel.Types
                 //Pt.Pt = Pt.Pt - Pt.Dir;
 
                 string PtCode2 = IK_PocketNC(Pt, TP.MatTool, AB, ref MachPos);
-                u = 7;
 
                 // Act if feed has changed
                 // HACK!
@@ -721,7 +715,7 @@ namespace CAMel.Types
                     i++;
                 }
                 ToolPoint Test = ReadTP_PocketNC(0, 0, -1, 45, 45, 8500, 1, 1);
-                int u = 7;
+
             }
 
             return TP;
