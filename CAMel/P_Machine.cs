@@ -714,6 +714,10 @@ namespace CAMel.Types
                 if (changed || (found && Fchanged))
                 {
                     TP.Pts.Add(ReadTP_PocketNC(X,Y,Z,A,B,F,S,toolLength));
+                    if(Z<-3.3)
+                    {
+                        TP.Pts[TP.Pts.Count-1].localCode = "Z";
+                    }
                     i++;
                 }
                 ToolPoint Test = ReadTP_PocketNC(0, 0, -1, 45, 45, 8500, 1, 1);
@@ -933,6 +937,7 @@ namespace CAMel.Types
                     route.Add(TPto.Pts[0].Pt);
                    
                     dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
+
                     safeD = Math.Max(TPfrom.MatForm.safeDistance, TPto.MatForm.safeDistance);
 
                     // loop through adding points at problem places until we have 
@@ -943,7 +948,7 @@ namespace CAMel.Types
                     {
                         checker++;
                         // add or edit a point by pushing it to safeD plus a little
-
+                        
                         route.Insert(i + 1, cPt + (safeD - dist + .125) * away);
 
                         dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
@@ -954,20 +959,44 @@ namespace CAMel.Types
                     Vector3d fromDir = TPfrom.Pts[TPfrom.Pts.Count - 1].Dir;
                     Vector3d toDir = TPto.Pts[0].Dir;
                     Vector3d mixDir;
+                    bool lng = false;
                     // ask machine how far it has to move in angle. 
-                    double angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.Pts[0]);
+                    double angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.Pts[0],lng);
 
                     int steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
                     if (steps == 0) steps = 1; // Need to add at least one point even if angSpread is 0
                     int j;
+
+                    // Try to build a path with angles. 
+                    // If a tool line hits the material 
+                    // switch to the longer rotate and try again
 
                     for(i=0; i<(route.Count-1);i++)
                     {
                         // add new point at speed 0 to describe rapid move.
                         for(j=0;j<steps;j++)
                         {
-                            mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*route.Count));
-                            Move.Pts.Add(new ToolPoint((j*route[i+1]+(steps-j)*route[i])/steps, mixDir, "", -1, 0));
+                            mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*route.Count),lng);
+                            ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
+                            if(TPfrom.MatForm.TPRayIntersect(newTP) || TPto.MatForm.TPRayIntersect(newTP))
+                            {
+                                if(lng == true) 
+                                {   // something has gone horribly wrong and 
+                                    // both angle change directions will hit the material
+                                    // 
+                                    throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
+                                } else
+                                { // start again with the longer angle change
+                                    lng=true;
+                                    i=0;
+                                    j=0;
+                                    angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.Pts[0],lng);
+                                    steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
+                                    Move = TPto.copyWithNewPoints(new List<ToolPoint>());
+                                }
+                            } else { 
+                                Move.Pts.Add(newTP);
+                            }
                         }
                     }
                     // get rid of start point that was already in the paths
@@ -989,7 +1018,7 @@ namespace CAMel.Types
         }
         // find the (maximum absolute) angular movement between too toolpoints
 
-        private double angDiff(ToolPoint tpFrom, ToolPoint tpTo)
+        private double angDiff(ToolPoint tpFrom, ToolPoint tpTo, bool lng)
         {
             if (this.type == MachineTypes.PocketNC)
             {
@@ -997,8 +1026,16 @@ namespace CAMel.Types
                 Vector2d ang2 = this.Orient_FiveAxisABP(tpTo);
 
                 Vector2d diff = new Vector2d();
-                diff.X = Math.Abs(ang1.X - ang2.X);
-                diff.Y = Math.Min(Math.Min(Math.Abs(ang1.Y-ang2.Y),Math.Abs(2*Math.PI+ang1.Y-ang2.Y)),Math.Abs(2*Math.PI-ang1.Y+ang2.Y));
+                if(lng)
+                {
+                    diff.X = 2 * Math.PI - Math.Abs(ang1.X - ang2.X);
+                    diff.Y = 2 * Math.PI - Math.Abs(ang1.Y - ang2.Y);
+                }
+                else
+                {
+                    diff.X = Math.Abs(ang1.X - ang2.X);
+                    diff.Y = Math.Min(Math.Min(Math.Abs(ang1.Y - ang2.Y), Math.Abs(2 * Math.PI + ang1.Y - ang2.Y)), Math.Abs(2 * Math.PI - ang1.Y + ang2.Y));
+                }
                 return Math.Max(diff.X,diff.Y);
             } else
             {
@@ -1007,9 +1044,18 @@ namespace CAMel.Types
         }
 
         // Create a vector a proportion p of the rotation between two vectors.
-        private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p)
+        // if lng is true go the long way
+        private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p, bool lng)
         {
-            double ang = Vector3d.VectorAngle(fromDir, toDir);
+            double ang;
+            if (lng)
+            {
+                ang = Vector3d.VectorAngle(fromDir, toDir) - 2*Math.PI;
+            }
+            else
+            {
+                ang = Vector3d.VectorAngle(fromDir, toDir);
+            }
             Vector3d newDir = fromDir;
             newDir.Rotate(ang*p,Vector3d.CrossProduct(fromDir,toDir));
             return newDir;

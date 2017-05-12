@@ -632,7 +632,7 @@ namespace CAMel.Types
 
                     if(IPts.Count>0)
                     {
-                        BoxMesh.ClosestPoint((IPts[0] + IPts[1]) / 2, out cPt, out away, 0.0);
+                        BoxMesh.ClosestPoint((IPts[0] + IPts[1]) / 2.0, out cPt, out away, 0.0);
                         dist = 0;
                         // The integer part of the polyline parameter is the line element
                         i = (int)Math.Floor(P.ClosestParameter(IPts[0]));
@@ -694,6 +694,29 @@ namespace CAMel.Types
             }
 
             return dist;
+        }
+        // Test if the ray given by a point and its tool direction
+        // intersects the material or not. 
+        public bool TPRayIntersect(ToolPoint TP)
+        {
+            bool inter;
+            switch (this.FT)
+            {
+                case FormType.Box:
+                    Interval Val = new Interval();
+                    if(Intersection.LineBox(new Line(TP.Pt,TP.Pt+TP.Dir),this.Bx,0,out Val))
+                    {
+                        inter = Val.T0<0;
+                    } else
+                    {
+                        inter = false;
+                    }
+                    break;
+                default:
+                    throw new System.NotImplementedException("TPRayIntersect not implemented for Planes or Breps");
+                    break;
+            }
+            return inter;
         }
     }
 

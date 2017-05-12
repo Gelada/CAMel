@@ -55,9 +55,21 @@ namespace CAMel
 
             ToolPath TP = M.ReadCode(Code);
 
+            List<Point3d> selPt = new List<Point3d>();
+            List<Vector3d> selDir = new List<Vector3d>();
+
+            foreach(ToolPoint tp in TP.Pts)
+            {
+                if(true)
+                {
+                    selPt.Add(tp.Pt);
+                    selDir.Add(tp.Dir);
+                }
+            }
+
             DA.SetData(0,TP);
-            DA.SetDataList(1, TP.GetPoints());
-            DA.SetDataList(2, TP.GetDirs());
+            DA.SetDataList(1, selPt);
+            DA.SetDataList(2, selDir);
             DA.SetDataList(3, TP.GetSpeedFeed());
             
         }
