@@ -143,6 +143,16 @@ namespace CAMel.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap createsurfacepath {
+            get {
+                object obj = ResourceManager.GetObject("createsurfacepath", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap createtoolpath {
             get {
                 object obj = ResourceManager.GetObject("createtoolpath", resourceCulture);
@@ -243,9 +253,59 @@ namespace CAMel.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap pocketing {
+            get {
+                object obj = ResourceManager.GetObject("pocketing", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap surfacepath {
             get {
                 object obj = ResourceManager.GetObject("surfacepath", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap surfacinghelix {
+            get {
+                object obj = ResourceManager.GetObject("surfacinghelix", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap surfacingspiral {
+            get {
+                object obj = ResourceManager.GetObject("surfacingspiral", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap surfacingzig {
+            get {
+                object obj = ResourceManager.GetObject("surfacingzig", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap surfacingzigzag {
+            get {
+                object obj = ResourceManager.GetObject("surfacingzigzag", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

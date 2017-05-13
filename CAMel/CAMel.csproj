@@ -171,6 +171,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
+    <None Include="Resources\pocketing.png" />
+    <None Include="Resources\surfacinghelix.png" />
+    <None Include="Resources\surfacingspiral.png" />
+    <None Include="Resources\surfacingzigzag.png" />
+    <None Include="Resources\surfacingzig.png" />
+    <None Include="Resources\createsurfacepath.png" />
     <None Include="Resources\surfacepath.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
