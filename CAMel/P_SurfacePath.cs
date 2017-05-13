@@ -15,8 +15,7 @@ namespace CAMel.Types
     public enum SurfProj {
         Parallel,
         Cylindrical,
-        Spherical,
-        None
+        Spherical
     }
 
     // The tool direction for surfacing.
@@ -48,12 +47,29 @@ namespace CAMel.Types
         public SurfacePath()
         {
         }
-        // 
-        public SurfacePath(Curve Path,SurfProj SP, Vector3d dir,Point3d Cen,SurfToolDir STD)
+
+        // Parallel constructor
+        public SurfacePath(Curve Path, Vector3d dir, SurfToolDir STD)
         {
             this.Path = Path;
-            this.SP = SP;
+            this.SP = SurfProj.Parallel;
             this.dir = dir;
+            this.STD = STD;
+        }
+        // Cylindrical constructor
+        public SurfacePath(Curve Path, Vector3d dir, Curve CC, SurfToolDir STD)
+        {
+            this.Path = Path;
+            this.SP = SurfProj.Cylindrical;
+            this.dir = dir;
+            this.CylOnto = CC;
+            this.STD = STD;
+        }
+        // Spherical constructor
+        public SurfacePath(Curve Path, Point3d Cen, SurfToolDir STD)
+        {
+            this.Path = Path;
+            this.SP = SurfProj.Spherical;
             this.Cen = Cen;
             this.STD = STD;
         }
@@ -62,6 +78,7 @@ namespace CAMel.Types
         {
             this.Path = Os.Path;
             this.SP = Os.SP;
+            this.CylOnto = Os.CylOnto;
             this.dir = Os.dir;
             this.Cen = Os.Cen;
             this.STD = Os.STD;
