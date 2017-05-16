@@ -36,6 +36,7 @@ namespace CAMel
             pManager.AddNumberParameter("minStep", "mS", "Minimum distance between machine positions", GH_ParamAccess.item);
             pManager.AddNumberParameter("Tool Width", "TW", "Width of tool", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis)", GH_ParamAccess.item, 0);
+            pManager.AddTextParameter("Tool Shape", "TS", "End shape of tool", GH_ParamAccess.item, "Ball");
         }
 
         /// <summary>
@@ -57,6 +58,9 @@ namespace CAMel
 
             double S = 0, CF = 0, PF = 0, CD = 0, FD = 0, T = 0, mS = 0, TW = 0, TL = 0;
 
+            string toolShape = "";
+            EndShape ES;
+
             if (!DA.GetData(0, ref matName)) return;
             if (!DA.GetData(1, ref toolName)) return;
             if (!DA.GetData(2, ref S)) return;
@@ -68,8 +72,34 @@ namespace CAMel
             if (!DA.GetData(8, ref mS)) return;
             if (!DA.GetData(9, ref TW)) return;
             if (!DA.GetData(10, ref TL)) return;
+            if (!DA.GetData(11, ref toolShape))
+            {
+                return;
+            }
+            else
+            {
+                switch (toolShape)
+                {
+                    case "Ball":
+                        ES = EndShape.Ball;
+                        break;
+                    case "Square":
+                        ES = EndShape.Square;
+                        break;
+                    case "V":
+                        ES = EndShape.V;
+                        break;
+                    case "Other":
+                        ES = EndShape.Other;
+                        break;
+                    default:
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "End Shape not recognised. Options are \"Ball\", \"Square\", \"V\" use \"Other\" to avoid warning.");
+                        ES = EndShape.Other;
+                        break;
+                }
+            }
 
-            MaterialTool MT = new MaterialTool(matName, toolName, S, CF, PF, CD, FD, T, mS, TW, TL);
+            MaterialTool MT = new MaterialTool(matName, toolName, S, CF, PF, CD, FD, TW, TL, ES, T, mS);
 
             DA.SetData(0, MT);
         }

@@ -76,7 +76,7 @@ namespace CAMel
                 TP.Additions.retract = true;
                 TP.Additions.stepDown = true;
                 TP.Additions.sdDropStart = true;
-                TP.Additions.sdDropMiddle = 1;
+                TP.Additions.sdDropMiddle = 8*MF.safeDistance;
                 TP.Additions.sdDropEnd = true;
                 TP.Additions.threeAxisHeightOffset = true;
 

@@ -7,6 +7,11 @@ using Rhino.Geometry;
 
 namespace CAMel.Types
 {
+    // Different end mill shapes to consider
+    public enum EndShape
+    {
+        Ball, Square, V, Other
+    }
     // Settings for a particular material and tool
     public class MaterialTool : CA_base 
     {
@@ -19,7 +24,7 @@ namespace CAMel.Types
         public double finishDepth; // thickness to cut in a finish pass
         public double toolWidth;   // width of tool (assumed unset for negative values)
         public double toolLength;  // length from the tip of the tool to the spindle
-        //TODO endshape
+        private EndShape ES;        // End shape of the tool
 
         // settings for curve approximation
 
@@ -39,6 +44,7 @@ namespace CAMel.Types
             this.toolLength = 0;
             this.tolerance = 0;
             this.minStep = 0;
+            this.ES = EndShape.Ball;
         }
         // Just names.
         public MaterialTool(string Mat, string Tool)
@@ -54,9 +60,10 @@ namespace CAMel.Types
             this.toolLength = 0;
             this.tolerance = 0;
             this.minStep = 0;
+            this.ES = EndShape.Ball;
         }
         // Everything, with defaults
-        public MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double tol = 0, double mS = 0, double width = -1, double tL = 0)
+        public MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0)
         {
             this.Mat_name = Mat;
             this.Tool_name = Tool;
@@ -69,6 +76,7 @@ namespace CAMel.Types
             this.toolLength = tL;
             this.tolerance = tol;
             this.minStep = mS;
+            this.ES = ES;
         }
         // Copy Constructor
         public MaterialTool(MaterialTool MT)
@@ -84,6 +92,7 @@ namespace CAMel.Types
             this.toolLength = MT.toolLength;
             this.tolerance = MT.tolerance;
             this.minStep = MT.minStep;
+            this.ES = MT.ES;
         }
         // Duplicate
         public MaterialTool Duplicate()
@@ -137,6 +146,44 @@ namespace CAMel.Types
             return osTp;
         }
 
+        public Vector3d CutOffset(Vector3d Dir, Vector3d Norm)
+        {
+            Vector3d uDir = Dir;
+            Vector3d uNorm = Norm;
+            uDir.Unitize();
+            uNorm.Unitize();
+            Vector3d os;
+            switch (this.ES)
+            {
+                case EndShape.Ball: // find correct position of ball centre and then push to tip. 
+                    os = this.toolWidth * (uNorm - uDir) / 2;
+                    break;
+                case EndShape.Square: // Cut with corner if the angle is greate than .01 radians
+                    if(Vector3d.VectorAngle(uDir,uNorm) < .01)
+                    {
+                        os = new Vector3d(0, 0, 0);
+                    }
+                    else
+                    {
+                        // find the normal to the plane give by the tool direction and the norm
+                        Vector3d PlN = Vector3d.CrossProduct(uNorm, uDir);
+                        // Now want a vecto on that plane orthogonal to tool direction
+                        os = this.toolWidth * Vector3d.CrossProduct(uDir, PlN) / 2;
+                    }
+                    break;
+                case EndShape.V: // Just use the tip. Beyond a certain angle this will not work
+                                 // TODO store angle of V end mill and use that and width 
+                    os = new Vector3d(0, 0, 0);
+                    break;
+                case EndShape.Other:
+                    os = new Vector3d(0, 0, 0);
+                    break;
+                default:
+                    os = new Vector3d(0, 0, 0);
+                    break;
+            }
+            return os;
+        }
     }
 
     // Grasshopper Type Wrapper
@@ -153,9 +200,9 @@ namespace CAMel.Types
             this.Value = new MaterialTool(Mat, Tool);
         }
         // Name, speed, feed and cut
-        public GH_MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0,double tolerance= 0, double minStep =0,double width = 0, double length = 0)
+        public GH_MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = 0, double length = 0, EndShape ES = EndShape.Ball,double tolerance = 0, double minStep = 0)
         {
-            this.Value = new MaterialTool(Mat, Tool, speed, feedCut,feedPlunge,cutDepth, finishDepth, tolerance, minStep,width, length);
+            this.Value = new MaterialTool(Mat, Tool, speed, feedCut, feedPlunge, cutDepth, finishDepth, width, length, ES, tolerance, minStep);
         }
         // construct from unwrapped type
         public GH_MaterialTool(MaterialTool MT)
