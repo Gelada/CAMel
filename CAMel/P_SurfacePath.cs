@@ -147,7 +147,6 @@ namespace CAMel.Types
         // actual code to generate the operation
         private MachineOperation GenerateOperation_(double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
         {
-
             // create unprojected toolpath (mainly to convert the curve into a list of points)
             List<ToolPath> TPs = new List<ToolPath>();
 
@@ -159,23 +158,42 @@ namespace CAMel.Types
 
             // move points onto surface storing projection direction
             // on the toolpoint and keeping lists of norms
+            List<ToolPath> newTPs = new List<ToolPath>();
             List<List<Vector3d>> Norms = new List<List<Vector3d>>();
             List<Vector3d> tempN;
             Vector3d proj;
             Line Ray;
             Vector3d Norm = new Vector3d(0, 0, 0);
             ToolPoint outPt;
+            ToolPath tempTP;
+            bool hit;
 
             foreach(ToolPath TP in TPs)
             {
+                tempTP = new ToolPath("", MT, MF, TPA);
                 tempN = new List<Vector3d>();
                 for(int i=0;i<TP.Pts.Count;i++)
                 {
                     proj = ProjDir(TP.Pts[i].Pt);
                     Ray = new Line(TP.Pts[i].Pt, proj);
-                    outPt = new ToolPoint(this.firstintersect(Ray, out Norm),proj);
+                    outPt = new ToolPoint(this.firstintersect(Ray, out Norm, out hit), proj);
                     tempN.Add(Norm);
+                    if (hit)
+                    {
+                        tempTP.Pts.Add(outPt);
+                    }
+                    else if(tempTP.Pts.Count > 0 )
+                    {
+                        if (tempTP.Pts.Count > 1)
+                        {
+                            newTPs.Add(tempTP);
+                            Norms.Add(tempN);
+                        }
+                        tempTP = new ToolPath("", MT, MF, TPA);
+                        tempN = new List<Vector3d>();
+                    }
                 }
+                newTPs.Add(tempTP);
                 Norms.Add(tempN);
             }
             Vector3d tangent, PTplaneN, STNorm, PNplaneN;
@@ -232,37 +250,45 @@ namespace CAMel.Types
             return MO;
         }
 
-        private ToolPoint Project(ToolPoint TP, double offset, Point3d fromPt)
+        private Point3d firstintersect(Line Ray, out Vector3d Norm, out bool hit)
         {
-            // find point on surface
-            Vector3d proj = ProjDir(TP.Pt);
-            Line Ray = new Line(TP.Pt, proj);
-            Vector3d Norm = new Vector3d(0,0,0);
-            ToolPoint outPt = new ToolPoint(this.firstintersect(Ray, out Norm));
-
-            switch (this.STD)
+            Point3d op = new Point3d(0, 0, 0);
+            Norm = new Vector3d(0, 0, 0);
+            Ray3d RayL = new Ray3d(Ray.From, Ray.UnitTangent);
+            hit = false;
+            switch (this.ST)
             {
-                case SurfToolDir.Projection:
-                    outPt.Dir = proj;
+                case surfaceType.Brep:
+                    List<Brep> LB = new List<Brep>();
+                    LB.Add(B);
+                    Point3d[] interP = Intersection.RayShoot(RayL, LB,1);
+                    if( interP.GetLength(1) > 0)
+                    {
+                        hit = true;
+                        op = interP[0];
+                        Point3d cp = new Point3d(0,0,0); ComponentIndex ci; double s, t; // catching infor we won't use;
+                        // call closestpoint to find norm
+                        B.ClosestPoint(op, out cp, out ci, out s, out t, 0.5, out Norm);
+                    }
                     break;
-                case SurfToolDir.PathTangent:
-
-                    break;
-                case SurfToolDir.PathNormal:
-                    break;
-                case SurfToolDir.Normal:
-                    outPt.Dir = Norm;
+                case surfaceType.Mesh:
+                    int[] faces;
+                    double inter = Intersection.MeshRay(this.M, RayL, out faces);
+                    if (inter>=0)
+                    {
+                        hit = true;
+                        op=RayL.PointAt(inter);
+                        List<int> Lfaces = new List<int>();
+                        Lfaces.AddRange(faces);
+                        Norm= new Vector3d(0,0,0);
+                        foreach(int F in Lfaces)
+                        {
+                            Norm = Norm + (Vector3d)this.M.Normals[F]/Lfaces.Count;
+                        }
+                    }
                     break;
             }
-
-
-            return outPt;
-            
-        }
-
-        private Point3d firstintersect(Line Ray, out Vector3d Norm)
-        {
-            throw new NotImplementedException();
+            return op;
         }
 
         private Vector3d ProjDir(Point3d point3d)
