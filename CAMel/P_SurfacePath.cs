@@ -290,10 +290,53 @@ namespace CAMel.Types
             }
             return op;
         }
-
-        private Vector3d ProjDir(Point3d point3d)
+        // Give the direction of projection for a specific point based on the projection type.
+        private Vector3d ProjDir(Point3d Pt)
         {
-            throw new NotImplementedException();
+            Vector3d pd = new Vector3d(0, 0, 0);
+            switch (this.SP)
+            {
+                case SurfProj.Parallel:
+                    pd = this.dir;
+                    break;
+                case SurfProj.Cylindrical:
+                    Plane Pl = new Plane(Pt,this.dir);
+                    
+                    if(this.CylOnto.IsLinear()) // if centre is a line treat it as infinite
+                    {
+                        double lp;
+                        Line cyline = new Line(this.CylOnto.PointAtStart, this.CylOnto.PointAtEnd);
+                        if(Intersection.LinePlane(cyline, Pl, out lp))
+                        {
+                            pd = cyline.PointAt(lp)-Pt;
+                        } else
+                        {
+                            throw new System.ArgumentOutOfRangeException("Cylinder Parallel","The projection direction is parallel to cyliner centre.");
+                        }
+                    } else // Use curve and warn if no intersection
+                    {
+                        CurveIntersections CI = Intersection.CurvePlane(this.CylOnto,Pl,0.0000001);
+                        if(CI.Count == 0)
+                        {
+                            throw new System.ArgumentOutOfRangeException("Short Cylinder", "The cylinder centre curve is shorter than the model."); 
+                        } else 
+                        {
+                            if(CI.Count >1 || CI[0].IsOverlap)
+                            {
+
+                                throw new System.ArgumentOutOfRangeException("Cylinder double cut", "The cylinder centre curve has multiple intersections with a projection plane.");
+                            }
+                            pd = CI[0].PointA - Pt;
+                        }
+                    }
+                    break;
+                case SurfProj.Spherical:
+                    pd = this.Cen-Pt;
+                    break;
+                default:
+                    break;
+            }
+            return pd;
         }
     }
 
