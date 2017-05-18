@@ -51,15 +51,18 @@ namespace CAMel
         {
             List<Curve> Paths = new List<Curve>();
             int Pr = 0;
+            double Prd = 0;
             Curve CC = new LineCurve(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
             Vector3d Dir = new Vector3d(0, 0, -1);
             Point3d Cen = new Point3d(0, 0, 0);
             int TD = 0;
+            double TDd = 0;
 
             SurfacePath SP;
 
             if (!DA.GetDataList(0, Paths)) return;
-            if (!DA.GetData(5, ref TD)) return;
+            if (!DA.GetData(5, ref TDd)) return;
+            TD = (int)TDd;
             // set Surfacing direction
             SurfToolDir STD;
             switch (TD)
@@ -82,8 +85,8 @@ namespace CAMel
             }
 
             // find the projection type (will effect the information we wish to use)
-            if (!DA.GetData(1, ref Pr)) return;
-
+            if (!DA.GetData(1, ref Prd)) return;
+            Pr = (int)Prd;
             switch (Pr)
             {
                 case 0: // Parallel

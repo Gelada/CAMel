@@ -196,7 +196,10 @@ namespace CAMel.Types
                     txt = "Material Plane: " + this.Pl.ToString() + ", safe distance: " + this.safeDistance.ToString();
                     break;
                 case FormType.Brep:
-                    txt = "Material Brep, safe distance: " + this.safeDistance.ToString(); 
+                    txt = "Material Brep, safe distance: " + this.safeDistance.ToString();
+                    break;
+                case FormType.Box:
+                    txt = "Material Box, safe distance: " + this.safeDistance.ToString();
                     break;
                 default:
                     txt = "Unknown state encountered.";
@@ -366,7 +369,7 @@ namespace CAMel.Types
 
             // Add the first ToolPoint
 
-            refined.Pts.Add(TP.Pts[0]);
+            if (TP.Pts.Count > 0) { refined.Pts.Add(TP.Pts[0]); }
 
             Line L;
             ToolPoint newPt;
@@ -431,7 +434,7 @@ namespace CAMel.Types
             Vector3d Norm;
 
             // check if we have something to do
-            if(TP.Additions.insert) // add insert
+            if(TP.Additions.insert && irTP.Pts.Count > 0) // add insert
             {
                 //note we do this backwards adding points to the start of the path.
 
@@ -463,8 +466,8 @@ namespace CAMel.Types
                     default:
                         throw new NotImplementedException("Unknown FormType for material Form.");
                 }
-            } 
-            if(TP.Additions.retract) // add retract
+            }
+            if (TP.Additions.retract && irTP.Pts.Count > 0) // add retract
             {
                 // get distance to surface and retract direction
                 dist = this.MatDist(irTP.Pts[irTP.Pts.Count-1], M, TP.MatTool, out Dir, out Norm);

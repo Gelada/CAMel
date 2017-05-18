@@ -193,24 +193,30 @@ namespace CAMel.Types
                         tempN = new List<Vector3d>();
                     }
                 }
-                newTPs.Add(tempTP);
-                Norms.Add(tempN);
+                if (tempTP.Pts.Count > 1)
+                {
+                    newTPs.Add(tempTP);
+                    Norms.Add(tempN);
+                }
             }
             Vector3d tangent, PTplaneN, STNorm, PNplaneN;
  
 
-            for(int j=0;j<TPs.Count;j++)
+            for(int j=0;j<newTPs.Count;j++)
             {
-                for (int i = 0; i < TPs[j].Pts.Count; i++)
+                for (int i = 0; i < newTPs[j].Pts.Count; i++)
                 {           
                     // find the tangent vector;
-                    if (i == TPs[j].Pts.Count - 1)
+                    if (i == newTPs[j].Pts.Count - 1)
                     {
-                        tangent = TPs[j].Pts[i].Pt - TPs[j].Pts[i - 1].Pt;
+                        tangent = newTPs[j].Pts[i].Pt - newTPs[j].Pts[i - 1].Pt;
                     }
-                    else
+                    else if(i== 46)
                     {
-                        tangent = TPs[j].Pts[i + 1].Pt - TPs[j].Pts[i].Pt;
+                        tangent = newTPs[j].Pts[i + 1].Pt - newTPs[j].Pts[i].Pt;
+                    } else
+                    {
+                        tangent = newTPs[j].Pts[i + 1].Pt - newTPs[j].Pts[i].Pt;
                     }
                     switch (this.STD)
                     {
@@ -219,34 +225,34 @@ namespace CAMel.Types
                         case SurfToolDir.PathTangent:
                             // get normal to tangent on surface
                             STNorm = Vector3d.CrossProduct(Norms[j][i], tangent);
-                            PNplaneN = Vector3d.CrossProduct(TPs[j].Pts[i].Dir, STNorm);
+                            PNplaneN = Vector3d.CrossProduct(newTPs[j].Pts[i].Dir, STNorm);
                             // find vector normal to the surface in the line orthogonal to the tangent
                             Vector3d.CrossProduct(PNplaneN, STNorm);
                             break;
                         case SurfToolDir.PathNormal:
                             // get normal to proj and tangent
-                            PTplaneN = Vector3d.CrossProduct(TPs[j].Pts[i].Dir, tangent);
+                            PTplaneN = Vector3d.CrossProduct(newTPs[j].Pts[i].Dir, tangent);
                             // find vector normal to tangent and in the plane of tangent and projection
                             Vector3d.CrossProduct(PTplaneN, tangent);
                             break;
                         case SurfToolDir.Normal: // set to Norm
-                            TPs[j].Pts[i].Dir = Norms[j][i];
+                            newTPs[j].Pts[i].Dir = Norms[j][i];
                             break;
                     }
                     // Adjust the tool position based on the surface normal and the tool orientation
                     // so that the cutting surface not the tooltip is at the correct point
 
-                    TPs[j].Pts[i].Pt = TPs[j].Pts[i].Pt + MT.CutOffset(TPs[j].Pts[i].Dir,Norms[j][i]);
+                    newTPs[j].Pts[i].Pt = newTPs[j].Pts[i].Pt + MT.CutOffset(newTPs[j].Pts[i].Dir,Norms[j][i]);
 
                     // Move to offset using normal
 
-                    TPs[j].Pts[i].Pt = TPs[j].Pts[i].Pt + (MT.toolWidth/2)*Norms[j][i];
+                    newTPs[j].Pts[i].Pt = newTPs[j].Pts[i].Pt + (MT.toolWidth/2)*Norms[j][i];
                 }
             }
 
             // make the machine operation
             MachineOperation MO = new MachineOperation("Surfacing Path");
-            MO.TPs = TPs;
+            MO.TPs = newTPs;
             return MO;
         }
 
@@ -262,7 +268,9 @@ namespace CAMel.Types
                     List<Brep> LB = new List<Brep>();
                     LB.Add(B);
                     Point3d[] interP = Intersection.RayShoot(RayL, LB,1);
-                    if( interP.GetLength(1) > 0)
+                    List<Point3d> LinterP = new List<Point3d>();
+                    if(interP != null) {LinterP.AddRange(interP);}
+                    if( LinterP.Count > 0)
                     {
                         hit = true;
                         op = interP[0];

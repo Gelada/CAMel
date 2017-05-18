@@ -53,24 +53,27 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             SurfaceType ST;
-            Mesh M = new Mesh();
-            Brep B = new Brep();
-            SurfacePath R = new SurfacePath();
-            SurfacePath F = new SurfacePath();
-            MaterialTool MTR = new MaterialTool();
-            MaterialTool MTF = new MaterialTool();
-            MaterialForm MF = new MaterialForm();
+            GeometryBase G = null;
+            Mesh M = null;
+            Brep B = null;
+            SurfacePath R = null;
+            SurfacePath F = null;
+            MaterialTool MTR = null;
+            MaterialTool MTF = null;
+            MaterialForm MF = null;
 
-
-            if (DA.GetData(0, ref M))
+            if (!DA.GetData(0, ref G)) {return;}
+            if(G.GetType() == typeof(Mesh))
             {
                 ST = SurfaceType.Mesh;
-            } else if (DA.GetData(0, ref B))
+                M = (Mesh)G;
+            } else if(G.GetType() == typeof(Brep))
             {
+                B = (Brep)G;
                 ST = SurfaceType.Brep;
             } else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter D failed to collect data");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The surface parameter must be a Brep, Surface of Mesh");
                 return;
             }
             if (!DA.GetData(1, ref R)) return;
@@ -105,12 +108,12 @@ namespace CAMel
                     switch (ST)
                     {
                         case SurfaceType.Brep:
-                            Rough=R.GenerateOperation(B, MTF.finishDepth,MTR,MF,AddRough);
-                            Finish=F.GenerateOperation(B,0.0,MTF,MF,AddFinish);
+                            Rough = R.GenerateOperation(B, MTF.finishDepth,MTR,MF,AddRough);
+                            Finish = F.GenerateOperation(B,0.0,MTF,MF,AddFinish);
                             break;
                         case SurfaceType.Mesh:
-                            Rough=R.GenerateOperation(M, MTF.finishDepth,MTR,MF,AddRough);
-                            Finish=F.GenerateOperation(M,0.0,MTF,MF,AddFinish);
+                            Rough = R.GenerateOperation(M, MTF.finishDepth,MTR,MF,AddRough);
+                            Finish = F.GenerateOperation(M,0.0,MTF,MF,AddFinish);
                             break;
                     }
 

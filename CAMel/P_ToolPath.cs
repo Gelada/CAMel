@@ -566,18 +566,18 @@ namespace CAMel.Types
         // of the safe spaces from both material forms.
         public ToolPath TransitionTo(Machine M, ToolPath TP, out bool inMaterial, out double Length)
         {
-            ToolPath TransPath;
-            Length = this.Pts[this.Pts.Count - 1].Pt.DistanceTo(TP.Pts[0].Pt);
-
             // Throw error if either toolpath is empty
             // This is not generally a problem but does 
             // not give the information we need here and 
             // could be dangerous.
 
-            if(this.Pts.Count == 0 || TP.Pts.Count == 0)
+            if (this.Pts.Count == 0 || TP.Pts.Count == 0)
             {
-                throw new ArgumentOutOfRangeException("Trying to transition to or from an empty path.");
+                throw new ArgumentOutOfRangeException("Toolpath","Trying to transition to or from an empty path.");
             }
+
+            ToolPath TransPath;
+            Length = this.Pts[this.Pts.Count - 1].Pt.DistanceTo(TP.Pts[0].Pt);
 
             // See if we lie in the material
             // Check end of this path and start of TP

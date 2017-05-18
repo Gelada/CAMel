@@ -88,7 +88,7 @@ namespace CAMel
                 }
                 if (op.TPs.Count > 0) MO.Add(op);
             }
-            else if (hasTP) // Mix Machine operations and toolpaths each turned into their own operation. 
+            else if (hasTP || hasMO) // Mix Machine operations and toolpaths each turned into their own operation. 
             {
                 foreach (ToolPointContainer tpc in tempMO)
                 {

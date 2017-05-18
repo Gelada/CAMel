@@ -140,38 +140,40 @@ namespace CAMel.Types
 
             foreach (ToolPath TP in this.TPs)
             {
-                if (oldPath != null)
+                if (TP.Pts.Count > 0) // If path has length 0 just ignore
                 {
-                    // Create transition move from sP with mf to first point of path array
-
-                    ToolPath Transition = oldPath.TransitionTo(M, TP, out inMaterial, out Length);
-
-                    // Error if changing operations in material
-
-                    if (inMaterial && first)
+                    if (oldPath != null)
                     {
-                        Co.AddError("Transition between operations might be in material.");
-                        Co.AppendLine(M.CommentChar + " Transition between operations might be in material." + M.endCommentChar);
-                    }
-                    else if (inMaterial && Length > M.PathJump)
-                    {
-                        Co.AddError("Long Transition between paths in material. \n"
-                            + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
-                            + M.PathJump.ToString() + " to at least: " + Length.ToString());
-                        Co.AppendLine(M.CommentChar + " Long Transition between paths in material." + M.endCommentChar);
-                    }
+                        // Create transition move from sP with mf to first point of path array
+                        ToolPath Transition = oldPath.TransitionTo(M, TP, out inMaterial, out Length);
 
-                    // Add transition to Code if needed
+                        // Error if changing operations in material
 
-                    if(Transition.Pts.Count > 0)
-                        lastPoint = Transition.WriteCode(ref Co, M,lastPoint);
+                        if (inMaterial && first)
+                        {
+                            Co.AddError("Transition between operations might be in material.");
+                            Co.AppendLine(M.CommentChar + " Transition between operations might be in material." + M.endCommentChar);
+                        }
+                        else if (inMaterial && Length > M.PathJump)
+                        {
+                            Co.AddError("Long Transition between paths in material. \n"
+                                + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
+                                + M.PathJump.ToString() + " to at least: " + Length.ToString());
+                            Co.AppendLine(M.CommentChar + " Long Transition between paths in material." + M.endCommentChar);
+                        }
+
+                        // Add transition to Code if needed
+
+                        if (Transition.Pts.Count > 0)
+                            lastPoint = Transition.WriteCode(ref Co, M, lastPoint);
+                    }
+                    // Add Path to Code
+
+                    lastPoint = TP.WriteCode(ref Co, M, lastPoint);
+
+                    oldPath = TP;
+                    first = false;
                 }
-                // Add Path to Code
-
-                lastPoint = TP.WriteCode(ref Co, M, lastPoint);
-
-                oldPath = TP;
-                first = false;
             }
             eP = oldPath;
         }
