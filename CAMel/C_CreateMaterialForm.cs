@@ -27,8 +27,9 @@ namespace CAMel
         {
             // TODO This needs to be replaced with the new material form accepting either a list of boxes, 
             // a plane, or a list of box unions (need good name) all into one parameter
-            pManager.AddPlaneParameter("Plane", "Pl", "Plane positions so that all material is on the negative side", GH_ParamAccess.item, Plane.WorldXY);
-            pManager.AddBoxParameter("Box", "Bx", "Box containing material", GH_ParamAccess.item);
+            // Edit: 19/5/17 or does it? Needs more thought.
+            
+            pManager.AddGenericParameter("Geometry", "G", "Object containing material, can be a plane (material on negative side) a box or a Cylinder.", GH_ParamAccess.item);
             pManager.AddNumberParameter("Safe Distance", "SD", "Safe distance away from material", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("Tolerance", "T", "Tolerance of material positioning", GH_ParamAccess.item, .1);
         }
@@ -49,23 +50,18 @@ namespace CAMel
         {
             List<MachineOperation> MO = new List<MachineOperation>();
 
-            Plane Pl = Plane.WorldXY;
-            Box Bx = new Box();
+            Object G = null;
             double SD = 0, T=0;
-            bool haveBx = true;
 
-            if (!DA.GetData(0, ref Pl)) return;
-            if (!DA.GetData(1, ref Bx)) haveBx=false;
-            if (!DA.GetData(2, ref SD)) return;
-            if (!DA.GetData(3, ref T)) return;
-            MaterialForm MF;
-            if (haveBx)
-            {
-                MF = new MaterialForm(Bx, SD, T);
-            } else
-            {
-                MF = new MaterialForm(Pl, SD, T);
-            }
+            if (!DA.GetData(0, ref G)) return;
+            if (!DA.GetData(1, ref SD)) return;
+            if (!DA.GetData(2, ref T)) return;
+            MaterialForm MF = null;
+            
+            if(G.GetType() == typeof(Plane)) { MF = new MaterialForm((Plane)G, SD, T); }
+            else if (G.GetType() == typeof(Box)) { MF = new MaterialForm((Box)G, SD, T); }
+            else if (G.GetType() == typeof(Cylinder)) { MF = new MaterialForm((Cylinder)G, SD, T); }
+            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Plane, a Box or a Cylinder. "); }
 
             DA.SetData(0, MF);
         }

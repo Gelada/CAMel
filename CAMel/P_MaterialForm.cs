@@ -12,6 +12,7 @@ namespace CAMel.Types
     {
         Plane,
         Brep,
+        Cylinder,
         Box
     }
 
@@ -38,6 +39,7 @@ namespace CAMel.Types
         public double materialTolerance;
         private Brep Shape;
         private Box Bx;
+        private Cylinder Cy;
         private FormType FT; // Track how we are establishing material
 
         // Default Constructor with XY plane with safe distance 1;
@@ -76,6 +78,15 @@ namespace CAMel.Types
             this.safeDistance = sD;
             this.materialTolerance = matTolerance;
         }
+        // Box
+        public MaterialForm(Cylinder Cy, double sD, double matTolerance)
+        {
+            this.Cy = Cy;
+            this.FT = FormType.Cylinder;
+            this.Pl = Plane.WorldXY;
+            this.safeDistance = sD;
+            this.materialTolerance = matTolerance;
+        }
         // Copy Constructor
         public MaterialForm(MaterialForm MF)
         {
@@ -85,6 +96,7 @@ namespace CAMel.Types
             this.materialTolerance = MF.materialTolerance;
             this.Shape = MF.Shape;
             this.Bx = MF.Bx;
+            this.Cy = MF.Cy;
         }
         // Duplicate
         public MaterialForm Duplicate()
@@ -136,6 +148,20 @@ namespace CAMel.Types
             return stick;
         }
 
+        public bool ChangeShape(Cylinder Cy, double sD, double matTolerance)
+        {
+            this.Cy = Cy;
+            this.safeDistance = sD;
+            this.materialTolerance = matTolerance;
+            bool stick = true; //Did the formtype stay the same?
+            if (this.FT != FormType.Cylinder)
+            {
+                stick = false;
+            }
+            this.FT = FormType.Cylinder;
+            return stick;
+        }
+
         // functions to look at internals
         public FormType GetFormType()
         {
@@ -151,6 +177,17 @@ namespace CAMel.Types
             else 
             {
                 throw new InvalidOperationException("Material not currently described by a Brep.");
+            }
+        }
+        public Cylinder GetCylinder()
+        {
+            if (FT == FormType.Cylinder)
+            {
+                return this.Cy;
+            }
+            else
+            {
+                throw new InvalidOperationException("Material not currently described by a Cylinder.");
             }
         }
         public Box GetBox()
@@ -200,6 +237,9 @@ namespace CAMel.Types
                     break;
                 case FormType.Box:
                     txt = "Material Box, safe distance: " + this.safeDistance.ToString();
+                    break;
+                case FormType.Cylinder:
+                    txt = "Material Cylinder, safe distance: " + this.safeDistance.ToString();
                     break;
                 default:
                     txt = "Unknown state encountered.";
@@ -260,7 +300,43 @@ namespace CAMel.Types
                     MBox.ClosestPoint(L.PointAt(interparam), out PoM, out Norm, 0.0);
 
                     break;
+                case FormType.Cylinder:
+                    Point3d inter1 = new Point3d(0,0,0), inter2=new Point3d(0,0,0);
+                    Point3d CP; 
+                    L.Extend(0,10000); // Extend line to make sure it intersects.
+                    LineCylinderIntersection LCI;
+                    LCI=Intersection.LineCylinder(L,this.Cy,out inter1, out inter2);
+                    switch (LCI)
+                    {
+		                case LineCylinderIntersection.Multiple: // Line through Cylinder
+                            CP = inter2;
+                            dist = inter2.DistanceTo(TP.Pt);
+                            break;
+                        case LineCylinderIntersection.None: // No intersection
+                            dist = 0;
+                            CP = inter1;
+                            break;
+                        case LineCylinderIntersection.Overlap: // on surface but parallel
+                            CP = inter2;
+                            dist = inter2.DistanceTo(TP.Pt);
+                            break;
+                        case LineCylinderIntersection.Single:
+                            CP = inter1;
+                            dist = inter1.DistanceTo(TP.Pt);
+                            break;
+                        default:
+                            CP = new Point3d();
+                            break;
+                    }
+                    
+                    // find the normal at the intersection, or closest point on the box
+                    // box does not itself give normals so we will look at it as a mesh
 
+                    Mesh CBox = Mesh.CreateFromCylinder(this.Cy,3,360);
+                    PoM = new Point3d();
+                    CBox.ClosestPoint(CP, out PoM, out Norm, 0.0);
+
+                    break;
                /* case FormType.Brep:
                     
                     // We now want to ensure that we are at least material tolerance away from
@@ -388,14 +464,62 @@ namespace CAMel.Types
                     {
                         newPt= new ToolPoint(TP.Pts[i]);
                         newPt.Pt = L.PointAt(paras.T0);
-                        newPt.Dir = paras.T0*TP.Pts[i].Dir + (1-paras.T0)*TP.Pts[i + 1].Dir; // assume small angles so linear interpolation works
+                        newPt.Dir = M.Interpolate(TP.Pts[i],TP.Pts[i+1],paras.T0).Dir;
                         refined.Pts.Add(newPt);
                     }
                     if (paras.T1 > 0 && paras.T1 < 1) // intersection with material
                     {
                         newPt = new ToolPoint(TP.Pts[i]);
                         newPt.Pt = L.PointAt(paras.T1);
-                        newPt.Dir = paras.T1 * TP.Pts[i].Dir + (1 - paras.T1) * TP.Pts[i + 1].Dir; // assume small angles to linear interpolation works
+                        newPt.Dir = M.Interpolate(TP.Pts[i], TP.Pts[i + 1], paras.T1).Dir; 
+                        refined.Pts.Add(newPt);
+                    }
+                }
+                refined.Pts.Add(TP.Pts[i + 1]);
+            }
+
+            return refined;
+        }
+
+        private ToolPath Refine_Cylinder(ToolPath TP, Machine M)
+        {
+            // for each line check if it intersects 
+            // the box and add those points. 
+            // For each internal line add a toolpoint at the position
+            // deepest into box. The goal is to avoid situations
+            // where the end points are close to surface but the 
+            // middle is deep. 
+
+            ToolPath refined = new ToolPath(TP);
+            refined.Pts = new List<ToolPoint>();
+
+            // Add the first ToolPoint
+
+            if (TP.Pts.Count > 0) { refined.Pts.Add(TP.Pts[0]); }
+
+            Line L;
+            ToolPoint newPt;
+            for (int i = 0; i < TP.Pts.Count - 1; i++)
+            {
+
+                // for every line between points check if we leave or enter the material
+                // TODO problem of long lines getting deep 
+
+                L = new Line(TP.Pts[i].Pt, TP.Pts[i + 1].Pt);
+                Point3d inter1 = new Point3d(), inter2 = new Point3d();
+                LineCylinderIntersection LCI = Intersection.LineCylinder(L, Cy, out inter1, out inter2);
+
+                if (LCI != LineCylinderIntersection.None)
+                {
+                    newPt = new ToolPoint(TP.Pts[i]);
+                    newPt.Pt = inter1;
+                    newPt.Dir = M.Interpolate(TP.Pts[i], TP.Pts[i + 1], L.ClosestParameter(inter1)).Dir;
+                    refined.Pts.Add(newPt);
+                    if (LCI != LineCylinderIntersection.Single)
+                    {
+                        newPt = new ToolPoint(TP.Pts[i]);
+                        newPt.Pt = inter1;
+                        newPt.Dir = M.Interpolate(TP.Pts[i], TP.Pts[i + 1], L.ClosestParameter(inter2)).Dir;
                         refined.Pts.Add(newPt);
                     }
                 }
@@ -417,6 +541,8 @@ namespace CAMel.Types
                     return this.Refine_Shape(TP, M);
                 case FormType.Box:
                     return this.Refine_Box(TP, M);
+                case FormType.Cylinder:
+                    return this.Refine_Cylinder(TP, M);
                 default:
                     throw new NotImplementedException("Unknown FormType for material Form.");
 	            }
@@ -434,7 +560,7 @@ namespace CAMel.Types
             Vector3d Norm;
 
             // check if we have something to do
-            if(TP.Additions.insert && irTP.Pts.Count > 0) // add insert
+            if (TP.Additions.insert && irTP.Pts.Count > 0) // add insert
             {
                 //note we do this backwards adding points to the start of the path.
 
@@ -444,33 +570,21 @@ namespace CAMel.Types
                 // point on material surface
 
                 ToolPoint tempTP = new ToolPoint(irTP.Pts[0]);
-                tempTP.Pt = tempTP.Pt + Dir*dist;
+                tempTP.Pt = tempTP.Pt + Dir * dist;
                 tempTP.feed = TP.MatTool.feedPlunge;
                 irTP.Pts.Insert(0, tempTP);
 
                 // point out at safe distance
 
-                switch (this.FT)
-                {
-                    case FormType.Box:
-                    case FormType.Plane:
-                        tempTP = new ToolPoint(irTP.Pts[0]);
-                        tempTP.Pt = tempTP.Pt + Norm * this.safeDistance;
-                        tempTP.feed = 0; // we can use a rapid move
-                        irTP.Pts.Insert(0, tempTP);
-                        break;
-                    case FormType.Brep:
-                        // Can't work out how to do this right now!
-                        // TODO Brep Form: Safe Push in for insert
-                        throw new NotImplementedException("Breps can be too difficult!");
-                    default:
-                        throw new NotImplementedException("Unknown FormType for material Form.");
-                }
+                tempTP = new ToolPoint(irTP.Pts[0]);
+                tempTP.Pt = tempTP.Pt + Norm * this.safeDistance;
+                tempTP.feed = 0; // we can use a rapid move
+                irTP.Pts.Insert(0, tempTP);
             }
             if (TP.Additions.retract && irTP.Pts.Count > 0) // add retract
             {
                 // get distance to surface and retract direction
-                dist = this.MatDist(irTP.Pts[irTP.Pts.Count-1], M, TP.MatTool, out Dir, out Norm);
+                dist = this.MatDist(irTP.Pts[irTP.Pts.Count - 1], M, TP.MatTool, out Dir, out Norm);
 
                 // set speed to the plunge feed rate.
 
@@ -479,31 +593,18 @@ namespace CAMel.Types
                 // Pull back to surface
 
                 ToolPoint tempTP = new ToolPoint(irTP.Pts[irTP.Pts.Count - 1]);
-                tempTP.Pt = tempTP.Pt + Dir*dist;
+                tempTP.Pt = tempTP.Pt + Dir * dist;
                 tempTP.feed = 0; // we can use a rapid move
 
                 irTP.Pts.Add(tempTP);
 
                 // Pull away to safe distance
 
-                switch (this.FT)
-                {
-                    case FormType.Plane:
-                    case FormType.Box:
-                        tempTP = new ToolPoint(irTP.Pts[irTP.Pts.Count - 1]);
-                        tempTP.Pt = tempTP.Pt + Norm * this.safeDistance;
-                        tempTP.feed = 0; // we can use a rapid move
-                        irTP.Pts.Add(tempTP);
-                        break;
-                    case FormType.Brep:
-                        // Can't work out how to do this right now!
-                        // TODO Brep Form: Safe Pull Away for retract
-                        throw new NotImplementedException("Breps do not have safe retract implemented");
-                    default:
-                        throw new NotImplementedException("Unknown FormType for material Form.");
-                }
-            } 
-
+                tempTP = new ToolPoint(irTP.Pts[irTP.Pts.Count - 1]);
+                tempTP.Pt = tempTP.Pt + Norm * this.safeDistance;
+                tempTP.feed = 0; // we can use a rapid move
+                irTP.Pts.Add(tempTP);
+            }
             return irTP;
         }
 
@@ -516,18 +617,38 @@ namespace CAMel.Types
                 case FormType.Plane:
                     Point3d plPt;
                     this.Pl.RemapToPlaneSpace(toolPoint.Pt, out plPt);
-                    safeD = plPt.Z - this.materialTolerance - this.safeDistance;
+                    safeD = plPt.Z;
                     break;
                 case FormType.Box:
-                    safeD = this.Bx.ClosestPoint(toolPoint.Pt).DistanceTo(toolPoint.Pt) - this.materialTolerance - this.safeDistance;
+                    safeD = this.Bx.ClosestPoint(toolPoint.Pt).DistanceTo(toolPoint.Pt);
+                    if(this.Bx.Contains(toolPoint.Pt)) safeD = -1*safeD;
+                    break;
+                case FormType.Cylinder:
+                    Plane Pl = new Plane(this.Cy.Center,this.Cy.Axis);
+                    Pl.RemapToPlaneSpace(toolPoint.Pt, out plPt);
+                    double r = new Vector3d(plPt.X,plPt.Y,0).Length;
+                    double Cr = this.Cy.CircleAt(0).Radius;
+
+                    if(plPt.Z>=this.Cy.Height1 && plPt.Z <= this.Cy.Height2) // closest point on curved surface
+                    {
+                        safeD = r - Cr;
+                    } else // closest point on top or bottom
+                    {
+                        double useH;
+                        if(plPt.Z < this.Cy.Height1) { useH = this.Cy.Height1; } //identify top or bottom
+                        else { useH = this.Cy.Height2; }
+
+                        if(r < Cr) { safeD = Math.Abs(plPt.Z - useH); } // closestpoint on end face
+                        else { safeD = this.Cy.CircleAt(useH).ClosestPoint(toolPoint.Pt).DistanceTo(toolPoint.Pt); } // closestpoint on edge
+                    }
                     break;
                 case FormType.Brep:
-                    safeD=this.Shape.ClosestPoint(toolPoint.Pt).DistanceTo(toolPoint.Pt) - this.materialTolerance - this.safeDistance;
+                    safeD=this.Shape.ClosestPoint(toolPoint.Pt).DistanceTo(toolPoint.Pt);
                     break;
                 default:
                     throw new NotImplementedException("Unknown FormType for material Form.");
             }
-            return safeD;
+            return safeD-this.materialTolerance-this.safeDistance;
         }
 
         public double closestDangerLinePlanePlane(Line L, Plane P1, Plane P2, out Point3d cPt, out Vector3d away)
@@ -621,32 +742,38 @@ namespace CAMel.Types
             switch (this.FT)
             {
                 case FormType.Box:
-                    
+                case FormType.Cylinder:
 
                     // first check for intersection 
                     // use box as mesh to pull normal info
-
-                    Mesh BoxMesh = Mesh.CreateFromBox(Bx,1,1,1);
+                    Mesh FormGeom;
+                    if (this.FT == FormType.Box)
+                    {
+                        FormGeom = Mesh.CreateFromBox(Bx, 1, 1, 1);
+                    } else
+                    {
+                        FormGeom = Mesh.CreateFromCylinder(Cy,1,360);
+                    }
                     PolylineCurve C = new PolylineCurve(route);
                     Polyline P = new Polyline(route);
                     int[] fIds;
                     List<Point3d> IPts = new List<Point3d>();
-                    IPts.AddRange(Intersection.MeshPolyline(BoxMesh,C,out fIds));
+                    IPts.AddRange(Intersection.MeshPolyline(FormGeom,C,out fIds));
 
                     if(IPts.Count>0)
                     {
-                        BoxMesh.ClosestPoint((IPts[0] + IPts[1]) / 2.0, out cPt, out away, 0.0);
+                        FormGeom.ClosestPoint((IPts[0] + IPts[1]) / 2.0, out cPt, out away, 0.0);
                         dist = 0;
                         // The integer part of the polyline parameter is the line element
                         i = (int)Math.Floor(P.ClosestParameter(IPts[0]));
                     } else {
 
-                    // Use Rhino's curve brep closest, possibly slow!
-                        List<Brep> BoxBrep = new List<Brep>();
-                        BoxBrep.Add(this.Bx.ToBrep());
+                    // Use Rhino's curve closest, possibly slow!
+                        List<Mesh> GeomList = new List<Mesh>();
+                        GeomList.Add(FormGeom);
                         Point3d PoC, PoO; // point on curve and point on object for closest
                         int geo; // geometry for closest (won't be used)
-                        if (C.ClosestPoints(BoxBrep, out PoC, out PoO, out geo))
+                        if (C.ClosestPoints(GeomList, out PoC, out PoO, out geo))
                         {
                             cPt = PoC;
                             away = (Vector3d)(PoC - PoO);
@@ -667,23 +794,16 @@ namespace CAMel.Types
                     double localDist;
                     Vector3d localAway;
                     Point3d localcPt;
-                    if(toForm.FT==FormType.Plane)
+                    for (int j = 0; j < route.Count - 1; j++)
                     {
-                        for (int j = 0; j < route.Count-1; j++)
+                        localDist = closestDangerLinePlanePlane(new Line(route[j], route[j + 1]), this.Pl, toForm.Pl, out localcPt, out localAway);
+                        if (localDist < dist)
                         {
-                            localDist = closestDangerLinePlanePlane(new Line(route[j], route[j + 1]), this.Pl, toForm.Pl, out localcPt, out localAway);
-                            if(localDist < dist)
-                            {
-                                dist = localDist;
-                                cPt = localcPt;
-                                away = localAway;
-                                i = j;
-                            }
+                            dist = localDist;
+                            cPt = localcPt;
+                            away = localAway;
+                            i = j;
                         }
-                    }
-                    else
-                    {
-                        throw new NotImplementedException("Brep form not implemented yet");
                     }
                     break;
                 case FormType.Brep:
@@ -702,21 +822,28 @@ namespace CAMel.Types
         // intersects the material or not. 
         public bool TPRayIntersect(ToolPoint TP)
         {
-            bool inter;
+            bool inter = true;
+            Line Ray = new Line(TP.Pt,TP.Pt+10000*TP.Dir);
             switch (this.FT)
             {
                 case FormType.Box:
                     Interval Val = new Interval();
-                    if(Intersection.LineBox(new Line(TP.Pt,TP.Pt+TP.Dir),this.Bx,0,out Val))
-                    {
-                        inter = Val.T0<0;
-                    } else
-                    {
-                        inter = false;
-                    }
+                    if(Intersection.LineBox(Ray,this.Bx,0,out Val)) { inter = Val.T0<0; } 
+                    else { inter = false; }
+                    break;
+                case FormType.Cylinder:
+                    Point3d inter1 = new Point3d(), inter2 = new Point3d();
+                    LineCylinderIntersection LCI = Intersection.LineCylinder(Ray, this.Cy, out inter1, out inter2);
+                    if (LCI == LineCylinderIntersection.None) { inter = false; }
+                    else { inter = true; }
+                    break;
+                case FormType.Plane:
+                    double para;
+                    inter = Intersection.LinePlane(Ray, this.Pl, out para);
+                    if (para < 0) { inter = false; }
                     break;
                 default:
-                    throw new System.NotImplementedException("TPRayIntersect not implemented for Planes or Breps");
+                    throw new System.NotImplementedException("TPRayIntersect not implemented for Breps");
             }
             return inter;
         }
