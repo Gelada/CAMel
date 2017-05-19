@@ -57,7 +57,7 @@ namespace CAMel
             if (!DA.GetData(2, ref foot)) return;
             if (!DA.GetData(3, ref PJ)) return;
 
-            Machine M = new Machine(name, MachineTypes.ThreeAxis, head, foot);
+            Machine M = new Machine(name, MachineTypes.ThreeAxis, head, foot,"","");
 
             DA.SetData(0, M);
         }

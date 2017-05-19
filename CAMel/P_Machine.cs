@@ -30,8 +30,10 @@ namespace CAMel.Types
     {
         public string name;
         public MachineTypes type;
+        public string filestart;
         public string header;
         public string footer;
+        public string fileend;
         public char CommentChar;
         public char endCommentChar;
         public string SpeedChangeCommand;
@@ -46,6 +48,8 @@ namespace CAMel.Types
             this.type = MachineTypes.ThreeAxis;
             this.header = "";
             this.footer = "";
+            this.filestart = "";
+            this.fileend = "";
             this.CommentChar = '(';
             this.endCommentChar = ')';
             this.SectionBreak = "(------------------------------------------)";
@@ -60,6 +64,8 @@ namespace CAMel.Types
             this.type = MachineTypes.ThreeAxis;
             this.header = "";
             this.footer = "";
+            this.filestart = "";
+            this.fileend = "";
             this.CommentChar = '(';
             this.endCommentChar = ')';
             this.SectionBreak = "(------------------------------------------)";
@@ -68,12 +74,14 @@ namespace CAMel.Types
             this.Pivot = Vector3d.Zero;
         }
         // All details
-        public Machine(string Name, MachineTypes Type, string Header, string Footer)
+        public Machine(string Name, MachineTypes Type, string Header, string Footer, string filestart, string fileend)
         {
             this.name = Name;
             this.type = Type;
             this.header = Header;
             this.footer = Footer;
+            this.filestart = filestart;
+            this.fileend = fileend;
             this.CommentChar = '(';
             this.endCommentChar = ')';
             this.SectionBreak = "(------------------------------------------)";
@@ -89,6 +97,8 @@ namespace CAMel.Types
             this.type = M.type;
             this.header = M.header;
             this.footer = M.footer;
+            this.filestart = M.filestart;
+            this.fileend = M.fileend;
             this.CommentChar = M.CommentChar;
             this.endCommentChar = M.endCommentChar;
             this.SectionBreak = M.SectionBreak;
@@ -1089,9 +1099,9 @@ namespace CAMel.Types
             this.Value = new Machine(Name);
         }
         // All details
-        public GH_Machine(string Name, MachineTypes Type, string Header, string Footer)
+        public GH_Machine(string Name, MachineTypes Type, string Header, string Footer, string filestart, string fileend)
         {
-            this.Value = new Machine(Name, Type, Header, Footer);
+            this.Value = new Machine(Name, Type, Header, Footer, filestart, fileend);
         }
         // Unwrapped type
         public GH_Machine(Machine M)

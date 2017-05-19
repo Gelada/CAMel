@@ -206,7 +206,11 @@ namespace CAMel.Types
         {
             return this.Code.ToString();
         }
-
+        
+        public void AppendLineNoNum(string L)
+        {
+            if (L.Length > 0) { this.Code.AppendLine(L); }  
+        }
         public void AppendLine(string L)
         {
             string line = L;

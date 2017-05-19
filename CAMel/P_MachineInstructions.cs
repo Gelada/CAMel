@@ -104,6 +104,7 @@ namespace CAMel.Types
         public void WriteCode(ref CodeInfo Co)
         {
             DateTime thisDay = DateTime.Now;
+            Co.AppendLineNoNum(this.Mach.filestart);
             Co.AppendLine(this.Mach.SectionBreak);
             if (this.name != "") Co.AppendLine(this.Mach.CommentChar + " " + this.name + this.Mach.endCommentChar);
             Co.AppendLine(this.Mach.CommentChar.ToString() + this.Mach.endCommentChar);
@@ -131,6 +132,7 @@ namespace CAMel.Types
             Co.AppendLine(this.Mach.SectionBreak);
 
             Co.Append(this.Mach.footer);
+            Co.AppendLineNoNum(this.Mach.fileend);
         }
     }
 

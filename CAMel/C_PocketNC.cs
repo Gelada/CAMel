@@ -54,7 +54,7 @@ namespace CAMel
             if (!DA.GetData(1, ref foot)) return;
             if (!DA.GetData(2, ref PJ)) return;
 
-            Machine M = new Machine("PocketNC", MachineTypes.PocketNC, head, foot);
+            Machine M = new Machine("PocketNC", MachineTypes.PocketNC, head, foot, "%","%");
             M.Pivot = new Vector3d(0, 0, 3.6);
             M.PathJump = PJ;
             M.CommentChar = '(';
