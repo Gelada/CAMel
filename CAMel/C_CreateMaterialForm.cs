@@ -50,7 +50,7 @@ namespace CAMel
         {
             List<MachineOperation> MO = new List<MachineOperation>();
 
-            Object G = null;
+            IGH_Goo G = null;
             double SD = 0, T=0;
 
             if (!DA.GetData(0, ref G)) return;
@@ -58,9 +58,13 @@ namespace CAMel
             if (!DA.GetData(2, ref T)) return;
             MaterialForm MF = null;
 
-            if(G.GetType() == typeof(Plane)) { MF = new MaterialForm((Plane)G, SD, T); }
-            else if (G.GetType() == typeof(Box)) { MF = new MaterialForm((Box)G, SD, T); }
-            else if (G.GetType() == typeof(Cylinder)) { MF = new MaterialForm((Cylinder)G, SD, T); }
+            Plane Pl = new Plane();
+            Box Bx = new Box();
+            Cylinder Cy = new Cylinder();
+
+            if(G.CastTo<Plane>(out Pl)) { MF = new MaterialForm(Pl, SD, T); }
+            else if (G.CastTo<Box>(out Bx)) { MF = new MaterialForm(Bx, SD, T); }
+            else if (G.CastTo<Cylinder>(out Cy)) { MF = new MaterialForm(Cy, SD, T); }
             else { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Plane, a Box or a Cylinder. "); }
 
             DA.SetData(0, MF);

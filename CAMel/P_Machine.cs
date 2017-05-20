@@ -415,6 +415,8 @@ namespace CAMel.Types
                 {
                     feed = TP.Pts[0].feed;
                     speed = TP.Pts[0].speed;
+                    if (feed < 0) { feed = TP.MatTool.feedCut; }
+                    if (speed < 0) { speed = TP.MatTool.speed; }
                     AB = this.Orient_FiveAxisABP(TP.Pts[0]);
                     FChange = true;
                     SChange = false;

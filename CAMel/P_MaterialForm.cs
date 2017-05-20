@@ -769,8 +769,16 @@ namespace CAMel.Types
                     } else {
 
                     // Use Rhino's curve closest, possibly slow!
-                        List<Mesh> GeomList = new List<Mesh>();
-                        GeomList.Add(FormGeom);
+                        List<Brep> GeomList = new List<Brep>();
+                        switch (this.FT)
+                        {
+                            case FormType.Cylinder:
+                                GeomList.Add(this.Cy.ToBrep(true,true));
+                                break;
+                            case FormType.Box:
+                                GeomList.Add(this.Bx.ToBrep());
+                                break;
+                        }
                         Point3d PoC, PoO; // point on curve and point on object for closest
                         int geo; // geometry for closest (won't be used)
                         if (C.ClosestPoints(GeomList, out PoC, out PoO, out geo))
