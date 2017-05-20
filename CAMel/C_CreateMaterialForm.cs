@@ -57,7 +57,7 @@ namespace CAMel
             if (!DA.GetData(1, ref SD)) return;
             if (!DA.GetData(2, ref T)) return;
             MaterialForm MF = null;
-            
+
             if(G.GetType() == typeof(Plane)) { MF = new MaterialForm((Plane)G, SD, T); }
             else if (G.GetType() == typeof(Box)) { MF = new MaterialForm((Box)G, SD, T); }
             else if (G.GetType() == typeof(Cylinder)) { MF = new MaterialForm((Cylinder)G, SD, T); }

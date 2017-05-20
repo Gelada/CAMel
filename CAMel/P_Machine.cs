@@ -197,6 +197,13 @@ namespace CAMel.Types
             machinePt = OP;
             return GPoint;
         }
+        private string IK_PocketNC_orient(MaterialTool materialTool, Vector2d AB)
+        {
+            String GPoint = "";
+            GPoint += "A" + (180 * AB.X / Math.PI).ToString("0.000") + " B" + (180 * AB.Y / Math.PI).ToString("0.000");
+
+            return GPoint;
+        }
 
         // Always gives B from -pi to pi and A from -pi/2 to pi/2.
         private Vector2d Orient_FiveAxisABP(ToolPoint TP)
@@ -222,6 +229,7 @@ namespace CAMel.Types
 
             return new Vector2d(Ao, Bo);
         }
+
 
         // Call the correct Code Writer
 
@@ -399,6 +407,7 @@ namespace CAMel.Types
             Vector2d AB,newAB;
             double Bto = 0;  // Allow for smooth adjustment through the cusp with A at 90.
             int Bsteps = 0;  //
+            string PtCode;
            
             if (beforePoint == null) // There were no previous points
             {
@@ -408,7 +417,13 @@ namespace CAMel.Types
                     speed = TP.Pts[0].speed;
                     AB = this.Orient_FiveAxisABP(TP.Pts[0]);
                     FChange = true;
-                    SChange = true;
+                    SChange = false;
+                    // making the first move. Orient the tool first
+
+                    PtCode = IK_PocketNC_orient(TP.MatTool, AB);
+                    PtCode = "G00 " + PtCode; 
+                    PtCode = this.SpeedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode;
+                    Co.Append(PtCode);
                 }
                 else
                 {
@@ -424,9 +439,9 @@ namespace CAMel.Types
                 AB = new Vector2d(Co.MachineState["A"], Co.MachineState["B"]);
             }
 
-            if (feed < 0) feed = TP.MatTool.feedCut;
-            if (speed < 0) speed = TP.MatTool.speed;
-            string PtCode;
+            if (feed < 0) { feed = TP.MatTool.feedCut; }
+            if (speed < 0) { speed = TP.MatTool.speed; }
+            
             int i,j;
             ToolPoint Pt;
             Point3d MachPos = new Point3d(0,0,0);
@@ -477,8 +492,6 @@ namespace CAMel.Types
 
                 // adjust B to correct period
                 newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((AB.Y-newAB.Y)/(2.0*Math.PI));
-
-
 
                 // set A to 90 if it is close (to avoid a lot of messing with B for no real reason)
 
@@ -537,9 +550,9 @@ namespace CAMel.Types
                     }
                 }
 
-                // (throw bounds error if B goes past +-9999 degrees or A is not between -5 and 95)
+                // (throw bounds error if B goes past +-999999 degrees or A is not between -5 and 95)
 
-                if (Math.Abs(180.0*newAB.Y/(Math.PI)) > 9999)
+                if (Math.Abs(180.0*newAB.Y/(Math.PI)) > 999999)
                 {
                     Co.AddError("Out of bounds on B");
                     Co.AppendLine(this.CommentChar + "Out of bounds on B" + this.endCommentChar);
@@ -556,20 +569,10 @@ namespace CAMel.Types
 
                 // Add the position information
 
-                //Pt.Pt = new Point3d(0, 0, 0);
-                //Pt.Dir = new Vector3d(-2, 1, -1);
-                //AB = Orient_FiveAxisABP(Pt);
-
                 PtCode = IK_PocketNC(Pt, TP.MatTool,AB, ref MachPos);
 
-                //Pt.Pt = Pt.Pt - Pt.Dir;
-
-                string PtCode2 = IK_PocketNC(Pt, TP.MatTool, AB, ref MachPos);
-
                 // Act if feed has changed
-                // HACK!
-                // Add the start instruction every time as we are dropping lines.
-                if (true)
+                if (FChange)
                 {
                     if (feed == 0)
                         PtCode = "G00 " + PtCode;
@@ -623,7 +626,7 @@ namespace CAMel.Types
                 Co.MachineState.Add("A", AB.X);
                 Co.MachineState.Add("B", AB.Y);
             }
-            else PtOut = beforePoint;
+            else { PtOut = beforePoint; }
 
             return PtOut;
         }

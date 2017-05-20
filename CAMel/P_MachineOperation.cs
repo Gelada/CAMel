@@ -135,8 +135,8 @@ namespace CAMel.Types
             bool first = true;
             ToolPoint lastPoint; // let the next path know where it is coming from (details like speed and feed can be transferred).
 
-            if (sP == null || sP.Pts.Count == 0) lastPoint = null;
-            else lastPoint = sP.Pts[sP.Pts.Count - 1];
+            if (sP == null || sP.Pts.Count == 0) { lastPoint = null; }
+            else { lastPoint = sP.Pts[sP.Pts.Count - 1]; }
 
             foreach (ToolPath TP in this.TPs)
             {
@@ -166,7 +166,7 @@ namespace CAMel.Types
 
                         if (Transition.Pts.Count > 0)
                             lastPoint = Transition.WriteCode(ref Co, M, lastPoint);
-                    }
+                    } 
                     // Add Path to Code
 
                     lastPoint = TP.WriteCode(ref Co, M, lastPoint);
