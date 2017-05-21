@@ -116,7 +116,22 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            return "Surfacing Path";
+            string op= "Surfacing:";
+            switch (this.SP)
+            {
+                case SurfProj.Parallel:
+                    op = op + " Parallel Projection";
+                    break;
+                case SurfProj.Cylindrical:
+                    op = op + " Cylindrical Projection";
+                    break;
+                case SurfProj.Spherical:
+                    op = op + " Cylindrical Projection";
+                    break;
+                default:
+                    break;
+            }
+            return op;
         }
 
         // Different calls to Generate a Machine Operation from different surfaces
@@ -163,7 +178,7 @@ namespace CAMel.Types
             List<Vector3d> tempN;
             Vector3d proj;
             Line Ray;
-            Vector3d Norm = new Vector3d(0, 0, 0);
+            Vector3d Norm = new Vector3d();
             ToolPoint outPt;
             ToolPath tempTP;
             bool hit;
@@ -177,10 +192,14 @@ namespace CAMel.Types
                     proj = ProjDir(TP.Pts[i].Pt);
                     Ray = new Line(TP.Pts[i].Pt, proj);
                     outPt = new ToolPoint(this.firstintersect(Ray, out Norm, out hit), proj);
-                    tempN.Add(Norm);
+
                     if (hit)
                     {
                         tempTP.Pts.Add(outPt);
+                        // Choose norm direction confirming
+                        // it points out from the surface (the projection comes into the surface
+                        if (Norm * proj > 0) { tempN.Add(-Norm); } 
+                        else { tempN.Add(Norm); }
                     }
                     else if(tempTP.Pts.Count > 0 )
                     {
@@ -199,9 +218,9 @@ namespace CAMel.Types
                     Norms.Add(tempN);
                 }
             }
+
             Vector3d tangent, PTplaneN, STNorm, PNplaneN;
  
-
             for(int j=0;j<newTPs.Count;j++)
             {
                 for (int i = 0; i < newTPs[j].Pts.Count; i++)
@@ -211,10 +230,7 @@ namespace CAMel.Types
                     {
                         tangent = newTPs[j].Pts[i].Pt - newTPs[j].Pts[i - 1].Pt;
                     }
-                    else if(i== 46)
-                    {
-                        tangent = newTPs[j].Pts[i + 1].Pt - newTPs[j].Pts[i].Pt;
-                    } else
+                    else
                     {
                         tangent = newTPs[j].Pts[i + 1].Pt - newTPs[j].Pts[i].Pt;
                     }
@@ -222,21 +238,22 @@ namespace CAMel.Types
                     {
                         case SurfToolDir.Projection: // already set
                             break; 
-                        case SurfToolDir.PathTangent:
+                        case SurfToolDir.PathNormal:
                             // get normal to tangent on surface
                             STNorm = Vector3d.CrossProduct(Norms[j][i], tangent);
                             PNplaneN = Vector3d.CrossProduct(newTPs[j].Pts[i].Dir, STNorm);
                             // find vector normal to the surface in the line orthogonal to the tangent
-                            Vector3d.CrossProduct(PNplaneN, STNorm);
+                            newTPs[j].Pts[i].Dir = Vector3d.CrossProduct(STNorm,PNplaneN);
                             break;
-                        case SurfToolDir.PathNormal:
+                        case SurfToolDir.PathTangent:
                             // get normal to proj and tangent
                             PTplaneN = Vector3d.CrossProduct(newTPs[j].Pts[i].Dir, tangent);
                             // find vector normal to tangent and in the plane of tangent and projection
-                            Vector3d.CrossProduct(PTplaneN, tangent);
+                            newTPs[j].Pts[i].Dir = Vector3d.CrossProduct(tangent,PTplaneN);
                             break;
-                        case SurfToolDir.Normal: // set to Norm
-                            newTPs[j].Pts[i].Dir = Norms[j][i];
+                        case SurfToolDir.Normal: // set to negative Norm as we use the direction
+                                                 // from pivot to tool
+                            newTPs[j].Pts[i].Dir = -Norms[j][i]; 
                             break;
                     }
                     // Adjust the tool position based on the surface normal and the tool orientation
@@ -246,20 +263,20 @@ namespace CAMel.Types
 
                     // Move to offset using normal
 
-                    newTPs[j].Pts[i].Pt = newTPs[j].Pts[i].Pt + (MT.toolWidth/2)*Norms[j][i];
+                    newTPs[j].Pts[i].Pt = newTPs[j].Pts[i].Pt + offset*(MT.toolWidth/2)*Norms[j][i];
                 }
             }
 
             // make the machine operation
-            MachineOperation MO = new MachineOperation("Surfacing Path");
+            MachineOperation MO = new MachineOperation(this.ToString());
             MO.TPs = newTPs;
             return MO;
         }
 
         private Point3d firstintersect(Line Ray, out Vector3d Norm, out bool hit)
         {
-            Point3d op = new Point3d(0, 0, 0);
-            Norm = new Vector3d(0, 0, 0);
+            Point3d op = new Point3d();
+            Norm = new Vector3d();
             Ray3d RayL = new Ray3d(Ray.From, Ray.UnitTangent);
             hit = false;
             switch (this.ST)
@@ -274,7 +291,7 @@ namespace CAMel.Types
                     {
                         hit = true;
                         op = interP[0];
-                        Point3d cp = new Point3d(0,0,0); ComponentIndex ci; double s, t; // catching infor we won't use;
+                        Point3d cp = new Point3d(); ComponentIndex ci; double s, t; // catching infor we won't use;
                         // call closestpoint to find norm
                         B.ClosestPoint(op, out cp, out ci, out s, out t, 0.5, out Norm);
                     }
@@ -301,7 +318,7 @@ namespace CAMel.Types
         // Give the direction of projection for a specific point based on the projection type.
         private Vector3d ProjDir(Point3d Pt)
         {
-            Vector3d pd = new Vector3d(0, 0, 0);
+            Vector3d pd = new Vector3d();
             switch (this.SP)
             {
                 case SurfProj.Parallel:

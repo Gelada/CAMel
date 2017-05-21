@@ -145,7 +145,7 @@ namespace CAMel.Types
         
             return osTp;
         }
-
+        // Find the path offset so the cutting surface of the tool is on the path
         public Vector3d CutOffset(Vector3d Dir, Vector3d Norm)
         {
             Vector3d uDir = Dir;
@@ -156,10 +156,10 @@ namespace CAMel.Types
             switch (this.ES)
             {
                 case EndShape.Ball: // find correct position of ball centre and then push to tip. 
-                    os = this.toolWidth * (uNorm - uDir) / 2;
+                    os = this.toolWidth * (uNorm + uDir) / 2;
                     break;
                 case EndShape.Square: // Cut with corner if the angle is greate than .01 radians
-                    if(Vector3d.VectorAngle(uDir,uNorm) < .01)
+                    if(Vector3d.VectorAngle(uDir,uNorm)-Math.PI < .01)
                     {
                         os = new Vector3d(0, 0, 0);
                     }
@@ -167,7 +167,7 @@ namespace CAMel.Types
                     {
                         // find the normal to the plane give by the tool direction and the norm
                         Vector3d PlN = Vector3d.CrossProduct(uNorm, uDir);
-                        // Now want a vecto on that plane orthogonal to tool direction
+                        // Now want a vector on that plane orthogonal to tool direction
                         os = this.toolWidth * Vector3d.CrossProduct(uDir, PlN) / 2;
                     }
                     break;
