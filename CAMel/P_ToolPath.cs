@@ -228,7 +228,8 @@ namespace CAMel.Types
                 List<double> MatDist = new List<double>();
                 List<int> NumSteps = new List<int>();
                 int MaxSteps = 0; // Maximum distance of all points. 
-                List<Vector3d> MatDir = new List<Vector3d>();
+                List<Vector3d> MatDir = new List<Vector3d>(); // list of tool directions
+                List<Vector3d> MatNorm = new List<Vector3d>(); // list of surface normals
                 Vector3d Dir, Norm;
 
                 // ask the material form to refine the path
@@ -238,8 +239,9 @@ namespace CAMel.Types
                 foreach(ToolPoint TP in refPath.Pts)
                 {
                     MatDist.Add(useTP.MatForm.MatDist(TP,M, useTP.MatTool, out Dir, out Norm)); // distance to material surface
-                    if (MatDist[MatDist.Count - 1] < 0) MatDist[MatDist.Count - 1] = 0; //avoid negative distances
+                    //if (MatDist[MatDist.Count - 1] < 0) MatDist[MatDist.Count - 1] = 0; //avoid negative distances
                     MatDir.Add(new Vector3d(Dir));
+                    MatNorm.Add(new Vector3d(Norm));
                     // calculate maximum number of cutDepth height steps down to finishDepth above material
                     NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1]-useTP.MatTool.finishDepth)/useTP.MatTool.cutDepth));
                     if(NumSteps[NumSteps.Count - 1] > MaxSteps) MaxSteps = NumSteps[NumSteps.Count - 1];

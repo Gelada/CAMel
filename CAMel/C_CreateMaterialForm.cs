@@ -60,12 +60,26 @@ namespace CAMel
 
             Plane Pl = new Plane();
             Box Bx = new Box();
-            Cylinder Cy = new Cylinder();
+            Surface S = null;
+            Brep B = null;
+            bool err=false;
 
             if(G.CastTo<Plane>(out Pl)) { MF = new MaterialForm(Pl, SD, T); }
             else if (G.CastTo<Box>(out Bx)) { MF = new MaterialForm(Bx, SD, T); }
-            else if (G.CastTo<Cylinder>(out Cy)) { MF = new MaterialForm(Cy, SD, T); }
-            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Plane, a Box or a Cylinder. "); }
+            else if (G.CastTo<Surface>(out S)) 
+            { 
+                Cylinder Cy;
+                if(S.TryGetCylinder(out Cy)) { MF = new MaterialForm(Cy, SD, T); }
+                else {err = true; }
+            }
+            else if (G.CastTo<Brep>(out B))
+            {
+                Cylinder Cy;
+                if (B.Surfaces[0].TryGetCylinder(out Cy)) { MF = new MaterialForm(Cy, SD, T); }
+                else { err = true; }
+            }
+            else { err = true; }
+            if(err) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Plane, a Box or a Cylinder. "); }
 
             DA.SetData(0, MF);
         }

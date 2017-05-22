@@ -277,9 +277,12 @@ namespace CAMel.Types
                     // parameters on the line that enter and leave box
                     // 0 is the toolpoint and anything positive lies along the tool
 
-                    double interparam; // Intersection param, used to find the normal direction. 
+                    double interparam; // Intersection param, used to find the normal direction.
+ 
+                    Box thickBx = this.Bx; // thicken box by materialTolerance
+                    thickBx.Inflate(this.materialTolerance);
 
-                    if (!Intersection.LineBox(L,this.Bx,this.materialTolerance,out paras))
+                    if (!Intersection.LineBox(L,thickBx,0.0,out paras))
                     { // line never hits box
                         dist = 0;
                         interparam = 0;
@@ -295,44 +298,45 @@ namespace CAMel.Types
                     // find the normal at the intersection, or closest point on the box
                     // box does not itself give normals so we will look at it as a mesh
 
-                    Mesh MBox = Mesh.CreateFromBox(this.Bx, 1, 1, 1);
+                    Mesh MBox = Mesh.CreateFromBox(thickBx, 1, 1, 1);
                     Point3d PoM = new Point3d();
                     MBox.ClosestPoint(L.PointAt(interparam), out PoM, out Norm, 0.0);
 
                     break;
                 case FormType.Cylinder:
-                    Point3d inter1 = new Point3d(0,0,0), inter2=new Point3d(0,0,0);
+                    Point3d inter1 = new Point3d(), inter2=new Point3d();
                     Point3d CP; 
-                    L.Extend(0,10000); // Extend line to make sure it intersects.
+                    Cylinder useCy; // Expand cylinder by materialTolerance
+                    Circle baseC = this.Cy.CircleAt(0);
+                    baseC.Radius = baseC.Radius+this.materialTolerance;
+                    useCy = new Cylinder(baseC);
+                    useCy.Height1 = this.Cy.Height1 - this.materialTolerance;
+                    useCy.Height2 = this.Cy.Height2 + this.materialTolerance;
+                    
                     LineCylinderIntersection LCI;
-                    LCI=Intersection.LineCylinder(L,this.Cy,out inter1, out inter2);
+                    LCI=Intersection.LineCylinder(L,useCy,out inter1, out inter2);
                     switch (LCI)
                     {
-		                case LineCylinderIntersection.Multiple: // Line through Cylinder
-                            CP = inter2;
-                            dist = inter2.DistanceTo(TP.Pt);
-                            break;
                         case LineCylinderIntersection.None: // No intersection
                             dist = 0;
                             CP = inter1;
                             break;
                         case LineCylinderIntersection.Overlap: // on surface but parallel
+		                case LineCylinderIntersection.Multiple: 
+		                case LineCylinderIntersection.Single: 
                             CP = inter2;
-                            dist = inter2.DistanceTo(TP.Pt);
-                            break;
-                        case LineCylinderIntersection.Single:
-                            CP = inter1;
-                            dist = inter1.DistanceTo(TP.Pt);
+                            dist = L.ClosestParameter(CP);
+                            if(dist < 0) { dist = 0; } // tool never reaches material
                             break;
                         default:
                             CP = new Point3d();
                             break;
                     }
                     
-                    // find the normal at the intersection, or closest point on the box
-                    // box does not itself give normals so we will look at it as a mesh
+                    // find the normal at the intersection, or closest point on the cylinder
+                    // cylinder does not itself give normals so we will look at it as a mesh
 
-                    Mesh CBox = Mesh.CreateFromCylinder(this.Cy,3,360);
+                    Mesh CBox = Mesh.CreateFromCylinder(useCy,1,360);
                     PoM = new Point3d();
                     CBox.ClosestPoint(CP, out PoM, out Norm, 0.0);
 
@@ -511,16 +515,24 @@ namespace CAMel.Types
 
                 if (LCI != LineCylinderIntersection.None)
                 {
-                    newPt = new ToolPoint(TP.Pts[i]);
-                    newPt.Pt = inter1;
-                    newPt.Dir = M.Interpolate(TP.Pts[i], TP.Pts[i + 1], L.ClosestParameter(inter1)).Dir;
-                    refined.Pts.Add(newPt);
-                    if (LCI != LineCylinderIntersection.Single)
+                    double param = L.ClosestParameter(inter1);
+                    if (param > 0 && param < 1)
                     {
                         newPt = new ToolPoint(TP.Pts[i]);
                         newPt.Pt = inter1;
-                        newPt.Dir = M.Interpolate(TP.Pts[i], TP.Pts[i + 1], L.ClosestParameter(inter2)).Dir;
-                        refined.Pts.Add(newPt);
+                        newPt.Dir = M.Interpolate(TP.Pts[i], TP.Pts[i + 1], param).Dir;
+                        refined.Pts.Add(newPt); 
+                    }
+                    if (LCI != LineCylinderIntersection.Single)
+                    {
+                        param = L.ClosestParameter(inter2);
+                        if (param > 0 && param < 1)
+                        {
+                            newPt = new ToolPoint(TP.Pts[i]);
+                            newPt.Pt = inter2;
+                            newPt.Dir = M.Interpolate(TP.Pts[i], TP.Pts[i + 1], param).Dir;
+                            refined.Pts.Add(newPt);
+                        }
                     }
                 }
                 refined.Pts.Add(TP.Pts[i + 1]);
@@ -531,6 +543,7 @@ namespace CAMel.Types
 
         // Add extra points to the toolpath where it intersects with the 
         // material between points. 
+
         public ToolPath Refine(ToolPath TP, Machine M)
         {
             switch (this.FT)
@@ -577,7 +590,7 @@ namespace CAMel.Types
                 // point out at safe distance
 
                 tempTP = new ToolPoint(irTP.Pts[0]);
-                tempTP.Pt = tempTP.Pt + Norm * this.safeDistance;
+                tempTP.Pt = tempTP.Pt + Norm * (this.safeDistance);
                 tempTP.feed = 0; // we can use a rapid move
                 irTP.Pts.Insert(0, tempTP);
             }
@@ -601,7 +614,7 @@ namespace CAMel.Types
                 // Pull away to safe distance
 
                 tempTP = new ToolPoint(irTP.Pts[irTP.Pts.Count - 1]);
-                tempTP.Pt = tempTP.Pt + Norm * this.safeDistance;
+                tempTP.Pt = tempTP.Pt + Norm * (this.safeDistance);
                 tempTP.feed = 0; // we can use a rapid move
                 irTP.Pts.Add(tempTP);
             }
@@ -631,7 +644,7 @@ namespace CAMel.Types
 
                     if(plPt.Z>=this.Cy.Height1 && plPt.Z <= this.Cy.Height2) // closest point on curved surface
                     {
-                        safeD = r - Cr;
+                        safeD = r-Cr;
                     } else // closest point on top or bottom
                     {
                         double useH;
@@ -831,19 +844,19 @@ namespace CAMel.Types
         public bool TPRayIntersect(ToolPoint TP)
         {
             bool inter = true;
-            Line Ray = new Line(TP.Pt,TP.Pt+10000*TP.Dir);
+            Line Ray = new Line(TP.Pt,TP.Pt-10000*TP.Dir);
             switch (this.FT)
             {
                 case FormType.Box:
                     Interval Val = new Interval();
-                    if(Intersection.LineBox(Ray,this.Bx,0,out Val)) { inter = Val.T0<0; } 
+                    if(Intersection.LineBox(Ray,this.Bx,0,out Val)) { inter = Val.T0>0; } 
                     else { inter = false; }
                     break;
                 case FormType.Cylinder:
                     Point3d inter1 = new Point3d(), inter2 = new Point3d();
                     LineCylinderIntersection LCI = Intersection.LineCylinder(Ray, this.Cy, out inter1, out inter2);
                     if (LCI == LineCylinderIntersection.None) { inter = false; }
-                    else { inter = true; }
+                    else { inter = (TP.Dir*(Vector3d)TP.Pt > TP.Dir*(Vector3d)inter1); }
                     break;
                 case FormType.Plane:
                     double para;

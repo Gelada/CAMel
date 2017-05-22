@@ -729,7 +729,6 @@ namespace CAMel.Types
                     }
                     i++;
                 }
-                ToolPoint Test = ReadTP_PocketNC(0, 0, -1, 45, 45, 8500, 1, 1);
 
             }
 
@@ -751,7 +750,7 @@ namespace CAMel.Types
             Dir.Transform(Transform.Rotation(-Math.PI*A/180.0, Vector3d.XAxis, Point3d.Origin));
             Dir.Transform(Transform.Rotation(-Math.PI*B/180.0, Vector3d.YAxis, Point3d.Origin));
 
-            return new ToolPoint(OP, Dir, S, F);
+            return new ToolPoint(OP, -Dir, S, F);
         }
 
         private ToolPath ReadCode_ThreeAxis(string Code)
@@ -829,7 +828,6 @@ namespace CAMel.Types
         }
 
         // Give the machine position somewhere on the move from one toolPoint to another.
-        // TODO PocketNC interpolate
         public ToolPoint Interpolate(ToolPoint toolPoint1, ToolPoint toolPoint2, double par)
         {
             ToolPoint TPo = new ToolPoint(toolPoint1);
@@ -850,6 +848,10 @@ namespace CAMel.Types
                     double Co = C1 * par + C2 * (1 - par);
 
                     TPo.Dir = new Vector3d(Math.Sin(Bo)*Math.Cos(Co), Math.Sin(Bo)*Math.Sin(Co), Math.Cos(Bo));
+                    break;
+                case MachineTypes.PocketNC:
+                    TPo.Pt = toolPoint1.Pt * par + toolPoint2.Pt * (1 - par);
+                    TPo.Dir = angShift(toolPoint1.Dir,toolPoint2.Dir,par,false);
                     break;
                 default:
                     throw new NotImplementedException("Machine Type has not implemented point interpolation.");
@@ -992,7 +994,7 @@ namespace CAMel.Types
                                 if(lng == true) 
                                 {   // something has gone horribly wrong and 
                                     // both angle change directions will hit the material
-                                    // 
+ 
                                     throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
                                 } else
                                 { // start again with the longer angle change

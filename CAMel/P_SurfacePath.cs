@@ -263,7 +263,7 @@ namespace CAMel.Types
 
                     // Move to offset using normal
 
-                    newTPs[j].Pts[i].Pt = newTPs[j].Pts[i].Pt + offset*(MT.toolWidth/2)*Norms[j][i];
+                    newTPs[j].Pts[i].Pt = newTPs[j].Pts[i].Pt + offset*Norms[j][i];
                 }
             }
 
