@@ -82,14 +82,9 @@ namespace CAMel.Types
             this.Pl = Plane.WorldXY;
             this.safeDistance = sD;
             this.materialTolerance = matTolerance;
-
-            // Cache the mesh once rather than generate it for every toolpath
-            Box thickBx = this.Bx;
-            thickBx.Inflate(this.materialTolerance);
-            this.cacheMesh = Mesh.CreateFromBox(thickBx, 1, 1, 1);
-            this.cacheBrep = thickBx.ToBrep();
+            toleranceBox(this.Bx, this.materialTolerance);
         }
-        // Box
+        // Cylinder
         public MaterialForm(Cylinder Cy, double sD, double matTolerance)
         {
             this.Cy = Cy;
@@ -97,18 +92,7 @@ namespace CAMel.Types
             this.Pl = Plane.WorldXY;
             this.safeDistance = sD;
             this.materialTolerance = matTolerance;
-
-            Cylinder useCy; // Expand cylinder by materialTolerance
-            Circle baseC = this.Cy.CircleAt(0);
-            baseC.Radius = baseC.Radius + this.materialTolerance;
-            useCy = new Cylinder(baseC);
-            useCy.Height1 = this.Cy.Height1 - this.materialTolerance;
-            useCy.Height2 = this.Cy.Height2 + this.materialTolerance;
-
-            // Cache the Cylinder expanded to material tolerances as specified and a mesh
-            this.tolerancedCylinder = useCy;
-            this.cacheMesh = Mesh.CreateFromCylinder(this.tolerancedCylinder, 1, 360);
-            this.cacheBrep = this.tolerancedCylinder.ToBrep(true, true);
+            toleranceCylinder(this.Cy.CircleAt(0), this.materialTolerance);
         }
         // Copy Constructor
         public MaterialForm(MaterialForm MF)
@@ -171,6 +155,7 @@ namespace CAMel.Types
                 stick = false;
             }
             this.FT = FormType.Box;
+            toleranceBox(this.Bx, this.materialTolerance);
             return stick;
         }
 
@@ -185,6 +170,7 @@ namespace CAMel.Types
                 stick = false;
             }
             this.FT = FormType.Cylinder;
+            toleranceCylinder(this.Cy.CircleAt(0), this.materialTolerance);
             return stick;
         }
 
@@ -884,6 +870,28 @@ namespace CAMel.Types
             }
             return inter;
         }
+
+        private void toleranceBox(Box B, double matTolerance)
+        {
+            // Cache the mesh once rather than generate it for every toolpath
+            B.Inflate(matTolerance);
+            this.cacheMesh = Mesh.CreateFromBox(B, 1, 1, 1);
+            this.cacheBrep = B.ToBrep();
+        }
+
+        private void toleranceCylinder(Circle C, double matTolerance)
+        {
+            Cylinder useCy; // Expand cylinder by matTolerance
+            C.Radius = C.Radius + matTolerance;
+            useCy = new Cylinder(C);
+            useCy.Height1 = this.Cy.Height1 - matTolerance;
+            useCy.Height2 = this.Cy.Height2 + matTolerance;
+
+            // Cache the Cylinder expanded to material tolerances as specified and a mesh
+            this.tolerancedCylinder = useCy;
+            this.cacheMesh = Mesh.CreateFromCylinder(this.tolerancedCylinder, 1, 360);
+            this.cacheBrep = this.tolerancedCylinder.ToBrep(true, true);
+        }
     }
 
     // Grasshopper Type Wrapper
@@ -957,6 +965,7 @@ namespace CAMel.Types
             }
             return false;
         }
+
     }
 
     // Grasshopper Parameter Wrapper
