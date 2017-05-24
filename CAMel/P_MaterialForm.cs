@@ -41,6 +41,8 @@ namespace CAMel.Types
         private Box Bx;
         private Cylinder Cy;
         private FormType FT; // Track how we are establishing material
+        private Mesh cacheMesh;
+        private Cylinder tolerancedCylinder;
 
         // Default Constructor with XY plane with safe distance 1;
         public MaterialForm()
@@ -50,6 +52,7 @@ namespace CAMel.Types
             this.Shape = null;
             this.safeDistance = 1;
             this.materialTolerance = 0;
+            this.cacheMesh = null;
         }
         // Plane
         public MaterialForm(Plane surfaceP,double safeD,double matTolerance)
@@ -77,6 +80,11 @@ namespace CAMel.Types
             this.Pl = Plane.WorldXY;
             this.safeDistance = sD;
             this.materialTolerance = matTolerance;
+
+            // Cache the mesh once rather than generate it for every toolpath
+            Box thickBx = this.Bx;
+            thickBx.Inflate(this.materialTolerance);
+            this.cacheMesh = Mesh.CreateFromBox(thickBx, 1, 1, 1);
         }
         // Box
         public MaterialForm(Cylinder Cy, double sD, double matTolerance)
@@ -86,6 +94,17 @@ namespace CAMel.Types
             this.Pl = Plane.WorldXY;
             this.safeDistance = sD;
             this.materialTolerance = matTolerance;
+
+            Cylinder useCy; // Expand cylinder by materialTolerance
+            Circle baseC = this.Cy.CircleAt(0);
+            baseC.Radius = baseC.Radius + this.materialTolerance;
+            useCy = new Cylinder(baseC);
+            useCy.Height1 = this.Cy.Height1 - this.materialTolerance;
+            useCy.Height2 = this.Cy.Height2 + this.materialTolerance;
+
+            // Cache the Cylinder exapnded to material tolerances as specified and a mesh
+            this.tolerancedCylinder = useCy;
+            this.cacheMesh = Mesh.CreateFromCylinder(useCy, 1, 360);
         }
         // Copy Constructor
         public MaterialForm(MaterialForm MF)
@@ -272,6 +291,10 @@ namespace CAMel.Types
                     Norm = this.Pl.ZAxis;
                     break;
                 case FormType.Box:
+                    if (this.cacheMesh == null) {
+                        throw new FieldAccessException("Mesh should have been cached for Box like Material Forms");
+                    }
+
                     Interval paras = new Interval();
                     // Intersect returns an interval given by the 
                     // parameters on the line that enter and leave box
@@ -297,24 +320,19 @@ namespace CAMel.Types
                     }
                     // find the normal at the intersection, or closest point on the box
                     // box does not itself give normals so we will look at it as a mesh
-
-                    Mesh MBox = Mesh.CreateFromBox(thickBx, 1, 1, 1);
                     Point3d PoM = new Point3d();
-                    MBox.ClosestPoint(L.PointAt(interparam), out PoM, out Norm, 0.0);
-
+                    this.cacheMesh.ClosestPoint(L.PointAt(interparam), out PoM, out Norm, 0.0);
                     break;
                 case FormType.Cylinder:
+                    if (this.cacheMesh == null)
+                    {
+                        throw new FieldAccessException("Mesh should have been cached for Cylinder like Material Forms");
+                    }
+
                     Point3d inter1 = new Point3d(), inter2=new Point3d();
                     Point3d CP; 
-                    Cylinder useCy; // Expand cylinder by materialTolerance
-                    Circle baseC = this.Cy.CircleAt(0);
-                    baseC.Radius = baseC.Radius+this.materialTolerance;
-                    useCy = new Cylinder(baseC);
-                    useCy.Height1 = this.Cy.Height1 - this.materialTolerance;
-                    useCy.Height2 = this.Cy.Height2 + this.materialTolerance;
-                    
                     LineCylinderIntersection LCI;
-                    LCI=Intersection.LineCylinder(L,useCy,out inter1, out inter2);
+                    LCI=Intersection.LineCylinder(L,this.tolerancedCylinder,out inter1, out inter2);
                     switch (LCI)
                     {
                         case LineCylinderIntersection.None: // No intersection
@@ -332,14 +350,11 @@ namespace CAMel.Types
                             CP = new Point3d();
                             break;
                     }
-                    
+
                     // find the normal at the intersection, or closest point on the cylinder
                     // cylinder does not itself give normals so we will look at it as a mesh
-
-                    Mesh CBox = Mesh.CreateFromCylinder(useCy,1,360);
                     PoM = new Point3d();
-                    CBox.ClosestPoint(CP, out PoM, out Norm, 0.0);
-
+                    this.cacheMesh.ClosestPoint(CP, out PoM, out Norm, 0.0);
                     break;
                /* case FormType.Brep:
                     
