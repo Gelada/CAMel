@@ -102,7 +102,7 @@ namespace CAMel.Types
             useCy.Height1 = this.Cy.Height1 - this.materialTolerance;
             useCy.Height2 = this.Cy.Height2 + this.materialTolerance;
 
-            // Cache the Cylinder exapnded to material tolerances as specified and a mesh
+            // Cache the Cylinder expanded to material tolerances as specified and a mesh
             this.tolerancedCylinder = useCy;
             this.cacheMesh = Mesh.CreateFromCylinder(useCy, 1, 360);
         }
@@ -116,6 +116,8 @@ namespace CAMel.Types
             this.Shape = MF.Shape;
             this.Bx = MF.Bx;
             this.Cy = MF.Cy;
+            this.tolerancedCylinder = MF.tolerancedCylinder;
+            this.cacheMesh = MF.cacheMesh;
         }
         // Duplicate
         public MaterialForm Duplicate()
