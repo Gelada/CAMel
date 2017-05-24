@@ -900,7 +900,10 @@ namespace CAMel.Types
                     // everything sorted!
                     // Warning this could race, it shouldn't though.
 
-                    while(dist < safeD)
+                    // Arbitrary epsilon of 1 millionth of a division use to take care of
+                    // really really close distances that are not exactly equal.
+
+                    while(dist + 1.0E-6 < safeD)
                     {
                         // add a new point to stay clear of danger
                         // DOC: How we find the new point so we do not get into an infinite loop
