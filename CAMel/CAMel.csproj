@@ -70,6 +70,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="C_CreatePocketingPath.cs" />
     <Compile Include="C_CreateSurfacePath.cs" />
     <Compile Include="C_Surfacing.cs" />
     <Compile Include="C_PocketNC.cs" />
@@ -85,6 +86,7 @@
     <Compile Include="C_ReadCode.cs" />
     <Compile Include="L_CodeInfo.cs" />
     <Compile Include="L_CA_Base.cs" />
+    <Compile Include="L_Offsetting.cs" />
     <Compile Include="L_ToolPointContainer.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -92,6 +94,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="P_MachineInstructions.cs" />
+    <Compile Include="P_PocketPath.cs" />
     <Compile Include="P_SurfacePath.cs" />
     <Compile Include="P_MachineOperation.cs" />
     <Compile Include="P_MaterialForm.cs" />
