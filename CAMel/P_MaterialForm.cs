@@ -42,6 +42,7 @@ namespace CAMel.Types
         private Cylinder Cy;
         private FormType FT; // Track how we are establishing material
         private Mesh cacheMesh;
+        private Brep cacheBrep;
         private Cylinder tolerancedCylinder;
 
         // Default Constructor with XY plane with safe distance 1;
@@ -53,6 +54,7 @@ namespace CAMel.Types
             this.safeDistance = 1;
             this.materialTolerance = 0;
             this.cacheMesh = null;
+            this.cacheBrep = null;
         }
         // Plane
         public MaterialForm(Plane surfaceP,double safeD,double matTolerance)
@@ -85,6 +87,7 @@ namespace CAMel.Types
             Box thickBx = this.Bx;
             thickBx.Inflate(this.materialTolerance);
             this.cacheMesh = Mesh.CreateFromBox(thickBx, 1, 1, 1);
+            this.cacheBrep = thickBx.ToBrep();
         }
         // Box
         public MaterialForm(Cylinder Cy, double sD, double matTolerance)
@@ -102,9 +105,10 @@ namespace CAMel.Types
             useCy.Height1 = this.Cy.Height1 - this.materialTolerance;
             useCy.Height2 = this.Cy.Height2 + this.materialTolerance;
 
-            // Cache the Cylinder exapnded to material tolerances as specified and a mesh
+            // Cache the Cylinder expanded to material tolerances as specified and a mesh
             this.tolerancedCylinder = useCy;
-            this.cacheMesh = Mesh.CreateFromCylinder(useCy, 1, 360);
+            this.cacheMesh = Mesh.CreateFromCylinder(this.tolerancedCylinder, 1, 360);
+            this.cacheBrep = this.tolerancedCylinder.ToBrep(true, true);
         }
         // Copy Constructor
         public MaterialForm(MaterialForm MF)
@@ -116,6 +120,9 @@ namespace CAMel.Types
             this.Shape = MF.Shape;
             this.Bx = MF.Bx;
             this.Cy = MF.Cy;
+            this.cacheMesh = MF.cacheMesh;
+            this.tolerancedCylinder = MF.tolerancedCylinder;
+            this.cacheBrep = MF.cacheBrep;
         }
         // Duplicate
         public MaterialForm Duplicate()
@@ -294,6 +301,10 @@ namespace CAMel.Types
                     if (this.cacheMesh == null) {
                         throw new FieldAccessException("Mesh should have been cached for Box like Material Forms");
                     }
+                    if (this.cacheBrep == null)
+                    {
+                        throw new FieldAccessException("Brep cache missing for Box like Material Form");
+                    }
 
                     Interval paras = new Interval();
                     // Intersect returns an interval given by the 
@@ -327,6 +338,10 @@ namespace CAMel.Types
                     if (this.cacheMesh == null)
                     {
                         throw new FieldAccessException("Mesh should have been cached for Cylinder like Material Forms");
+                    }
+                    if (this.cacheBrep == null)
+                    {
+                        throw new FieldAccessException("Brep cache missing for Cylinder like Material Form");
                     }
 
                     Point3d inter1 = new Point3d(), inter2=new Point3d();
@@ -774,14 +789,7 @@ namespace CAMel.Types
 
                     // first check for intersection 
                     // use box as mesh to pull normal info
-                    Mesh FormGeom;
-                    if (this.FT == FormType.Box)
-                    {
-                        FormGeom = Mesh.CreateFromBox(Bx, 1, 1, 1);
-                    } else
-                    {
-                        FormGeom = Mesh.CreateFromCylinder(Cy,1,360);
-                    }
+                    Mesh FormGeom = this.cacheMesh;
                     PolylineCurve C = new PolylineCurve(route);
                     Polyline P = new Polyline(route);
                     int[] fIds;
@@ -798,17 +806,10 @@ namespace CAMel.Types
 
                     // Use Rhino's curve closest, possibly slow!
                         List<Brep> GeomList = new List<Brep>();
-                        switch (this.FT)
-                        {
-                            case FormType.Cylinder:
-                                GeomList.Add(this.Cy.ToBrep(true,true));
-                                break;
-                            case FormType.Box:
-                                GeomList.Add(this.Bx.ToBrep());
-                                break;
-                        }
                         Point3d PoC, PoO; // point on curve and point on object for closest
                         int geo; // geometry for closest (won't be used)
+
+                        GeomList.Add(this.cacheBrep);
                         if (C.ClosestPoints(GeomList, out PoC, out PoO, out geo))
                         {
                             cPt = PoC;

@@ -91,9 +91,10 @@ namespace CAMel
             AddRough.retract = true;
             AddRough.stepDown = true;
             AddRough.sdDropStart = true;
-            AddRough.sdDropMiddle = 8*MF.safeDistance;
+            AddRough.sdDropMiddle = 8 * MF.safeDistance;
             AddRough.sdDropEnd = true;
             AddRough.threeAxisHeightOffset = false;
+            MTR.finishDepth = MTR.cutDepth; // ignore finish depth for roughing
 
             ToolPathAdditions AddFinish = new ToolPathAdditions();
             // Additions for Finishing toolpath
@@ -105,17 +106,19 @@ namespace CAMel
             AddFinish.sdDropEnd = false;
             AddFinish.threeAxisHeightOffset = false;
 
-                    switch (ST)
-                    {
-                        case SurfaceType.Brep:
-                            Rough = R.GenerateOperation(B, MTF.finishDepth,MTR,MF,AddRough);
-                            Finish = F.GenerateOperation(B,0.0,MTF,MF,AddFinish);
-                            break;
-                        case SurfaceType.Mesh:
-                            Rough = R.GenerateOperation(M, MTF.finishDepth,MTR,MF,AddRough);
-                            Finish = F.GenerateOperation(M,0.0,MTF,MF,AddFinish);
-                            break;
-                    }
+            switch (ST)
+            {
+                case SurfaceType.Brep:
+                    Rough = R.GenerateOperation(B, MTF.finishDepth, MTR, MF, AddRough);
+                    Finish = F.GenerateOperation(B, 0.0, MTF, MF, AddFinish);
+                    break;
+                case SurfaceType.Mesh:
+                    Rough = R.GenerateOperation(M, MTF.finishDepth, MTR, MF, AddRough);
+                    Finish = F.GenerateOperation(M, 0.0, MTF, MF, AddFinish);
+                    break;
+            }
+            Rough.name = "Rough " + Rough.name;
+            Finish.name = "Finish " + Finish.name;
 
             DA.SetData(0, Rough);
             DA.SetData(1, Finish);
