@@ -680,7 +680,7 @@ namespace CAMel.Types
             return safeD-this.materialTolerance-this.safeDistance;
         }
 
-        public double closestDangerLinePlanePlane(Line L, Plane P1, Plane P2, out Point3d cPt, out Vector3d away)
+        static public double closestDangerLinePlanePlane(Line L, Plane P1, Plane P2, out Point3d cPt, out Vector3d away)
         {
             // This assumes that both end points are safe
             // There has to be a more elegant way to do this!

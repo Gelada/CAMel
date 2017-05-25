@@ -45,7 +45,6 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<MachineOperation> MO = new List<MachineOperation>();
 
             string name = "";
             string head = "";
