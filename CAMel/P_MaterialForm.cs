@@ -846,7 +846,7 @@ namespace CAMel.Types
         public bool TPRayIntersect(ToolPoint TP)
         {
             bool inter = true;
-            Line Ray = new Line(TP.Pt,TP.Pt-10000*TP.Dir);
+            Line Ray = new Line(TP.Pt,TP.Pt-TP.Dir);
             switch (this.FT)
             {
                 case FormType.Box:

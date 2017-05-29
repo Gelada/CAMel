@@ -954,7 +954,7 @@ namespace CAMel.Types
                     // everything sorted!
                     // Warning this could race, it shouldn't though.
                     int checker = 0;
-                    while (dist < safeD && checker < 100)
+                    while (dist + 1.0E-6 < safeD && checker < 100)
                     {
                         checker++;
                         // add or edit a point by pushing it to safeD plus a little
@@ -986,9 +986,9 @@ namespace CAMel.Types
                         // add new point at speed 0 to describe rapid move.
                         for(j=0;j<steps;j++)
                         {
-                            mixDir=Machine.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*route.Count),lng);
+                            mixDir=Machine.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*(route.Count-1)),lng);
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
-                            if(TPfrom.MatForm.TPRayIntersect(newTP) || TPto.MatForm.TPRayIntersect(newTP))
+                            if((TPfrom.MatForm.TPRayIntersect(newTP) || TPto.MatForm.TPRayIntersect(newTP)))
                             {
                                 if(lng == true) 
                                 {   // something has gone horribly wrong and 
