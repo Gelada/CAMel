@@ -145,8 +145,11 @@ namespace CAMel.Types
 
         public MachineOperation GenerateOperation(Brep B, double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
         {
-            this.ST = surfaceType.Brep;
+            // Mesh is so much faster
+            this.ST = surfaceType.Mesh;
             this.B = B;
+            MeshingParameters mP = MeshingParameters.Smooth;
+            this.M = Mesh.CreateFromBrep(B, mP)[0];
 
             return this.GenerateOperation_(offset, MT, MF, TPA);
         }
