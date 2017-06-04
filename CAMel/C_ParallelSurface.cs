@@ -19,6 +19,9 @@ namespace CAMel
         {
         }
 
+        // put this item in the second batch (surfacing strategies)
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
+
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>

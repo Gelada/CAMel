@@ -95,10 +95,8 @@ namespace CAMel
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored.");
 
 
-            if(Op.TPs.Count > 0)
-                DA.SetData(0, Op);
-            else 
-                DA.SetData(0,null);
+            if (Op.TPs.Count > 0) { DA.SetData(0, Op); }
+            else { DA.SetData(0, null); }
         }
 
         /// <summary>

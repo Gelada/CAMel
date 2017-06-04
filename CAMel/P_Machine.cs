@@ -667,7 +667,7 @@ namespace CAMel.Types
         {
             ToolPath TP = new ToolPath();
 
-            double toolLength = 1;
+            double toolLength = 1.5;
 
             double X = 0, Y = 0, Z = 0, A = 0, B = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;

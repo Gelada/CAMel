@@ -308,11 +308,13 @@ namespace CAMel.Types
                         List<int> Lfaces = new List<int>();
                         Lfaces.AddRange(faces);
                         Norm= new Vector3d(0,0,0);
-                        foreach(int F in Lfaces)
-                        {
-                            Norm = Norm + (Vector3d)this.M.Normals[F]/Lfaces.Count;
-                        }
-                        Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
+                        //if (Lfaces.Count > 0)
+                        //{
+                            Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
+                        //} else
+                        //{
+                        //    int u = 1;
+                        //}
                         if (Norm * Ray.UnitTangent > 0) { Norm = -Norm; }
                     }
                     break;
