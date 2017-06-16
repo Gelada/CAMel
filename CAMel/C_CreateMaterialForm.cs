@@ -74,7 +74,10 @@ namespace CAMel
             else if (G.CastTo<Brep>(out B))
             {
                 Cylinder Cy;
-                if (B.Surfaces[0].TryGetCylinder(out Cy)) { MF = new MaterialForm(Cy, SD, T); }
+                if (B.Surfaces[0].TryGetCylinder(out Cy))
+                {
+                    MF = new MaterialForm(Cy, SD, T);
+                }
                 else { err = true; }
             }
             else { err = true; }

@@ -667,7 +667,7 @@ namespace CAMel.Types
         {
             ToolPath TP = new ToolPath();
 
-            double toolLength = 1.5;
+            double toolLength = 1;
 
             double X = 0, Y = 0, Z = 0, A = 0, B = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
@@ -961,6 +961,11 @@ namespace CAMel.Types
                         
                         route.Insert(i + 1, cPt + (safeD - dist + .125) * away);
 
+                        if(away*new Vector3d(0,1,0) >.1 )
+                        {
+                            int u = 1;
+                        }
+
                         dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
                     }
 
@@ -990,11 +995,11 @@ namespace CAMel.Types
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
                             if((TPfrom.MatForm.TPRayIntersect(newTP) || TPto.MatForm.TPRayIntersect(newTP)))
                             {
-                                if(lng == true) 
+                                if(lng) 
                                 {   // something has gone horribly wrong and 
                                     // both angle change directions will hit the material
  
-                                    throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
+                                    //throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
                                 } else
                                 { // start again with the longer angle change
                                     lng=true;

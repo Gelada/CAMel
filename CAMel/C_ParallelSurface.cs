@@ -27,7 +27,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddBrepParameter("Surface", "S", "Surface to Mill", GH_ParamAccess.item);
+            pManager.AddGeometryParameter("Surface", "S", "Brep or Mesh to Mill", GH_ParamAccess.item);
             pManager.AddCurveParameter("Curve", "C", "Curve to run parallel to", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Direction", "Dir", "Plane to use, -Z is projection direction, curve moves parallel to Y.", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddGenericParameter("Material Tool", "MT", "Information about the material and tool", GH_ParamAccess.item);
@@ -52,7 +52,7 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Brep S = null; //surface to mill
+            GeometryBase S = null; //surface to mill
             Curve C = null; // path to move parallel to 
             Plane Dir = Plane.WorldXY; // Direction to project onto the surface
             MaterialTool MT = null; // The materialtool, mainly for tool width

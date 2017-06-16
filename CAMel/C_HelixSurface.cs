@@ -27,7 +27,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddBrepParameter("Surface", "S", "Surface to Mill", GH_ParamAccess.item);
+            pManager.AddGeometryParameter("Surface", "S", "Brep or Mesh to Mill", GH_ParamAccess.item);
             pManager.AddCurveParameter("Curve", "C", "Curve to run parallel to", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Direction", "Dir", "Plane to use, Helix around Z.", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddGenericParameter("Material Tool", "MT", "Information about the material and tool", GH_ParamAccess.item);
@@ -51,7 +51,7 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Brep S = null; //surface to mill
+            GeometryBase G = null;
             Curve C = null; // path to move parallel to 
             Plane Dir = Plane.WorldXY; // Plane to rotate in as you rise.
             MaterialTool MT = null; // The materialtool, mainly for tool width
@@ -60,7 +60,7 @@ namespace CAMel
             bool CW = true; // Go up clockwise if true.
             bool createcurve = false; // was a curve passed in or do we go to default/
 
-            if (!DA.GetData(0, ref S)) { return; }
+            if (!DA.GetData(0, ref G)) { return; }
             if (!DA.GetData(1, ref C)) { createcurve = true; }
             if (!DA.GetData(2, ref Dir)) { return; }
             if (!DA.GetData(3, ref MT)) { return; }
@@ -91,9 +91,9 @@ namespace CAMel
 
             // Find surface bounding box to find our extents
             
-            BoundingBox BB = S.GetBoundingBox(Dir); // extents of S in the coordinate system
+            BoundingBox BB = G.GetBoundingBox(Dir); // extents of S in the coordinate system
             Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
-            BB = S.GetBoundingBox(Dir); // extents of S in the coordinate system
+            BB = G.GetBoundingBox(Dir); // extents of S in the coordinate system
 
             double outerradius = (new Vector3d(BB.Max.X-BB.Min.X,BB.Max.Y-BB.Min.Y,0)).Length/2;
             Cylinder Cy = new Cylinder(new Circle(Dir, outerradius));
@@ -158,7 +158,8 @@ namespace CAMel
                 else
                 { startPt.Y = startPt.Y + turns - 2.0 * Math.PI; }
 
-                int shiftl = (int)Math.Ceiling(Math.Abs((startPt.Y - endPt.Y)/(2.0*Math.PI*addangle)));
+
+                int shiftl = (int)Math.Ceiling(addangle*Math.Abs((startPt.Y - endPt.Y)/(2.0*Math.PI)));
                 for (i = 1; i < shiftl; i++)
                 {
                     CTP.Pts.Add(new ToolPoint(
@@ -184,7 +185,7 @@ namespace CAMel
             List<Point3d> SpiralPath = new List<Point3d>();
 
             Point3d tempPt;
-            for(i=0;i<Math.Abs(rot);i++)
+            for(i=-1;i<=Math.Abs(rot);i++) // strange limits to make sure we go top to bottom
             {
                 for (int j = 0; j < CTP.Pts.Count; j++)
                 {

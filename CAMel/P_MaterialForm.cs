@@ -801,8 +801,16 @@ namespace CAMel.Types
                             cPt = PoC;
                             away = (Vector3d)(PoC - PoO);
                             dist = away.Length;
-                            away.Unitize();
-
+                            ComponentIndex ci = new ComponentIndex();
+                            Vector3d norm = new Vector3d();
+                            Point3d PoO2 = new Point3d();
+                            this.cacheBrep.ClosestPoint(PoO, out PoO2, out ci, out double s, out double t, 0.0, out norm);
+                            if (norm.Y > .1)
+                            {
+                                int u = 1;
+                            }
+                            away = norm;
+ 
                             // The integer part of the polyline parameter is the line element
                             i = (int)Math.Floor(P.ClosestParameter(PoC));
                         } else
@@ -877,6 +885,7 @@ namespace CAMel.Types
             B.Inflate(matTolerance);
             this.cacheMesh = Mesh.CreateFromBox(B, 1, 1, 1);
             this.cacheBrep = B.ToBrep();
+            this.cacheMesh.FaceNormals.ComputeFaceNormals();
         }
 
         private void toleranceCylinder(Circle C, double matTolerance)
@@ -889,7 +898,9 @@ namespace CAMel.Types
 
             // Cache the Cylinder expanded to material tolerances as specified and a mesh
             this.tolerancedCylinder = useCy;
-            this.cacheMesh = Mesh.CreateFromCylinder(this.tolerancedCylinder, 1, 360);
+            this.cacheMesh = Mesh.CreateFromCylinder(this.tolerancedCylinder,1,360);
+            this.cacheMesh.FaceNormals.ComputeFaceNormals();
+
             this.cacheBrep = this.tolerancedCylinder.ToBrep(true, true);
         }
     }
