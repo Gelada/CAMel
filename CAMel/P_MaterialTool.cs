@@ -13,18 +13,18 @@ namespace CAMel.Types
         Ball, Square, V, Other
     }
     // Settings for a particular material and tool
-    public class MaterialTool : CA_base 
+    public class MaterialTool : ICAMel_Base 
     {
-        public string Mat_name;    // Name of the material
-        public string Tool_name;   // Name of the tool 
-        public double speed;       // speed of spindle (assumed unset for negative values)
-        public double feedCut;     // feed rate for cutting (assumed unset for negative values)
-        public double feedPlunge;  // feed rate for plunging (assumed unset for negative values)
-        public double cutDepth;    // maximum material to cut away (assumed unset for negative values)
-        public double finishDepth; // thickness to cut in a finish pass
-        public double toolWidth;   // width of tool (assumed unset for negative values)
-        public double toolLength;  // length from the tip of the tool to the spindle
-        private EndShape ES;        // End shape of the tool
+        public string Mat_name    { get; set; } // Name of the material
+        public string Tool_name   { get; set; } // Name of the tool 
+        public double speed       { get; set; } // speed of spindle (assumed unset for negative values)
+        public double feedCut     { get; set; } // feed rate for cutting (assumed unset for negative values)
+        public double feedPlunge  { get; set; } // feed rate for plunging (assumed unset for negative values)
+        public double cutDepth    { get; set; } // maximum material to cut away (assumed unset for negative values)
+        public double finishDepth { get; set; } // thickness to cut in a finish pass
+        public double toolWidth   { get; set; } // width of tool (assumed unset for negative values)
+        public double toolLength  { get; set; } // length from the tip of the tool to the spindle
+        public EndShape ES        { get; set; } // End shape of the tool
 
         // settings for curve approximation
 
@@ -95,17 +95,17 @@ namespace CAMel.Types
             this.ES = MT.ES;
         }
         // Duplicate
-        public MaterialTool Duplicate()
+        public ICAMel_Base Duplicate()
         {
             return new MaterialTool(this);
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Details of a Material and Tool"; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "MaterialTool"; }
         }
@@ -121,6 +121,15 @@ namespace CAMel.Types
             if (this.toolWidth > 0) outp = outp + " Tool Width: " + this.toolWidth.ToString();
             if (this.toolLength > 0) outp = outp + " Tool Length: " + this.toolLength.ToString();
             return outp;
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                return (this.speed > 0 && this.feedCut > 0 && this.feedPlunge > 0 && this.cutDepth > 0
+                     && this.finishDepth > 0 && this.toolWidth > 0 && this.toolLength > 0);
+            }
         }
 
         /// <summary>
@@ -187,7 +196,7 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MaterialTool : CA_Goo<MaterialTool>
+    public class GH_MaterialTool : CAMel_Goo<MaterialTool>
     {
         // Default constructor
         public GH_MaterialTool()

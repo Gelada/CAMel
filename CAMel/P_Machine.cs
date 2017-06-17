@@ -26,7 +26,7 @@ namespace CAMel.Types
     //  currently using CodeInfo to store a dictionary of values. 
     //  a bespoke version for each machine type would be better
 
-    public class Machine : CA_base
+    public class Machine : ICAMel_Base
     {
         public string name;
         public MachineTypes type;
@@ -112,14 +112,22 @@ namespace CAMel.Types
             return new Machine(this);
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Details of a CNC Machine"; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "Machine"; }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override string ToString()
@@ -1093,10 +1101,14 @@ namespace CAMel.Types
             return cPt + d * away;
         }
 
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_Machine : CA_Goo<Machine>
+    public class GH_Machine : CAMel_Goo<Machine>
     {
         // Default constructor
         public GH_Machine()

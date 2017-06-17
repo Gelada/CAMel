@@ -84,8 +84,10 @@
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_Index3Axis.cs" />
     <Compile Include="C_ReadCode.cs" />
+    <Compile Include="L_MFBox.cs" />
+    <Compile Include="L_MFCylinder.cs" />
     <Compile Include="L_CodeInfo.cs" />
-    <Compile Include="L_CA_Base.cs" />
+    <Compile Include="L_CAMel_Base.cs" />
     <Compile Include="L_Offsetting.cs" />
     <Compile Include="L_ToolPointContainer.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

@@ -11,7 +11,7 @@ namespace CAMel.Types
 
     // A path that will create pockets from boundary curves,
     // direction vectors and a maximum depth.
-    public class PocketPath : CA_base
+    public class PocketPath : ICAMel_Base
     {
         public List<Curve> Paths; // Boundary Pocket Curves
         public Vector3d dir; // direction for the pocket
@@ -66,7 +66,7 @@ namespace CAMel.Types
             return new PocketPath(this);
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get
             {
@@ -74,11 +74,19 @@ namespace CAMel.Types
             }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get
             {
                 return "PocketPath";
+            }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException();
             }
         }
 
@@ -88,6 +96,11 @@ namespace CAMel.Types
             pfx += " Direction " + this.dir.ToString();
             pfx += " Depth " + this.depth.ToString();
             return base.ToString();
+        }
+
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            throw new NotImplementedException();
         }
     }
 }

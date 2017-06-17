@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {
@@ -48,11 +49,11 @@ namespace CAMel.Types
     }
 
     // One action of the machine, such as cutting a line
-    public class ToolPath : ToolPointContainer
+    public class ToolPath : IToolPointContainer
     {
         public List<ToolPoint> Pts;     // Positions of the machine
         public MaterialTool MatTool;    // Material and tool to cut it with
-        public MaterialForm MatForm;    // Shape of the material
+        public IMaterialForm MatForm;    // Shape of the material
         public ToolPathAdditions Additions;       // Features we might add to the path 
 
         // Default Constructor, set everything to empty
@@ -102,7 +103,7 @@ namespace CAMel.Types
             this.Additions = new ToolPathAdditions(TPA);
         }
         // MaterialTool and Form
-        public ToolPath(string name, MaterialTool MT, MaterialForm MF)
+        public ToolPath(string name, MaterialTool MT, IMaterialForm MF)
         {
             this.name = name;
             this.Pts = new List<ToolPoint>();
@@ -111,7 +112,7 @@ namespace CAMel.Types
             this.Additions = new ToolPathAdditions();
         }
         // MaterialTool, Form and features
-        public ToolPath(string name, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
+        public ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             this.name = name;
             this.Pts = new List<ToolPoint>();
@@ -120,7 +121,7 @@ namespace CAMel.Types
             this.Additions = new ToolPathAdditions(TPA);
         }
         // MaterialTool, Form and Code
-        public ToolPath(string name, MaterialTool MT, MaterialForm MF, string Co)
+        public ToolPath(string name, MaterialTool MT, IMaterialForm MF, string Co)
         {
             this.name = name;
             this.Pts = new List<ToolPoint>();
@@ -130,7 +131,7 @@ namespace CAMel.Types
             this.Additions = new ToolPathAdditions();
         }
         // MaterialTool, Form, Code and features
-        public ToolPath(string name, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA, string Co)
+        public ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA, string Co)
         {
             this.name = name;
             this.Pts = new List<ToolPoint>();
@@ -149,14 +150,9 @@ namespace CAMel.Types
                 this.Pts.Add(new ToolPoint(pt));
             }
             this.MatTool = new MaterialTool(TP.MatTool);
-            this.MatForm = new MaterialForm(TP.MatForm);
+            this.MatForm = (IMaterialForm) TP.MatForm.Duplicate();
             this.localCode = TP.localCode;
             this.Additions = new ToolPathAdditions(TP.Additions);
-        }
-        //Duplicate
-        public override ToolPointContainer Duplicate()
-        {
-            return new ToolPath(this);
         }
 
         public ToolPath copyWithNewPoints(List<ToolPoint> Pts)
@@ -166,14 +162,48 @@ namespace CAMel.Types
             return newTP;
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "An action of the machine, for example cutting a single line"; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "ToolPath"; }
+        }
+
+        public string name
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public string localCode
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override string ToString()
@@ -660,6 +690,11 @@ namespace CAMel.Types
             }
             return true;
         }
+
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            return new ToolPath(this);
+        }
     }
 
     // Grasshopper Type Wrapper
@@ -691,22 +726,22 @@ namespace CAMel.Types
             this.Value = new ToolPath(name, MT, Co, TPA);
         }
         // Points, MaterialTool and Form
-        public GH_ToolPath(string name, MaterialTool MT, MaterialForm MF)
+        public GH_ToolPath(string name, MaterialTool MT, IMaterialForm MF)
         {
             this.Value = new ToolPath(name, MT, MF);
         }
         // Points, MaterialTool, Form and features
-        public GH_ToolPath(string name, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
+        public GH_ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             this.Value = new ToolPath(name, MT, MF, TPA);
         }
         // Points, MaterialTool, Form and Code
-        public GH_ToolPath(string name, MaterialTool MT, MaterialForm MF, string Co)
+        public GH_ToolPath(string name, MaterialTool MT, IMaterialForm MF, string Co)
         {
             this.Value = new ToolPath(name, MT, MF, Co);
         }
         // Points, MaterialTool, Form, Code and features
-        public GH_ToolPath(string name, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA, string Co)
+        public GH_ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA, string Co)
         {
             this.Value = new ToolPath(name, MT, MF, TPA, Co);
         }

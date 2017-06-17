@@ -12,7 +12,7 @@ namespace CAMel.Types
     // creating a surface, drilling a whole, cutting out an object...
     // When paths within an operation have a stepdown then all first 
     // step downs with be completed, then the second and so on.
-    public class MachineOperation : ToolPointContainer
+    public class MachineOperation : IToolPointContainer
     {
         public List<ToolPath> TPs;
 
@@ -38,11 +38,7 @@ namespace CAMel.Types
                 this.TPs.Add(new ToolPath(TP));
             }
         }
-        // Duplicate
-        public override ToolPointContainer Duplicate()
-        {
-            return new MachineOperation(this);
-        }
+
         // Return with new paths.
         public MachineOperation copyWithNewPaths(List<ToolPath> procPaths)
         {
@@ -54,14 +50,48 @@ namespace CAMel.Types
             return outOp;
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Single operation of the machine, from the complex (creating a surface) to the simple (drilling a hole)."; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "MachineOperation"; }
+        }
+
+        public string name
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public string localCode
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override string ToString()
@@ -177,12 +207,15 @@ namespace CAMel.Types
             }
             eP = oldPath;
         }
-    
-    
+
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            return new MachineOperation(this);
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MachineOperation : CA_Goo<MachineOperation>
+    public class GH_MachineOperation : CAMel_Goo<MachineOperation>
     {
         // Default Constructor
         public GH_MachineOperation()

@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using Rhino.Geometry.Intersect;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {
@@ -40,7 +41,7 @@ namespace CAMel.Types
 
     // A path that will project to a surface for surfacing
     // TODO write a subclass for each projection
-    public class SurfacePath : CA_base
+    public class SurfacePath : ICAMel_Base
     {
         public List<Curve> Paths; // Curves to project
         public SurfProj SP; // Type of projection
@@ -104,14 +105,22 @@ namespace CAMel.Types
         }
 
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Path and projection information to generate a surfacing path"; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "SurfacePath"; }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override string ToString()
@@ -135,7 +144,7 @@ namespace CAMel.Types
         }
 
         // Different calls to Generate a Machine Operation from different surfaces
-        public MachineOperation GenerateOperation(Surface S, double offset, MaterialTool MT,MaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation GenerateOperation(Surface S, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             this.ST = surfaceType.Brep;
             this.B = S.ToBrep();
@@ -143,7 +152,7 @@ namespace CAMel.Types
             return this.GenerateOperation_(offset, MT, MF, TPA);
         }
 
-        public MachineOperation GenerateOperation(Brep B, double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation GenerateOperation(Brep B, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             this.ST = surfaceType.Brep;
             this.B = B;
@@ -151,7 +160,7 @@ namespace CAMel.Types
             return this.GenerateOperation_(offset, MT, MF, TPA);
         }
 
-        public MachineOperation GenerateOperation(Mesh M, double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation GenerateOperation(Mesh M, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             this.ST = surfaceType.Mesh;
             this.M = M;
@@ -160,7 +169,7 @@ namespace CAMel.Types
         }
 
         // actual code to generate the operation
-        private MachineOperation GenerateOperation_(double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
+        private MachineOperation GenerateOperation_(double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             // create unprojected toolpath (mainly to convert the curve into a list of points)
             List<ToolPath> TPs = new List<ToolPath>();
@@ -363,10 +372,15 @@ namespace CAMel.Types
             }
             return pd;
         }
+
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_SurfacePath : CA_Goo<SurfacePath>
+    public class GH_SurfacePath : CAMel_Goo<SurfacePath>
     {
         // Default Constructor
         public GH_SurfacePath()

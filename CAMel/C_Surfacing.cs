@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
@@ -60,7 +61,7 @@ namespace CAMel
             SurfacePath F = null;
             MaterialTool MTR = null;
             MaterialTool MTF = null;
-            MaterialForm MF = null;
+            IMaterialForm MF = null;
 
             if (!DA.GetData(0, ref G)) {return;}
             if(G.GetType() == typeof(Mesh))

@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
@@ -56,26 +57,26 @@ namespace CAMel
             if (!DA.GetData(0, ref G)) return;
             if (!DA.GetData(1, ref SD)) return;
             if (!DA.GetData(2, ref T)) return;
-            MaterialForm MF = null;
+            IMaterialForm MF = null;
 
-            Plane Pl = new Plane();
             Box Bx = new Box();
             Surface S = null;
             Brep B = null;
             bool err=false;
 
-            if(G.CastTo<Plane>(out Pl)) { MF = new MaterialForm(Pl, SD, T); }
-            else if (G.CastTo<Box>(out Bx)) { MF = new MaterialForm(Bx, SD, T); }
+            if (G.CastTo<Box>(out Bx)) { MF = MaterialForm.create(Bx, SD, T); }
             else if (G.CastTo<Surface>(out S)) 
             { 
                 Cylinder Cy;
-                if(S.TryGetCylinder(out Cy)) { MF = new MaterialForm(Cy, SD, T); }
+                if(S.TryGetCylinder(out Cy)) { MF = MaterialForm.create(Cy, SD, T); }
                 else {err = true; }
             }
             else if (G.CastTo<Brep>(out B))
             {
                 Cylinder Cy;
-                if (B.Surfaces[0].TryGetCylinder(out Cy)) { MF = new MaterialForm(Cy, SD, T); }
+
+                // BUG: RhinoCommon has a problem with TryGetCylinder, this is fixed in a WIP build of Rhino 6
+                if (B.Surfaces[0].TryGetCylinder(out Cy)) { MF = MaterialForm.create(Cy, SD, T); }
                 else { err = true; }
             }
             else { err = true; }
