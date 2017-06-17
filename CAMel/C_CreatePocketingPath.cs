@@ -12,9 +12,9 @@ namespace CAMel
         /// Initializes a new instance of the C_CreatePocketingPath class.
         /// </summary>
         public C_CreatePocketingPath()
-          : base("Create Pocketing Path", "PocketPath",
+          : base("Create Pocketing Operation", "PocketPath",
               "Create a pocket from any closed curve",
-              "CAMel", " ToolPaths")
+              "CAMel", " Operations")
         {
         }
 
