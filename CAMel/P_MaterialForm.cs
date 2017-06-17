@@ -18,12 +18,14 @@ namespace CAMel.Types.MaterialForm
         double safeDistance { get; set; }
         double materialTolerance { get; set; }
 
-        double intersect(Point3d Pt, Vector3d direction, double tolerance, out DirectedPointInsideOutside dist);
-        double intersect(Point3d Pt, Vector3d direction, double tolerance);
+        double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist);
+        double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm);
+        double intersect(ToolPoint TP, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist);
+        double intersect(ToolPoint TP, double tolerance, out Vector3d Norm);
+
 
         ToolPath Refine(ToolPath TP, Machine M);
         ToolPath InsertRetract(ToolPath TP);
-        ToolPath InsertRetract(ToolPath TP, Vector3d dir);
 
         double closestDanger(List<Point3d> route, IMaterialForm toForm, out Point3d cPt, out Vector3d away, out int i);
         double closestDanger(List<Point3d> route, out Point3d cPt, out Vector3d away, out int i);

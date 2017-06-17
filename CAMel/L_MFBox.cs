@@ -48,13 +48,24 @@ namespace CAMel.Types.MaterialForm
             throw new NotImplementedException();
         }
 
-        public double intersect(Point3d Pt, Vector3d direction, double tolerance)
+        public double intersect(Point3d Pt, Vector3d direction,double tolerance, out Vector3d Norm)
         {
             DirectedPointInsideOutside dpio;
-            return this.intersect(Pt, direction, tolerance, out dpio);
+            return this.intersect(Pt, direction, tolerance, out Norm, out dpio);
         }
 
-        public double intersect(Point3d Pt, Vector3d direction, double tolerance, out DirectedPointInsideOutside dist)
+        public double intersect(ToolPoint TP, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double intersect(ToolPoint TP, double tolerance, out Vector3d Norm)
+        {
+            DirectedPointInsideOutside dpio;
+            return this.intersect(TP.Pt,-TP.Dir, tolerance, out Norm, out dpio);
+        }
+
+        public double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist)
         {
             throw new NotImplementedException();
         }

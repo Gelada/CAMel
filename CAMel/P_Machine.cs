@@ -878,8 +878,15 @@ namespace CAMel.Types
             // Check ends are safe, or throw error
             // If the end is safe in one that is good enough.
             // Give a little wiggle as we just pull back to the safe distance.
-            if ((TPfrom.MatForm.SafePoint(TPfrom.Pts[TPfrom.Pts.Count - 1]) < -0.001 && TPto.MatForm.SafePoint(TPfrom.Pts[TPfrom.Pts.Count - 1]) < -0.001)
-                || (TPfrom.MatForm.SafePoint(TPto.Pts[0]) < -0.001 && TPto.MatForm.SafePoint(TPto.Pts[0]) < -0.001))
+
+            Vector3d Norm = new Vector3d();
+            if ((
+                TPfrom.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPfrom.MatForm.safeDistance, out Norm) > 0.0001
+                && TPto.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.MatForm.safeDistance, out Norm) > 0.0001
+                ) || (
+                TPfrom.MatForm.intersect(TPto.Pts[0], TPfrom.MatForm.safeDistance, out Norm) > 0.0001
+                && TPto.MatForm.intersect(TPto.Pts[0], TPto.MatForm.safeDistance, out Norm) > 0.0001
+               ))
             {
                 throw new ArgumentException("End points of a safe move are not in safe space.");
             }
@@ -1000,7 +1007,8 @@ namespace CAMel.Types
                         {
                             mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*route.Count),lng);
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
-                            if(TPfrom.MatForm.TPRayIntersect(newTP) || TPto.MatForm.TPRayIntersect(newTP))
+                            if(TPfrom.MatForm.intersect(newTP,0,out Norm) > 0
+                                || TPto.MatForm.intersect(newTP, 0, out Norm) > 0)
                             {
                                 if(lng == true) 
                                 {   // something has gone horribly wrong and 
