@@ -177,6 +177,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
+    <None Include="Resources\CAMel.png" />
+    <None Include="Resources\BW_CAMel.png" />
+    <Content Include="Resources\Image1.png" />
     <None Include="Resources\pocketing.png" />
     <None Include="Resources\surfacinghelix.png" />
     <None Include="Resources\surfacingspiral.png" />
