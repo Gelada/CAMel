@@ -902,44 +902,24 @@ namespace CAMel.Types
                     route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
                     route.Add(TPto.Pts[0].Pt);
 
-                    Vector3d away;
-                    Point3d cPt;
+                    Vector3d dir = new Vector3d();
+                    Point3d mid = new Point3d();
                     int i;
-                    double dist = TPfrom.MatForm.closestDanger( route, TPto.MatForm, out cPt, out away, out i);
-                    double safeD = Math.Max(TPfrom.MatForm.safeDistance, TPto.MatForm.safeDistance);
+                    double distToSurf;
+                    Vector3d SNorm = new Vector3d();
 
-                    double dS,dE;
-                    Point3d pS, pE;
-
-                    // loop through adding points at problem places until we have 
-                    // everything sorted!
-                    // Warning this could race, it shouldn't though.
-
-                    // Arbitrary epsilon of 1 millionth of a division use to take care of
-                    // really really close distances that are not exactly equal.
-
-                    while(dist + 1.0E-6 < safeD)
+                    // loop through intersecting with safe bubble and adding points
+                    for (i = 0; i < (route.Count - 1) && i < 100;)
                     {
-                        // add a new point to stay clear of danger
-                        // DOC: How we find the new point so we do not get into an infinite loop
-                        // Avoid a sphere of correct radius around cPt
-                        // 
-                        // Work in plane given by CPt, away and each end point of our path
-                        // can now just avoid a circle as CPt is the center of the sphere
-
-                        pS = this.missSphere(route[i], cPt, away, safeD, out dS);
-                        pE = this.missSphere(route[i+1], cPt, away, safeD, out dE);
-
-                        // add the point that is further along the vector away
-                        // it might make more sense to add the closer one, this loop 
-                        // will run more, the toolpath will be shorter but have 
-                        // more points
-                        if (dS > dE)
-                            route.Insert(i + 1, pS);
+                        if (TPto.MatForm.cutThrough(route[i], route[i + 1], TPto.MatForm.safeDistance, out mid, out dir))
+                        {
+                            distToSurf = TPto.MatForm.intersect(mid, dir, TPto.MatForm.safeDistance * 1.1, out SNorm);
+                            route.Insert(i + 1, mid + distToSurf * dir);
+                        }
                         else
-                            route.Insert(i+1,pE);
-
-                        dist = TPfrom.MatForm.closestDanger( route, TPto.MatForm, out cPt, out away, out i);
+                        {
+                            i++;
+                        }
                     }
 
                     // get rid of start and end points that are already in the paths
@@ -956,31 +936,27 @@ namespace CAMel.Types
 
                 case MachineTypes.PocketNC:
 
-                    // Start with a straight line, with a maximum rotation of pi/30 between points, 
-                    // see how close it comes to danger. If its too close add a new
-                    // point and try again.
+                    // new method using intersect
 
                     route = new List<Point3d>();
+
                     route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
-
                     route.Add(TPto.Pts[0].Pt);
-                   
-                    dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
+                    mid = new Point3d();
+                    dir = new Vector3d();
+                    SNorm = new Vector3d();
 
-                    safeD = Math.Max(TPfrom.MatForm.safeDistance, TPto.MatForm.safeDistance);
-
-                    // loop through adding points at problem places until we have 
-                    // everything sorted!
-                    // Warning this could race, it shouldn't though.
-                    int checker = 0;
-                    while (dist < safeD && checker < 100)
+                    // loop through intersecting with safe bubble and adding points
+                    for(i=0;i<(route.Count-1)&&i<100;)
                     {
-                        checker++;
-                        // add or edit a point by pushing it to safeD plus a little
-                        
-                        route.Insert(i + 1, cPt + (safeD - dist + .125) * away);
-
-                        dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
+                        if (TPto.MatForm.cutThrough(route[i], route[i + 1],TPto.MatForm.safeDistance, out mid, out dir))
+                        {
+                            distToSurf=TPto.MatForm.intersect(mid, dir, TPto.MatForm.safeDistance * 1.1, out SNorm);
+                            route.Insert(i + 1, mid + distToSurf * dir);
+                        } else
+                        {
+                            i++;
+                        }
                     }
 
                     // add extra points if the angle change between steps is too large (pi/30)

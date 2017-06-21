@@ -23,12 +23,10 @@ namespace CAMel.Types.MaterialForm
         double intersect(ToolPoint TP, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist);
         double intersect(ToolPoint TP, double tolerance, out Vector3d Norm);
 
+        bool cutThrough(Point3d FromPt, Point3d ToPt, double tolerance, out Point3d mid, out Vector3d outD);
 
         ToolPath Refine(ToolPath TP, Machine M);
         ToolPath InsertRetract(ToolPath TP);
-
-        double closestDanger(List<Point3d> route, IMaterialForm toForm, out Point3d cPt, out Vector3d away, out int i);
-        double closestDanger(List<Point3d> route, out Point3d cPt, out Vector3d away, out int i);
 
         bool getBrep(ref Brep brep);
         bool getBrep(ref object brep);

@@ -56,16 +56,6 @@ namespace CAMel.Types.MaterialForm
             }
         }
 
-        public double closestDanger(List<Point3d> route, out Point3d cPt, out Vector3d away, out int i)
-        {
-            throw new NotImplementedException();
-        }
-
-        public double closestDanger(List<Point3d> route, IMaterialForm toForm, out Point3d cPt, out Vector3d away, out int i)
-        {
-            throw new NotImplementedException();
-        }
-
         public ICAMel_Base Duplicate()
         {
             throw new NotImplementedException();
@@ -97,6 +87,11 @@ namespace CAMel.Types.MaterialForm
         }
 
         public double intersect(ToolPoint TP, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool cutThrough(Point3d FromPt, Point3d ToPt, double tolerance, out Point3d mid, out Vector3d outD)
         {
             throw new NotImplementedException();
         }

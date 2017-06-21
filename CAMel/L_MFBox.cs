@@ -23,16 +23,6 @@ namespace CAMel.Types.MaterialForm
 
         public string TypeName { get { return "CAMelMFBox"; } }
 
-        public double closestDanger(List<Point3d> route, out Point3d cPt, out Vector3d away, out int i)
-        {
-            throw new NotImplementedException();
-        }
-
-        public double closestDanger(List<Point3d> route, IMaterialForm toForm, out Point3d cPt, out Vector3d away, out int i)
-        {
-            throw new NotImplementedException();
-        }
-
         public ICAMel_Base Duplicate()
         {
             return (ICAMel_Base) this.MemberwiseClone();
@@ -66,6 +56,11 @@ namespace CAMel.Types.MaterialForm
         }
 
         public double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool cutThrough(Point3d FromPt, Point3d ToPt, double tolerance, out Point3d mid, out Vector3d outD)
         {
             throw new NotImplementedException();
         }
