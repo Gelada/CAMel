@@ -13,17 +13,66 @@ namespace CAMel.Types.MaterialForm
     public enum DirectedPointInsideOutside
     { Inside, Outside, Through }
 
+    public struct intersection
+    {
+        intersection(Point3d Pt, Vector3d Away,double lineP)
+        {
+            this.Pt = Pt;
+            this.Away = Away;
+            this.lineP = lineP;
+        }
+        public Point3d Pt { get; set; }    // Point of intersection
+        public Vector3d Away { get; set; } // direction to get away from the material (eg normal)
+        public double lineP { get; set; }  // position along intersecting line
+    }
+
+    public class intersects
+    {
+        public List<intersection> inters; // List of intersections
+        public Point3d mid // midpoint through material
+        {
+            get { return (this.first.Pt + this.through.Pt) / 2; }
+        }
+        public Vector3d midOut { get; set; } // direction to head to surface from the middle of middle of the line
+        //TODO set these through adding items to inters
+        public intersection through { // intersection with highest lineParameter
+            get
+            { return this.through; }
+            set
+            {
+                this.through = value;
+                this.thrDist = value.lineP;
+            }
+        }
+        public intersection first
+        { // intersection with lowest lineParameter
+            get
+            { return this.first; }
+            set
+            {
+                this.first = value;
+                this.firstDist = value.lineP;
+            }
+        }
+
+        public double thrDist { get; private set; }
+        public double firstDist { get; private set; }
+        public bool hits
+        {
+            get => (this.inters.Count > 0);
+        }
+    }
+
+
     public interface IMaterialForm : ICAMel_Base
     {
         double safeDistance { get; set; }
         double materialTolerance { get; set; }
 
-        double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist);
-        double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm);
-        double intersect(ToolPoint TP, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist);
-        double intersect(ToolPoint TP, double tolerance, out Vector3d Norm);
-
-        bool cutThrough(Point3d FromPt, Point3d ToPt, double tolerance, out Point3d mid, out Vector3d outD);
+        //double intersect(Point3d Pt, Vector3d direction, double tolerance);
+        intersects intersect(Point3d Pt, Vector3d direction, double tolerance);
+        //double intersect(ToolPoint TP, double tolerance);
+        intersects intersect(ToolPoint TP, double tolerance);
 
         ToolPath Refine(ToolPath TP, Machine M);
         ToolPath InsertRetract(ToolPath TP);

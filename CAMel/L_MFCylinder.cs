@@ -71,27 +71,12 @@ namespace CAMel.Types.MaterialForm
             throw new NotImplementedException();
         }
 
-        public double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm)
+        public intersects intersect(Point3d Pt, Vector3d direction, double tolerance)
         {
             throw new NotImplementedException();
         }
 
-        public double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist)
-        {
-            throw new NotImplementedException();
-        }
-
-        public double intersect(ToolPoint TP, double tolerance, out Vector3d Norm)
-        {
-            throw new NotImplementedException();
-        }
-
-        public double intersect(ToolPoint TP, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool cutThrough(Point3d FromPt, Point3d ToPt, double tolerance, out Point3d mid, out Vector3d outD)
+        public intersects intersect(ToolPoint TP, double tolerance)
         {
             throw new NotImplementedException();
         }

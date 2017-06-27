@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types 
 {
@@ -878,14 +879,13 @@ namespace CAMel.Types
             // Check ends are safe, or throw error
             // If the end is safe in one that is good enough.
             // Give a little wiggle as we just pull back to the safe distance.
-
-            Vector3d Norm = new Vector3d();
+            
             if ((
-                TPfrom.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPfrom.MatForm.safeDistance, out Norm) > 0.0001
-                && TPto.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.MatForm.safeDistance, out Norm) > 0.0001
+                TPfrom.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPfrom.MatForm.safeDistance).thrDist > 0.0001
+                && TPto.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.MatForm.safeDistance).thrDist > 0.0001
                 ) || (
-                TPfrom.MatForm.intersect(TPto.Pts[0], TPfrom.MatForm.safeDistance, out Norm) > 0.0001
-                && TPto.MatForm.intersect(TPto.Pts[0], TPto.MatForm.safeDistance, out Norm) > 0.0001
+                TPfrom.MatForm.intersect(TPto.Pts[0], TPfrom.MatForm.safeDistance).thrDist > 0.0001
+                && TPto.MatForm.intersect(TPto.Pts[0], TPto.MatForm.safeDistance).thrDist > 0.0001
                ))
             {
                 throw new ArgumentException("End points of a safe move are not in safe space.");
@@ -901,20 +901,19 @@ namespace CAMel.Types
                     List<Point3d> route = new List<Point3d>();
                     route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
                     route.Add(TPto.Pts[0].Pt);
-
-                    Vector3d dir = new Vector3d();
-                    Point3d mid = new Point3d();
+                    
                     int i;
-                    double distToSurf;
-                    Vector3d SNorm = new Vector3d();
+                    intersects inters;
+                    intersects fromMid;
 
                     // loop through intersecting with safe bubble and adding points
                     for (i = 0; i < (route.Count - 1) && i < 100;)
                     {
-                        if (TPto.MatForm.cutThrough(route[i], route[i + 1], TPto.MatForm.safeDistance, out mid, out dir))
+                        inters = TPto.MatForm.intersect(route[i], route[i + 1] - route[i], TPto.MatForm.safeDistance);
+                        if (inters.hits && inters.firstDist < (route[i + 1] - route[i]).Length)
                         {
-                            distToSurf = TPto.MatForm.intersect(mid, dir, TPto.MatForm.safeDistance * 1.1, out SNorm);
-                            route.Insert(i + 1, mid + distToSurf * dir);
+                            fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
+                            route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
                         }
                         else
                         {
@@ -942,18 +941,17 @@ namespace CAMel.Types
 
                     route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
                     route.Add(TPto.Pts[0].Pt);
-                    mid = new Point3d();
-                    dir = new Vector3d();
-                    SNorm = new Vector3d();
 
                     // loop through intersecting with safe bubble and adding points
                     for(i=0;i<(route.Count-1)&&i<100;)
                     {
-                        if (TPto.MatForm.cutThrough(route[i], route[i + 1],TPto.MatForm.safeDistance, out mid, out dir))
+                        inters = TPto.MatForm.intersect(route[i], route[i + 1] - route[i], TPto.MatForm.safeDistance);
+                        if (inters.hits && inters.firstDist < (route[i + 1] - route[i]).Length)
                         {
-                            distToSurf=TPto.MatForm.intersect(mid, dir, TPto.MatForm.safeDistance * 1.1, out SNorm);
-                            route.Insert(i + 1, mid + distToSurf * dir);
-                        } else
+                            fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
+                            route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
+                        }
+                        else
                         {
                             i++;
                         }
@@ -983,8 +981,8 @@ namespace CAMel.Types
                         {
                             mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*route.Count),lng);
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
-                            if(TPfrom.MatForm.intersect(newTP,0,out Norm) > 0
-                                || TPto.MatForm.intersect(newTP, 0, out Norm) > 0)
+                            if(TPfrom.MatForm.intersect(newTP,0).thrDist > 0
+                                || TPto.MatForm.intersect(newTP, 0).thrDist > 0)
                             {
                                 if(lng == true) 
                                 {   // something has gone horribly wrong and 

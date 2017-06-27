@@ -266,18 +266,18 @@ namespace CAMel.Types
                 List<int> NumSteps = new List<int>();
                 int MaxSteps = 0; // Maximum distance of all points. 
                 List<Vector3d> MatNorm = new List<Vector3d>(); // list of surface normals
-                Vector3d Norm;
 
                 // ask the material form to refine the path
 
                 ToolPath refPath = useTP.MatForm.Refine(useTP, M);
+                MaterialForm.intersection inters;
 
                 foreach(ToolPoint TP in refPath.Pts)
                 {
-                    
-                    MatDist.Add(useTP.MatForm.intersect(TP, 0, out Norm)); // distance to material surface
+                    inters = useTP.MatForm.intersect(TP, 0).through;
+                    MatDist.Add(inters.lineP); // distance to material surface
                     if (MatDist[MatDist.Count - 1] < 0) MatDist[MatDist.Count - 1] = 0; // avoid negative distances (outside material)
-                    MatNorm.Add(new Vector3d(Norm));
+                    MatNorm.Add(new Vector3d(inters.Away));
                     // calculate maximum number of cutDepth height steps down to finishDepth above material
                     NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1]-useTP.MatTool.finishDepth)/useTP.MatTool.cutDepth));
                     if(NumSteps[NumSteps.Count - 1] > MaxSteps) MaxSteps = NumSteps[NumSteps.Count - 1];
@@ -621,14 +621,12 @@ namespace CAMel.Types
             // For each see if it is safe in one Material Form
             // As we pull back to safe distance we allow a little wiggle.
 
-            Vector3d Norm = new Vector3d();
-
             if ((
-                this.MatForm.intersect(this.Pts[this.Pts.Count - 1], this.MatForm.safeDistance, out Norm) > 0.0001 
-                && TP.MatForm.intersect(this.Pts[this.Pts.Count-1], TP.MatForm.safeDistance, out Norm) > 0.0001
+                this.MatForm.intersect(this.Pts[this.Pts.Count - 1], this.MatForm.safeDistance).thrDist > 0.0001 
+                && TP.MatForm.intersect(this.Pts[this.Pts.Count-1], TP.MatForm.safeDistance).thrDist > 0.0001
                 ) || (
-                this.MatForm.intersect(TP.Pts[0], this.MatForm.safeDistance, out Norm) > 0.0001
-                && TP.MatForm.intersect(TP.Pts[0], TP.MatForm.safeDistance, out Norm) > 0.0001
+                this.MatForm.intersect(TP.Pts[0], this.MatForm.safeDistance).thrDist > 0.0001
+                && TP.MatForm.intersect(TP.Pts[0], TP.MatForm.safeDistance).thrDist > 0.0001
                ))
             {
                 inMaterial = true;

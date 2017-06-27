@@ -30,34 +30,103 @@ namespace CAMel.Types.MaterialForm
 
         public ToolPath InsertRetract(ToolPath TP)
         {
-            throw new NotImplementedException();
+            ToolPath irTP = new ToolPath(TP);
+            irTP.Additions.insert = false;
+            irTP.Additions.retract = false;
+
+            intersection inter;
+
+            // check if we have something to do
+            if (TP.Additions.insert && irTP.Pts.Count > 0) // add insert
+            {
+                //note we do this backwards adding points to the start of the path.
+
+                // get distance to surface and insert direction
+                inter = this.intersect(irTP.Pts[0], 0).through;
+
+                // point on material surface
+
+                ToolPoint tempTP = new ToolPoint(irTP.Pts[0]);
+                tempTP.Pt = tempTP.Pt + tempTP.Dir * inter.lineP;
+                tempTP.feed = TP.MatTool.feedPlunge;
+                irTP.Pts.Insert(0, tempTP);
+
+                // point out at safe distance
+
+                tempTP = new ToolPoint(irTP.Pts[0]);
+                tempTP.Pt = tempTP.Pt + inter.Away * (this.safeDistance);
+                tempTP.feed = 0; // we can use a rapid move
+                irTP.Pts.Insert(0, tempTP);
+            }
+            if (TP.Additions.retract && irTP.Pts.Count > 0) // add retract
+            {
+                // get distance to surface and retract direction
+                inter = this.intersect(irTP.Pts[irTP.Pts.Count - 1], 0).through;
+
+                ToolPoint tempTP = new ToolPoint(irTP.Pts[irTP.Pts.Count - 1]);
+
+                // set speed to the plunge feed rate.
+                tempTP.feed = TP.MatTool.feedPlunge;
+
+                // Pull back to surface
+                tempTP.Pt = tempTP.Pt + tempTP.Dir * inter.lineP;
+                tempTP.feed = 0; // we can use a rapid move
+
+                irTP.Pts.Add(tempTP);
+
+                // Pull away to safe distance
+
+                tempTP = new ToolPoint(irTP.Pts[irTP.Pts.Count - 1]);
+                tempTP.Pt = tempTP.Pt + inter.Away * (this.safeDistance);
+                tempTP.feed = 0; // we can use a rapid move
+                irTP.Pts.Add(tempTP);
+            }
+            return irTP;
         }
 
-        public ToolPath InsertRetract(ToolPath TP, Vector3d dir)
+        public intersects intersect(ToolPoint TP, double tolerance)
+        {
+            return this.intersect(TP.Pt,-TP.Dir, tolerance);
+        }
+
+        public intersects intersect(Point3d Pt, Vector3d direction, double tolerance)
         {
             throw new NotImplementedException();
         }
+        // test the X faces, for other faces reorder point and direction.
 
-        public double intersect(Point3d Pt, Vector3d direction,double tolerance, out Vector3d Norm)
+        private bool testFace(
+            Interval tdi, Interval odi1, Interval odi2, 
+            Point3d Pt, Vector3d Dir, 
+            out double dist)
         {
-            DirectedPointInsideOutside dpio;
-            return this.intersect(Pt, direction, tolerance, out Norm, out dpio);
-        }
+            double intDist;
+            double shift;
 
-        public double intersect(ToolPoint TP, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist)
-        {
-            throw new NotImplementedException();
-        }
-
-        public double intersect(ToolPoint TP, double tolerance, out Vector3d Norm)
-        {
-            DirectedPointInsideOutside dpio;
-            return this.intersect(TP.Pt,-TP.Dir, tolerance, out Norm, out dpio);
-        }
-
-        public double intersect(Point3d Pt, Vector3d direction, double tolerance, out Vector3d Norm, out DirectedPointInsideOutside dist)
-        {
-            throw new NotImplementedException();
+            if (Dir.X > 0)
+            {
+                shift = (tdi.Max - Pt.X) / (Pt.X);
+                intDist = shift * Dir.Length;
+            } else if (Dir.X < 0)
+            {
+                shift = (tdi.Min - Pt.X) / (Pt.X);
+                intDist = shift * Dir.Length;
+            } else // parallel
+            {
+                dist = 0;
+                return false;
+            }
+            Vector3d inter = (Vector3d)(Pt + (shift * Dir));
+            if( odi1.Min < inter.Y && 
+                inter.Y < odi1.Max &&
+                odi2.Min < inter.Z && 
+                inter.Z < odi2.Max) // hit plane
+            {
+                dist = intDist;
+                return true;
+            }
+            dist = 0;
+            return false;
         }
 
         public bool cutThrough(Point3d FromPt, Point3d ToPt, double tolerance, out Point3d mid, out Vector3d outD)
