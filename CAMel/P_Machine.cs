@@ -145,14 +145,14 @@ namespace CAMel.Types
             switch (this.type)
             {
                 case MachineTypes.ThreeAxis:
-                    GPoint = this.IK_ThreeAxis(TP, MT);
+                    GPoint = Machine.IK_ThreeAxis(TP, MT);
                         break;
                 default:
                     throw new System.NotImplementedException("Machine Type has not implemented Inverse Kinematics.");
             }
             return GPoint;
         }
-        private string IK_ThreeAxis(ToolPoint TP, MaterialTool MT)
+        static private string IK_ThreeAxis(ToolPoint TP, MaterialTool MT)
         {
             Point3d OP = TP.Pt;
             string GPoint = "";
@@ -161,7 +161,7 @@ namespace CAMel.Types
             return GPoint;
         }
 
-        private string IK_FiveAxisBC(ToolPoint TP, MaterialTool MT)
+        static private string IK_FiveAxisBC(ToolPoint TP, MaterialTool MT)
         {
             Point3d Point = TP.Pt;
             Vector3d UV = TP.Dir;
@@ -206,7 +206,7 @@ namespace CAMel.Types
             machinePt = OP;
             return GPoint;
         }
-        private string IK_PocketNC_orient(MaterialTool materialTool, Vector2d AB)
+        static private string IK_PocketNC_orient(MaterialTool materialTool, Vector2d AB)
         {
             String GPoint = "";
             GPoint += "A" + (180 * AB.X / Math.PI).ToString("0.000") + " B" + (180 * AB.Y / Math.PI).ToString("0.000");
@@ -215,7 +215,7 @@ namespace CAMel.Types
         }
 
         // Always gives B from -pi to pi and A from -pi/2 to pi/2.
-        private Vector2d Orient_FiveAxisABP(ToolPoint TP)
+        static private Vector2d Orient_FiveAxisABP(ToolPoint TP)
         {
             Vector3d UV = TP.Dir;
 
@@ -426,7 +426,7 @@ namespace CAMel.Types
                     speed = TP.Pts[0].speed;
                     if (feed < 0) { feed = TP.MatTool.feedCut; }
                     if (speed < 0) { speed = TP.MatTool.speed; }
-                    AB = this.Orient_FiveAxisABP(TP.Pts[0]);
+                    AB = Machine.Orient_FiveAxisABP(TP.Pts[0]);
                     FChange = true;
                     SChange = false;
                     // making the first move. Orient the tool first
@@ -681,8 +681,6 @@ namespace CAMel.Types
             double X = 0, Y = 0, Z = 0, A = 0, B = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
 
-            System.Text.StringBuilder OutputCode = new System.Text.StringBuilder();
-
             string Xpattern = @".*X([0-9\-.]+).*";
             string Ypattern = @".*Y([0-9\-.]+).*";
             string Zpattern = @".*Z([0-9\-.]+).*";
@@ -769,8 +767,6 @@ namespace CAMel.Types
             double X=0, Y = 0, Z = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
 
-            System.Text.StringBuilder OutputCode = new System.Text.StringBuilder();
-
             string Xpattern = @".*X([0-9\-.]+).*";
             string Ypattern = @".*Y([0-9\-.]+).*";
             string Zpattern = @".*Z([0-9\-.]+).*";
@@ -823,7 +819,7 @@ namespace CAMel.Types
             return TP;
         }
          
-        private double GetValue(string line, string pattern, double old, ref bool found, ref bool changed)
+        static private double GetValue(string line, string pattern, double old, ref bool found, ref bool changed)
         {
             double val = old;
             string monkey;
@@ -978,16 +974,16 @@ namespace CAMel.Types
                         // add new point at speed 0 to describe rapid move.
                         for(j=0;j<steps;j++)
                         {
-                            mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*route.Count),lng);
+                            mixDir=Machine.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*(route.Count-1)),lng);
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
                             if(TPfrom.MatForm.intersect(newTP,0).thrDist > 0
                                 || TPto.MatForm.intersect(newTP, 0).thrDist > 0)
                             {
-                                if(lng == true) 
+                                if(lng) 
                                 {   // something has gone horribly wrong and 
                                     // both angle change directions will hit the material
  
-                                    throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
+                                    //throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
                                 } else
                                 { // start again with the longer angle change
                                     lng=true;
@@ -1025,8 +1021,8 @@ namespace CAMel.Types
         {
             if (this.type == MachineTypes.PocketNC)
             {
-                Vector2d ang1 = this.Orient_FiveAxisABP(tpFrom);
-                Vector2d ang2 = this.Orient_FiveAxisABP(tpTo);
+                Vector2d ang1 = Machine.Orient_FiveAxisABP(tpFrom);
+                Vector2d ang2 = Machine.Orient_FiveAxisABP(tpTo);
 
                 Vector2d diff = new Vector2d();
                 if(lng)
@@ -1048,7 +1044,7 @@ namespace CAMel.Types
 
         // Create a vector a proportion p of the rotation between two vectors.
         // if lng is true go the long way
-        private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p, bool lng)
+        static private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p, bool lng)
         {
             double ang;
             if (lng)
@@ -1064,7 +1060,7 @@ namespace CAMel.Types
             return newDir;
         }
 
-        private Point3d missSphere(Point3d pPt, Point3d cPt, Vector3d away, double safeD, out double d)
+        static private Point3d missSphere(Point3d pPt, Point3d cPt, Vector3d away, double safeD, out double d)
         {
             // find the tangent line from pPt to the sphere centered 
             // at cPt with radius safeD. The intersect it with the line 

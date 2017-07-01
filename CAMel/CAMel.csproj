@@ -70,8 +70,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="C_HelixSurface.cs" />
     <Compile Include="C_CreatePocketingPath.cs" />
     <Compile Include="C_CreateSurfacePath.cs" />
+    <Compile Include="C_ParallelSurface.cs" />
     <Compile Include="C_Surfacing.cs" />
     <Compile Include="C_PocketNC.cs" />
     <Compile Include="C_CreateMaterialTool.cs" />
@@ -206,6 +208,9 @@ Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"</PostBui
     </StartArguments>
     <StartAction>Program</StartAction>
     <StartProgram>C:\Program Files (x86)\Rhinoceros 5.0\System\Rhino4.exe</StartProgram>
+    <PlatformTarget>x86</PlatformTarget>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <FallbackCulture>en-US</FallbackCulture>

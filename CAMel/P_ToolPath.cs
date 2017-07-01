@@ -449,6 +449,17 @@ namespace CAMel.Types
 
             return NewPaths;
         }
+        // Create a path with the points 
+        internal List<Point3d> RawPath(out List<Vector3d> Dirs)
+        {
+            List<Point3d> Ptsout = new List<Point3d>();
+            Dirs = new List<Vector3d>();
+            foreach(ToolPoint P in this.Pts) {
+                Ptsout.Add(P.Pt);
+                Dirs.Add(P.Dir);
+            }
+            return Ptsout;
+        }
 
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
         // TODO make this guarantee that it does not gouge locally. There is a problem 

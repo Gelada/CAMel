@@ -116,7 +116,7 @@ namespace CAMel.Types
             // TODO reorder cutting to increase efficency
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
 
-            foreach( ToolPath TP in this.TPs)
+            foreach (ToolPath TP in this.TPs)
                 newPaths.Add(TP.ProcessAdditions(M));
 
             // Create the list for the output
@@ -126,13 +126,13 @@ namespace CAMel.Types
 
             // Find path with most levels
             int levels = 0;
-            foreach( List<List<ToolPath>> LTP in newPaths )
-                if(LTP.Count > levels) levels = LTP.Count;
+            foreach (List<List<ToolPath>> LTP in newPaths)
+                if (LTP.Count > levels) levels = LTP.Count;
             // do the roughing layers
-            for (int i = 0; i < levels-1; i++)
+            for (int i = 0; i < levels - 1; i++)
             {
                 levelPaths = new List<ToolPath>();
-                foreach( List<List<ToolPath>> LTP in newPaths)
+                foreach (List<List<ToolPath>> LTP in newPaths)
                     if (i < LTP.Count - 1) levelPaths.AddRange(LTP[i]);
                 // sort here (remember to only move chunks that are outside the material!)
                 procPaths.AddRange(levelPaths);
@@ -154,7 +154,7 @@ namespace CAMel.Types
         public void WriteCode(ref CodeInfo Co, Machine M, out ToolPath eP, ToolPath sP = null)
         {
             Co.AppendLine(M.SectionBreak);
-            Co.AppendLine(M.CommentChar.ToString()+ M.endCommentChar);
+            Co.AppendLine(M.CommentChar.ToString() + M.endCommentChar);
             Co.AppendLine(M.CommentChar + " Operation: " + this.name + M.endCommentChar);
             Co.AppendLine(M.CommentChar.ToString() + M.endCommentChar);
             if (this.localCode != "") Co.Append(this.localCode);
@@ -196,7 +196,7 @@ namespace CAMel.Types
 
                         if (Transition.Pts.Count > 0)
                             lastPoint = Transition.WriteCode(ref Co, M, lastPoint);
-                    } 
+                    }
                     // Add Path to Code
 
                     lastPoint = TP.WriteCode(ref Co, M, lastPoint);
@@ -206,6 +206,20 @@ namespace CAMel.Types
                 }
             }
             eP = oldPath;
+        }
+
+        // Give the lists of paths as polyline
+        public List<List<Point3d>> RawPaths(out List<List<Vector3d>> Dirs)
+        {
+            List<List<Point3d>> paths = new List<List<Point3d>>();
+            List<Vector3d> dirs = null;
+            Dirs = new List<List<Vector3d>>();
+            foreach(ToolPath TP in this.TPs)
+            {
+                paths.Add(TP.RawPath(out dirs));
+                Dirs.Add(dirs);
+            }
+            return paths;
         }
 
         ICAMel_Base ICAMel_Base.Duplicate()

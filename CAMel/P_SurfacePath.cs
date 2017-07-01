@@ -154,8 +154,11 @@ namespace CAMel.Types
 
         public MachineOperation GenerateOperation(Brep B, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
-            this.ST = surfaceType.Brep;
+            // Mesh is so much faster
+            this.ST = surfaceType.Mesh;
             this.B = B;
+            MeshingParameters mP = MeshingParameters.Smooth;
+            this.M = Mesh.CreateFromBrep(B, mP)[0];
 
             return this.GenerateOperation_(offset, MT, MF, TPA);
         }
@@ -164,6 +167,7 @@ namespace CAMel.Types
         {
             this.ST = surfaceType.Mesh;
             this.M = M;
+            this.M.FaceNormals.ComputeFaceNormals();
 
             return this.GenerateOperation_(offset, MT, MF, TPA);
         }
@@ -205,10 +209,7 @@ namespace CAMel.Types
                     if (hit)
                     {
                         tempTP.Pts.Add(outPt);
-                        // Choose norm direction confirming
-                        // it points out from the surface (the projection comes into the surface
-                        if (Norm * proj > 0) { tempN.Add(-Norm); } 
-                        else { tempN.Add(Norm); }
+                        tempN.Add(Norm); 
                     }
                     else if(tempTP.Pts.Count > 0 )
                     {
@@ -292,7 +293,7 @@ namespace CAMel.Types
             {
                 case surfaceType.Brep:
                     List<Brep> LB = new List<Brep>();
-                    LB.Add(B);
+                    LB.Add(this.B);
                     Point3d[] interP = Intersection.RayShoot(RayL, LB,1);
                     List<Point3d> LinterP = new List<Point3d>();
                     if(interP != null) {LinterP.AddRange(interP);}
@@ -300,12 +301,13 @@ namespace CAMel.Types
                     {
                         hit = true;
                         op = interP[0];
-                        Point3d cp = new Point3d(); ComponentIndex ci; double s, t; // catching infor we won't use;
+                        Point3d cp = new Point3d(); ComponentIndex ci; double s, t; // catching info we won't use;
                         // call closestpoint to find norm
                         B.ClosestPoint(op, out cp, out ci, out s, out t, 0.5, out Norm);
                     }
                     break;
                 case surfaceType.Mesh:
+                    
                     int[] faces;
                     double inter = Intersection.MeshRay(this.M, RayL, out faces);
                     if (inter>=0)
@@ -315,10 +317,14 @@ namespace CAMel.Types
                         List<int> Lfaces = new List<int>();
                         Lfaces.AddRange(faces);
                         Norm= new Vector3d(0,0,0);
-                        foreach(int F in Lfaces)
-                        {
-                            Norm = Norm + (Vector3d)this.M.Normals[F]/Lfaces.Count;
-                        }
+                        //if (Lfaces.Count > 0)
+                        //{
+                            Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
+                        //} else
+                        //{
+                        //    int u = 1;
+                        //}
+                        if (Norm * Ray.UnitTangent > 0) { Norm = -Norm; }
                     }
                     break;
             }

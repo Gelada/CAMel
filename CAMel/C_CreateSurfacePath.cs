@@ -52,7 +52,7 @@ namespace CAMel
             List<Curve> Paths = new List<Curve>();
             int Pr = 0;
             double Prd = 0;
-            Curve CC = new LineCurve(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
+            Curve CC = null;
             Vector3d Dir = new Vector3d(0, 0, -1);
             Point3d Cen = new Point3d(0, 0, 0);
             int TD = 0;
