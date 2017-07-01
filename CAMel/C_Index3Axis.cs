@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
@@ -47,8 +48,8 @@ namespace CAMel
         {
             List<Curve> C = new List<Curve>();
             Vector3d Dir = new Vector3d();
-            MaterialTool MT = new MaterialTool();
-            MaterialForm MF = new MaterialForm();
+            MaterialTool MT = null;
+            IMaterialForm MF = null;
 
 
             if (!DA.GetDataList(0, C)) return;

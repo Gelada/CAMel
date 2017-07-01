@@ -8,34 +8,13 @@ using Rhino.Geometry;
 
 namespace CAMel.Types
 {
-    public class ToolPointContainer : CA_base
+    public interface IToolPointContainer : ICAMel_Base
     {
-        public string name;
-        public string localCode;
-
-        public ToolPointContainer()
-        {
-            this.name = "";
-            this.localCode = "";
-        }
-
-        public override string TypeDescription
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override string TypeName
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        virtual public ToolPointContainer Duplicate()
-        {
-            throw new NotImplementedException();
-        }
+        string name { get; set; }
+        string localCode { get; set; }
     }
 
-    public class GH_ToolPointContainer<T> : CA_Goo<T> where T : ToolPointContainer
+    public class GH_ToolPointContainer<T> : CAMel_Goo<T> where T : IToolPointContainer
     {
         // Strip off our hierarchy and plonk it into a tree 
         public GH_Structure<GH_ToolPoint> TreeOfPoints()

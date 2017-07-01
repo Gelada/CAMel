@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types 
 {
@@ -26,7 +27,7 @@ namespace CAMel.Types
     //  currently using CodeInfo to store a dictionary of values. 
     //  a bespoke version for each machine type would be better
 
-    public class Machine : CA_base
+    public class Machine : ICAMel_Base
     {
         public string name;
         public MachineTypes type;
@@ -112,14 +113,22 @@ namespace CAMel.Types
             return new Machine(this);
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Details of a CNC Machine"; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "Machine"; }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override string ToString()
@@ -866,8 +875,14 @@ namespace CAMel.Types
             // Check ends are safe, or throw error
             // If the end is safe in one that is good enough.
             // Give a little wiggle as we just pull back to the safe distance.
-            if ((TPfrom.MatForm.SafePoint(TPfrom.Pts[TPfrom.Pts.Count - 1]) < -0.001 && TPto.MatForm.SafePoint(TPfrom.Pts[TPfrom.Pts.Count - 1]) < -0.001)
-                || (TPfrom.MatForm.SafePoint(TPto.Pts[0]) < -0.001 && TPto.MatForm.SafePoint(TPto.Pts[0]) < -0.001))
+            
+            if ((
+                TPfrom.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPfrom.MatForm.safeDistance).thrDist > 0.0001
+                && TPto.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.MatForm.safeDistance).thrDist > 0.0001
+                ) || (
+                TPfrom.MatForm.intersect(TPto.Pts[0], TPfrom.MatForm.safeDistance).thrDist > 0.0001
+                && TPto.MatForm.intersect(TPto.Pts[0], TPto.MatForm.safeDistance).thrDist > 0.0001
+               ))
             {
                 throw new ArgumentException("End points of a safe move are not in safe space.");
             }
@@ -882,45 +897,23 @@ namespace CAMel.Types
                     List<Point3d> route = new List<Point3d>();
                     route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
                     route.Add(TPto.Pts[0].Pt);
-
-                    Vector3d away;
-                    Point3d cPt;
+                    
                     int i;
-                    double dist = TPfrom.MatForm.closestDanger( route, TPto.MatForm, out cPt, out away, out i);
-                    double safeD = Math.Max(TPfrom.MatForm.safeDistance, TPto.MatForm.safeDistance);
+                    intersects inters;
+                    intersects fromMid;
 
-                    double dS,dE;
-                    Point3d pS, pE;
-
-                    // loop through adding points at problem places until we have 
-                    // everything sorted!
-                    // Warning this could race, it shouldn't though.
-
-                    // Arbitrary epsilon of 1 millionth of a division use to take care of
-                    // really really close distances that are not exactly equal.
-
-                    while(dist + 1.0E-6 < safeD)
+                    // loop through intersecting with safe bubble and adding points
+                    for (i = 0; i < (route.Count - 1) && i < 100;)
                     {
-                        // add a new point to stay clear of danger
-                        // DOC: How we find the new point so we do not get into an infinite loop
-                        // Avoid a sphere of correct radius around cPt
-                        // 
-                        // Work in plane given by CPt, away and each end point of our path
-                        // can now just avoid a circle as CPt is the center of the sphere
-
-                        pS = Machine.missSphere(route[i], cPt, away, safeD, out dS);
-                        pE = Machine.missSphere(route[i+1], cPt, away, safeD, out dE);
-
-                        // add the point that is further along the vector away
-                        // it might make more sense to add the closer one, this loop 
-                        // will run more, the toolpath will be shorter but have 
-                        // more points
-                        if (dS > dE)
-                            route.Insert(i + 1, pS);
+                        if(TPto.MatForm.intersect(route[i], route[i + 1], TPto.MatForm.safeDistance, out inters))
+                        {
+                            fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
+                            route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
+                        }
                         else
-                            route.Insert(i+1,pE);
-
-                        dist = TPfrom.MatForm.closestDanger( route, TPto.MatForm, out cPt, out away, out i);
+                        {
+                            i++;
+                        }
                     }
 
                     // get rid of start and end points that are already in the paths
@@ -937,36 +930,26 @@ namespace CAMel.Types
 
                 case MachineTypes.PocketNC:
 
-                    // Start with a straight line, with a maximum rotation of pi/30 between points, 
-                    // see how close it comes to danger. If its too close add a new
-                    // point and try again.
+                    // new method using intersect
 
                     route = new List<Point3d>();
+
                     route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
-
                     route.Add(TPto.Pts[0].Pt);
-                   
-                    dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
 
-                    safeD = Math.Max(TPfrom.MatForm.safeDistance, TPto.MatForm.safeDistance);
-
-                    // loop through adding points at problem places until we have 
-                    // everything sorted!
-                    // Warning this could race, it shouldn't though.
-                    int checker = 0;
-                    while (dist + 1.0E-6 < safeD && checker < 100)
+                    // loop through intersecting with safe bubble and adding points
+                    for(i=0;i<(route.Count-1)&&i<100;)
                     {
-                        checker++;
-                        // add or edit a point by pushing it to safeD plus a little
-                        
-                        route.Insert(i + 1, cPt + (safeD - dist + .125) * away);
-
-                        if(away*new Vector3d(0,1,0) >.1 )
+                        inters = TPto.MatForm.intersect(route[i], route[i + 1] - route[i], TPto.MatForm.safeDistance);
+                        if (inters.hits && inters.firstDist < (route[i + 1] - route[i]).Length)
                         {
-                            int u = 1;
+                            fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
+                            route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
                         }
-
-                        dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
+                        else
+                        {
+                            i++;
+                        }
                     }
 
                     // add extra points if the angle change between steps is too large (pi/30)
@@ -993,7 +976,8 @@ namespace CAMel.Types
                         {
                             mixDir=Machine.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*(route.Count-1)),lng);
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
-                            if((TPfrom.MatForm.TPRayIntersect(newTP) || TPto.MatForm.TPRayIntersect(newTP)))
+                            if(TPfrom.MatForm.intersect(newTP,0).thrDist > 0
+                                || TPto.MatForm.intersect(newTP, 0).thrDist > 0)
                             {
                                 if(lng) 
                                 {   // something has gone horribly wrong and 
@@ -1094,10 +1078,14 @@ namespace CAMel.Types
             return cPt + d * away;
         }
 
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_Machine : CA_Goo<Machine>
+    public class GH_Machine : CAMel_Goo<Machine>
     {
         // Default constructor
         public GH_Machine()

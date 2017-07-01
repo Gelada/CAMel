@@ -29,7 +29,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\</OutputPath>
+    <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
@@ -55,21 +55,22 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="RhinoCommon">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Rhinoceros 5.0\System\rhinocommon.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Rhinoceros 5.0\System\RhinoCommon.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Grasshopper">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files\Common Files\McNeel\Rhinoceros\5.0\Plug-ins\Grasshopper (b45a29b1-4343-4035-989e-044e8580d9cf)\0.9.75.0\Grasshopper.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files\Common Files\McNeel\Rhinoceros\5.0\Plug-ins\Grasshopper (b45a29b1-4343-4035-989e-044e8580d9cf)\0.9.75.0\Grasshopper.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="GH_IO">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files\Common Files\McNeel\Rhinoceros\5.0\Plug-ins\Grasshopper (b45a29b1-4343-4035-989e-044e8580d9cf)\0.9.75.0\GH_IO.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files\Common Files\McNeel\Rhinoceros\5.0\Plug-ins\Grasshopper (b45a29b1-4343-4035-989e-044e8580d9cf)\0.9.75.0\GH_IO.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="C_CreatePocketingPath.cs" />
     <Compile Include="C_HelixSurface.cs" />
     <Compile Include="C_CreateSurfacePath.cs" />
     <Compile Include="C_ParallelSurface.cs" />
@@ -85,8 +86,11 @@
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_Index3Axis.cs" />
     <Compile Include="C_ReadCode.cs" />
+    <Compile Include="L_MFBox.cs" />
+    <Compile Include="L_MFCylinder.cs" />
     <Compile Include="L_CodeInfo.cs" />
-    <Compile Include="L_CA_Base.cs" />
+    <Compile Include="L_CAMel_Base.cs" />
+    <Compile Include="L_Offsetting.cs" />
     <Compile Include="L_ToolPointContainer.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -94,6 +98,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="P_MachineInstructions.cs" />
+    <Compile Include="P_PocketPath.cs" />
     <Compile Include="P_SurfacePath.cs" />
     <Compile Include="P_MachineOperation.cs" />
     <Compile Include="P_MaterialForm.cs" />
@@ -174,6 +179,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
+    <None Include="Resources\CAMel.png" />
+    <None Include="Resources\BW_CAMel.png" />
+    <Content Include="Resources\Image1.png" />
     <None Include="Resources\pocketing.png" />
     <None Include="Resources\surfacinghelix.png" />
     <None Include="Resources\surfacingspiral.png" />
@@ -191,7 +199,8 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
+    <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
+Copy "$(TargetPath)" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
 Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">

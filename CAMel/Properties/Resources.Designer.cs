@@ -63,6 +63,26 @@ namespace CAMel.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap BW_CAMel {
+            get {
+                object obj = ResourceManager.GetObject("BW_CAMel", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CAMel {
+            get {
+                object obj = ResourceManager.GetObject("CAMel", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap cncreader {
             get {
                 object obj = ResourceManager.GetObject("cncreader", resourceCulture);

@@ -7,28 +7,18 @@ using Rhino.Geometry;
 
 namespace CAMel.Types
 {
-    // base class for all CAMel classes
-    public class CA_base
+    public interface ICAMel_Base
     {
-        virtual public string TypeDescription
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
+        bool IsValid { get; }
+        string TypeDescription { get; }
+        string TypeName { get; }
 
-        virtual public string TypeName
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
+        ICAMel_Base Duplicate();
+        string ToString();
     }
 
     // Add a little more standard stuff to GH_Goo
-    public class CA_Goo<T> : GH_Goo<T> where T : CA_base
+    public class CAMel_Goo<T> : GH_Goo<T> where T : ICAMel_Base
     {
         // Always valid
         public override bool IsValid

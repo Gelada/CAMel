@@ -45,7 +45,7 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<MachineOperation> MO = new List<MachineOperation>();
-            List<ToolPointContainer> tempMO = new List<ToolPointContainer>();
+            List<IToolPointContainer> tempMO = new List<IToolPointContainer>();
 
             Machine M = new Machine();
             string name = "";
@@ -58,7 +58,7 @@ namespace CAMel
 
             Boolean hasTP = false, hasMO = false;
 
-            foreach (ToolPointContainer tpc in tempMO)
+            foreach (IToolPointContainer tpc in tempMO)
                 if (tpc != null)
                 {
                     switch (tpc.TypeName)
@@ -80,7 +80,7 @@ namespace CAMel
 
             if (!hasMO && hasTP) // Process a list of ToolPaths into a Machine Operation
             {
-                foreach (ToolPointContainer tpc in tempMO)
+                foreach (IToolPointContainer tpc in tempMO)
                 {
                     if (tpc == null)
                         Invalids++;
@@ -90,7 +90,7 @@ namespace CAMel
             }
             else if (hasTP || hasMO) // Mix Machine operations and toolpaths each turned into their own operation. 
             {
-                foreach (ToolPointContainer tpc in tempMO)
+                foreach (IToolPointContainer tpc in tempMO)
                 {
                     if (tpc == null)
                         Invalids++;

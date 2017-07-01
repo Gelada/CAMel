@@ -9,7 +9,7 @@ namespace CAMel.Types
 {
     // List of toolpaths forming a complete set of instructions 
     // for the machine
-    public class MachineInstruction : ToolPointContainer
+    public class MachineInstruction : IToolPointContainer
     {
         public List<MachineOperation> MOs;
         public Machine Mach;
@@ -45,11 +45,6 @@ namespace CAMel.Types
                 this.MOs.Add(new MachineOperation(MO));
             }
         }
-        // Duplicate
-        public override ToolPointContainer Duplicate()
-        {
-            return new MachineInstruction(this);
-        }
 
         // Copy basic information but add new paths
         public MachineInstruction copyWithNewPaths(List<MachineOperation> MOs)
@@ -64,14 +59,48 @@ namespace CAMel.Types
 
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Complete set of operations for a run of the machine."; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "MachineInstruction"; }
+        }
+
+        public string name
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public string localCode
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override string ToString()
@@ -134,10 +163,15 @@ namespace CAMel.Types
             Co.Append(this.Mach.footer);
             Co.AppendLineNoNum(this.Mach.fileend);
         }
+
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            return new MachineInstruction(this);
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MachineInstruction : CA_Goo<MachineInstruction>
+    public class GH_MachineInstruction : CAMel_Goo<MachineInstruction>
     {
         // Default Constructor with XY plane with safe distance 1;
         public GH_MachineInstruction()

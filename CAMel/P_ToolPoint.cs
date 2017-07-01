@@ -8,7 +8,7 @@ using Rhino.Geometry;
 namespace CAMel.Types
 {
     // One position of the machine
-    public class ToolPoint : ToolPointContainer
+    public class ToolPoint : IToolPointContainer
     {
         public Point3d Pt;      // Tool Tip position
         private Vector3d _Dir;
@@ -104,20 +104,49 @@ namespace CAMel.Types
             this.error = TP.error;
             this.warning = TP.warning;
         }
-        // Duplicate
-        public override ToolPointContainer Duplicate()
-        {
-            return new ToolPoint(this);
-        }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Information about a position of the machine"; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "ToolPoint"; }
+        }
+
+        public string name
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public string localCode
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override string ToString()
@@ -131,6 +160,11 @@ namespace CAMel.Types
             if (speed >= 0 || feed >= 0)
                 outp = "\n" + outp + "Speed: " + this.speed.ToString() + " Feed: " + this.feed.ToString();
             return outp;
+        }
+
+        public ICAMel_Base Duplicate()
+        {
+            return new ToolPoint(this);
         }
     }
 

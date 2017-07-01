@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
@@ -47,8 +48,8 @@ namespace CAMel
         {
             Circle D = new Circle();
             double peck = 0;
-            MaterialTool MT = new MaterialTool();
-            MaterialForm MF = new MaterialForm();
+            MaterialTool MT = null;
+            IMaterialForm MF = null;
 
 
             if (!DA.GetData(0, ref D))
