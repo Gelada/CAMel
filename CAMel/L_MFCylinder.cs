@@ -142,10 +142,40 @@ namespace CAMel.Types.MaterialForm
                     }
                 }
             }
+            if (inters.Count > 1)
+            {
+                inters.midOut = this.midOutDir(inters.mid,tolerance);
+            }
+            else
+            {
+                inters.midOut = new Vector3d();
+            }
             return inters;
         }
+        private Vector3d midOutDir(Point3d Pt, double tolerance)
+        {
+            double utol = tolerance + this.materialTolerance;
+            double closeD;
+            Vector3d outD;
+            closeD = utol+Pt.Z; // Distance from base
+            outD = -this.Pl.ZAxis;
+            if(closeD > this.H + utol - Pt.Z) // closer to top?
+            {
+                closeD = this.H + utol - Pt.Z;
+                outD = this.Pl.ZAxis;
+            } 
+            if(closeD > (this.radius + utol-((Vector3d)zeroZ(Pt)).Length))
+            {
+                closeD = this.radius + utol - ((Vector3d)zeroZ(Pt)).Length);
+                outD = (Vector3d)this.fromPlane(zeroZ(Pt));
+            }
+            if (closeD < 0) { throw new FormatException("MidOutDir in MFCylinder called for point outside the Cylinder."); }
+            return outD;
 
-        private Point3d fromPlane(Point3d Pt)
+
+        }
+
+            private Point3d fromPlane(Point3d Pt)
         {
             return this.Pl.PointAt(Pt.X, Pt.Y, Pt.Z);
         }

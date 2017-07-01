@@ -69,7 +69,15 @@ namespace CAMel.Types.MaterialForm
         {
             get { return (this.first.Pt + this.through.Pt) / 2; }
         }
-        public Vector3d midOut { get; set; } // direction to head to surface from the middle of middle of the line
+        public Vector3d midOut
+        { // direction to head to surface from the middle of middle of the line
+            get { return this.midOut }
+            set
+            {
+                this.midOut = value;
+                this.midOut.Unitize();
+            }
+        }
 
         public void Add(intersection inter)
         {

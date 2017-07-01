@@ -73,6 +73,14 @@ namespace CAMel.Types.MaterialForm
             if (testFace(exB.Z.Min, exB.X, exB.Y, new Point3d(Pt.Z, Pt.X, Pt.Y), new Vector3d(dir.Z, dir.X, dir.Y), out dist))
             { inters.Add(this.fromPlane(Pt + dir * dist), -this.B.Plane.ZAxis, dist); }
 
+            if (inters.Count > 1)
+            {
+                inters.midOut = this.midOutDir(inters.mid, tolerance);
+            } else
+            {
+                inters.midOut = new Vector3d();
+            }
+
             return inters;
 
         }
@@ -106,6 +114,43 @@ namespace CAMel.Types.MaterialForm
         private Point3d fromPlane(Point3d Pt)
         {
             return this.B.Plane.PointAt(Pt.X, Pt.Y, Pt.Z);
+        }
+
+        private Vector3d midOutDir(Point3d Pt, double tolerance)
+        {
+            double utol = materialTolerance + tolerance;
+            double closeD;
+            Vector3d outD;
+            // check how close to each face, return normal of closest
+            closeD = this.B.X.Max+utol - Pt.X;
+            outD = this.B.Plane.XAxis;
+            if(closeD > (Pt.X-this.B.X.Min-utol))
+            {
+                closeD = (Pt.X- this.B.X.Min-utol);
+                outD = -this.B.Plane.XAxis;
+            }
+            if (closeD > (this.B.Y.Max+utol - Pt.Y))
+            {
+                closeD = (this.B.Y.Max+utol - Pt.Y);
+                outD = this.B.Plane.YAxis;
+            }
+            if (closeD > (Pt.Y - this.B.Y.Min-utol))
+            {
+                closeD = (Pt.Y - this.B.Y.Min-utol);
+                outD = -this.B.Plane.YAxis;
+            }
+            if (closeD > (this.B.Z.Max+utol - Pt.Z))
+            {
+                closeD = (this.B.Z.Max+utol - Pt.Z);
+                outD = this.B.Plane.ZAxis;
+            }
+            if (closeD > (Pt.Z - this.B.Z.Min-utol))
+            {
+                closeD = (Pt.Z - this.B.Z.Min-utol);
+                outD = -this.B.Plane.ZAxis;
+            }
+            if(closeD < 0) { throw new FormatException("MidOutDir in MFBox called for point outside the Box."); }
+            return outD;
         }
 
         public ToolPath refine(ToolPath TP, Machine M)
