@@ -269,7 +269,7 @@ namespace CAMel.Types
 
                 // ask the material form to refine the path
 
-                ToolPath refPath = useTP.MatForm.Refine(useTP, M);
+                ToolPath refPath = useTP.MatForm.refine(useTP, M);
                 MaterialForm.intersection inters;
 
                 foreach(ToolPoint TP in refPath.Pts)

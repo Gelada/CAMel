@@ -909,8 +909,7 @@ namespace CAMel.Types
                     // loop through intersecting with safe bubble and adding points
                     for (i = 0; i < (route.Count - 1) && i < 100;)
                     {
-                        inters = TPto.MatForm.intersect(route[i], route[i + 1] - route[i], TPto.MatForm.safeDistance);
-                        if (inters.hits && inters.firstDist < (route[i + 1] - route[i]).Length)
+                        if(TPto.MatForm.intersect(route[i], route[i + 1], TPto.MatForm.safeDistance, out inters))
                         {
                             fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
                             route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
