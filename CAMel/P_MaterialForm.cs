@@ -71,7 +71,7 @@ namespace CAMel.Types.MaterialForm
         }
         public Vector3d midOut
         { // direction to head to surface from the middle of middle of the line
-            get { return this.midOut }
+            get { return this.midOut; }
             set
             {
                 this.midOut = value;

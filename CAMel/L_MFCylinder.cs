@@ -166,7 +166,7 @@ namespace CAMel.Types.MaterialForm
             } 
             if(closeD > (this.radius + utol-((Vector3d)zeroZ(Pt)).Length))
             {
-                closeD = this.radius + utol - ((Vector3d)zeroZ(Pt)).Length);
+                closeD = this.radius + utol - ((Vector3d)zeroZ(Pt)).Length;
                 outD = (Vector3d)this.fromPlane(zeroZ(Pt));
             }
             if (closeD < 0) { throw new FormatException("MidOutDir in MFCylinder called for point outside the Cylinder."); }
