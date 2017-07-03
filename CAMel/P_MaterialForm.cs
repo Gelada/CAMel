@@ -17,15 +17,17 @@ namespace CAMel.Types.MaterialForm
             this.Pt = Pt;
             this.lineP = lineP;
             this.isSet = true;
-            this.Away = Away;
+            _Away = Away;
+            _Away.Unitize();
         }
 
         public Point3d Pt { get; private set; }    // Point of intersection
-        public Vector3d Away { get { return this.Away; } // direction to get away from the material (eg normal)
+        private Vector3d _Away;
+        public Vector3d Away { get { return _Away; } // direction to get away from the material (eg normal)
             private set
             {
-                this.Away = value;
-                this.Away.Unitize();
+                _Away = value;
+                _Away.Unitize();
             }
         } 
         public double lineP { get; private set; }  // position along intersecting line
@@ -43,39 +45,24 @@ namespace CAMel.Types.MaterialForm
         }
         public List<intersection> inters { get; private set; } // List of intersections 
 
-        public double thrDist { get; private set; }
-        public double firstDist { get; private set; }
+        public double thrDist { get { return this.through.lineP; } }
+        public double firstDist { get { return this.first.lineP; } }
 
-        public intersection through
-        { // intersection with highest lineParameter
-            get { return this.through; }
-            private set
-            {
-                this.through = value;
-                this.thrDist = value.lineP;
-            }
-        }
-        public intersection first
-        { // intersection with lowest lineParameter
-            get { return this.first; }
-            private set
-            {
-                this.first = value;
-                this.firstDist = value.lineP;
-            }
-        }
+        public intersection through { get; protected set; }// intersection with highest lineParameter
+        public intersection first { get; protected set; } // intersection with lowest lineParameter
 
         public Point3d mid // midpoint through material
         {
             get { return (this.first.Pt + this.through.Pt) / 2; }
         }
+        private Vector3d _midOut;
         public Vector3d midOut
         { // direction to head to surface from the middle of middle of the line
-            get { return this.midOut; }
+            get { return _midOut; }
             set
             {
-                this.midOut = value;
-                this.midOut.Unitize();
+                value.Unitize();
+                _midOut = value;
             }
         }
 
@@ -121,7 +108,7 @@ namespace CAMel.Types.MaterialForm
                 // point on material surface
 
                 ToolPoint tempTP = new ToolPoint(irTP.Pts[0]);
-                tempTP.Pt = tempTP.Pt + tempTP.Dir * inter.lineP;
+                tempTP.Pt = tempTP.Pt - tempTP.Dir * inter.lineP;
                 tempTP.feed = TP.MatTool.feedPlunge;
                 irTP.Pts.Insert(0, tempTP);
 
@@ -143,7 +130,7 @@ namespace CAMel.Types.MaterialForm
                 tempTP.feed = TP.MatTool.feedPlunge;
 
                 // Pull back to surface
-                tempTP.Pt = tempTP.Pt + tempTP.Dir * inter.lineP;
+                tempTP.Pt = tempTP.Pt - tempTP.Dir * inter.lineP;
                 tempTP.feed = 0; // we can use a rapid move
 
                 irTP.Pts.Add(tempTP);
@@ -158,10 +145,15 @@ namespace CAMel.Types.MaterialForm
             return irTP;
         }
 
+        // Does the line intersect the surface of the material?
         internal static bool lineIntersect(IMaterialForm MF,Point3d start, Point3d end, double tolerance, out intersects inters)
         {
             inters = MF.intersect(start, end - start, tolerance);
-            return (inters.hits && inters.firstDist < (end - start).Length);
+            double lLength = (end - start).Length;
+            return (inters.hits && 
+                ((inters.firstDist > 0 && inters.firstDist < lLength) ||
+                 (inters.thrDist > 0 && inters.thrDist < lLength))
+                );
         }
 
         internal static ToolPath refine(IMaterialForm MF, ToolPath TP, Machine M)
@@ -229,30 +221,58 @@ namespace CAMel.Types.MaterialForm
     {
         // FIXME: These functions need to do some inspection of the input geometry and determine what MaterialForm
         // is best suited for use. Currently these are defaulted to a basic unit box.
-        public static IMaterialForm create(object inputGeometry, double tolerance, double safeD)
+        public static bool create(IGH_Goo inputGeometry, double tolerance, double safeD, out IMaterialForm MF)
         {
-            if(inputGeometry.GetType() == typeof(Box))
+            if(inputGeometry.CastTo<Box>(out Box BoxT))
             {
-                return create((Box)inputGeometry, tolerance, safeD);
+                MF = create(BoxT, tolerance, safeD);
+                return true;
             }
-            else if (inputGeometry.GetType() == typeof(Cylinder))
+            else if (inputGeometry.CastTo<Cylinder>(out Cylinder CyT))
             {
-                return create((Cylinder)inputGeometry, tolerance, safeD);
+                MF = create(CyT, tolerance, safeD);
+                return true;
             }
-            else if (inputGeometry.GetType() == typeof(Mesh))
+            else if (inputGeometry.CastTo<Mesh>(out Mesh meshT))
             {
-                return create((Mesh)inputGeometry, tolerance, safeD);
+                MF = create(meshT, tolerance, safeD);
+                return true;
             }
-            else if (inputGeometry.GetType() == typeof(Brep))
+            else if (inputGeometry.CastTo<Surface>(out Surface surfT))
             {
-                return create((Brep)inputGeometry, tolerance, safeD);
+                MF = create(surfT, tolerance, safeD);
+                return true;
+            }
+            else if (inputGeometry.CastTo<Brep>(out Brep brepT))
+            {
+                MF = create(brepT, tolerance, safeD);
+                return true;
             }
             else
             {
-                throw new FormatException("create was not able to interpret the object");
+                MF = null;
+                return false;
             }
         }
-        
+
+        private static IMaterialForm create(Surface inputGeometry, double tolerance, double safeD)
+        {
+            Cylinder Cy = new Cylinder();
+            if (inputGeometry.TryGetCylinder(out Cy))
+            {
+                // Cope with bug in TryGetCylinder
+                BoundingBox BB = inputGeometry.GetBoundingBox(Cy.CircleAt(0).Plane);
+                Cy.Height1 = BB.Min.Z;
+                Cy.Height2 = BB.Max.Z;
+                return create(Cy, tolerance, safeD);
+            }
+            else
+            {
+                // TODO throw warning that we are just using bounding box
+                return create(inputGeometry.GetBoundingBox(false), tolerance, safeD);
+            }
+        }
+
         private static IMaterialForm create(Brep inputGeometry, double tolerance, double safeD)
         {
             Cylinder Cy = new Cylinder();
@@ -286,12 +306,20 @@ namespace CAMel.Types.MaterialForm
 
         private static IMaterialForm create(Box B, double tolerance, double safeD)
         {
-            return new MFBox(B, tolerance, safeD);
+            MFBox mB = new MFBox(B, tolerance, safeD);
+            return (IMaterialForm) mB;
+        }
+
+        private static IMaterialForm create(BoundingBox BB, double tolerance, double safeD)
+        {
+            MFBox mB = new MFBox(new Box(BB), tolerance, safeD);
+            return (IMaterialForm)mB;
         }
 
         private static IMaterialForm create(Cylinder Cy, double tolerance, double safeD)
         {
-            return new MFCylinder(Cy, tolerance, safeD);
+            MFCylinder mC = new MFCylinder(Cy, tolerance, safeD);
+            return (IMaterialForm)mC;
         }
     }
 }
@@ -302,6 +330,10 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public class GH_MaterialForm : CAMel_Goo<IMaterialForm>
     {
+        public GH_MaterialForm()
+        {
+            this.Value = null;
+        }
         // Construct from unwrapped object
         public GH_MaterialForm(IMaterialForm MF)
         {
@@ -331,23 +363,25 @@ namespace CAMel.Types
             }
 
             // Cast to Brep or if that is asked for.
-            if (typeof(Q).IsAssignableFrom(typeof(Brep)))
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Brep)))
             {
-                object b = null;
+                Brep b = null;
                 if (this.Value.getBrep(ref b))
                 {
-                    target = (Q)b;
+                    object GHb = new GH_Brep(b);
+                    target = (Q)GHb;
                     return true;
                 }
             }
 
             // Cast to a Mesh if that is asked for.
-            if (typeof(Q).IsAssignableFrom(typeof(Mesh)))
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Mesh)))
             {
-                object m = null;
+                Mesh m = null;
                 if (this.Value.getMesh(ref m))
                 {
-                    target = (Q)m;
+                    object GHm = new GH_Mesh(m);
+                    target = (Q)GHm;
                     return true;
                 }
             }

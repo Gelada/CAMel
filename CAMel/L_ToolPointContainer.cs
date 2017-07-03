@@ -19,7 +19,7 @@ namespace CAMel.Types
         // Strip off our hierarchy and plonk it into a tree 
         public GH_Structure<GH_ToolPoint> TreeOfPoints()
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("ToolPoint Container has not yet implemented conversion to a tree of points.");
         }
     }
 }

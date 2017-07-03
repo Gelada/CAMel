@@ -126,8 +126,9 @@ namespace CAMel
                 foreach (ToolPoint tp in CTP.Pts)
                 {
                     Dir.RemapToPlaneSpace(tp.Pt, out CylPt);
-                    tp.Pt = ToCyl(CylPt);
-                    tp.Pt.X = outerradius;
+                    Point3d temp = ToCyl(CylPt);
+                    temp.X = outerradius;
+                    tp.Pt = temp;
                     if( first )
                     {
                         Zmin = tp.Pt.Z;
@@ -147,7 +148,9 @@ namespace CAMel
                         turns = turns - 2.0 * Math.PI;
                     }
                     angle = tp.Pt.Y;
-                    tp.Pt.Y = tp.Pt.Y + turns;
+                    temp = tp.Pt;
+                    temp.Y = temp.Y + turns;
+                    tp.Pt = temp;
                 }
                 // complete loop by adding points going from
                 // the end point to the start point

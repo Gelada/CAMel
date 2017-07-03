@@ -20,12 +20,15 @@ namespace CAMel.Types
         public MachineOperation()
         {
             this.TPs = new List<ToolPath>();
+            this.name = "";
+            this.localCode = "";
         }
         // Just name
         public MachineOperation(string name)
         {
             this.name = name;
             this.TPs = new List<ToolPath>();
+            this.localCode = "";
         }
         // Copy Constructor
         public MachineOperation(MachineOperation Op)
@@ -60,37 +63,15 @@ namespace CAMel.Types
             get { return "MachineOperation"; }
         }
 
-        public string name
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
+        public string name { get; set; }
 
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public string localCode
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public string localCode { get; set; }
 
         public bool IsValid
         {
             get
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException("Machine Operation has not implemented IsValid");
             }
         }
 

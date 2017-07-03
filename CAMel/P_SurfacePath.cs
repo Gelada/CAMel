@@ -119,7 +119,7 @@ namespace CAMel.Types
         {
             get
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException("SurfacePath has not implemented IsValid");
             }
         }
 
@@ -381,7 +381,7 @@ namespace CAMel.Types
 
         ICAMel_Base ICAMel_Base.Duplicate()
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Surface Path has not implemented Duplicate");
         }
     }
 

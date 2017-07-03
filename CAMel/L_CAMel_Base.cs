@@ -31,7 +31,7 @@ namespace CAMel.Types
 
         public override IGH_Goo Duplicate()
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Camel_Base object has not implemented its duplicate command.");
         }
 
         public override string TypeDescription

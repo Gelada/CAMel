@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types.MaterialForm;
+using System.Text.RegularExpressions;
 
 namespace CAMel.Types 
 {
@@ -29,18 +30,18 @@ namespace CAMel.Types
 
     public class Machine : ICAMel_Base
     {
-        public string name;
-        public MachineTypes type;
-        public string filestart;
-        public string header;
-        public string footer;
-        public string fileend;
-        public char CommentChar;
-        public char endCommentChar;
-        public string SpeedChangeCommand;
-        public double PathJump; // Max distance allowed between paths in material.
+        public string name { get; set; }
+        public MachineTypes type { get; set; }
+        public string filestart { get; set; }
+        public string header { get; set; }
+        public string footer { get; set; }
+        public string fileend { get; set; }
+        public char CommentChar { get; set; }
+        public char endCommentChar { get; set; }
+        public string SpeedChangeCommand { get; set; }
+        public double PathJump { get; set; } // Max distance allowed between paths in material.
         public string SectionBreak { get; set; }
-        public Vector3d Pivot;
+        public Vector3d Pivot { get; set; }
 
         // Default Constructor (un-named 3 Axis)
         public Machine()
@@ -127,7 +128,7 @@ namespace CAMel.Types
         {
             get
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException("Machine has not yet implemented IsValid");
             }
         }
 
@@ -671,7 +672,7 @@ namespace CAMel.Types
                     throw new System.NotImplementedException("Machine Type has not implemented ReadCode.");
             }
         }
-        // TODO PocketNC read
+
         private ToolPath ReadCode_PocketNC(string Code)
         {
             ToolPath TP = new ToolPath();
@@ -681,23 +682,23 @@ namespace CAMel.Types
             double X = 0, Y = 0, Z = 0, A = 0, B = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
 
-            string Xpattern = @".*X([0-9\-.]+).*";
-            string Ypattern = @".*Y([0-9\-.]+).*";
-            string Zpattern = @".*Z([0-9\-.]+).*";
-            string Apattern = @".*A([0-9\-.]+).*";
-            string Bpattern = @".*B([0-9\-.]+).*";
-            string Fpattern = @".*F([0-9\-.]+).*";
-            string Spattern = @".*S([0-9\-.]+).*";
-            string G0pattern = @"G0.*";
-            string LinePattern = @".*";
+            const string Xpattern = @".*X([0-9\-.]+).*";
+            const string Ypattern = @".*Y([0-9\-.]+).*";
+            const string Zpattern = @".*Z([0-9\-.]+).*";
+            const string Apattern = @".*A([0-9\-.]+).*";
+            const string Bpattern = @".*B([0-9\-.]+).*";
+            const string Fpattern = @".*F([0-9\-.]+).*";
+            const string Spattern = @".*S([0-9\-.]+).*";
+            const string G0pattern = @"G0.*";
+            const string LinePattern = @".*";
 
-            System.Text.RegularExpressions.MatchCollection Lines;
+            MatchCollection Lines;
 
-            Lines = System.Text.RegularExpressions.Regex.Matches(Code, LinePattern);
+            Lines = Regex.Matches(Code, LinePattern);
 
             int i = 0;
 
-            foreach (System.Text.RegularExpressions.Match line in Lines)
+            foreach (Match line in Lines)
             {
                 changed = false;
                 Fchanged = false;
@@ -940,8 +941,8 @@ namespace CAMel.Types
                     // loop through intersecting with safe bubble and adding points
                     for(i=0;i<(route.Count-1)&&i<100;)
                     {
-                        inters = TPto.MatForm.intersect(route[i], route[i + 1] - route[i], TPto.MatForm.safeDistance);
-                        if (inters.hits && inters.firstDist < (route[i + 1] - route[i]).Length)
+                        
+                        if (TPto.MatForm.intersect(route[i], route[i + 1], TPto.MatForm.safeDistance, out inters))
                         {
                             fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
                             route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
@@ -1080,7 +1081,7 @@ namespace CAMel.Types
 
         ICAMel_Base ICAMel_Base.Duplicate()
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Machine has not yet implemented Duplicate.");
         }
     }
 

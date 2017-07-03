@@ -10,7 +10,7 @@ namespace CAMel.Types
     // One position of the machine
     public class ToolPoint : IToolPointContainer
     {
-        public Point3d Pt;      // Tool Tip position
+        public Point3d Pt { get; set; }      // Tool Tip position
         private Vector3d _Dir;
         public Vector3d Dir     // Tool Direction (away from position)
         {
@@ -21,8 +21,8 @@ namespace CAMel.Types
                 this._Dir.Unitize();
             }
         }
-        public double speed;    // Considered unset for negative values
-        public double feed;     // Considered unset for negative values
+        public double speed { get; set; }    // Considered unset for negative values
+        public double feed { get; set; }     // Considered unset for negative values
         public List<string> error;
         public List<string> warning;
 
@@ -35,6 +35,8 @@ namespace CAMel.Types
             this.feed = -1;
             this.error = new List<string>();
             this.warning = new List<string>();
+            this.name = "";
+            this.localCode = "";
         }
         // Just a point, set direction to 0 vector.
         public ToolPoint(Point3d Pt)
@@ -45,6 +47,8 @@ namespace CAMel.Types
             this.feed = -1;
             this.error = new List<string>();
             this.warning = new List<string>();
+            this.name = "";
+            this.localCode = "";
         }
         // Use point and direction, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D)
@@ -56,6 +60,8 @@ namespace CAMel.Types
             this.feed = -1;
             this.error = new List<string>();
             this.warning = new List<string>();
+            this.name = "";
+            this.localCode = "";
         }
         // Use point direction and extra Code, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, string Code)
@@ -68,6 +74,8 @@ namespace CAMel.Types
             this.feed = -1;
             this.error = new List<string>();
             this.warning = new List<string>();
+            this.name = "";
+            this.localCode = "";
         }
         // Use point direction and override speed and feed, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
@@ -79,6 +87,8 @@ namespace CAMel.Types
             this.feed = feed;
             this.error = new List<string>();
             this.warning = new List<string>();
+            this.name = "";
+            this.localCode = "";
         }
         // Use point direction extra Code and override speed and feed, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, string Code, double speed, double feed)
@@ -91,6 +101,8 @@ namespace CAMel.Types
             this.feed = feed;
             this.error = new List<string>();
             this.warning = new List<string>();
+            this.name = "";
+            this.localCode = "";
         }
         // Copy Constructor
         public ToolPoint(ToolPoint TP)
@@ -103,6 +115,8 @@ namespace CAMel.Types
             this.name = TP.name;
             this.error = TP.error;
             this.warning = TP.warning;
+            this.name = "";
+            this.localCode = "";
         }
 
         public string TypeDescription
@@ -115,37 +129,15 @@ namespace CAMel.Types
             get { return "ToolPoint"; }
         }
 
-        public string name
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
+        public string name { get; set; }
 
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public string localCode
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public string localCode { get; set; }
 
         public bool IsValid
         {
             get
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException("ToolPoint has not implemented IsValid");
             }
         }
 

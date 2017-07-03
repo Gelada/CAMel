@@ -12,19 +12,23 @@ namespace CAMel.Types
     public class MachineInstruction : IToolPointContainer
     {
         public List<MachineOperation> MOs;
-        public Machine Mach;
+        public Machine Mach { get; set; }
 
         // Default Constructor
         public MachineInstruction()
         {
             this.MOs = new List<MachineOperation>();
             this.Mach = new Machine();
+            this.name = "";
+            this.localCode = "";
         }
         // Just name
         public MachineInstruction(string name)
         {
             this.name = name;
             this.MOs = new List<MachineOperation>();
+            this.Mach = new Machine();
+            this.localCode = "";
         }
         // Name and Machine
         public MachineInstruction(string name, Machine Ma)
@@ -32,6 +36,7 @@ namespace CAMel.Types
             this.name = name;
             this.Mach = Ma;
             this.MOs = new List<MachineOperation>();
+            this.localCode = "";
         }
         // Copy Constructor
         public MachineInstruction(MachineInstruction Op)
@@ -69,37 +74,15 @@ namespace CAMel.Types
             get { return "MachineInstruction"; }
         }
 
-        public string name
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
+        public string name { get; set; }
 
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public string localCode
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public string localCode { get; set; }
 
         public bool IsValid
         {
             get
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException("IsValid not implemented for Machine Instructions.");
             }
         }
 

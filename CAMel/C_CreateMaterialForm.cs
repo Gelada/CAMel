@@ -58,30 +58,15 @@ namespace CAMel
             if (!DA.GetData(2, ref T)) return;
             IMaterialForm MF = null;
 
-            Box Bx = new Box();
-            Surface S = null;
-            Brep B = null;
-            bool err=false;
-
-            if (G.CastTo<Box>(out Bx)) { MF = MaterialForm.create(Bx, SD, T); }
-            else if (G.CastTo<Surface>(out S)) 
-            { 
-                Cylinder Cy;
-                if(S.TryGetCylinder(out Cy)) { MF = MaterialForm.create(Cy, SD, T); }
-                else {err = true; }
-            }
-            else if (G.CastTo<Brep>(out B))
+            if (MaterialForm.create(G, T, SD, out MF))
             {
-                Cylinder Cy;
-
-                // BUG: RhinoCommon has a problem with TryGetCylinder, this is fixed in a WIP build of Rhino 6
-                if (B.Surfaces[0].TryGetCylinder(out Cy)) { MF = MaterialForm.create(Cy, SD, T); }
-                else { err = true; }
+                DA.SetData(0, new GH_MaterialForm(MF));
             }
-            else { err = true; }
-            if(err) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Plane, a Box or a Cylinder. "); }
+            else
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Box or a Cylinder. ");
+            }
 
-            DA.SetData(0, MF);
         }
 
         /// <summary>

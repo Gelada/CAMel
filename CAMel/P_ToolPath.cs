@@ -63,6 +63,7 @@ namespace CAMel.Types
             this.MatTool = null;
             this.MatForm = null;
             this.Additions = new ToolPathAdditions();
+            this.localCode = "";
         }
         // Just a MaterialTool
         public ToolPath(string name, MaterialTool MT)
@@ -72,6 +73,7 @@ namespace CAMel.Types
             this.MatTool = MT;
             this.MatForm = null;
             this.Additions = new ToolPathAdditions();
+            this.localCode = "";
         }
         // MaterialTool and features
         public ToolPath(string name, MaterialTool MT, ToolPathAdditions TPA)
@@ -81,6 +83,7 @@ namespace CAMel.Types
             this.MatTool = MT;
             this.MatForm = null;
             this.Additions = new ToolPathAdditions(TPA);
+            this.localCode = "";
         }
         // MaterialTool and Code
         public ToolPath(string name, MaterialTool MT, string Co)
@@ -110,6 +113,7 @@ namespace CAMel.Types
             this.MatTool = MT;
             this.MatForm = MF;
             this.Additions = new ToolPathAdditions();
+            this.localCode = "";
         }
         // MaterialTool, Form and features
         public ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
@@ -119,6 +123,7 @@ namespace CAMel.Types
             this.MatTool = MT;
             this.MatForm = MF;
             this.Additions = new ToolPathAdditions(TPA);
+            this.localCode = "";
         }
         // MaterialTool, Form and Code
         public ToolPath(string name, MaterialTool MT, IMaterialForm MF, string Co)
@@ -172,37 +177,15 @@ namespace CAMel.Types
             get { return "ToolPath"; }
         }
 
-        public string name
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
+        public string name { get; set; }
 
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public string localCode
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public string localCode { get; set; }
 
         public bool IsValid
         {
             get
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException("ToolPath has not implemented IsValid");
             }
         }
 
@@ -270,14 +253,14 @@ namespace CAMel.Types
                 // ask the material form to refine the path
 
                 ToolPath refPath = useTP.MatForm.refine(useTP, M);
-                MaterialForm.intersection inters;
+                MaterialForm.intersection inter;
 
                 foreach(ToolPoint TP in refPath.Pts)
                 {
-                    inters = useTP.MatForm.intersect(TP, 0).through;
-                    MatDist.Add(inters.lineP); // distance to material surface
+                    inter = useTP.MatForm.intersect(TP, 0).through;
+                    MatDist.Add(inter.lineP); // distance to material surface
                     if (MatDist[MatDist.Count - 1] < 0) MatDist[MatDist.Count - 1] = 0; // avoid negative distances (outside material)
-                    MatNorm.Add(new Vector3d(inters.Away));
+                    MatNorm.Add(new Vector3d(inter.Away));
                     // calculate maximum number of cutDepth height steps down to finishDepth above material
                     NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1]-useTP.MatTool.finishDepth)/useTP.MatTool.cutDepth));
                     if(NumSteps[NumSteps.Count - 1] > MaxSteps) MaxSteps = NumSteps[NumSteps.Count - 1];
@@ -321,7 +304,7 @@ namespace CAMel.Types
                             {
                                 TPt = new ToolPoint(refPath.Pts[j - 1]);
                                 height = useTP.MatTool.finishDepth;
-                                if (height > MatDist[j-1] + useTP.MatForm.materialTolerance) height = 0;
+                                if (height > MatDist[j-1] ) height = 0;
                                 TPt.Pt = -TPt.Dir * height + TPt.Pt; // stay finishDepth above final path
 
                                 tempTP.Pts.Add(TPt);
@@ -340,7 +323,7 @@ namespace CAMel.Types
                             {
                                 TPt = new ToolPoint(refPath.Pts[j]);
                                 height = useTP.MatTool.finishDepth;
-                                if (height > MatDist[j] + useTP.MatForm.materialTolerance) height = 0;
+                                if (height > MatDist[j] ) height = 0;
                                 TPt.Pt = -TPt.Dir * height +TPt.Pt;
                                 tempTP.Pts.Add(TPt);
                             } // otherwise we do nothing
@@ -357,7 +340,7 @@ namespace CAMel.Types
                                     // then set end to true so we finish
                                     TPt = new ToolPoint(refPath.Pts[j]);
                                     height = useTP.MatTool.finishDepth;
-                                    if (height > MatDist[j] + useTP.MatForm.materialTolerance) height = 0;
+                                    if (height > MatDist[j] ) height = 0;
                                     TPt.Pt = -TPt.Dir *height + TPt.Pt;
                                     tempTP.Pts.Add(TPt);
                                     end = true;
@@ -366,7 +349,7 @@ namespace CAMel.Types
                                 {
                                     TPt = new ToolPoint(refPath.Pts[j]);
                                     height = useTP.MatTool.finishDepth;
-                                    if (height > MatDist[j] + useTP.MatForm.materialTolerance) height = 0;
+                                    if (height > MatDist[j] ) height = 0;
                                     TPt.Pt = -TPt.Dir *height + TPt.Pt;
                                     tempTP.Pts.Add(TPt);
                                 }
@@ -377,7 +360,7 @@ namespace CAMel.Types
                                 {
                                     TPt = new ToolPoint(refPath.Pts[j]);
                                     height = useTP.MatTool.finishDepth;
-                                    if (height > MatDist[j] + useTP.MatForm.materialTolerance) height = 0;
+                                    if (height > MatDist[j] ) height = 0;
                                     TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                     tempTP.Pts.Add(TPt);
                                 }
@@ -393,7 +376,7 @@ namespace CAMel.Types
                                         // add point, as previous point was in material
                                         TPt = new ToolPoint(refPath.Pts[j]);
                                         height = useTP.MatTool.finishDepth;
-                                        if (height > MatDist[j] + useTP.MatForm.materialTolerance) height = 0;
+                                        if (height > MatDist[j] ) height = 0;
                                         TPt.Pt = -TPt.Dir *height + TPt.Pt;
                                         tempTP.Pts.Add(TPt);
                                         // leap forward cut path and start a new one
@@ -411,7 +394,7 @@ namespace CAMel.Types
                                         // this will not result in a double point as we checked (k-j) >=3
                                         TPt = new ToolPoint(refPath.Pts[k - 1]);
                                         height = useTP.MatTool.finishDepth;
-                                        if (height > MatDist[k-1] + useTP.MatForm.materialTolerance) height = 0;
+                                        if (height > MatDist[k-1] ) height = 0;
                                         TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                         tempTP.Pts.Add(TPt);
                                         j = k - 1; //set j to k-1 so it deals with the k point next
@@ -421,7 +404,7 @@ namespace CAMel.Types
                                     {
                                         TPt = new ToolPoint(refPath.Pts[j]);
                                         height = useTP.MatTool.finishDepth;
-                                        if (height > MatDist[j] + useTP.MatForm.materialTolerance) height = 0;
+                                        if (height > MatDist[j] ) height = 0;
                                         TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                         tempTP.Pts.Add(TPt);
                                     }
