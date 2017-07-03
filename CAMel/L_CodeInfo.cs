@@ -172,7 +172,7 @@ namespace CAMel.Types
         // return string with all errors
         public string GetErrors()
         {
-            System.Text.StringBuilder outP = new System.Text.StringBuilder();
+            StringBuilder outP = new StringBuilder();
             if (Errors.Count > 0)
             {
                 outP.AppendLine("Errors: ");
@@ -185,7 +185,7 @@ namespace CAMel.Types
         // return string listing errors that are not ignored
         public string GetErrors(List<string> ignore)
         {
-            System.Text.StringBuilder outP = new System.Text.StringBuilder();
+            StringBuilder outP = new StringBuilder();
             bool first = true;
 
             foreach (string k in this.Errors.Keys)

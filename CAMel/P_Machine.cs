@@ -673,6 +673,15 @@ namespace CAMel.Types
             }
         }
 
+        private static Regex Xpattern = new Regex(@"[^X]*X([0-9\-.]+).*", RegexOptions.Compiled);
+        private static Regex Ypattern = new Regex(@"[^Y]*Y([0-9\-.]+).*", RegexOptions.Compiled);
+        private static Regex Zpattern = new Regex(@"[^Z]*Z([0-9\-.]+).*", RegexOptions.Compiled);
+        private static Regex Apattern = new Regex(@"[^A]*A([0-9\-.]+).*", RegexOptions.Compiled);
+        private static Regex Bpattern = new Regex(@"[^B]*B([0-9\-.]+).*", RegexOptions.Compiled);
+        private static Regex Fpattern = new Regex(@"[^F]*F([0-9\-.]+).*", RegexOptions.Compiled);
+        private static Regex Spattern = new Regex(@"[^S]*S([0-9\-.]+).*", RegexOptions.Compiled);
+        private static Regex G0pattern = new Regex(@"^G0.*", RegexOptions.Compiled);
+
         private ToolPath ReadCode_PocketNC(string Code)
         {
             ToolPath TP = new ToolPath();
@@ -681,15 +690,7 @@ namespace CAMel.Types
 
             double X = 0, Y = 0, Z = 0, A = 0, B = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
-
-            const string Xpattern = @".*X([0-9\-.]+).*";
-            const string Ypattern = @".*Y([0-9\-.]+).*";
-            const string Zpattern = @".*Z([0-9\-.]+).*";
-            const string Apattern = @".*A([0-9\-.]+).*";
-            const string Bpattern = @".*B([0-9\-.]+).*";
-            const string Fpattern = @".*F([0-9\-.]+).*";
-            const string Spattern = @".*S([0-9\-.]+).*";
-            const string G0pattern = @"G0.*";
+            
             const string LinePattern = @".*";
 
             MatchCollection Lines;
@@ -716,7 +717,7 @@ namespace CAMel.Types
                 S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
 
                 //interpret a G0 command.
-                if (System.Text.RegularExpressions.Regex.IsMatch(line.ToString(), G0pattern))
+                if (G0pattern.IsMatch(line.ToString()))
                 {
                     feedfound = true;
                     if (F != 0)
@@ -768,21 +769,16 @@ namespace CAMel.Types
             double X=0, Y = 0, Z = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
 
-            string Xpattern = @".*X([0-9\-.]+).*";
-            string Ypattern = @".*Y([0-9\-.]+).*";
-            string Zpattern = @".*Z([0-9\-.]+).*";
-            string Fpattern = @".*F([0-9\-.]+).*";
-            string Spattern = @".*S([0-9\-.]+).*";
             string G0pattern = @"G0.*";
             string LinePattern = @".*";
 
-            System.Text.RegularExpressions.MatchCollection Lines;
+            MatchCollection Lines;
 
-            Lines = System.Text.RegularExpressions.Regex.Matches(Code, LinePattern);
+            Lines = Regex.Matches(Code, LinePattern);
 
             int i = 0;
 
-            foreach( System.Text.RegularExpressions.Match line in Lines )
+            foreach(Match line in Lines )
             {
                 changed = false;
                 Fchanged = false;
@@ -798,7 +794,7 @@ namespace CAMel.Types
                 S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
 
                 //interpret a G0 command.
-                if( System.Text.RegularExpressions.Regex.IsMatch(line.ToString(), G0pattern))
+                if( Regex.IsMatch(line.ToString(), G0pattern))
                 {
                     feedfound = true;
                     if( F != 0 )
@@ -820,12 +816,12 @@ namespace CAMel.Types
             return TP;
         }
          
-        static private double GetValue(string line, string pattern, double old, ref bool found, ref bool changed)
+        static private double GetValue(string line, Regex pattern, double old, ref bool found, ref bool changed)
         {
             double val = old;
             string monkey;
-            if ( System.Text.RegularExpressions.Regex.IsMatch(line, pattern) ) {
-                monkey = System.Text.RegularExpressions.Regex.Replace(line, pattern, "$1");
+            if ( pattern.IsMatch(line) ) {
+                monkey = pattern.Replace(line, "$1");
                 val = Convert.ToDouble(monkey);
                 found = true;
                 if (val != old) changed = true;
