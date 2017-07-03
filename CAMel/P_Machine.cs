@@ -680,8 +680,7 @@ namespace CAMel.Types
         private static Regex Bpattern = new Regex(@"[^B]*B([0-9\-.]+).*", RegexOptions.Compiled);
         private static Regex Fpattern = new Regex(@"[^F]*F([0-9\-.]+).*", RegexOptions.Compiled);
         private static Regex Spattern = new Regex(@"[^S]*S([0-9\-.]+).*", RegexOptions.Compiled);
-        private static Regex G0pattern = new Regex(@"^G0.*", RegexOptions.Compiled);
-
+        
         private ToolPath ReadCode_PocketNC(string Code)
         {
             ToolPath TP = new ToolPath();
@@ -717,7 +716,7 @@ namespace CAMel.Types
                 S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
 
                 //interpret a G0 command.
-                if (G0pattern.IsMatch(line.ToString()))
+                if (line.ToString().Contains(@"G0"))
                 {
                     feedfound = true;
                     if (F != 0)
@@ -768,8 +767,7 @@ namespace CAMel.Types
 
             double X=0, Y = 0, Z = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
-
-            string G0pattern = @"G0.*";
+            
             string LinePattern = @".*";
 
             MatchCollection Lines;
@@ -794,7 +792,7 @@ namespace CAMel.Types
                 S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
 
                 //interpret a G0 command.
-                if( Regex.IsMatch(line.ToString(), G0pattern))
+                if( line.ToString().Contains(@"GO"))
                 {
                     feedfound = true;
                     if( F != 0 )
@@ -820,8 +818,8 @@ namespace CAMel.Types
         {
             double val = old;
             string monkey;
-            if ( pattern.IsMatch(line) ) {
-                monkey = pattern.Replace(line, "$1");
+            monkey = pattern.Replace(line, "$1");
+            if ( monkey.Length != line.Length ) {
                 val = Convert.ToDouble(monkey);
                 found = true;
                 if (val != old) changed = true;
