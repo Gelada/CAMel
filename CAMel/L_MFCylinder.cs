@@ -56,7 +56,6 @@ namespace CAMel.Types.MaterialForm
 
         public intersects intersect(Point3d PtIn, Vector3d dirIn, double tolerance)
         {
-            dirIn.Unitize();
             double utol = tolerance + this.materialTolerance;
 
             // expand by tolerance
@@ -67,6 +66,7 @@ namespace CAMel.Types.MaterialForm
             Vector3d dir = new Vector3d();
             this.Pl.RemapToPlaneSpace((Point3d)(dirIn+this.Pl.Origin), out Pt);
             dir = (Vector3d)Pt;
+            dir.Unitize();
             this.Pl.RemapToPlaneSpace(PtIn, out Pt);
             // give the projections of the points to the cylinder's planes
             Point3d Pt2d = Pt;
@@ -102,13 +102,13 @@ namespace CAMel.Types.MaterialForm
                 }
             } else
             {
-                lineP = (-utol-Pt.Z / dir.Z);
+                lineP = (-utol-Pt.Z) / dir.Z;
                 intPt = (Vector3d)Pt + lineP*dir;
                 if (zeroZ(intPt).Length <= exRadius) // hit bottom
                 {
                     inters.Add(this.fromPlane((Point3d)intPt), -this.Pl.ZAxis, lineP);
                 }
-                lineP = ((this.H+utol-Pt.Z) / dir.Z);
+                lineP = (this.H+utol-Pt.Z) / dir.Z;
                 intPt = (Vector3d)Pt + lineP * dir;
                 if (zeroZ(intPt).Length <= exRadius) // hit top
                 {
@@ -144,7 +144,7 @@ namespace CAMel.Types.MaterialForm
             }
             if (inters.Count > 1)
             {
-                inters.midOut = this.midOutDir(inters.mid,tolerance);
+                inters.midOut = this.midOutDir(inters.mid,dirIn,tolerance);
             }
             else
             {
@@ -152,7 +152,7 @@ namespace CAMel.Types.MaterialForm
             }
             return inters;
         }
-        private Vector3d midOutDir(Point3d PtIn, double tolerance)
+        private Vector3d midOutDir(Point3d PtIn, Vector3d dirIn, double tolerance)
         {
             Point3d Pt = new Point3d();
             this.Pl.RemapToPlaneSpace(PtIn, out Pt);
@@ -166,13 +166,22 @@ namespace CAMel.Types.MaterialForm
                 closeD = this.H + utol - Pt.Z;
                 outD = this.Pl.ZAxis;
             } 
-            if(closeD > (this.radius + utol-((Vector3d)zeroZ(Pt)).Length))
+            if(closeD > (this.radius + utol-((Vector3d)zeroZ(Pt)).Length)) // closer to side?
             {
                 closeD = this.radius + utol - ((Vector3d)zeroZ(Pt)).Length;
-                outD = (Vector3d)(this.fromPlane(zeroZ(Pt)) - this.Pl.Origin);
+                if (((Vector3d)zeroZ(Pt)).Length > 0.000001)
+                {
+                    outD = (Vector3d)(this.fromPlane(zeroZ(Pt)) - this.Pl.Origin);
+                } else
+                {
+                    Point3d dirP = new Point3d();
+                    this.Pl.RemapToPlaneSpace((Point3d)dirIn, out dirP);
+                    outD = (Vector3d)this.fromPlane(new Point3d(dirP.Y,-dirP.X,0));
+                }
+                outD.Unitize();
             }
             if (closeD < 0) {
-                //throw new FormatException("MidOutDir in MFCylinder called for point outside the Cylinder.");
+                throw new FormatException("MidOutDir in MFCylinder called for point outside the Cylinder.");
             }
             return outD;
         }

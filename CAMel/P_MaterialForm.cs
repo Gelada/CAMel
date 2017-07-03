@@ -97,6 +97,8 @@ namespace CAMel.Types.MaterialForm
 
             intersection inter;
 
+            double utol = MF.safeDistance * 1.05;
+
             // check if we have something to do
             if (TP.Additions.insert && irTP.Pts.Count > 0) // add insert
             {
@@ -115,7 +117,7 @@ namespace CAMel.Types.MaterialForm
                 // point out at safe distance
 
                 tempTP = new ToolPoint(irTP.Pts[0]);
-                tempTP.Pt = tempTP.Pt + inter.Away * (MF.safeDistance);
+                tempTP.Pt = tempTP.Pt + inter.Away * utol;
                 tempTP.feed = 0; // we can use a rapid move
                 irTP.Pts.Insert(0, tempTP);
             }
@@ -138,7 +140,7 @@ namespace CAMel.Types.MaterialForm
                 // Pull away to safe distance
 
                 tempTP = new ToolPoint(irTP.Pts[irTP.Pts.Count - 1]);
-                tempTP.Pt = tempTP.Pt + inter.Away * (MF.safeDistance);
+                tempTP.Pt = tempTP.Pt + inter.Away * utol;
                 tempTP.feed = 0; // we can use a rapid move
                 irTP.Pts.Add(tempTP);
             }
