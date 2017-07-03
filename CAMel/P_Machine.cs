@@ -673,14 +673,8 @@ namespace CAMel.Types
             }
         }
 
-        private static Regex Xpattern = new Regex(@"[^X]*X([0-9\-.]+).*", RegexOptions.Compiled);
-        private static Regex Ypattern = new Regex(@"[^Y]*Y([0-9\-.]+).*", RegexOptions.Compiled);
-        private static Regex Zpattern = new Regex(@"[^Z]*Z([0-9\-.]+).*", RegexOptions.Compiled);
-        private static Regex Apattern = new Regex(@"[^A]*A([0-9\-.]+).*", RegexOptions.Compiled);
-        private static Regex Bpattern = new Regex(@"[^B]*B([0-9\-.]+).*", RegexOptions.Compiled);
-        private static Regex Fpattern = new Regex(@"[^F]*F([0-9\-.]+).*", RegexOptions.Compiled);
-        private static Regex Spattern = new Regex(@"[^S]*S([0-9\-.]+).*", RegexOptions.Compiled);
-        
+        private static Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);
+
         private ToolPath ReadCode_PocketNC(string Code)
         {
             ToolPath TP = new ToolPath();
@@ -689,16 +683,13 @@ namespace CAMel.Types
 
             double X = 0, Y = 0, Z = 0, A = 0, B = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
-            
-            const string LinePattern = @".*";
 
-            MatchCollection Lines;
-
-            Lines = Regex.Matches(Code, LinePattern);
+            char[] seps = { '\n', '\r' };
+            String[] Lines = Code.Split(seps,StringSplitOptions.RemoveEmptyEntries);
 
             int i = 0;
 
-            foreach (Match line in Lines)
+            foreach (String line in Lines)
             {
                 changed = false;
                 Fchanged = false;
@@ -707,16 +698,16 @@ namespace CAMel.Types
                 feedfound = false;
                 speedfound = false;
 
-                X = GetValue(line.ToString(), Xpattern, X, ref found, ref changed);
-                Y = GetValue(line.ToString(), Ypattern, Y, ref found, ref changed);
-                Z = GetValue(line.ToString(), Zpattern, Z, ref found, ref changed);
-                A = GetValue(line.ToString(), Apattern, A, ref found, ref changed);
-                B = GetValue(line.ToString(), Bpattern, B, ref found, ref changed);
-                F = GetValue(line.ToString(), Fpattern, F, ref feedfound, ref Fchanged);
-                S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
+                X = GetValue(line, 'X', X, ref found, ref changed);
+                Y = GetValue(line, 'Y', Y, ref found, ref changed);
+                Z = GetValue(line, 'Z', Z, ref found, ref changed);
+                A = GetValue(line, 'A', A, ref found, ref changed);
+                B = GetValue(line, 'B', B, ref found, ref changed);
+                F = GetValue(line, 'F', F, ref feedfound, ref Fchanged);
+                S = GetValue(line, 'S', S, ref speedfound, ref Schanged);
 
                 //interpret a G0 command.
-                if (line.ToString().Contains(@"G0"))
+                if (line.Contains(@"G00") || line.ToString().Contains(@"G0 ") )
                 {
                     feedfound = true;
                     if (F != 0)
@@ -767,16 +758,13 @@ namespace CAMel.Types
 
             double X=0, Y = 0, Z = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
-            
-            string LinePattern = @".*";
 
-            MatchCollection Lines;
-
-            Lines = Regex.Matches(Code, LinePattern);
+            char[] seps = { '\n', '\r' };
+            String[] Lines = Code.Split(seps, StringSplitOptions.RemoveEmptyEntries);
 
             int i = 0;
 
-            foreach(Match line in Lines )
+            foreach(String line in Lines )
             {
                 changed = false;
                 Fchanged = false;
@@ -785,14 +773,15 @@ namespace CAMel.Types
                 feedfound = false;
                 speedfound = false;
 
-                X = GetValue(line.ToString(), Xpattern, X, ref found, ref changed);
-                Y = GetValue(line.ToString(), Ypattern, Y, ref found, ref changed);
-                Z = GetValue(line.ToString(), Zpattern, Z, ref found, ref changed);
-                F = GetValue(line.ToString(), Fpattern, F, ref feedfound, ref Fchanged);
-                S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
+                X = GetValue(line.ToString(), 'X', X, ref found, ref changed);
+                Y = GetValue(line.ToString(), 'Y', Y, ref found, ref changed);
+                Z = GetValue(line.ToString(), 'Z', Z, ref found, ref changed);
+                F = GetValue(line.ToString(), 'F', F, ref feedfound, ref Fchanged);
+                S = GetValue(line.ToString(), 'S', S, ref speedfound, ref Schanged);
 
                 //interpret a G0 command.
-                if( line.ToString().Contains(@"GO"))
+
+                if (line.Contains(@"G00") || line.ToString().Contains(@"G0 "))
                 {
                     feedfound = true;
                     if( F != 0 )
@@ -814,12 +803,14 @@ namespace CAMel.Types
             return TP;
         }
          
-        static private double GetValue(string line, Regex pattern, double old, ref bool found, ref bool changed)
+        static private double GetValue(string line, char split, double old, ref bool found, ref bool changed)
         {
             double val = old;
-            string monkey;
-            monkey = pattern.Replace(line, "$1");
-            if ( monkey.Length != line.Length ) {
+            string monkey = "";
+            string[] splitLine = line.Split(split);
+            if (splitLine.Length > 1 && numbPattern.IsMatch(splitLine[1]))
+            {
+                monkey = numbPattern.Replace(splitLine[1], "$1");
                 val = Convert.ToDouble(monkey);
                 found = true;
                 if (val != old) changed = true;
