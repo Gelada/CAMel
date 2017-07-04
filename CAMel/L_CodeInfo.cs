@@ -206,6 +206,31 @@ namespace CAMel.Types
         {
             return this.Code.ToString();
         }
+
+        public string ToString(int start, int length)
+        {
+            int ulength;
+            if (start+length > this.Code.Length)
+            {
+                ulength = this.Code.Length - start;
+            } else
+            {
+                ulength = length;
+            }
+
+            if( length > 0)
+            {
+                return this.Code.ToString(start, length);
+            }
+            else{
+                return "";
+            }
+        }
+
+        public int Length
+        {
+            get { return this.Code.Length; }
+        }
         
         public void AppendLineNoNum(string L)
         {
@@ -222,7 +247,7 @@ namespace CAMel.Types
                     line = "N" + this.lines.ToString("0000") + "0 " + L;
                     this.lines++;
                 }
-                this.Code.AppendLine(line);
+                this.AppendLineNoNum(line);
             }
         }
 

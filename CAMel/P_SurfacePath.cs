@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -189,27 +191,34 @@ namespace CAMel.Types
             List<ToolPath> newTPs = new List<ToolPath>();
             List<List<Vector3d>> Norms = new List<List<Vector3d>>();
             List<Vector3d> tempN;
-            Vector3d proj;
-            Line Ray;
-            Vector3d Norm = new Vector3d();
-            ToolPoint outPt;
+
             ToolPath tempTP;
-            bool hit;
+
 
             foreach(ToolPath TP in TPs)
             {
+                var intersectInfo = new ConcurrentDictionary<ToolPoint, firstIntersectResponse>(Environment.ProcessorCount, TP.Pts.Count);
+
+                foreach (ToolPoint TPt in TP.Pts) //initialise dictionary
+                    intersectInfo[TPt] = new firstIntersectResponse();
+
+                Parallel.ForEach(TP.Pts, TPtP =>
+                 {
+                     intersectInfo[TPtP] = firstIntersect(TPtP);
+                 }
+                );
+                
                 tempTP = new ToolPath("", MT, MF, TPA);
                 tempN = new List<Vector3d>();
-                for(int i=0;i<TP.Pts.Count;i++)
-                {
-                    proj = ProjDir(TP.Pts[i].Pt);
-                    Ray = new Line(TP.Pts[i].Pt, proj);
-                    outPt = new ToolPoint(this.firstintersect(Ray, out Norm, out hit), proj);
+                firstIntersectResponse fIR;
 
-                    if (hit)
+                foreach( ToolPoint TPt in TP.Pts)
+                {
+                    fIR = intersectInfo[TPt];
+                    if (fIR.hit)
                     {
-                        tempTP.Pts.Add(outPt);
-                        tempN.Add(Norm); 
+                        tempTP.Pts.Add(fIR.TP);
+                        tempN.Add(fIR.Norm); 
                     }
                     else if(tempTP.Pts.Count > 0 )
                     {
@@ -283,12 +292,27 @@ namespace CAMel.Types
             return MO;
         }
 
-        private Point3d firstintersect(Line Ray, out Vector3d Norm, out bool hit)
+        private struct firstIntersectResponse
         {
-            Point3d op = new Point3d();
-            Norm = new Vector3d();
-            Ray3d RayL = new Ray3d(Ray.From, Ray.UnitTangent);
-            hit = false;
+            public ToolPoint TP { get; set; }
+            public Vector3d Norm { get; set; }
+            public bool hit { get; set; }
+
+            public override string ToString()
+            {
+                return this.hit.ToString();
+            }
+        }
+
+        private firstIntersectResponse firstIntersect(ToolPoint TP)
+        {
+            firstIntersectResponse fIR = new firstIntersectResponse();
+            Vector3d Norm = new Vector3d();
+   
+            Vector3d proj = this.ProjDir(TP.Pt);
+            Ray3d RayL = new Ray3d(TP.Pt, proj);
+
+            fIR.hit = false;
             switch (this.ST)
             {
                 case surfaceType.Brep:
@@ -299,11 +323,12 @@ namespace CAMel.Types
                     if(interP != null) {LinterP.AddRange(interP);}
                     if( LinterP.Count > 0)
                     {
-                        hit = true;
-                        op = interP[0];
+                        fIR.hit = true;
+                        fIR.TP = new ToolPoint(interP[0],proj);
                         Point3d cp = new Point3d(); ComponentIndex ci; double s, t; // catching info we won't use;
                         // call closestpoint to find norm
-                        B.ClosestPoint(op, out cp, out ci, out s, out t, 0.5, out Norm);
+                        B.ClosestPoint(fIR.TP.Pt, out cp, out ci, out s, out t, 0.5, out Norm);
+                        fIR.Norm = Norm;
                     }
                     break;
                 case surfaceType.Mesh:
@@ -312,18 +337,17 @@ namespace CAMel.Types
                     double inter = Intersection.MeshRay(this.M, RayL, out faces);
                     if (inter>=0)
                     {
-                        hit = true;
-                        op=RayL.PointAt(inter);
+                        fIR.hit = true;
+                        fIR.TP= new ToolPoint(RayL.PointAt(inter),proj);
                         List<int> Lfaces = new List<int>();
                         Lfaces.AddRange(faces);
-                        Norm= new Vector3d(0,0,0);
-                            Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
+                        fIR.Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
 
-                        if (Norm * Ray.UnitTangent > 0) { Norm = -Norm; }
+                        if (fIR.Norm * RayL.Direction > 0) { fIR.Norm = -fIR.Norm; }
                     }
                     break;
             }
-            return op;
+            return fIR;
         }
         // Give the direction of projection for a specific point based on the projection type.
         private Vector3d ProjDir(Point3d Pt)

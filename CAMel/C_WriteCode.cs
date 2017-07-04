@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -18,6 +20,12 @@ namespace CAMel
                 "Write CNC Code",
                 "CAMel", "CNC Code")
         {
+            this.filePath = "";
+            this.SaveCode = new CodeInfo();
+            this.WriteFileThread = new BackgroundWorker();
+            this.WriteFileThread.DoWork += this.BW_WriteFile;
+            this.WriteFileThread.RunWorkerCompleted += BW_completedFileWrite;
+            this.WriteFileThread.WorkerSupportsCancellation = true;
         }
 
         /// <summary>
@@ -29,6 +37,7 @@ namespace CAMel
             Ig.Add("Nothing to Ignore.");
             pManager.AddGenericParameter("Machine Instructions", "MI", "Complete set of machine instructions to convert to Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list,Ig);
+            pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, "");
         }
 
         /// <summary>
@@ -38,6 +47,18 @@ namespace CAMel
         {
             pManager.AddTextParameter("Code", "Code", "Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ranges", "R", "Ranges of movement", GH_ParamAccess.item);
+        }
+
+        protected override void BeforeSolveInstance()
+        {
+            base.BeforeSolveInstance();
+
+            // Cancel a write thread if it is running
+            if (this.WriteFileThread.IsBusy)
+            {
+                this.WriteFileThread.CancelAsync();
+                this.setOffWriting = false;
+            }
         }
 
         /// <summary>
@@ -54,37 +75,87 @@ namespace CAMel
             }
 
             List<String> ignore = new List<string>();
+            DA.GetDataList(1, ignore);
 
-            if (!DA.GetDataList(1, ignore)) return;
+            lock (this.filePath)
+            {
+                DA.GetData(2, ref this.filePath);
+            }
 
-            CodeInfo Code = new CodeInfo(MI.Mach);
+            lock (this.SaveCode)
+            {
+                this.SaveCode = new CodeInfo(MI.Mach);
 
-            MachineInstruction procMI = MI.ProcessAdditions();
+                MachineInstruction procMI = MI.ProcessAdditions();
 
-            procMI.WriteCode(ref Code);
-
+                procMI.WriteCode(ref this.SaveCode);
+            }
             // Detect Errors and warnings
 
             // TODO report errors and warnings in an output parameter
 
-            if (Code.HasErrors(ignore))
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, Code.GetErrors(ignore));
-            if (Code.HasWarnings(ignore))
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, Code.GetWarnings(ignore));
+            if (this.SaveCode.HasErrors(ignore))
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.GetErrors(ignore));
+            if (this.SaveCode.HasWarnings(ignore))
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, this.SaveCode.GetWarnings(ignore));
 
             // Extract Ranges
 
-            Dictionary<String, Interval> Ranges = Code.GetRanges();
-            string rOut = ""; 
+            Dictionary<String, Interval> Ranges = this.SaveCode.GetRanges();
+            string rOut = "";
 
-            foreach(string k in Ranges.Keys)
+            foreach (string k in Ranges.Keys)
             {
                 rOut = rOut + "\n" + k + ": " + Ranges[k].T0.ToString("0.00") + " to " + Ranges[k].T1.ToString("0.00");
             }
 
-            DA.SetData(0,Code.ToString());
-            DA.SetData(1,rOut);
-            
+            DA.SetData(0, this.SaveCode.ToString());
+            DA.SetData(1, rOut);
+
+            // queue up file write
+            if (this.WriteFileThread.IsBusy) { this.WriteFileThread.RunWorkerAsync(); }
+            else { this.setOffWriting = true; }
+        }
+
+        private BackgroundWorker WriteFileThread;
+
+        private CodeInfo SaveCode;
+        private string filePath;
+
+        private bool setOffWriting;
+
+        private void BW_WriteFile(object sender, DoWorkEventArgs e)
+        {
+            lock (this.filePath) lock (this.SaveCode)
+                {
+                    File.Delete(filePath);
+                    using (StreamWriter SW = new StreamWriter(filePath))
+                    {
+                        for (int i = 0; i < SaveCode.Length; i += 400)
+                        {
+                            if (((BackgroundWorker)sender).CancellationPending)
+                            {
+                                e.Cancel = true;
+                                break;
+                            }
+                            SW.Write(SaveCode.ToString(i, i + 399));
+                        }
+                    }
+                }
+        }
+
+        private void BW_completedFileWrite(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if(e.Cancelled)
+            {
+                File.Delete(filePath);
+            }
+            // Restart writing if asked.
+            if(this.setOffWriting)
+            {
+                this.setOffWriting = false;
+                this.WriteFileThread.RunWorkerAsync();
+            }
         }
 
         /// <summary>
