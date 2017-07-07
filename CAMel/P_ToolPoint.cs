@@ -55,9 +55,8 @@ namespace CAMel.Types
         // Use point and direction, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D)
         {
-            this.Pt = new Point3d(Pt);
-            this.Dir = new Vector3d(D);
-            if (this.Dir.Length > 0) this.Dir.Unitize();
+            this.Pt = Pt;
+            this.Dir = D;
             this.speed = -1;
             this.feed = -1;
             this.error = null;
@@ -68,9 +67,8 @@ namespace CAMel.Types
         // Use point direction and extra Code, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, string Code)
         {
-            this.Pt = new Point3d(Pt);
-            this.Dir = new Vector3d(D);
-            if (this.Dir.Length > 0) this.Dir.Unitize();
+            this.Pt = Pt;
+            this.Dir = D;
             this.localCode = Code;
             this.speed = -1;
             this.feed = -1;
@@ -82,9 +80,8 @@ namespace CAMel.Types
         // Use point direction and override speed and feed, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
         {
-            this.Pt = new Point3d(Pt);
-            this.Dir = new Vector3d(D);
-            if (this.Dir.Length > 0) this.Dir.Unitize();
+            this.Pt = Pt;
+            this.Dir = D;
             this.speed = speed;
             this.feed = feed;
             this.error = null;
@@ -95,9 +92,8 @@ namespace CAMel.Types
         // Use point direction extra Code and override speed and feed, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, string Code, double speed, double feed)
         {
-            this.Pt = new Point3d(Pt);
-            this.Dir = new Vector3d(D);
-            if (this.Dir.Length > 0) this.Dir.Unitize();
+            this.Pt = Pt;
+            this.Dir = D;
             this.localCode = Code;
             this.speed = speed;
             this.feed = feed;
@@ -109,8 +105,8 @@ namespace CAMel.Types
         // Copy Constructor
         public ToolPoint(ToolPoint TP)
         {
-            this.Pt = new Point3d(TP.Pt);
-            this.Dir = new Vector3d(TP.Dir);
+            this.Pt = TP.Pt;
+            this.Dir = TP.Dir;
             this.localCode = TP.localCode;
             this.speed = TP.speed;
             this.feed = TP.feed;

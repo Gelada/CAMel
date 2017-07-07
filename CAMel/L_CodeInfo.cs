@@ -253,11 +253,12 @@ namespace CAMel.Types
 
         public void Append(string L)
         {
-            string LinePattern = @".+";
-            MatchCollection Lines = Regex.Matches(L, LinePattern);
-            foreach(Match m in Lines)
+            char[] seps = { '\n', '\r' };
+            String[] Lines = L.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (String line in Lines)
             {
-                this.AppendLine(m.ToString());
+                this.AppendLine(line);
             }
         }
 

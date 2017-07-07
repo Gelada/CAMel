@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -196,16 +197,19 @@ namespace CAMel.Types
             // translate from origin at pivot to origin set so that the tooltip is at machine origin
             OP = OP - this.Pivot + Vector3d.ZAxis * MT.toolLength;
             //HACK!
-            if (OP.Z > 0.02) OP.Z = 0.02;
+            //if (OP.Z > 0.02) OP.Z = 0.02;
             //if (OP.X < -2.0) OP.X = -2.0;
             //if (OP.X > 2.4) OP.X = 2.4;
 
-            String GPoint = "";
-            GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000") + " Z" + OP.Z.ToString("0.000") + " ";
-            GPoint += "A" + (180 * AB.X / Math.PI).ToString("0.000") + " B" + (180 * AB.Y / Math.PI).ToString("0.000");
+            StringBuilder GPtBd = new StringBuilder(@"X",34);
+            GPtBd.Append(OP.X.ToString("0.000"));
+            GPtBd.Append(@" Y"); GPtBd.Append(OP.Y.ToString("0.000"));
+            GPtBd.Append(@" Z"); GPtBd.Append(OP.Z.ToString("0.000"));
+            GPtBd.Append(@" A"); GPtBd.Append((180 * AB.X / Math.PI).ToString("0.000"));
+            GPtBd.Append(@" B"); GPtBd.Append((180 * AB.Y / Math.PI).ToString("0.000"));
 
             machinePt = OP;
-            return GPoint;
+            return GPtBd.ToString();
         }
         static private string IK_PocketNC_orient(MaterialTool materialTool, Vector2d AB)
         {
@@ -697,8 +701,6 @@ namespace CAMel.Types
             char[] seps = { '\n', '\r' };
             String[] Lines = Code.Split(seps,StringSplitOptions.RemoveEmptyEntries);
 
-            int i = 0;
-
             foreach (String line in Lines)
             {
                 changed = false;
@@ -736,7 +738,6 @@ namespace CAMel.Types
                     {
                         TP.Pts[TP.Pts.Count-1].localCode = "Z";
                     }
-                    i++;
                 }
 
             }
