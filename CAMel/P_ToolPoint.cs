@@ -23,8 +23,10 @@ namespace CAMel.Types
         }
         public double speed { get; set; }    // Considered unset for negative values
         public double feed { get; set; }     // Considered unset for negative values
-        public List<string> error;
-        public List<string> warning;
+        public List<string> error { get; private set; }
+        public List<string> warning { get; private set; }
+        public string name { get; set; }
+        public string localCode { get; set; }
 
         // Default Constructor, set up at the origin with direction set to 0 vector.
         public ToolPoint()
@@ -33,8 +35,8 @@ namespace CAMel.Types
             this.Dir = new Vector3d(0, 0, 0);
             this.speed = -1;
             this.feed = -1;
-            this.error = new List<string>();
-            this.warning = new List<string>();
+            this.error = null;
+            this.warning = null;
             this.name = "";
             this.localCode = "";
         }
@@ -45,8 +47,8 @@ namespace CAMel.Types
             this.Dir = new Vector3d(0, 0, 0);
             this.speed = -1;
             this.feed = -1;
-            this.error = new List<string>();
-            this.warning = new List<string>();
+            this.error = null;
+            this.warning = null;
             this.name = "";
             this.localCode = "";
         }
@@ -58,8 +60,8 @@ namespace CAMel.Types
             if (this.Dir.Length > 0) this.Dir.Unitize();
             this.speed = -1;
             this.feed = -1;
-            this.error = new List<string>();
-            this.warning = new List<string>();
+            this.error = null;
+            this.warning = null;
             this.name = "";
             this.localCode = "";
         }
@@ -72,8 +74,8 @@ namespace CAMel.Types
             this.localCode = Code;
             this.speed = -1;
             this.feed = -1;
-            this.error = new List<string>();
-            this.warning = new List<string>();
+            this.error = null;
+            this.warning = null;
             this.name = "";
             this.localCode = "";
         }
@@ -85,8 +87,8 @@ namespace CAMel.Types
             if (this.Dir.Length > 0) this.Dir.Unitize();
             this.speed = speed;
             this.feed = feed;
-            this.error = new List<string>();
-            this.warning = new List<string>();
+            this.error = null;
+            this.warning = null;
             this.name = "";
             this.localCode = "";
         }
@@ -99,8 +101,8 @@ namespace CAMel.Types
             this.localCode = Code;
             this.speed = speed;
             this.feed = feed;
-            this.error = new List<string>();
-            this.warning = new List<string>();
+            this.error = null;
+            this.warning = null;
             this.name = "";
             this.localCode = "";
         }
@@ -119,6 +121,18 @@ namespace CAMel.Types
             this.localCode = "";
         }
 
+        public void AddError(string err)
+        {
+            if(this.error == null) { this.error = new List<string>(); }
+            this.error.Add(err);
+        }
+
+        public void AddWarning(string warn)
+        {
+            if (this.warning == null) { this.warning = new List<string>(); }
+            this.error.Add(warn);
+        }
+
         public string TypeDescription
         {
             get { return "Information about a position of the machine"; }
@@ -129,9 +143,6 @@ namespace CAMel.Types
             get { return "ToolPoint"; }
         }
 
-        public string name { get; set; }
-
-        public string localCode { get; set; }
 
         public bool IsValid
         {

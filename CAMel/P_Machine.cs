@@ -307,18 +307,22 @@ namespace CAMel.Types
 
             foreach(ToolPoint Pt in TP.Pts)
             {
-                
-                foreach(string err in Pt.error)
+                if (Pt.error != null)
                 {
-                    Co.AddError(err);
-                    Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                    foreach (string err in Pt.error)
+                    {
+                        Co.AddError(err);
+                        Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                    }
                 }
-                foreach (string warn in Pt.warning)
+                if (Pt.warning != null)
                 {
-                    Co.AddWarning(warn);
-                    Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                    foreach (string warn in Pt.warning)
+                    {
+                        Co.AddWarning(warn);
+                        Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                    }
                 }
-                    
 
                 // Establish new feed value
                 if(Pt.feed != feed)
@@ -461,15 +465,21 @@ namespace CAMel.Types
             {
                 Pt = TP.Pts[i];
 
-                foreach (string err in Pt.error)
+                if (Pt.error != null)
                 {
-                    Co.AddError(err);
-                    Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                    foreach (string err in Pt.error)
+                    {
+                        Co.AddError(err);
+                        Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                    }
                 }
-                foreach (string warn in Pt.warning)
+                if (Pt.warning != null)
                 {
-                    Co.AddWarning(warn);
-                    Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                    foreach (string warn in Pt.warning)
+                    {
+                        Co.AddWarning(warn);
+                        Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                    }
                 }
 
                 // Establish new feed value
