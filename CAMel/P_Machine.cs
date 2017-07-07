@@ -971,7 +971,7 @@ namespace CAMel.Types
                                 {   // something has gone horribly wrong and 
                                     // both angle change directions will hit the material
  
-                                    //throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
+                                    throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
                                 } else
                                 { // start again with the longer angle change
                                     lng=true;

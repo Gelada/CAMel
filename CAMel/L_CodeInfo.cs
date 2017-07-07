@@ -218,9 +218,9 @@ namespace CAMel.Types
                 ulength = length;
             }
 
-            if( length > 0)
+            if( ulength > 0)
             {
-                return this.Code.ToString(start, length);
+              return this.Code.ToString(start, ulength);
             }
             else{
                 return "";

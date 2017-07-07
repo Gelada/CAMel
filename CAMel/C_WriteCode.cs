@@ -5,11 +5,17 @@ using System.IO;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
+using Grasshopper.GUI.Base;
 using Rhino.Geometry;
 using CAMel.Types;
 
 namespace CAMel
 {
+    public enum WriteState
+    {
+        No_file, Writing, Finished, Cancelled, Waiting
+    }
+
     public class C_WriteCode : GH_Component
     {
         /// <summary>
@@ -22,10 +28,22 @@ namespace CAMel
         {
             this.filePath = "";
             this.SaveCode = new CodeInfo();
+            this.WS = WriteState.No_file;
+            this.writeProgress = 0;
+
             this.WriteFileThread = new BackgroundWorker();
             this.WriteFileThread.DoWork += this.BW_WriteFile;
-            this.WriteFileThread.RunWorkerCompleted += BW_completedFileWrite;
+            this.WriteFileThread.RunWorkerCompleted += this.BW_completedFileWrite;
+            this.WriteFileThread.ProgressChanged += BW_progressWithFile;
+            this.WriteFileThread.WorkerReportsProgress = true;
             this.WriteFileThread.WorkerSupportsCancellation = true;
+
+
+        }
+
+        public override void CreateAttributes()
+        {
+            m_attributes = new WriteCodeAttributes(this);
         }
 
         /// <summary>
@@ -77,11 +95,6 @@ namespace CAMel
             List<String> ignore = new List<string>();
             DA.GetDataList(1, ignore);
 
-            lock (this.filePath)
-            {
-                DA.GetData(2, ref this.filePath);
-            }
-
             lock (this.SaveCode)
             {
                 this.SaveCode = new CodeInfo(MI.Mach);
@@ -112,33 +125,59 @@ namespace CAMel
             DA.SetData(0, this.SaveCode.ToString());
             DA.SetData(1, rOut);
 
-            // queue up file write
-            if (this.WriteFileThread.IsBusy) { this.WriteFileThread.RunWorkerAsync(); }
-            else { this.setOffWriting = true; }
+            lock(this.filePath)
+            {
+                if(DA.GetData(2, ref this.filePath) && this.filePath != "")
+                {
+                    // queue up file write
+                    if (!this.WriteFileThread.IsBusy)
+                    {
+                        this.WriteFileThread.RunWorkerAsync();
+                    }
+                    else {
+                        this.setOffWriting = true;
+                    }
+                } 
+                else
+                {
+                    this.WS = WriteState.No_file;
+                    this.writeProgress = 0;
+                    this.OnDisplayExpired(true);
+                }
+            }
         }
 
-        private BackgroundWorker WriteFileThread;
-
+        private BackgroundWorker WriteFileThread { get; set; }
         private CodeInfo SaveCode;
         private string filePath;
+        private bool setOffWriting { get; set; }
 
-        private bool setOffWriting;
+        public WriteState WS;
+        public double writeProgress { get; private set; }
 
         private void BW_WriteFile(object sender, DoWorkEventArgs e)
         {
+            BackgroundWorker BW = (BackgroundWorker)sender;
+            
+            const int saveBlockSize = 40000;
             lock (this.filePath) lock (this.SaveCode)
                 {
-                    File.Delete(filePath);
+                    this.WS = WriteState.Writing;
+                    try { File.Delete(filePath); }
+                    catch (Exception) { }
+                    BW.ReportProgress(0);
+
                     using (StreamWriter SW = new StreamWriter(filePath))
                     {
-                        for (int i = 0; i < SaveCode.Length; i += 400)
+                        for (int i = 0; i < SaveCode.Length; i += saveBlockSize)
                         {
-                            if (((BackgroundWorker)sender).CancellationPending)
+                            if (BW.CancellationPending)
                             {
                                 e.Cancel = true;
                                 break;
                             }
-                            SW.Write(SaveCode.ToString(i, i + 399));
+                            SW.Write(SaveCode.ToString(i, saveBlockSize));
+                            BW.ReportProgress((int)Math.Floor(100.0 * i / (double)SaveCode.Length));
                         }
                     }
                 }
@@ -148,7 +187,10 @@ namespace CAMel
         {
             if(e.Cancelled)
             {
-                File.Delete(filePath);
+                this.cancelWrite();
+            } else
+            {
+                this.finishWrite();
             }
             // Restart writing if asked.
             if(this.setOffWriting)
@@ -156,6 +198,32 @@ namespace CAMel
                 this.setOffWriting = false;
                 this.WriteFileThread.RunWorkerAsync();
             }
+        }
+
+        private void cancelWrite()
+        {
+            File.Delete(filePath);
+            this.WS = WriteState.Cancelled;
+            this.writeProgress = 0;
+            this.OnDisplayExpired(true);
+        }
+
+        private void finishWrite()
+        {
+            this.WS = WriteState.Finished;
+            this.writeProgress = 1;
+            //this.OnDisplayExpired(true);
+        }
+
+        private void BW_progressWithFile(object sender, ProgressChangedEventArgs e)
+        {
+            this.updateWriteProgress(e.ProgressPercentage / 100.0);
+        }
+
+        private void updateWriteProgress(double progress)
+        {
+            this.writeProgress = progress;
+            //this.OnDisplayExpired(true);
         }
 
         /// <summary>
