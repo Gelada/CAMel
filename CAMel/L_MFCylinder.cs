@@ -96,9 +96,9 @@ namespace CAMel.Types.MaterialForm
                     linePshift = Math.Sqrt(exRadius * exRadius - cenDist*cenDist);
                     // add the two intersection points.
                     intPt = (Vector3d)Pt + (linePshift-linePcen) * dir;
-                    inters.Add(this.fromPlane((Point3d)intPt),(Vector3d)this.fromPlane((Point3d)zeroZ(intPt)),linePshift-linePcen);
+                    inters.Add(this.fromPlane((Point3d)intPt),this.fromPlane((Point3d)zeroZ(intPt))-this.Pl.Origin,linePshift-linePcen);
                     intPt = (Vector3d)Pt + (-linePshift-linePcen) * dir;
-                    inters.Add(this.fromPlane((Point3d)intPt), (Vector3d)this.fromPlane((Point3d)zeroZ(intPt)), - linePshift-linePcen);
+                    inters.Add(this.fromPlane((Point3d)intPt), this.fromPlane((Point3d)zeroZ(intPt))-this.Pl.Origin, - linePshift-linePcen);
                 }
             } else
             {
@@ -129,7 +129,7 @@ namespace CAMel.Types.MaterialForm
                     {
                         inters.Add(
                             this.fromPlane((Point3d)intPt), 
-                            (Vector3d)(this.fromPlane((Point3d)zeroZ(intPt)) - this.Pl.Origin), 
+                            this.fromPlane((Point3d)zeroZ(intPt)) - this.Pl.Origin, 
                             (linePshift-linePcen)/flatDist);
                     }
                     intPt = (Vector3d)Pt + (-linePshift-linePcen) * dir/flatDist;
@@ -171,12 +171,12 @@ namespace CAMel.Types.MaterialForm
                 closeD = this.radius + utol - ((Vector3d)zeroZ(Pt)).Length;
                 if (((Vector3d)zeroZ(Pt)).Length > 0.000001)
                 {
-                    outD = (Vector3d)(this.fromPlane(zeroZ(Pt)) - this.Pl.Origin);
+                    outD = this.fromPlane(zeroZ(Pt)) - this.Pl.Origin;
                 } else
                 {
                     Point3d dirP = new Point3d();
-                    this.Pl.RemapToPlaneSpace((Point3d)dirIn, out dirP);
-                    outD = (Vector3d)this.fromPlane(new Point3d(dirP.Y,-dirP.X,0));
+                    this.Pl.RemapToPlaneSpace((Point3d)(dirIn + this.Pl.Origin), out dirP);
+                    outD = this.fromPlane(new Point3d(dirP.Y,-dirP.X,0))-this.Pl.Origin;
                 }
                 outD.Unitize();
             }

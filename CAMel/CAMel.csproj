@@ -108,6 +108,7 @@
     <Compile Include="P_ToolPoint.cs" />
     <Compile Include="P_ToolPath.cs" />
     <Compile Include="C_WriteCode.cs" />
+    <Compile Include="C_WriteCodeAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
