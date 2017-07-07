@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
 
@@ -27,7 +28,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGeometryParameter("Surface", "S", "Brep or Mesh to Mill", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Bounding Box", "BB", "Region to Mill as a bounding box oriented by Dir, will be calulated if you add the Mesh or Brep to Mill.", GH_ParamAccess.item);
             pManager.AddCurveParameter("Curve", "C", "Curve to run parallel to", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Direction", "Dir", "Plane to use, Helix around Z.", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddGenericParameter("Material Tool", "MT", "Information about the material and tool", GH_ParamAccess.item);
@@ -51,7 +52,8 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            GeometryBase G = null;
+            IGH_Goo G = null; 
+            BoundingBox BB = new BoundingBox(); // region to mill
             Curve C = null; // path to move parallel to 
             Plane Dir = Plane.WorldXY; // Plane to rotate in as you rise.
             MaterialTool MT = null; // The materialtool, mainly for tool width
@@ -67,6 +69,36 @@ namespace CAMel
             if (!DA.GetData(4, ref TD)) { return; }
             if (!DA.GetData(5, ref stepOver)) { return; }
             if (!DA.GetData(6, ref CW)) { return; }
+
+            // process the bounding box
+
+            if (!G.CastTo<BoundingBox>(out BB))
+            {
+                if (G.CastTo<Surface>(out Surface S))
+                {
+                    BB = S.GetBoundingBox(Dir);// extents of S in the coordinate system
+                    Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
+                    BB = S.GetBoundingBox(Dir); // extents of S in the coordinate system
+                }
+                else if (G.CastTo<Brep>(out Brep B))
+                {
+                    BB = B.GetBoundingBox(Dir);// extents of S in the coordinate system
+                    Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
+                    BB = B.GetBoundingBox(Dir); // extents of S in the coordinate system
+                }
+                else if (G.CastTo<Mesh>(out Mesh M))
+                {
+                    BB = M.GetBoundingBox(Dir);// extents of S in the coordinate system
+                    Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
+                    BB = M.GetBoundingBox(Dir); // extents of S in the coordinate system
+                }
+                else
+                {
+                    this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep.");
+                }
+
+                BB.Inflate(MT.toolWidth);
+            }
 
             // set Surfacing direction
             SurfToolDir STD;
@@ -88,12 +120,6 @@ namespace CAMel
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
                     return;
             }
-
-            // Find surface bounding box to find our extents
-            
-            BoundingBox BB = G.GetBoundingBox(Dir); // extents of S in the coordinate system
-            Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
-            BB = G.GetBoundingBox(Dir); // extents of S in the coordinate system
 
             double outerradius = (new Vector3d(BB.Max.X-BB.Min.X,BB.Max.Y-BB.Min.Y,0)).Length/2;
             Cylinder Cy = new Cylinder(new Circle(Dir, outerradius));
