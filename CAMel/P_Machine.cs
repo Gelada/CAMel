@@ -817,11 +817,10 @@ namespace CAMel.Types
         static private double GetValue(string line, char split, double old, ref bool found, ref bool changed)
         {
             double val = old;
-            string monkey = "";
             string[] splitLine = line.Split(split);
             if (splitLine.Length > 1 && numbPattern.IsMatch(splitLine[1]))
             {
-                monkey = numbPattern.Replace(splitLine[1], "$1");
+                string monkey = numbPattern.Replace(splitLine[1], "$1");
                 val = Convert.ToDouble(monkey);
                 found = true;
                 if (val != old) changed = true;

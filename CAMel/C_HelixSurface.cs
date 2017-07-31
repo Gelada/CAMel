@@ -127,7 +127,7 @@ namespace CAMel
             Cy.Height1 = BB.Min.Z;
             Cy.Height2 = BB.Max.Z;
 
-            // Use Toolpath so we standardise Curve converstion
+            // Use Toolpath so we standardise Curve convertion
             ToolPath CTP = new ToolPath("", MT);
 
             double Zmin=0, Zmax=0;
@@ -178,6 +178,7 @@ namespace CAMel
                     temp.Y = temp.Y + turns;
                     tp.Pt = temp;
                 }
+
                 // complete loop by adding points going from
                 // the end point to the start point
                 Point3d startPt = CTP.Pts[0].Pt;
@@ -220,7 +221,7 @@ namespace CAMel
                 {
                     tempPt = FromCyl(new Point3d(
                         outerradius,
-                        CTP.Pts[j].Pt.Y, 
+                        -CTP.Pts[j].Pt.Y, 
                         BB.Min.Z - Zmax + CTP.Pts[j].Pt.Z + (2.0 * Math.PI * winding * i + CTP.Pts[j].Pt.Y) * raisePer));
                     tempPt = Dir.PointAt(tempPt.X, tempPt.Y, tempPt.Z);
                     SpiralPath.Add(tempPt);
@@ -236,7 +237,7 @@ namespace CAMel
                 Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Max.Z));
 
             SurfacePath SP = new SurfacePath(Paths, Dir.ZAxis, CC, STD);
-            DA.SetData(0, SP);
+            DA.SetData(0, new GH_SurfacePath(SP));
             DA.SetDataList(1, Paths);
 
         }

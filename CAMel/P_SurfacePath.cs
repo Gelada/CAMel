@@ -413,6 +413,12 @@ namespace CAMel.Types
             this.Value = new SurfacePath();
         }
 
+        // Default Constructor
+        public GH_SurfacePath(SurfacePath SP)
+        {
+            this.Value = SP;
+        }
+
         // Copy Constructor.
         public GH_SurfacePath(GH_SurfacePath Op)
         {
