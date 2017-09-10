@@ -177,7 +177,7 @@ namespace CAMel.Types
             {
                 outP.AppendLine("Errors: ");
                 foreach (string k in this.Errors.Keys)
-                    outP.AppendLine(k + ": " + Errors[k]);
+                    outP.AppendLine(k + ": " + Errors[k] + " times");
             }
             return outP.ToString();
         }
@@ -196,7 +196,7 @@ namespace CAMel.Types
                         first = false;
                         outP.AppendLine("Errors: ");
                     }
-                    outP.AppendLine(k + ": " + Errors[k]);
+                    outP.AppendLine(k + ": " + Errors[k] + " times");
                 }
 
             return outP.ToString();

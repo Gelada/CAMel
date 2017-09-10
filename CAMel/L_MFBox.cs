@@ -93,7 +93,7 @@ namespace CAMel.Types.MaterialForm
             
             if (Dir.X != 0)
             {
-                shift = (face - Pt.X) / (Pt.X);
+                shift = (face - Pt.X) / (Dir.X);
                 intDist = shift * Dir.Length;
             } else // parallel
             {
@@ -149,7 +149,7 @@ namespace CAMel.Types.MaterialForm
                 closeD = (Pt.Z - this.B.Z.Min-utol);
                 outD = -this.B.Plane.ZAxis;
             }
-            if(closeD < 0) { throw new FormatException("MidOutDir in MFBox called for point outside the Box."); }
+            if(closeD < -2*utol) { throw new FormatException("MidOutDir in MFBox called for point outside the Box."); }
             return outD;
         }
 
