@@ -214,6 +214,7 @@ namespace CAMel.Types
 
                 foreach( ToolPoint TPt in TP.Pts)
                 {
+
                     fIR = intersectInfo[TPt];
                     if (fIR.hit)
                     {
@@ -243,16 +244,28 @@ namespace CAMel.Types
             for(int j=0;j<newTPs.Count;j++)
             {
                 for (int i = 0; i < newTPs[j].Pts.Count; i++)
-                {           
-                    // find the tangent vector;
+                {
+                    // find the tangent vector, assume the curve is not too jagged
+                    // this is reasonable for most paths, but not for space 
+                    // filling curve styles. Though for those this is a bad option.
+                    // For the moment we will look 2 points back and one point forward.
+                    // Some cases to deal with the start, end and short paths. 
+                    // TODO Smooth this out by taking into account individual tangencies?
+                    int lookback, lookforward;
                     if (i == newTPs[j].Pts.Count - 1)
                     {
-                        tangent = newTPs[j].Pts[i].Pt - newTPs[j].Pts[i - 1].Pt;
+                        lookback = 3;
+                        if( i < lookback) { lookback = newTPs[j].Pts.Count - 1; }
+                        lookforward = 0;
                     }
                     else
                     {
-                        tangent = newTPs[j].Pts[i + 1].Pt - newTPs[j].Pts[i].Pt;
+                        lookback = Math.Min(i, 2);
+                        lookforward = 3-lookback;
+                        if(lookforward + i >= newTPs[j].Pts.Count) { lookforward = newTPs[j].Pts.Count - i - 1; }
                     }
+
+                    tangent = newTPs[j].Pts[i+lookforward].Pt - newTPs[j].Pts[i - lookback].Pt;
                     switch (this.STD)
                     {
                         case SurfToolDir.Projection: // already set
@@ -267,8 +280,13 @@ namespace CAMel.Types
                         case SurfToolDir.PathTangent:
                             // get normal to proj and tangent
                             PTplaneN = Vector3d.CrossProduct(newTPs[j].Pts[i].Dir, tangent);
+                            PNplaneN = newTPs[j].Pts[i].Dir;
                             // find vector normal to tangent and in the plane of tangent and projection
                             newTPs[j].Pts[i].Dir = Vector3d.CrossProduct(tangent,PTplaneN);
+                            if (Math.Abs(newTPs[j].Pts[i].Dir.Y) > .01)
+                            {
+                                int u = 17;
+                            }
                             break;
                         case SurfToolDir.Normal: // set to negative Norm as we use the direction
                                                  // from pivot to tool

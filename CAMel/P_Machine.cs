@@ -186,7 +186,7 @@ namespace CAMel.Types
             return GPoint;
         }
 
-        private string IK_PocketNC(ToolPoint TP, MaterialTool MT, Vector2d AB, ref Point3d machinePt)
+        private string IK_PocketNC(ToolPoint TP, MaterialTool MT, Vector3d AB, ref Point3d machinePt)
         {
             Point3d OP = TP.Pt;
 
@@ -211,7 +211,7 @@ namespace CAMel.Types
             machinePt = OP;
             return GPtBd.ToString();
         }
-        static private string IK_PocketNC_orient(MaterialTool materialTool, Vector2d AB)
+        static private string IK_PocketNC_orient(MaterialTool materialTool, Vector3d AB)
         {
             String GPoint = "";
             GPoint += "A" + (180 * AB.X / Math.PI).ToString("0.000") + " B" + (180 * AB.Y / Math.PI).ToString("0.000");
@@ -220,10 +220,8 @@ namespace CAMel.Types
         }
 
         // Always gives B from -pi to pi and A from -pi/2 to pi/2.
-        static private Vector2d Orient_FiveAxisABP(ToolPoint TP)
+        static private Vector3d Orient_FiveAxisABP(Vector3d UV)
         {
-            Vector3d UV = TP.Dir;
-
             double Ao = Math.Asin(-UV.Y);
             double Bo = Math.Atan2(UV.X, -UV.Z);
 
@@ -241,7 +239,7 @@ namespace CAMel.Types
                 if (Bo < 0) Bo = Bo + 2.0 * Math.PI;
             }
 
-            return new Vector2d(Ao, Bo);
+            return new Vector3d(Ao, Bo,0);
         }
 
 
@@ -422,7 +420,7 @@ namespace CAMel.Types
 
             double feed;
             double speed;
-            Vector2d AB,newAB;
+            Vector3d AB,newAB;
             double Bto = 0;  // Allow for smooth adjustment through the cusp with A at 90.
             int Bsteps = 0;  //
             string PtCode;
@@ -435,7 +433,7 @@ namespace CAMel.Types
                     speed = TP.Pts[0].speed;
                     if (feed < 0) { feed = TP.MatTool.feedCut; }
                     if (speed < 0) { speed = TP.MatTool.speed; }
-                    AB = Machine.Orient_FiveAxisABP(TP.Pts[0]);
+                    AB = Machine.Orient_FiveAxisABP(TP.Pts[0].Dir);
                     FChange = true;
                     SChange = false;
                     // making the first move. Orient the tool first
@@ -449,14 +447,14 @@ namespace CAMel.Types
                 {
                     feed = -1;
                     speed = -1;
-                    AB = new Vector2d(Math.PI/2.0, 0);
+                    AB = new Vector3d(Math.PI/2.0, 0,0);
                 }
             }
             else
             {
                 feed = beforePoint.feed;
                 speed = beforePoint.speed;
-                AB = new Vector2d(Co.MachineState["A"], Co.MachineState["B"]);
+                AB = new Vector3d(Co.MachineState["A"], Co.MachineState["B"],0);
             }
 
             if (feed < 0) { feed = TP.MatTool.feedCut; }
@@ -514,7 +512,7 @@ namespace CAMel.Types
                 // Work on tool orientation
 
                 // get naive orientation
-                newAB = Orient_FiveAxisABP(Pt);
+                newAB = Orient_FiveAxisABP(Pt.Dir);
 
                 // adjust B to correct period
                 newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((AB.Y-newAB.Y)/(2.0*Math.PI));
@@ -550,18 +548,18 @@ namespace CAMel.Types
                     {
                         j = i+1;
 
-                        while (j < (TP.Pts.Count-1) && Math.Abs(Orient_FiveAxisABP(TP.Pts[j]).X - Math.PI/2.0) < AngleAcc) j++;
+                        while (j < (TP.Pts.Count-1) && Math.Abs(Orient_FiveAxisABP(TP.Pts[j].Dir).X - Math.PI/2.0) < AngleAcc) j++;
 
                         // If we are at the start of a path and vertical then we can just use the first non-vertical 
                         // position for the whole run. 
                         if (Math.Abs(AB.X - Math.PI / 2.0) < AngleAcc) 
                         {
-                            Bto = Orient_FiveAxisABP(TP.Pts[j]).Y;
+                            Bto = Orient_FiveAxisABP(TP.Pts[j].Dir).Y;
                             Bsteps = j - i;
                             newAB.Y = Bto;
                         }
                         // if we get to the end and it is still vertical we do not need to rotate.
-                        else if (Math.Abs(Orient_FiveAxisABP(TP.Pts[j]).X) < AngleAcc)
+                        else if (Math.Abs(Orient_FiveAxisABP(TP.Pts[j].Dir).X) < AngleAcc)
                         {
                             Bto = AB.X;
                             Bsteps = j - i;
@@ -569,7 +567,7 @@ namespace CAMel.Types
                         }
                         else
                         {
-                            Bto = Orient_FiveAxisABP(TP.Pts[j]).Y;
+                            Bto = Orient_FiveAxisABP(TP.Pts[j].Dir).Y;
                             Bsteps = j - i;
                             newAB.Y = AB.Y;
                         }
@@ -957,7 +955,7 @@ namespace CAMel.Types
                     Vector3d mixDir;
                     bool lng = false;
                     // ask machine how far it has to move in angle. 
-                    double angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.Pts[0],lng);
+                    double angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1].Dir, TPto.Pts[0].Dir,lng);
 
                     int steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
                     if (steps == 0) steps = 1; // Need to add at least one point even if angSpread is 0
@@ -972,7 +970,8 @@ namespace CAMel.Types
                         // add new point at speed 0 to describe rapid move.
                         for(j=0;j<steps;j++)
                         {
-                            mixDir=Machine.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*(route.Count-1)),lng);
+                            mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*(route.Count-1)),lng);
+
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
                             if(TPfrom.MatForm.intersect(newTP,0).thrDist > 0
                                 || TPto.MatForm.intersect(newTP, 0).thrDist > 0)
@@ -984,10 +983,11 @@ namespace CAMel.Types
                                     throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
                                 } else
                                 { // start again with the longer angle change
+                                    
                                     lng=true;
                                     i=0;
                                     j=0;
-                                    angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.Pts[0],lng);
+                                    angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1].Dir, TPto.Pts[0].Dir,lng);
                                     steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
                                     Move = TPto.copyWithNewPoints(new List<ToolPoint>());
                                 }
@@ -1015,12 +1015,12 @@ namespace CAMel.Types
         }
         // find the (maximum absolute) angular movement between too toolpoints
 
-        private double angDiff(ToolPoint tpFrom, ToolPoint tpTo, bool lng)
+        private double angDiff(Vector3d tpFrom, Vector3d tpTo, bool lng)
         {
             if (this.type == MachineTypes.PocketNC)
             {
-                Vector2d ang1 = Machine.Orient_FiveAxisABP(tpFrom);
-                Vector2d ang2 = Machine.Orient_FiveAxisABP(tpTo);
+                Vector3d ang1 = Machine.Orient_FiveAxisABP(tpFrom);
+                Vector3d ang2 = Machine.Orient_FiveAxisABP(tpTo);
 
                 Vector2d diff = new Vector2d();
                 if(lng)
@@ -1040,22 +1040,30 @@ namespace CAMel.Types
             }
         }
 
-        // Create a vector a proportion p of the rotation between two vectors.
-        // if lng is true go the long way
-        static private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p, bool lng)
+        // Interpolate the machine axes linearly between two positions. 
+        // If both axes have full rotation then there are four ways to do this.
+        // If lng is true then reverse the direction on the B axis (for PocketNC)
+        // TODO work with anything other than AB machine
+        // TODO give more options for long turns. 
+        private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p, bool lng)
         {
-            double ang;
-            if (lng)
+            Vector3d fromAB = Orient_FiveAxisABP(fromDir);
+            Vector3d toAB = Orient_FiveAxisABP(toDir);
+            Vector3d outAB;
+
+            outAB = (1-p) * fromAB + p * toAB;
+            // switch to long way round or short way round depending on gap between angles
+            if((lng && Math.Abs(fromAB.Y - toAB.Y) <= Math.PI) ||
+               (!lng && Math.Abs(fromAB.Y -toAB.Y) > Math.PI))
             {
-                ang = Vector3d.VectorAngle(fromDir, toDir) - 2*Math.PI;
+                Vector3d alt;
+                if (fromAB.Y > toAB.Y) { alt = new Vector3d(0, 2 * Math.PI, 0); }
+                else { alt = new Vector3d(0, -2 * Math.PI, 0); }
+                outAB = (1-p) * fromAB + p * (toAB+alt);
             }
-            else
-            {
-                ang = Vector3d.VectorAngle(fromDir, toDir);
-            }
-            Vector3d newDir = fromDir;
-            newDir.Rotate(ang*p,Vector3d.CrossProduct(fromDir,toDir));
-            return newDir;
+            // TODO this is kludgy make a consistent interface for Kinematics and Inverse Kinematics
+            // Probably a separate library that machines can refer to. 
+            return this.ReadTP_PocketNC(0,0,0,180.0*outAB.X/Math.PI,180.0*outAB.Y/Math.PI,0,0,0).Dir;
         }
 
         static private Point3d missSphere(Point3d pPt, Point3d cPt, Vector3d away, double safeD, out double d)
