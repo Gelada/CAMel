@@ -93,12 +93,15 @@ namespace CAMel.Types.MaterialForm
                     // cylinder
                     linePcen = (Vector3d)Pt2d * dir2d;
                     cenDist = ((Vector3d)(Pt2d - linePcen * dir2d)).Length;
-                    linePshift = Math.Sqrt(exRadius * exRadius - cenDist*cenDist);
-                    // add the two intersection points.
-                    intPt = (Vector3d)Pt + (linePshift-linePcen) * dir;
-                    inters.Add(this.fromPlane((Point3d)intPt),this.fromPlane((Point3d)zeroZ(intPt))-this.Pl.Origin,linePshift-linePcen);
-                    intPt = (Vector3d)Pt + (-linePshift-linePcen) * dir;
-                    inters.Add(this.fromPlane((Point3d)intPt), this.fromPlane((Point3d)zeroZ(intPt))-this.Pl.Origin, - linePshift-linePcen);
+                    if (cenDist < exRadius)
+                    {
+                        linePshift = Math.Sqrt(exRadius * exRadius - cenDist * cenDist);
+                        // add the two intersection points.
+                        intPt = (Vector3d)Pt + (linePshift - linePcen) * dir;
+                        inters.Add(this.fromPlane((Point3d)intPt), this.fromPlane((Point3d)zeroZ(intPt)) - this.Pl.Origin, linePshift - linePcen);
+                        intPt = (Vector3d)Pt + (-linePshift - linePcen) * dir;
+                        inters.Add(this.fromPlane((Point3d)intPt), this.fromPlane((Point3d)zeroZ(intPt)) - this.Pl.Origin, -linePshift - linePcen);
+                    }
                 }
             } else
             {
