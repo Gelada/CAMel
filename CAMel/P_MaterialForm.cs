@@ -206,6 +206,8 @@ namespace CAMel.Types.MaterialForm
             
             double lineLen;
             intersects inters;
+
+            // TODO refine on significant changes of direction
             for (int i = 0; i < TP.Pts.Count - 1; i++)
             {
                 // for every line between points check if we leave or enter the material

@@ -15,7 +15,7 @@ namespace CAMel
             WriteMessages = new Dictionary<WriteState, string>();
             WriteMessages.Add(WriteState.Cancelled, @"Cancelled");
             WriteMessages.Add(WriteState.Finished, @"File Written");
-            WriteMessages.Add(WriteState.No_file, @"No File");
+            WriteMessages.Add(WriteState.No_path, @"No Path");
             WriteMessages.Add(WriteState.Writing, @"Writing...");
             WriteMessages.Add(WriteState.Waiting, @"Waiting");
         }

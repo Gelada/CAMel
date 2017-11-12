@@ -13,7 +13,7 @@ namespace CAMel
 {
     public enum WriteState
     {
-        No_file, Writing, Finished, Cancelled, Waiting
+        No_path, Writing, Finished, Cancelled, Waiting
     }
 
     public class C_WriteCode : GH_Component
@@ -28,7 +28,8 @@ namespace CAMel
         {
             this.filePath = "";
             this.SaveCode = new CodeInfo();
-            this.WS = WriteState.No_file;
+            this.extension = "ngc";
+            this.WS = WriteState.No_path;
             this.writeProgress = 0;
 
             this.WriteFileThread = new BackgroundWorker();
@@ -65,6 +66,42 @@ namespace CAMel
         {
             pManager.AddTextParameter("Code", "Code", "Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ranges", "R", "Ranges of movement", GH_ParamAccess.item);
+        }
+
+        // Need to save and recover the extension
+        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
+        {
+            // First add our own field.
+            writer.SetString("Extension", this.extension);
+            // Then call the base class implementation.
+            return base.Write(writer);
+        }
+        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        {
+            // First read our own field.
+            if (reader.ItemExists("Extension"))
+            {
+                this.extension = reader.GetString("Extension");
+            }
+            // Then call the base class implementation.
+            return base.Read(reader);
+        }
+
+        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
+        {
+            Menu_AppendItem(menu, "File Extension");
+            Menu_AppendTextItem(menu, this.extension, Menu_ExtensionClick, Menu_ExtensionChange, true);
+        }
+
+        private void Menu_ExtensionClick(object sender, EventArgs e)
+        {
+        }
+
+        private void Menu_ExtensionChange(object sender, string text)
+        {
+            base.RecordUndoEvent("Extension");
+            this.extension = text;
+            this.OnDisplayExpired(true);
         }
 
         protected override void BeforeSolveInstance()
@@ -129,6 +166,8 @@ namespace CAMel
             {
                 if(DA.GetData(2, ref this.filePath) && this.filePath != "")
                 {
+                    this.filePath = Path.GetDirectoryName(filePath);
+                    this.filePath = Path.Combine(this.filePath, MI.name+"."+this.extension);
                     // queue up file write
                     if (!this.WriteFileThread.IsBusy)
                     {
@@ -140,7 +179,7 @@ namespace CAMel
                 } 
                 else
                 {
-                    this.WS = WriteState.No_file;
+                    this.WS = WriteState.No_path;
                     this.writeProgress = 0;
                     this.OnDisplayExpired(true);
                 }
@@ -150,6 +189,16 @@ namespace CAMel
         private BackgroundWorker WriteFileThread { get; set; }
         private CodeInfo SaveCode;
         private string filePath;
+        private string m_extension;
+        public string extension
+        {
+            get { return m_extension; }
+            set
+            {
+                m_extension = value;
+                this.Message = "." + m_extension;
+            }
+        }
         private bool setOffWriting { get; set; }
 
         public WriteState WS;
