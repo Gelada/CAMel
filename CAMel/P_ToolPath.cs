@@ -200,11 +200,27 @@ namespace CAMel.Types
         public ToolPoint WriteCode(ref CodeInfo Co, Machine M, ToolPoint beforePoint)
         {
             Co.AppendLine(M.SectionBreak);
+            bool preamble = false;
             if (this.name != "")
             {
-                Co.AppendLine(M.CommentChar + " ToolPath: " + this.name + M.endCommentChar);
-                Co.AppendLine(M.SectionBreak);
+                Co.AppendComment(" ToolPath: " + this.name);
+                preamble = true;
             }
+            if (Co.currentMT==null || this.MatTool.Tool_name != Co.currentMT.Tool_name)
+            {
+                Co.AppendComment(" using: " + this.MatTool.Tool_name + " into " + this.MatTool.Mat_name);
+                Co.currentMT = this.MatTool;
+                preamble = true;
+            }
+            if (Co.currentMF==null || this.MatForm.ToString() != Co.currentMF.ToString())
+            {
+                Co.AppendComment(" material: " + this.MatForm.ToString());
+                Co.currentMF = this.MatForm;
+                preamble = true;
+            }
+
+            if (preamble) { Co.AppendLine(M.SectionBreak); }
+
             if (this.localCode != "") Co.Append(this.localCode);
 
             if (this.Additions.any)

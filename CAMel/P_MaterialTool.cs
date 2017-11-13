@@ -113,7 +113,7 @@ namespace CAMel.Types
         public override string ToString()
         {
             string outp = this.Tool_name + " into " + this.Mat_name + "\n"
-                + "Speed: " + this.speed.ToString() + " Cut Feed: " + this.feedCut.ToString()
+                + " Speed: " + this.speed.ToString() + " Cut Feed: " + this.feedCut.ToString()
                 + " Plunge feed: " + this.feedPlunge.ToString() + " Cut Depth: " + this.cutDepth.ToString();
             if (this.finishDepth > 0) outp = outp + " Finish Depth: " + this.toolLength.ToString();
             if (this.tolerance > 0) outp = outp + " Tolerance: " + this.toolLength.ToString();

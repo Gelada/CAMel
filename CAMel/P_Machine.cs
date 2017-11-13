@@ -314,7 +314,7 @@ namespace CAMel.Types
                     foreach (string err in Pt.error)
                     {
                         Co.AddError(err);
-                        Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                        Co.AppendComment(err);
                     }
                 }
                 if (Pt.warning != null)
@@ -322,7 +322,7 @@ namespace CAMel.Types
                     foreach (string warn in Pt.warning)
                     {
                         Co.AddWarning(warn);
-                        Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                        Co.AppendComment(warn);
                     }
                 }
 
@@ -472,7 +472,7 @@ namespace CAMel.Types
                     foreach (string err in Pt.error)
                     {
                         Co.AddError(err);
-                        Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                        Co.AppendComment(err);
                     }
                 }
                 if (Pt.warning != null)
@@ -480,7 +480,7 @@ namespace CAMel.Types
                     foreach (string warn in Pt.warning)
                     {
                         Co.AddWarning(warn);
-                        Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                        Co.AppendComment(warn);
                     }
                 }
 
@@ -579,12 +579,12 @@ namespace CAMel.Types
                 if (Math.Abs(180.0*newAB.Y/(Math.PI)) > 999999)
                 {
                     Co.AddError("Out of bounds on B");
-                    Co.AppendLine(this.CommentChar + "Out of bounds on B" + this.endCommentChar);
+                    Co.AppendComment("Out of bounds on B");
                 }
                 if ((180.0 * newAB.X / Math.PI > 95) || (180.0 * newAB.X / Math.PI < -5))
                 {
                     Co.AddError("Out of bounds on A");
-                    Co.AppendLine(this.CommentChar + "Out of bounds on A" + this.endCommentChar);
+                    Co.AppendComment("Out of bounds on A");
                 }
                 
                 // update AB value

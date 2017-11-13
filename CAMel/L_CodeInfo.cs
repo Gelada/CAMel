@@ -24,6 +24,9 @@ namespace CAMel.Types
         private Dictionary<string, int> Warnings; // Warning text and number of occurences
         private Dictionary<string, int> Errors; // Error text and number of occurences
         private Machine Mach; // Machine for language handling.
+
+        public MaterialTool currentMT;
+        public MaterialForm.IMaterialForm currentMF;
         private int lines;
 
         public CodeInfo()
@@ -249,6 +252,10 @@ namespace CAMel.Types
                 }
                 this.AppendLineNoNum(line);
             }
+        }
+        public void AppendComment(string L)
+        {
+            AppendLine(Mach.CommentChar+L+" "+Mach.endCommentChar);
         }
 
         public void Append(string L)

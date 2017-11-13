@@ -23,6 +23,11 @@ namespace CAMel.Types.MaterialForm
 
         public string TypeName { get { return "CAMelMFBox"; } }
 
+        public override string ToString()
+        {
+            return "MFBox "+this.B.ToString();
+        }
+
         public ICAMel_Base Duplicate()
         {
             return (ICAMel_Base) this.MemberwiseClone();

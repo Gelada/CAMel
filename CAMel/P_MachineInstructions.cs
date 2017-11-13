@@ -119,15 +119,22 @@ namespace CAMel.Types
             Co.AppendLineNoNum(this.Mach.filestart);
             Co.AppendLine(this.Mach.SectionBreak);
             if (this.name != "") Co.AppendLine(this.Mach.CommentChar + " " + this.name + this.Mach.endCommentChar);
-            Co.AppendLine(this.Mach.CommentChar.ToString() + this.Mach.endCommentChar);
-            Co.AppendLine(this.Mach.CommentChar + " Machine Instructions Created " + thisDay.ToString("f") + this.Mach.endCommentChar);
-            Co.AppendLine(this.Mach.CommentChar + " by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
-                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + this.Mach.endCommentChar);
-            if (this.Mach.name != "") Co.AppendLine(this.Mach.CommentChar + " for " + this.Mach.name + this.Mach.endCommentChar);
-            Co.AppendLine(this.Mach.CommentChar.ToString() + this.Mach.endCommentChar);
+            Co.AppendComment("");
+            Co.AppendComment(" Machine Instructions Created " + thisDay.ToString("f"));
+            Co.AppendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
+                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            if (this.Mach.name != "") Co.AppendComment("  for " + this.Mach.name);
+            Co.AppendComment(" Starting with: ");
+            Co.AppendComment("  Tool: "+this.MOs[0].TPs[0].MatTool.Tool_name);
+            Co.AppendComment("  in " + this.MOs[0].TPs[0].MatTool.Mat_name+ " with shape " + this.MOs[0].TPs[0].MatForm.ToString());
+            Co.AppendComment("");
             Co.AppendLine(this.Mach.SectionBreak);
             Co.Append(this.Mach.header);
             Co.Append(this.localCode);
+
+            // Let the Code writer know the Material Tool and Form so can report changes
+            Co.currentMT = this.MOs[0].TPs[0].MatTool;
+            Co.currentMF = this.MOs[0].TPs[0].MatForm;
 
             ToolPath startPath = null;
             ToolPath endPath;
@@ -140,7 +147,7 @@ namespace CAMel.Types
 
 
             Co.AppendLine(this.Mach.SectionBreak);
-            Co.AppendLine(this.Mach.CommentChar + " End of ToolPaths" + this.Mach.endCommentChar);
+            Co.AppendComment(" End of ToolPaths");
             Co.AppendLine(this.Mach.SectionBreak);
 
             Co.Append(this.Mach.footer);

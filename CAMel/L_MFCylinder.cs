@@ -34,6 +34,12 @@ namespace CAMel.Types.MaterialForm
 
         public string TypeName { get { return "CAMelMFCylinder"; } }
 
+        public override string ToString()
+        {
+            Point3d end = this.Pl.Origin + this.H * this.Pl.ZAxis;
+            return "MFCylinder r:"+this.radius.ToString()+" s:"+this.Pl.Origin.ToString()+" e:"+end.ToString();
+        }
+
         public ICAMel_Base Duplicate()
         {
             return (ICAMel_Base) this.MemberwiseClone();

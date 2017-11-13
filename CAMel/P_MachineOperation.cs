@@ -135,9 +135,9 @@ namespace CAMel.Types
         public void WriteCode(ref CodeInfo Co, Machine M, out ToolPath eP, ToolPath sP = null)
         {
             Co.AppendLine(M.SectionBreak);
-            Co.AppendLine(M.CommentChar.ToString() + M.endCommentChar);
-            Co.AppendLine(M.CommentChar + " Operation: " + this.name + M.endCommentChar);
-            Co.AppendLine(M.CommentChar.ToString() + M.endCommentChar);
+            Co.AppendComment("");
+            Co.AppendComment(" Operation: " + this.name);
+            Co.AppendComment("");
             if (this.localCode != "") Co.Append(this.localCode);
 
             ToolPath oldPath = sP;
@@ -163,14 +163,14 @@ namespace CAMel.Types
                         if (inMaterial && first)
                         {
                             Co.AddError("Transition between operations might be in material.");
-                            Co.AppendLine(M.CommentChar + " Transition between operations might be in material." + M.endCommentChar);
+                            Co.AppendComment(" Transition between operations might be in material.");
                         }
                         else if (inMaterial && Length > M.PathJump)
                         {
                             Co.AddError("Long Transition between paths in material. \n"
                                 + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
                                 + M.PathJump.ToString() + " to at least: " + Length.ToString());
-                            Co.AppendLine(M.CommentChar + " Long Transition between paths in material." + M.endCommentChar);
+                            Co.AppendComment(" Long Transition between paths in material.");
                         }
 
                         // Add transition to Code if needed
