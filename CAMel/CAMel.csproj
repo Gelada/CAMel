@@ -15,6 +15,8 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -46,8 +48,11 @@
     <Reference Include="clipper_library, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Clipper.6.4.0\lib\net40\clipper_library.dll</HintPath>
     </Reference>
-    <Reference Include="Magick.NET-Q8-AnyCPU, Version=7.4.3.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=MSIL">
-      <HintPath>..\packages\Magick.NET-Q8-AnyCPU.7.4.3\lib\net40\Magick.NET-Q8-AnyCPU.dll</HintPath>
+    <Reference Include="Emgu.CV.UI, Version=3.3.0.2824, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\EMGU.CV.3.3.0.2824\lib\net35\Emgu.CV.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Emgu.CV.World, Version=3.3.0.2824, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\EMGU.CV.3.3.0.2824\lib\net35\Emgu.CV.World.dll</HintPath>
     </Reference>
     <Reference Include="MIConvexHull, Version=1.0.17.411, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
       <HintPath>..\packages\MIConvexHull.1.1.17.1019\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
@@ -70,6 +75,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files\Common Files\McNeel\Rhinoceros\5.0\Plug-ins\Grasshopper (b45a29b1-4343-4035-989e-044e8580d9cf)\0.9.75.0\GH_IO.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="ZedGraph, Version=5.1.5.28844, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL">
+      <HintPath>..\packages\ZedGraph.5.1.5\lib\ZedGraph.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -122,7 +131,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Resources\materialform.png" />
   </ItemGroup>
   <ItemGroup>
@@ -195,6 +206,12 @@
     <None Include="Resources\createsurfacepath.png" />
     <None Include="Resources\surfacepath.png" />
   </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -205,8 +222,10 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
-Copy "$(TargetPath)" "C:\Users\Edmund\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
-Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"</PostBuildEvent>
+Copy "$(TargetPath)" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
+Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"
+Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\Emgu.CV.World.dll"
+Copy "$(TargetDir)Emgu.CV.World.dll" "\\tsclient\Onto windows\CAMel\Emgu.CV.World.dll"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <StartArguments>
@@ -216,6 +235,7 @@ Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"</PostBui
     <PlatformTarget>x86</PlatformTarget>
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <RegisterForComInterop>false</RegisterForComInterop>
   </PropertyGroup>
   <PropertyGroup>
     <FallbackCulture>en-US</FallbackCulture>
@@ -227,4 +247,11 @@ Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"</PostBui
     <StartAction>Program</StartAction>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Import Project="..\packages\EMGU.CV.3.3.0.2824\build\Emgu.CV.targets" Condition="Exists('..\packages\EMGU.CV.3.3.0.2824\build\Emgu.CV.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\EMGU.CV.3.3.0.2824\build\Emgu.CV.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EMGU.CV.3.3.0.2824\build\Emgu.CV.targets'))" />
+  </Target>
 </Project>
