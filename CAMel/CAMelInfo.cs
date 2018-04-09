@@ -59,6 +59,9 @@ namespace CAMel
     {
         public override GH_LoadingInstruction PriorityLoad()
         {
+            //Rhino.Runtime.AssemblyResolver.AddSearchFile("C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\Emgu.CV.World.dll");
+
+            System.Reflection.Assembly.LoadFile("C:\\Users\\eharriss\\AppData\\Roaming\\Grasshopper\\Libraries\\Emgu.CV.World.dll");
             Grasshopper.Instances.ComponentServer.AddCategoryIcon("CAMel", Properties.Resources.BW_CAMel);
             Grasshopper.Instances.ComponentServer.AddCategoryShortName("CAMel", "CMl");
             Grasshopper.Instances.ComponentServer.AddCategorySymbolName("CAMel", 'C');

@@ -273,6 +273,36 @@ namespace CAMel.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap photocontour {
+            get {
+                object obj = ResourceManager.GetObject("photocontour", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap photosurface {
+            get {
+                object obj = ResourceManager.GetObject("photosurface", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap phototrace {
+            get {
+                object obj = ResourceManager.GetObject("phototrace", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap pocketing {
             get {
                 object obj = ResourceManager.GetObject("pocketing", resourceCulture);
@@ -286,6 +316,16 @@ namespace CAMel.Properties {
         internal static System.Drawing.Bitmap surfacepath {
             get {
                 object obj = ResourceManager.GetObject("surfacepath", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap surfacingcontour {
+            get {
+                object obj = ResourceManager.GetObject("surfacingcontour", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

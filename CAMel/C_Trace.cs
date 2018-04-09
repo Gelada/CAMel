@@ -6,6 +6,7 @@ using System.Diagnostics;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.GUI.Base;
+using Grasshopper.Kernel.Expressions;
 using Rhino.Geometry;
 
 using Emgu.CV;
@@ -25,7 +26,7 @@ namespace CAMel
         public C_Trace()
             : base("Trace hand drawn path", "Trace",
                 "Trace a path from a photo of a hand drawn image",
-                "CAMel", " ToolPaths")
+                "CAMel", " Photos")
         {
         }
 
@@ -35,6 +36,7 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("File", "F", "Name of image file", GH_ParamAccess.item);
+            pManager.AddTextParameter("Height Expression", "H", "Function to define height. Evaluates on x along each genrated path from 0 to 1.", GH_ParamAccess.item, "0");
         }
 
         /// <summary>
@@ -43,9 +45,10 @@ namespace CAMel
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddCurveParameter("Curves", "C", "Traced Curves", GH_ParamAccess.list);
+            pManager.AddCurveParameter("Polyline", "P", "Polyline of points along traced curve, for more creative processing.", GH_ParamAccess.list);
         }
 
-        int Prune = 3, Jump = 15, Blur = 0;
+        int Prune = 3, Jump = 15, Blur = 0, MaxFile = 3;
         private bool m_debug = false;
         public bool debug
         {
@@ -65,16 +68,33 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            Stopwatch watch = Stopwatch.StartNew();
             string filename = "";
-
+            Bitmap BM;
             if (!DA.GetData(0, ref filename)) return;
-            string filepath = System.IO.Path.GetDirectoryName(filename);
+            try { BM = (Bitmap)Image.FromFile(filename); }
+            catch(System.IO.FileNotFoundException e)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Image File: "+e.FileName+" not found");
+                return;
+            }
+            if(BM.Size.Width*BM.Size.Height > 1000000*MaxFile)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Image File too large. If you have a fast machine or enough patience adjust the maximum file size in the component conext menu.");
+                return;
+            }
+            string filepath= System.IO.Path.GetDirectoryName(filename);
+
+            string exp = "";
+            if (!DA.GetData(1, ref exp)) { return; }
+            GH_ExpressionParser EP = new GH_ExpressionParser(true);
+
+            exp = GH_ExpressionSyntaxWriter.RewriteForEvaluator(exp);
+            EP.CacheSymbols(exp);
 
             List<Curve> curves = new List<Curve>();
             times = new List<string>();
-            Stopwatch watch = Stopwatch.StartNew();
 
-            Bitmap BM = (Bitmap)Image.FromFile(filename);
             Image<Gray, Byte> img = new Image<Gray, Byte>(BM);
 
             CvInvoke.GaussianBlur(img, img, new Size(2*Blur+1,2*Blur+1), 0, 0);
@@ -207,7 +227,7 @@ namespace CAMel
                         cont.Push(pt);
                         j++;
                     }
-                    CvInvoke.ApproxPolyDP(cont, sco, 2, false);
+                    CvInvoke.ApproxPolyDP(cont, sco, 1, false);
                     //sco = cont;
                     List<Point3d> c = new List<Point3d>();
                     for (j = 0; j < sco.Size; j++) { c.Add(Pt2R(sco[j])); }
@@ -224,7 +244,8 @@ namespace CAMel
 
             // In Rhino we join the remaining curves, healing the triple points we removed
             // Hopefully ending up with something close to the intended result. 
-            // I would be curious to see what happens with trees!
+            // This should be replaced with a heuristic that aims to 
+            // create the longest curves possible. 
 
             curves.Sort(delegate (Curve x, Curve y)
             {
@@ -244,6 +265,8 @@ namespace CAMel
                 Tcurves = Jcurves;
             }
 
+            // Find centre at 0 and do final join.
+
             Tcurves = Jcurves;
             Jcurves = new List<Curve>();
 
@@ -260,21 +283,56 @@ namespace CAMel
             Jcurves = new List<Curve>();
             Jcurves.AddRange(Curve.JoinCurves(Tcurves, Jump + 2*Prune, false));
 
-            for(int i=0;i<Jcurves.Count;i++)
+            // Give height and move to centre.
+            for (int i = 0; i < Jcurves.Count; i++)
             {
+                double cp = 0;
+                double cl = Jcurves[i].GetLength();
+                Polyline pl;
+                Jcurves[i].TryGetPolyline(out pl);
+                for(int j=0; j<pl.Count; j++)
+                {
+                    if (j > 0) { cp = cp + (pl[j]-pl[j-1]).Length/cl; }
+                    EP.AddVariable("x", cp);
+                    double h = EP.Evaluate()._Double;
+                    pl[j] = new Point3d(pl[j].X, pl[j].Y, h);
+                }
+                Jcurves[i] = new PolylineCurve(pl);
                 Jcurves[i].Translate(-(Vector3d)BB.Center);
             }
 
+            // Turn polylines into nice smooth curves
+            Tcurves = new List<Curve>();
+            for (int i = 0; i < Jcurves.Count; i++)
+            {
+                Polyline pl;
+                List<Point3d> op = new List<Point3d>();
+                Jcurves[i].TryGetPolyline(out pl);
+                for (int j = 1; j < pl.Count; j++)
+                {
+                    if ((pl[j - 1] - pl[j]).Length > 5)
+                    {
+                        op.Add((0.5 * pl[j - 1] + 0.5 * pl[j]));
+                    }
+                    if (j < pl.Count - 1)
+                    {
+                        double ang = Vector3d.VectorAngle(pl[j] - pl[j - 1], pl[j + 1] - pl[j]);
+                        if (ang > Math.PI / 2.1) { op.Add(pl[j]);  }
+                    }
+                    op.Add(pl[j]);
+                }
+                Tcurves.Add(Curve.CreateControlPointCurve(op));
+            }
+            
             if (debug)
             {
                 watch.Stop();
                 times.Add("Join Curves: " + watch.ElapsedMilliseconds + " ms");
             }
-
-
             watch.Stop();
 
-            DA.SetDataList(0, Jcurves);
+            DA.SetDataList(0, Tcurves);
+            DA.SetDataList(1, Jcurves);
         }
 
         Point3d Pt2R(System.Drawing.Point p)
@@ -286,8 +344,10 @@ namespace CAMel
         {
             base.AppendAdditionalComponentMenuItems(menu);
 
-            Menu_AppendItem(menu, "Tracing Settings");
+            Menu_AppendNumber(menu, "Mega Pixels", this.MaxFile, "Largest file to process (in megapixels)");
+            Menu_AppendSeparator(menu);
 
+            Menu_AppendItem(menu, "Tracing Settings");
             Menu_AppendNumber(menu, "Jump", this.Jump,"Distance to connect edges (in pixels)");
             Menu_AppendNumber(menu, "Blur", this.Blur,"Radius of blur (in pixels)");
             Menu_AppendNumber(menu, "Prune", this.Prune,"Pixels to prune of ends of every branch");
@@ -307,12 +367,12 @@ namespace CAMel
         private NumericUpDown Menu_AppendNumber(ToolStripDropDown menu, string name, int val, string desc)
         {
             Panel MI = new FlowLayoutPanel();
-            MI.AutoSize = true;
             MI.Text = name;
             MI.AutoSize = true;
             MI.BackColor = Color.White;
 
             NumericUpDown uD = new NumericUpDown();
+
             uD.Value = val;
             uD.Name = name;
             uD.ValueChanged += Trace_Settings;
@@ -362,25 +422,8 @@ namespace CAMel
                 case "Prune":
                     Prune = (int)UD.Value;
                     break;
-                default:
-                    break;
-            }
-
-        }
-        private void Trace_Settings(object sender, string text)
-        {
-            ToolStripTextBox TB = (ToolStripTextBox)sender;
-            RecordUndoEvent(TB.Name);
-            switch(TB.Name)
-            {
-                case "Blur":
-                    Blur = Convert.ToInt32(text);
-                    break;
-                case "Jump":
-                    Jump = Convert.ToInt32(text);
-                    break;
-                case "Prune":
-                    Prune = Convert.ToInt32(text);
+                case "Mega Pixels":
+                    MaxFile = (int)UD.Value;
                     break;
                 default:
                     break;
@@ -391,7 +434,8 @@ namespace CAMel
         // Need to save and recover the trace settings
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            // First add our own field.
+            // First add our own fields.
+            writer.SetInt32("MaxFile", this.MaxFile);
             writer.SetInt32("Jump", this.Jump);
             writer.SetInt32("Prune", this.Prune);
             writer.SetInt32("Blur", this.Blur);
@@ -401,7 +445,11 @@ namespace CAMel
         }
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            // First read our own field.
+            // First read our own fields.
+            if (reader.ItemExists("MaxFile"))
+            {
+                this.MaxFile = reader.GetInt32("MaxFile");
+            }
             if (reader.ItemExists("Jump"))
             {
                 this.Jump = reader.GetInt32("Jump");
@@ -432,7 +480,7 @@ namespace CAMel
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.surfacingspiral;
+                return Properties.Resources.phototrace;
             }
         }
 
