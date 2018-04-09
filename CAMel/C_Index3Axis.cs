@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
@@ -26,7 +27,7 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddCurveParameter("Curves", "C", "The curves for the tip of the tool to follow", GH_ParamAccess.list);
-            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0,0,1));
+            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0,0,-1));
             pManager.AddGenericParameter("Material/Tool", "MT", "The material to cut and the tool to do it", GH_ParamAccess.item);
             pManager.AddGenericParameter("MaterialForm", "MF","The shape of the material to cut", GH_ParamAccess.item);
         }
@@ -47,8 +48,8 @@ namespace CAMel
         {
             List<Curve> C = new List<Curve>();
             Vector3d Dir = new Vector3d();
-            MaterialTool MT = new MaterialTool();
-            MaterialForm MF = new MaterialForm();
+            MaterialTool MT = null;
+            IMaterialForm MF = null;
 
 
             if (!DA.GetDataList(0, C)) return;

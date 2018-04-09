@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
 
@@ -27,7 +28,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGeometryParameter("Surface", "S", "Brep or Mesh to Mill", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Bounding Box", "BB", "Region to Mill as a bounding box oriented by Dir, will be calulated if you add the Mesh or Brep to Mill.", GH_ParamAccess.item);
             pManager.AddCurveParameter("Curve", "C", "Curve to run parallel to", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Direction", "Dir", "Plane to use, Helix around Z.", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddGenericParameter("Material Tool", "MT", "Information about the material and tool", GH_ParamAccess.item);
@@ -51,7 +52,8 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            GeometryBase G = null;
+            IGH_Goo G = null; 
+            BoundingBox BB = new BoundingBox(); // region to mill
             Curve C = null; // path to move parallel to 
             Plane Dir = Plane.WorldXY; // Plane to rotate in as you rise.
             MaterialTool MT = null; // The materialtool, mainly for tool width
@@ -67,6 +69,36 @@ namespace CAMel
             if (!DA.GetData(4, ref TD)) { return; }
             if (!DA.GetData(5, ref stepOver)) { return; }
             if (!DA.GetData(6, ref CW)) { return; }
+
+            // process the bounding box
+
+            if (!G.CastTo<BoundingBox>(out BB))
+            {
+                if (G.CastTo<Surface>(out Surface S))
+                {
+                    BB = S.GetBoundingBox(Dir);// extents of S in the coordinate system
+                    Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
+                    BB = S.GetBoundingBox(Dir); // extents of S in the coordinate system
+                }
+                else if (G.CastTo<Brep>(out Brep B))
+                {
+                    BB = B.GetBoundingBox(Dir);// extents of S in the coordinate system
+                    Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
+                    BB = B.GetBoundingBox(Dir); // extents of S in the coordinate system
+                }
+                else if (G.CastTo<Mesh>(out Mesh M))
+                {
+                    BB = M.GetBoundingBox(Dir);// extents of S in the coordinate system
+                    Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
+                    BB = M.GetBoundingBox(Dir); // extents of S in the coordinate system
+                }
+                else
+                {
+                    this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep.");
+                }
+
+                BB.Inflate(MT.toolWidth);
+            }
 
             // set Surfacing direction
             SurfToolDir STD;
@@ -89,19 +121,13 @@ namespace CAMel
                     return;
             }
 
-            // Find surface bounding box to find our extents
-            
-            BoundingBox BB = G.GetBoundingBox(Dir); // extents of S in the coordinate system
-            Dir.Origin = Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
-            BB = G.GetBoundingBox(Dir); // extents of S in the coordinate system
-
             double outerradius = (new Vector3d(BB.Max.X-BB.Min.X,BB.Max.Y-BB.Min.Y,0)).Length/2;
             Cylinder Cy = new Cylinder(new Circle(Dir, outerradius));
 
             Cy.Height1 = BB.Min.Z;
             Cy.Height2 = BB.Max.Z;
 
-            // Use Toolpath so we standardise Curve converstion
+            // Use Toolpath so we standardise Curve convertion
             ToolPath CTP = new ToolPath("", MT);
 
             double Zmin=0, Zmax=0;
@@ -126,8 +152,9 @@ namespace CAMel
                 foreach (ToolPoint tp in CTP.Pts)
                 {
                     Dir.RemapToPlaneSpace(tp.Pt, out CylPt);
-                    tp.Pt = ToCyl(CylPt);
-                    tp.Pt.X = outerradius;
+                    Point3d temp = ToCyl(CylPt);
+                    temp.X = outerradius;
+                    tp.Pt = temp;
                     if( first )
                     {
                         Zmin = tp.Pt.Z;
@@ -147,8 +174,11 @@ namespace CAMel
                         turns = turns - 2.0 * Math.PI;
                     }
                     angle = tp.Pt.Y;
-                    tp.Pt.Y = tp.Pt.Y + turns;
+                    temp = tp.Pt;
+                    temp.Y = temp.Y + turns;
+                    tp.Pt = temp;
                 }
+
                 // complete loop by adding points going from
                 // the end point to the start point
                 Point3d startPt = CTP.Pts[0].Pt;
@@ -191,7 +221,7 @@ namespace CAMel
                 {
                     tempPt = FromCyl(new Point3d(
                         outerradius,
-                        CTP.Pts[j].Pt.Y, 
+                        -CTP.Pts[j].Pt.Y, 
                         BB.Min.Z - Zmax + CTP.Pts[j].Pt.Z + (2.0 * Math.PI * winding * i + CTP.Pts[j].Pt.Y) * raisePer));
                     tempPt = Dir.PointAt(tempPt.X, tempPt.Y, tempPt.Z);
                     SpiralPath.Add(tempPt);
@@ -207,7 +237,7 @@ namespace CAMel
                 Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Max.Z));
 
             SurfacePath SP = new SurfacePath(Paths, Dir.ZAxis, CC, STD);
-            DA.SetData(0, SP);
+            DA.SetData(0, new GH_SurfacePath(SP));
             DA.SetDataList(1, Paths);
 
         }

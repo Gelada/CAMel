@@ -9,22 +9,26 @@ namespace CAMel.Types
 {
     // List of toolpaths forming a complete set of instructions 
     // for the machine
-    public class MachineInstruction : ToolPointContainer
+    public class MachineInstruction : IToolPointContainer
     {
         public List<MachineOperation> MOs;
-        public Machine Mach;
+        public Machine Mach { get; set; }
 
         // Default Constructor
         public MachineInstruction()
         {
             this.MOs = new List<MachineOperation>();
             this.Mach = new Machine();
+            this.name = "";
+            this.localCode = "";
         }
         // Just name
         public MachineInstruction(string name)
         {
             this.name = name;
             this.MOs = new List<MachineOperation>();
+            this.Mach = new Machine();
+            this.localCode = "";
         }
         // Name and Machine
         public MachineInstruction(string name, Machine Ma)
@@ -32,6 +36,7 @@ namespace CAMel.Types
             this.name = name;
             this.Mach = Ma;
             this.MOs = new List<MachineOperation>();
+            this.localCode = "";
         }
         // Copy Constructor
         public MachineInstruction(MachineInstruction Op)
@@ -44,11 +49,6 @@ namespace CAMel.Types
             {
                 this.MOs.Add(new MachineOperation(MO));
             }
-        }
-        // Duplicate
-        public override ToolPointContainer Duplicate()
-        {
-            return new MachineInstruction(this);
         }
 
         // Copy basic information but add new paths
@@ -64,14 +64,26 @@ namespace CAMel.Types
 
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Complete set of operations for a run of the machine."; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "MachineInstruction"; }
+        }
+
+        public string name { get; set; }
+
+        public string localCode { get; set; }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException("IsValid not implemented for Machine Instructions.");
+            }
         }
 
         public override string ToString()
@@ -107,15 +119,22 @@ namespace CAMel.Types
             Co.AppendLineNoNum(this.Mach.filestart);
             Co.AppendLine(this.Mach.SectionBreak);
             if (this.name != "") Co.AppendLine(this.Mach.CommentChar + " " + this.name + this.Mach.endCommentChar);
-            Co.AppendLine(this.Mach.CommentChar.ToString() + this.Mach.endCommentChar);
-            Co.AppendLine(this.Mach.CommentChar + " Machine Instructions Created " + thisDay.ToString("f") + this.Mach.endCommentChar);
-            Co.AppendLine(this.Mach.CommentChar + " by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
-                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + this.Mach.endCommentChar);
-            if (this.Mach.name != "") Co.AppendLine(this.Mach.CommentChar + " for " + this.Mach.name + this.Mach.endCommentChar);
-            Co.AppendLine(this.Mach.CommentChar.ToString() + this.Mach.endCommentChar);
+            Co.AppendComment("");
+            Co.AppendComment(" Machine Instructions Created " + thisDay.ToString("f"));
+            Co.AppendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
+                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            if (this.Mach.name != "") Co.AppendComment("  for " + this.Mach.name);
+            Co.AppendComment(" Starting with: ");
+            Co.AppendComment("  Tool: "+this.MOs[0].TPs[0].MatTool.Tool_name);
+            Co.AppendComment("  in " + this.MOs[0].TPs[0].MatTool.Mat_name+ " with shape " + this.MOs[0].TPs[0].MatForm.ToString());
+            Co.AppendComment("");
             Co.AppendLine(this.Mach.SectionBreak);
             Co.Append(this.Mach.header);
             Co.Append(this.localCode);
+
+            // Let the Code writer know the Material Tool and Form so can report changes
+            Co.currentMT = this.MOs[0].TPs[0].MatTool;
+            Co.currentMF = this.MOs[0].TPs[0].MatForm;
 
             ToolPath startPath = null;
             ToolPath endPath;
@@ -128,16 +147,21 @@ namespace CAMel.Types
 
 
             Co.AppendLine(this.Mach.SectionBreak);
-            Co.AppendLine(this.Mach.CommentChar + " End of ToolPaths" + this.Mach.endCommentChar);
+            Co.AppendComment(" End of ToolPaths");
             Co.AppendLine(this.Mach.SectionBreak);
 
             Co.Append(this.Mach.footer);
             Co.AppendLineNoNum(this.Mach.fileend);
         }
+
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            return new MachineInstruction(this);
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MachineInstruction : CA_Goo<MachineInstruction>
+    public class GH_MachineInstruction : CAMel_Goo<MachineInstruction>
     {
         // Default Constructor with XY plane with safe distance 1;
         public GH_MachineInstruction()

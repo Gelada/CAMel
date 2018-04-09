@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
@@ -60,8 +61,8 @@ namespace CAMel
             List<Vector3d> SF = new List<Vector3d>();
             List<String> Co1 = new List<String>();
             string name = "";
-            MaterialTool MT = new MaterialTool();
-            MaterialForm MF = new MaterialForm();
+            MaterialTool MT = null;
+            IMaterialForm MF = null;
             string Co2 = "";
             List<double> TPAd = new List<double>();
 

@@ -7,6 +7,7 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
@@ -45,11 +46,11 @@ namespace CAMel
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Rough", "R", "Roughing Operation", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Rough Path", "RP", "Path for Roughing Operation", GH_ParamAccess.tree);
-            pManager.AddGenericParameter("Rough Directions", "RD", "Tool directions for Roughing Operation", GH_ParamAccess.tree);
+            //pManager.AddGenericParameter("Rough Path", "RP", "Path for Roughing Operation", GH_ParamAccess.tree);
+            //pManager.AddGenericParameter("Rough Directions", "RD", "Tool directions for Roughing Operation", GH_ParamAccess.tree);
             pManager.AddGenericParameter("Finish", "F", "Finishing Operation", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Finish Path", "FP", "Path for Finishing Operation", GH_ParamAccess.tree);
-            pManager.AddGenericParameter("Finish Directions", "FD", "Tool directions for Finishing Operation", GH_ParamAccess.tree);
+            //pManager.AddGenericParameter("Finish Path", "FP", "Path for Finishing Operation", GH_ParamAccess.tree);
+            //pManager.AddGenericParameter("Finish Directions", "FD", "Tool directions for Finishing Operation", GH_ParamAccess.tree);
         }
 
         /// <summary>
@@ -66,7 +67,7 @@ namespace CAMel
             SurfacePath F = null;
             MaterialTool MTR = null;
             MaterialTool MTF = null;
-            MaterialForm MF = null;
+            IMaterialForm MF = null;
 
             if (!DA.GetData(0, ref G)) {return;}
             if(G.GetType() == typeof(Mesh))
@@ -126,7 +127,7 @@ namespace CAMel
             Rough.name = "Rough " + Rough.name;
             Finish.name = "Finish " + Finish.name;
 
-            List<List<Point3d>> Pts;
+            /*List<List<Point3d>> Pts;
             List<List<Vector3d>> Dirs = new List<List<Vector3d>>();
             DataTree<Point3d> RPTree = new DataTree<Point3d>();
             DataTree<Vector3d> RDTree = new DataTree<Vector3d>();
@@ -138,13 +139,13 @@ namespace CAMel
                 path = new GH_Path(i);
                 RPTree.AddRange(Pts[i],path);
                 RDTree.AddRange(Dirs[i], path);
-            }
+            }*/
 
             DA.SetData(0, Rough);
-            DA.SetDataTree(1, RPTree);
-            DA.SetDataTree(2, RDTree);
+            //DA.SetDataTree(1, RPTree);
+            //DA.SetDataTree(2, RDTree);
 
-            DataTree<Point3d> FPTree = new DataTree<Point3d>();
+            /*DataTree<Point3d> FPTree = new DataTree<Point3d>();
             DataTree<Vector3d> FDTree = new DataTree<Vector3d>();
             Pts = Finish.RawPaths(out Dirs);
             for (int i = 0; i < Pts.Count; i++)
@@ -152,11 +153,11 @@ namespace CAMel
                 path = new GH_Path(i);
                 FPTree.AddRange(Pts[i], path);
                 FDTree.AddRange(Dirs[i], path);
-            }
+            }*/
 
-            DA.SetData(3, Finish);
-            DA.SetDataTree(4, FPTree);
-            DA.SetDataTree(5, FDTree);
+            DA.SetData(1, Finish);
+            //DA.SetDataTree(4, FPTree);
+            //DA.SetDataTree(5, FDTree);
         }
 
         /// <summary>

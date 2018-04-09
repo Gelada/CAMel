@@ -18,7 +18,7 @@ namespace CAMel
             get
             {
                 //Return a 24x24 pixel bitmap to represent this GHA library.
-                return null;
+                return Properties.Resources.CAMel;
             }
         }
         public override string Description
@@ -50,8 +50,22 @@ namespace CAMel
             get
             {
                 //Return a string representing your preferred contact details.
-                return "CAMel@mathematicians.org.uk";
+                return "http://www.Camel3d.com";
             }
+        }
+    }
+
+    public class CAMelCategory : GH_AssemblyPriority
+    {
+        public override GH_LoadingInstruction PriorityLoad()
+        {
+            //Rhino.Runtime.AssemblyResolver.AddSearchFile("C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\Emgu.CV.World.dll");
+
+            System.Reflection.Assembly.LoadFile("C:\\Users\\eharriss\\AppData\\Roaming\\Grasshopper\\Libraries\\Emgu.CV.World.dll");
+            Grasshopper.Instances.ComponentServer.AddCategoryIcon("CAMel", Properties.Resources.BW_CAMel);
+            Grasshopper.Instances.ComponentServer.AddCategoryShortName("CAMel", "CMl");
+            Grasshopper.Instances.ComponentServer.AddCategorySymbolName("CAMel", 'C');
+            return GH_LoadingInstruction.Proceed;
         }
     }
 }

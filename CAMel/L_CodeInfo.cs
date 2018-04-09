@@ -24,6 +24,9 @@ namespace CAMel.Types
         private Dictionary<string, int> Warnings; // Warning text and number of occurences
         private Dictionary<string, int> Errors; // Error text and number of occurences
         private Machine Mach; // Machine for language handling.
+
+        public MaterialTool currentMT;
+        public MaterialForm.IMaterialForm currentMF;
         private int lines;
 
         public CodeInfo()
@@ -172,12 +175,12 @@ namespace CAMel.Types
         // return string with all errors
         public string GetErrors()
         {
-            System.Text.StringBuilder outP = new System.Text.StringBuilder();
+            StringBuilder outP = new StringBuilder();
             if (Errors.Count > 0)
             {
                 outP.AppendLine("Errors: ");
                 foreach (string k in this.Errors.Keys)
-                    outP.AppendLine(k + ": " + Errors[k]);
+                    outP.AppendLine(k + ": " + Errors[k] + " times");
             }
             return outP.ToString();
         }
@@ -185,7 +188,7 @@ namespace CAMel.Types
         // return string listing errors that are not ignored
         public string GetErrors(List<string> ignore)
         {
-            System.Text.StringBuilder outP = new System.Text.StringBuilder();
+            StringBuilder outP = new StringBuilder();
             bool first = true;
 
             foreach (string k in this.Errors.Keys)
@@ -196,7 +199,7 @@ namespace CAMel.Types
                         first = false;
                         outP.AppendLine("Errors: ");
                     }
-                    outP.AppendLine(k + ": " + Errors[k]);
+                    outP.AppendLine(k + ": " + Errors[k] + " times");
                 }
 
             return outP.ToString();
@@ -205,6 +208,31 @@ namespace CAMel.Types
         public override string ToString()
         {
             return this.Code.ToString();
+        }
+
+        public string ToString(int start, int length)
+        {
+            int ulength;
+            if (start+length > this.Code.Length)
+            {
+                ulength = this.Code.Length - start;
+            } else
+            {
+                ulength = length;
+            }
+
+            if( ulength > 0)
+            {
+              return this.Code.ToString(start, ulength);
+            }
+            else{
+                return "";
+            }
+        }
+
+        public int Length
+        {
+            get { return this.Code.Length; }
         }
         
         public void AppendLineNoNum(string L)
@@ -222,17 +250,22 @@ namespace CAMel.Types
                     line = "N" + this.lines.ToString("0000") + "0 " + L;
                     this.lines++;
                 }
-                this.Code.AppendLine(line);
+                this.AppendLineNoNum(line);
             }
+        }
+        public void AppendComment(string L)
+        {
+            AppendLine(Mach.CommentChar+L+" "+Mach.endCommentChar);
         }
 
         public void Append(string L)
         {
-            string LinePattern = @".+";
-            MatchCollection Lines = Regex.Matches(L, LinePattern);
-            foreach(Match m in Lines)
+            char[] seps = { '\n', '\r' };
+            String[] Lines = L.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (String line in Lines)
             {
-                this.AppendLine(m.ToString());
+                this.AppendLine(line);
             }
         }
 

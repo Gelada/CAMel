@@ -12,7 +12,7 @@ namespace CAMel.Types
     // creating a surface, drilling a whole, cutting out an object...
     // When paths within an operation have a stepdown then all first 
     // step downs with be completed, then the second and so on.
-    public class MachineOperation : ToolPointContainer
+    public class MachineOperation : IToolPointContainer
     {
         public List<ToolPath> TPs;
 
@@ -20,12 +20,15 @@ namespace CAMel.Types
         public MachineOperation()
         {
             this.TPs = new List<ToolPath>();
+            this.name = "";
+            this.localCode = "";
         }
         // Just name
         public MachineOperation(string name)
         {
             this.name = name;
             this.TPs = new List<ToolPath>();
+            this.localCode = "";
         }
         // Copy Constructor
         public MachineOperation(MachineOperation Op)
@@ -38,11 +41,7 @@ namespace CAMel.Types
                 this.TPs.Add(new ToolPath(TP));
             }
         }
-        // Duplicate
-        public override ToolPointContainer Duplicate()
-        {
-            return new MachineOperation(this);
-        }
+
         // Return with new paths.
         public MachineOperation copyWithNewPaths(List<ToolPath> procPaths)
         {
@@ -54,14 +53,26 @@ namespace CAMel.Types
             return outOp;
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Single operation of the machine, from the complex (creating a surface) to the simple (drilling a hole)."; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "MachineOperation"; }
+        }
+
+        public string name { get; set; }
+
+        public string localCode { get; set; }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException("Machine Operation has not implemented IsValid");
+            }
         }
 
         public override string ToString()
@@ -124,9 +135,9 @@ namespace CAMel.Types
         public void WriteCode(ref CodeInfo Co, Machine M, out ToolPath eP, ToolPath sP = null)
         {
             Co.AppendLine(M.SectionBreak);
-            Co.AppendLine(M.CommentChar.ToString() + M.endCommentChar);
-            Co.AppendLine(M.CommentChar + " Operation: " + this.name + M.endCommentChar);
-            Co.AppendLine(M.CommentChar.ToString() + M.endCommentChar);
+            Co.AppendComment("");
+            Co.AppendComment(" Operation: " + this.name);
+            Co.AppendComment("");
             if (this.localCode != "") Co.Append(this.localCode);
 
             ToolPath oldPath = sP;
@@ -152,14 +163,14 @@ namespace CAMel.Types
                         if (inMaterial && first)
                         {
                             Co.AddError("Transition between operations might be in material.");
-                            Co.AppendLine(M.CommentChar + " Transition between operations might be in material." + M.endCommentChar);
+                            Co.AppendComment(" Transition between operations might be in material.");
                         }
                         else if (inMaterial && Length > M.PathJump)
                         {
                             Co.AddError("Long Transition between paths in material. \n"
                                 + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
                                 + M.PathJump.ToString() + " to at least: " + Length.ToString());
-                            Co.AppendLine(M.CommentChar + " Long Transition between paths in material." + M.endCommentChar);
+                            Co.AppendComment(" Long Transition between paths in material.");
                         }
 
                         // Add transition to Code if needed
@@ -191,10 +202,15 @@ namespace CAMel.Types
             }
             return paths;
         }
+
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            return new MachineOperation(this);
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MachineOperation : CA_Goo<MachineOperation>
+    public class GH_MachineOperation : CAMel_Goo<MachineOperation>
     {
         // Default Constructor
         public GH_MachineOperation()

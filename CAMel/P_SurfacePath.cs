@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using Rhino.Geometry.Intersect;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {
@@ -40,7 +43,7 @@ namespace CAMel.Types
 
     // A path that will project to a surface for surfacing
     // TODO write a subclass for each projection
-    public class SurfacePath : CA_base
+    public class SurfacePath : ICAMel_Base
     {
         public List<Curve> Paths; // Curves to project
         public SurfProj SP; // Type of projection
@@ -104,14 +107,22 @@ namespace CAMel.Types
         }
 
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Path and projection information to generate a surfacing path"; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "SurfacePath"; }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException("SurfacePath has not implemented IsValid");
+            }
         }
 
         public override string ToString()
@@ -135,7 +146,7 @@ namespace CAMel.Types
         }
 
         // Different calls to Generate a Machine Operation from different surfaces
-        public MachineOperation GenerateOperation(Surface S, double offset, MaterialTool MT,MaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation GenerateOperation(Surface S, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             this.ST = surfaceType.Brep;
             this.B = S.ToBrep();
@@ -143,7 +154,7 @@ namespace CAMel.Types
             return this.GenerateOperation_(offset, MT, MF, TPA);
         }
 
-        public MachineOperation GenerateOperation(Brep B, double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation GenerateOperation(Brep B, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             // Mesh is so much faster
             this.ST = surfaceType.Mesh;
@@ -154,7 +165,7 @@ namespace CAMel.Types
             return this.GenerateOperation_(offset, MT, MF, TPA);
         }
 
-        public MachineOperation GenerateOperation(Mesh M, double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation GenerateOperation(Mesh M, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             this.ST = surfaceType.Mesh;
             this.M = M;
@@ -164,7 +175,7 @@ namespace CAMel.Types
         }
 
         // actual code to generate the operation
-        private MachineOperation GenerateOperation_(double offset, MaterialTool MT, MaterialForm MF, ToolPathAdditions TPA)
+        private MachineOperation GenerateOperation_(double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             // create unprojected toolpath (mainly to convert the curve into a list of points)
             List<ToolPath> TPs = new List<ToolPath>();
@@ -180,27 +191,35 @@ namespace CAMel.Types
             List<ToolPath> newTPs = new List<ToolPath>();
             List<List<Vector3d>> Norms = new List<List<Vector3d>>();
             List<Vector3d> tempN;
-            Vector3d proj;
-            Line Ray;
-            Vector3d Norm = new Vector3d();
-            ToolPoint outPt;
+
             ToolPath tempTP;
-            bool hit;
+
 
             foreach(ToolPath TP in TPs)
             {
+                var intersectInfo = new ConcurrentDictionary<ToolPoint, firstIntersectResponse>(Environment.ProcessorCount, TP.Pts.Count);
+
+                foreach (ToolPoint TPt in TP.Pts) //initialise dictionary
+                    intersectInfo[TPt] = new firstIntersectResponse();
+
+                Parallel.ForEach(TP.Pts, TPtP =>
+                 {
+                     intersectInfo[TPtP] = firstIntersect(TPtP);
+                 }
+                );
+                
                 tempTP = new ToolPath("", MT, MF, TPA);
                 tempN = new List<Vector3d>();
-                for(int i=0;i<TP.Pts.Count;i++)
-                {
-                    proj = ProjDir(TP.Pts[i].Pt);
-                    Ray = new Line(TP.Pts[i].Pt, proj);
-                    outPt = new ToolPoint(this.firstintersect(Ray, out Norm, out hit), proj);
+                firstIntersectResponse fIR;
 
-                    if (hit)
+                foreach( ToolPoint TPt in TP.Pts)
+                {
+
+                    fIR = intersectInfo[TPt];
+                    if (fIR.hit)
                     {
-                        tempTP.Pts.Add(outPt);
-                        tempN.Add(Norm); 
+                        tempTP.Pts.Add(fIR.TP);
+                        tempN.Add(fIR.Norm); 
                     }
                     else if(tempTP.Pts.Count > 0 )
                     {
@@ -225,16 +244,28 @@ namespace CAMel.Types
             for(int j=0;j<newTPs.Count;j++)
             {
                 for (int i = 0; i < newTPs[j].Pts.Count; i++)
-                {           
-                    // find the tangent vector;
+                {
+                    // find the tangent vector, assume the curve is not too jagged
+                    // this is reasonable for most paths, but not for space 
+                    // filling curve styles. Though for those this is a bad option.
+                    // For the moment we will look 2 points back and one point forward.
+                    // Some cases to deal with the start, end and short paths. 
+                    // TODO Smooth this out by taking into account individual tangencies?
+                    int lookback, lookforward;
                     if (i == newTPs[j].Pts.Count - 1)
                     {
-                        tangent = newTPs[j].Pts[i].Pt - newTPs[j].Pts[i - 1].Pt;
+                        lookback = 3;
+                        if( i < lookback) { lookback = newTPs[j].Pts.Count - 1; }
+                        lookforward = 0;
                     }
                     else
                     {
-                        tangent = newTPs[j].Pts[i + 1].Pt - newTPs[j].Pts[i].Pt;
+                        lookback = Math.Min(i, 2);
+                        lookforward = 3-lookback;
+                        if(lookforward + i >= newTPs[j].Pts.Count) { lookforward = newTPs[j].Pts.Count - i - 1; }
                     }
+
+                    tangent = newTPs[j].Pts[i+lookforward].Pt - newTPs[j].Pts[i - lookback].Pt;
                     switch (this.STD)
                     {
                         case SurfToolDir.Projection: // already set
@@ -249,8 +280,13 @@ namespace CAMel.Types
                         case SurfToolDir.PathTangent:
                             // get normal to proj and tangent
                             PTplaneN = Vector3d.CrossProduct(newTPs[j].Pts[i].Dir, tangent);
+                            PNplaneN = newTPs[j].Pts[i].Dir;
                             // find vector normal to tangent and in the plane of tangent and projection
                             newTPs[j].Pts[i].Dir = Vector3d.CrossProduct(tangent,PTplaneN);
+                            if (Math.Abs(newTPs[j].Pts[i].Dir.Y) > .01)
+                            {
+                                int u = 17;
+                            }
                             break;
                         case SurfToolDir.Normal: // set to negative Norm as we use the direction
                                                  // from pivot to tool
@@ -274,12 +310,27 @@ namespace CAMel.Types
             return MO;
         }
 
-        private Point3d firstintersect(Line Ray, out Vector3d Norm, out bool hit)
+        private struct firstIntersectResponse
         {
-            Point3d op = new Point3d();
-            Norm = new Vector3d();
-            Ray3d RayL = new Ray3d(Ray.From, Ray.UnitTangent);
-            hit = false;
+            public ToolPoint TP { get; set; }
+            public Vector3d Norm { get; set; }
+            public bool hit { get; set; }
+
+            public override string ToString()
+            {
+                return this.hit.ToString();
+            }
+        }
+
+        private firstIntersectResponse firstIntersect(ToolPoint TP)
+        {
+            firstIntersectResponse fIR = new firstIntersectResponse();
+            Vector3d Norm = new Vector3d();
+   
+            Vector3d proj = this.ProjDir(TP.Pt);
+            Ray3d RayL = new Ray3d(TP.Pt, proj);
+
+            fIR.hit = false;
             switch (this.ST)
             {
                 case surfaceType.Brep:
@@ -290,11 +341,12 @@ namespace CAMel.Types
                     if(interP != null) {LinterP.AddRange(interP);}
                     if( LinterP.Count > 0)
                     {
-                        hit = true;
-                        op = interP[0];
+                        fIR.hit = true;
+                        fIR.TP = new ToolPoint(interP[0],proj);
                         Point3d cp = new Point3d(); ComponentIndex ci; double s, t; // catching info we won't use;
                         // call closestpoint to find norm
-                        B.ClosestPoint(op, out cp, out ci, out s, out t, 0.5, out Norm);
+                        B.ClosestPoint(fIR.TP.Pt, out cp, out ci, out s, out t, 0.5, out Norm);
+                        fIR.Norm = Norm;
                     }
                     break;
                 case surfaceType.Mesh:
@@ -303,23 +355,17 @@ namespace CAMel.Types
                     double inter = Intersection.MeshRay(this.M, RayL, out faces);
                     if (inter>=0)
                     {
-                        hit = true;
-                        op=RayL.PointAt(inter);
+                        fIR.hit = true;
+                        fIR.TP= new ToolPoint(RayL.PointAt(inter),proj);
                         List<int> Lfaces = new List<int>();
                         Lfaces.AddRange(faces);
-                        Norm= new Vector3d(0,0,0);
-                        //if (Lfaces.Count > 0)
-                        //{
-                            Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
-                        //} else
-                        //{
-                        //    int u = 1;
-                        //}
-                        if (Norm * Ray.UnitTangent > 0) { Norm = -Norm; }
+                        fIR.Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
+
+                        if (fIR.Norm * RayL.Direction > 0) { fIR.Norm = -fIR.Norm; }
                     }
                     break;
             }
-            return op;
+            return fIR;
         }
         // Give the direction of projection for a specific point based on the projection type.
         private Vector3d ProjDir(Point3d Pt)
@@ -369,15 +415,26 @@ namespace CAMel.Types
             }
             return pd;
         }
+
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            throw new NotImplementedException("Surface Path has not implemented Duplicate");
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_SurfacePath : CA_Goo<SurfacePath>
+    public class GH_SurfacePath : CAMel_Goo<SurfacePath>
     {
         // Default Constructor
         public GH_SurfacePath()
         {
             this.Value = new SurfacePath();
+        }
+
+        // Default Constructor
+        public GH_SurfacePath(SurfacePath SP)
+        {
+            this.Value = SP;
         }
 
         // Copy Constructor.

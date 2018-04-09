@@ -118,6 +118,12 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="BW_CAMel" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\BW_CAMel.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CAMel" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CAMel.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="cncreader" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\cncreader.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -175,11 +181,23 @@
   <data name="pathsurfacing" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\pathsurfacing.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="photocontour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\photocontour.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="photosurface" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\photosurface.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="phototrace" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\phototrace.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="pocketing" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\pocketing.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="surfacepath" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\surfacepath.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="surfacingcontour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\surfacingcontour.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="surfacinghelix" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\surfacinghelix.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

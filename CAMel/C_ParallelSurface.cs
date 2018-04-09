@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
 
@@ -52,7 +53,8 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            GeometryBase S = null; //surface to mill
+            IGH_Goo G = null;
+            BoundingBox BB = new BoundingBox(); // region to mill
             Curve C = null; // path to move parallel to 
             Plane Dir = Plane.WorldXY; // Direction to project onto the surface
             MaterialTool MT = null; // The materialtool, mainly for tool width
@@ -61,7 +63,7 @@ namespace CAMel
             bool ZZ = true; // ZigZag if true, Zig if false
             bool createcurve = false; // was a curve passed in or do we go to default/
 
-            if (!DA.GetData(0, ref S)) { return; }
+            if (!DA.GetData(0, ref G)) { return; }
             if (!DA.GetData(1, ref C))
             {
                 createcurve = true;
@@ -71,6 +73,30 @@ namespace CAMel
             if (!DA.GetData(4, ref TD)) { return; }
             if (!DA.GetData(5, ref stepOver)) { return; }
             if (!DA.GetData(6, ref ZZ)) { return; }
+
+            // process the bounding box
+
+            if (!G.CastTo<BoundingBox>(out BB))
+            {
+                if (G.CastTo<Surface>(out Surface S))
+                {
+                    BB = S.GetBoundingBox(Dir);// extents of S in the coordinate system
+                }
+                else if (G.CastTo<Brep>(out Brep B))
+                {
+                    BB = B.GetBoundingBox(Dir);// extents of B in the coordinate system
+                }
+                else if (G.CastTo<Mesh>(out Mesh M))
+                {
+                    BB = M.GetBoundingBox(Dir);// extents of M in the coordinate system
+                }
+                else
+                {
+                    this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep.");
+                }
+
+                BB.Inflate(MT.toolWidth);
+            }
 
             // set Surfacing direction
             SurfToolDir STD;
@@ -92,10 +118,6 @@ namespace CAMel
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
                     return;
             }
-
-            // Find surface bounding box to find our extents
-            
-            BoundingBox BB = S.GetBoundingBox(Dir); // extents of S in the coordinate system
 
             if(createcurve) // default to curve running along X-direction on Plane. 
             {

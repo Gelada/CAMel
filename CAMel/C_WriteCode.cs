@@ -1,13 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
+using Grasshopper.GUI.Base;
 using Rhino.Geometry;
 using CAMel.Types;
 
 namespace CAMel
 {
+    public enum WriteState
+    {
+        No_path, Writing, Finished, Cancelled, Waiting
+    }
+
     public class C_WriteCode : GH_Component
     {
         /// <summary>
@@ -18,6 +26,25 @@ namespace CAMel
                 "Write CNC Code",
                 "CAMel", "CNC Code")
         {
+            this.filePath = "";
+            this.SaveCode = new CodeInfo();
+            this.extension = "ngc";
+            this.WS = WriteState.No_path;
+            this.writeProgress = 0;
+
+            this.WriteFileThread = new BackgroundWorker();
+            this.WriteFileThread.DoWork += this.BW_WriteFile;
+            this.WriteFileThread.RunWorkerCompleted += this.BW_completedFileWrite;
+            this.WriteFileThread.ProgressChanged += BW_progressWithFile;
+            this.WriteFileThread.WorkerReportsProgress = true;
+            this.WriteFileThread.WorkerSupportsCancellation = true;
+
+
+        }
+
+        public override void CreateAttributes()
+        {
+            m_attributes = new WriteCodeAttributes(this);
         }
 
         /// <summary>
@@ -29,6 +56,7 @@ namespace CAMel
             Ig.Add("Nothing to Ignore.");
             pManager.AddGenericParameter("Machine Instructions", "MI", "Complete set of machine instructions to convert to Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list,Ig);
+            pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, "");
         }
 
         /// <summary>
@@ -38,6 +66,54 @@ namespace CAMel
         {
             pManager.AddTextParameter("Code", "Code", "Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ranges", "R", "Ranges of movement", GH_ParamAccess.item);
+        }
+
+        // Need to save and recover the extension
+        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
+        {
+            // First add our own field.
+            writer.SetString("Extension", this.extension);
+            // Then call the base class implementation.
+            return base.Write(writer);
+        }
+        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        {
+            // First read our own field.
+            if (reader.ItemExists("Extension"))
+            {
+                this.extension = reader.GetString("Extension");
+            }
+            // Then call the base class implementation.
+            return base.Read(reader);
+        }
+
+        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
+        {
+            Menu_AppendItem(menu, "File Extension");
+            Menu_AppendTextItem(menu, this.extension, Menu_ExtensionClick, Menu_ExtensionChange, true);
+        }
+
+        private void Menu_ExtensionClick(object sender, EventArgs e)
+        {
+        }
+
+        private void Menu_ExtensionChange(object sender, string text)
+        {
+            base.RecordUndoEvent("Extension");
+            this.extension = text;
+            this.OnDisplayExpired(true);
+        }
+
+        protected override void BeforeSolveInstance()
+        {
+            base.BeforeSolveInstance();
+
+            // Cancel a write thread if it is running
+            if (this.WriteFileThread.IsBusy)
+            {
+                this.WriteFileThread.CancelAsync();
+                this.setOffWriting = false;
+            }
         }
 
         /// <summary>
@@ -54,37 +130,149 @@ namespace CAMel
             }
 
             List<String> ignore = new List<string>();
+            DA.GetDataList(1, ignore);
 
-            if (!DA.GetDataList(1, ignore)) return;
+            lock (this.SaveCode)
+            {
+                this.SaveCode = new CodeInfo(MI.Mach);
 
-            CodeInfo Code = new CodeInfo(MI.Mach);
+                MachineInstruction procMI = MI.ProcessAdditions();
 
-            MachineInstruction procMI = MI.ProcessAdditions();
-
-            procMI.WriteCode(ref Code);
-
+                procMI.WriteCode(ref this.SaveCode);
+            }
             // Detect Errors and warnings
 
             // TODO report errors and warnings in an output parameter
 
-            if (Code.HasErrors(ignore))
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, Code.GetErrors(ignore));
-            if (Code.HasWarnings(ignore))
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, Code.GetWarnings(ignore));
+            if (this.SaveCode.HasErrors(ignore))
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.GetErrors(ignore));
+            if (this.SaveCode.HasWarnings(ignore))
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, this.SaveCode.GetWarnings(ignore));
 
             // Extract Ranges
 
-            Dictionary<String, Interval> Ranges = Code.GetRanges();
-            string rOut = ""; 
+            Dictionary<String, Interval> Ranges = this.SaveCode.GetRanges();
+            string rOut = "";
 
-            foreach(string k in Ranges.Keys)
+            foreach (string k in Ranges.Keys)
             {
                 rOut = rOut + "\n" + k + ": " + Ranges[k].T0.ToString("0.00") + " to " + Ranges[k].T1.ToString("0.00");
             }
 
-            DA.SetData(0,Code.ToString());
-            DA.SetData(1,rOut);
+            DA.SetData(0, this.SaveCode.ToString());
+            DA.SetData(1, rOut);
+
+            lock(this.filePath)
+            {
+                if(DA.GetData(2, ref this.filePath) && this.filePath != "")
+                {
+                    this.filePath = Path.GetDirectoryName(filePath);
+                    this.filePath = Path.Combine(this.filePath, MI.name+"."+this.extension);
+                    // queue up file write
+                    if (!this.WriteFileThread.IsBusy)
+                    {
+                        this.WriteFileThread.RunWorkerAsync();
+                    }
+                    else {
+                        this.setOffWriting = true;
+                    }
+                } 
+                else
+                {
+                    this.WS = WriteState.No_path;
+                    this.writeProgress = 0;
+                    this.OnDisplayExpired(true);
+                }
+            }
+        }
+
+        private BackgroundWorker WriteFileThread { get; set; }
+        private CodeInfo SaveCode;
+        private string filePath;
+        private string m_extension;
+        public string extension
+        {
+            get { return m_extension; }
+            set
+            {
+                m_extension = value;
+                this.Message = "." + m_extension;
+            }
+        }
+        private bool setOffWriting { get; set; }
+
+        public WriteState WS;
+        public double writeProgress { get; private set; }
+
+        private void BW_WriteFile(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker BW = (BackgroundWorker)sender;
             
+            const int saveBlockSize = 40000;
+            lock (this.filePath) lock (this.SaveCode)
+                {
+                    this.WS = WriteState.Writing;
+                    try { File.Delete(filePath); }
+                    catch (Exception) { }
+                    BW.ReportProgress(0);
+
+                    using (StreamWriter SW = new StreamWriter(filePath))
+                    {
+                        for (int i = 0; i < SaveCode.Length; i += saveBlockSize)
+                        {
+                            if (BW.CancellationPending)
+                            {
+                                e.Cancel = true;
+                                break;
+                            }
+                            SW.Write(SaveCode.ToString(i, saveBlockSize));
+                            BW.ReportProgress((int)Math.Floor(100.0 * i / (double)SaveCode.Length));
+                        }
+                    }
+                }
+        }
+
+        private void BW_completedFileWrite(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if(e.Cancelled)
+            {
+                this.cancelWrite();
+            } else
+            {
+                this.finishWrite();
+            }
+            // Restart writing if asked.
+            if(this.setOffWriting)
+            {
+                this.setOffWriting = false;
+                this.WriteFileThread.RunWorkerAsync();
+            }
+        }
+
+        private void cancelWrite()
+        {
+            File.Delete(filePath);
+            this.WS = WriteState.Cancelled;
+            this.writeProgress = 0;
+            this.OnDisplayExpired(true);
+        }
+
+        private void finishWrite()
+        {
+            this.WS = WriteState.Finished;
+            this.writeProgress = 1;
+            //this.OnDisplayExpired(true);
+        }
+
+        private void BW_progressWithFile(object sender, ProgressChangedEventArgs e)
+        {
+            this.updateWriteProgress(e.ProgressPercentage / 100.0);
+        }
+
+        private void updateWriteProgress(double progress)
+        {
+            this.writeProgress = progress;
+            //this.OnDisplayExpired(true);
         }
 
         /// <summary>

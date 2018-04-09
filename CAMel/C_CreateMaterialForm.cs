@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
@@ -55,35 +56,17 @@ namespace CAMel
             if (!DA.GetData(0, ref G)) return;
             if (!DA.GetData(1, ref SD)) return;
             if (!DA.GetData(2, ref T)) return;
-            MaterialForm MF = null;
+            IMaterialForm MF = null;
 
-            Plane Pl = new Plane();
-            Box Bx = new Box();
-            Surface S = null;
-            Brep B = null;
-            bool err=false;
-
-            if(G.CastTo<Plane>(out Pl)) { MF = new MaterialForm(Pl, SD, T); }
-            else if (G.CastTo<Box>(out Bx)) { MF = new MaterialForm(Bx, SD, T); }
-            else if (G.CastTo<Surface>(out S)) 
-            { 
-                Cylinder Cy;
-                if(S.TryGetCylinder(out Cy)) { MF = new MaterialForm(Cy, SD, T); }
-                else {err = true; }
-            }
-            else if (G.CastTo<Brep>(out B))
+            if (MaterialForm.create(G, T, SD, out MF))
             {
-                Cylinder Cy;
-                if (B.Surfaces[0].TryGetCylinder(out Cy))
-                {
-                    MF = new MaterialForm(Cy, SD, T);
-                }
-                else { err = true; }
+                DA.SetData(0, new GH_MaterialForm(MF));
             }
-            else { err = true; }
-            if(err) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Plane, a Box or a Cylinder. "); }
+            else
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Box or a Cylinder. ");
+            }
 
-            DA.SetData(0, MF);
         }
 
         /// <summary>

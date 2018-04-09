@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
+using CAMel.Types.MaterialForm;
+using System.Text.RegularExpressions;
 
 namespace CAMel.Types 
 {
@@ -26,20 +29,20 @@ namespace CAMel.Types
     //  currently using CodeInfo to store a dictionary of values. 
     //  a bespoke version for each machine type would be better
 
-    public class Machine : CA_base
+    public class Machine : ICAMel_Base
     {
-        public string name;
-        public MachineTypes type;
-        public string filestart;
-        public string header;
-        public string footer;
-        public string fileend;
-        public char CommentChar;
-        public char endCommentChar;
-        public string SpeedChangeCommand;
-        public double PathJump; // Max distance allowed between paths in material.
+        public string name { get; set; }
+        public MachineTypes type { get; set; }
+        public string filestart { get; set; }
+        public string header { get; set; }
+        public string footer { get; set; }
+        public string fileend { get; set; }
+        public char CommentChar { get; set; }
+        public char endCommentChar { get; set; }
+        public string SpeedChangeCommand { get; set; }
+        public double PathJump { get; set; } // Max distance allowed between paths in material.
         public string SectionBreak { get; set; }
-        public Vector3d Pivot;
+        public Vector3d Pivot { get; set; }
 
         // Default Constructor (un-named 3 Axis)
         public Machine()
@@ -112,14 +115,22 @@ namespace CAMel.Types
             return new Machine(this);
         }
 
-        public override string TypeDescription
+        public string TypeDescription
         {
             get { return "Details of a CNC Machine"; }
         }
 
-        public override string TypeName
+        public string TypeName
         {
             get { return "Machine"; }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                throw new NotImplementedException("Machine has not yet implemented IsValid");
+            }
         }
 
         public override string ToString()
@@ -175,7 +186,7 @@ namespace CAMel.Types
             return GPoint;
         }
 
-        private string IK_PocketNC(ToolPoint TP, MaterialTool MT, Vector2d AB, ref Point3d machinePt)
+        private string IK_PocketNC(ToolPoint TP, MaterialTool MT, Vector3d AB, ref Point3d machinePt)
         {
             Point3d OP = TP.Pt;
 
@@ -186,18 +197,21 @@ namespace CAMel.Types
             // translate from origin at pivot to origin set so that the tooltip is at machine origin
             OP = OP - this.Pivot + Vector3d.ZAxis * MT.toolLength;
             //HACK!
-            if (OP.Z > 0.02) OP.Z = 0.02;
+            //if (OP.Z > 0.02) OP.Z = 0.02;
             //if (OP.X < -2.0) OP.X = -2.0;
             //if (OP.X > 2.4) OP.X = 2.4;
 
-            String GPoint = "";
-            GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000") + " Z" + OP.Z.ToString("0.000") + " ";
-            GPoint += "A" + (180 * AB.X / Math.PI).ToString("0.000") + " B" + (180 * AB.Y / Math.PI).ToString("0.000");
+            StringBuilder GPtBd = new StringBuilder(@"X",34);
+            GPtBd.Append(OP.X.ToString("0.000"));
+            GPtBd.Append(@" Y"); GPtBd.Append(OP.Y.ToString("0.000"));
+            GPtBd.Append(@" Z"); GPtBd.Append(OP.Z.ToString("0.000"));
+            GPtBd.Append(@" A"); GPtBd.Append((180 * AB.X / Math.PI).ToString("0.000"));
+            GPtBd.Append(@" B"); GPtBd.Append((180 * AB.Y / Math.PI).ToString("0.000"));
 
             machinePt = OP;
-            return GPoint;
+            return GPtBd.ToString();
         }
-        static private string IK_PocketNC_orient(MaterialTool materialTool, Vector2d AB)
+        static private string IK_PocketNC_orient(MaterialTool materialTool, Vector3d AB)
         {
             String GPoint = "";
             GPoint += "A" + (180 * AB.X / Math.PI).ToString("0.000") + " B" + (180 * AB.Y / Math.PI).ToString("0.000");
@@ -206,10 +220,8 @@ namespace CAMel.Types
         }
 
         // Always gives B from -pi to pi and A from -pi/2 to pi/2.
-        static private Vector2d Orient_FiveAxisABP(ToolPoint TP)
+        static private Vector3d Orient_FiveAxisABP(Vector3d UV)
         {
-            Vector3d UV = TP.Dir;
-
             double Ao = Math.Asin(-UV.Y);
             double Bo = Math.Atan2(UV.X, -UV.Z);
 
@@ -227,7 +239,7 @@ namespace CAMel.Types
                 if (Bo < 0) Bo = Bo + 2.0 * Math.PI;
             }
 
-            return new Vector2d(Ao, Bo);
+            return new Vector3d(Ao, Bo,0);
         }
 
 
@@ -297,18 +309,22 @@ namespace CAMel.Types
 
             foreach(ToolPoint Pt in TP.Pts)
             {
-                
-                foreach(string err in Pt.error)
+                if (Pt.error != null)
                 {
-                    Co.AddError(err);
-                    Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                    foreach (string err in Pt.error)
+                    {
+                        Co.AddError(err);
+                        Co.AppendComment(err);
+                    }
                 }
-                foreach (string warn in Pt.warning)
+                if (Pt.warning != null)
                 {
-                    Co.AddWarning(warn);
-                    Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                    foreach (string warn in Pt.warning)
+                    {
+                        Co.AddWarning(warn);
+                        Co.AppendComment(warn);
+                    }
                 }
-                    
 
                 // Establish new feed value
                 if(Pt.feed != feed)
@@ -404,7 +420,7 @@ namespace CAMel.Types
 
             double feed;
             double speed;
-            Vector2d AB,newAB;
+            Vector3d AB,newAB;
             double Bto = 0;  // Allow for smooth adjustment through the cusp with A at 90.
             int Bsteps = 0;  //
             string PtCode;
@@ -417,7 +433,7 @@ namespace CAMel.Types
                     speed = TP.Pts[0].speed;
                     if (feed < 0) { feed = TP.MatTool.feedCut; }
                     if (speed < 0) { speed = TP.MatTool.speed; }
-                    AB = Machine.Orient_FiveAxisABP(TP.Pts[0]);
+                    AB = Machine.Orient_FiveAxisABP(TP.Pts[0].Dir);
                     FChange = true;
                     SChange = false;
                     // making the first move. Orient the tool first
@@ -431,14 +447,14 @@ namespace CAMel.Types
                 {
                     feed = -1;
                     speed = -1;
-                    AB = new Vector2d(Math.PI/2.0, 0);
+                    AB = new Vector3d(Math.PI/2.0, 0,0);
                 }
             }
             else
             {
                 feed = beforePoint.feed;
                 speed = beforePoint.speed;
-                AB = new Vector2d(Co.MachineState["A"], Co.MachineState["B"]);
+                AB = new Vector3d(Co.MachineState["A"], Co.MachineState["B"],0);
             }
 
             if (feed < 0) { feed = TP.MatTool.feedCut; }
@@ -451,15 +467,21 @@ namespace CAMel.Types
             {
                 Pt = TP.Pts[i];
 
-                foreach (string err in Pt.error)
+                if (Pt.error != null)
                 {
-                    Co.AddError(err);
-                    Co.AppendLine(this.CommentChar + err + this.endCommentChar);
+                    foreach (string err in Pt.error)
+                    {
+                        Co.AddError(err);
+                        Co.AppendComment(err);
+                    }
                 }
-                foreach (string warn in Pt.warning)
+                if (Pt.warning != null)
                 {
-                    Co.AddWarning(warn);
-                    Co.AppendLine(this.CommentChar + warn + this.endCommentChar);
+                    foreach (string warn in Pt.warning)
+                    {
+                        Co.AddWarning(warn);
+                        Co.AppendComment(warn);
+                    }
                 }
 
                 // Establish new feed value
@@ -490,7 +512,7 @@ namespace CAMel.Types
                 // Work on tool orientation
 
                 // get naive orientation
-                newAB = Orient_FiveAxisABP(Pt);
+                newAB = Orient_FiveAxisABP(Pt.Dir);
 
                 // adjust B to correct period
                 newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((AB.Y-newAB.Y)/(2.0*Math.PI));
@@ -526,18 +548,18 @@ namespace CAMel.Types
                     {
                         j = i+1;
 
-                        while (j < (TP.Pts.Count-1) && Math.Abs(Orient_FiveAxisABP(TP.Pts[j]).X - Math.PI/2.0) < AngleAcc) j++;
+                        while (j < (TP.Pts.Count-1) && Math.Abs(Orient_FiveAxisABP(TP.Pts[j].Dir).X - Math.PI/2.0) < AngleAcc) j++;
 
                         // If we are at the start of a path and vertical then we can just use the first non-vertical 
                         // position for the whole run. 
                         if (Math.Abs(AB.X - Math.PI / 2.0) < AngleAcc) 
                         {
-                            Bto = Orient_FiveAxisABP(TP.Pts[j]).Y;
+                            Bto = Orient_FiveAxisABP(TP.Pts[j].Dir).Y;
                             Bsteps = j - i;
                             newAB.Y = Bto;
                         }
                         // if we get to the end and it is still vertical we do not need to rotate.
-                        else if (Math.Abs(Orient_FiveAxisABP(TP.Pts[j]).X) < AngleAcc)
+                        else if (Math.Abs(Orient_FiveAxisABP(TP.Pts[j].Dir).X) < AngleAcc)
                         {
                             Bto = AB.X;
                             Bsteps = j - i;
@@ -545,7 +567,7 @@ namespace CAMel.Types
                         }
                         else
                         {
-                            Bto = Orient_FiveAxisABP(TP.Pts[j]).Y;
+                            Bto = Orient_FiveAxisABP(TP.Pts[j].Dir).Y;
                             Bsteps = j - i;
                             newAB.Y = AB.Y;
                         }
@@ -557,12 +579,12 @@ namespace CAMel.Types
                 if (Math.Abs(180.0*newAB.Y/(Math.PI)) > 999999)
                 {
                     Co.AddError("Out of bounds on B");
-                    Co.AppendLine(this.CommentChar + "Out of bounds on B" + this.endCommentChar);
+                    Co.AppendComment("Out of bounds on B");
                 }
                 if ((180.0 * newAB.X / Math.PI > 95) || (180.0 * newAB.X / Math.PI < -5))
                 {
                     Co.AddError("Out of bounds on A");
-                    Co.AppendLine(this.CommentChar + "Out of bounds on A" + this.endCommentChar);
+                    Co.AppendComment("Out of bounds on A");
                 }
                 
                 // update AB value
@@ -662,7 +684,9 @@ namespace CAMel.Types
                     throw new System.NotImplementedException("Machine Type has not implemented ReadCode.");
             }
         }
-        // TODO PocketNC read
+
+        private static Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);
+
         private ToolPath ReadCode_PocketNC(string Code)
         {
             ToolPath TP = new ToolPath();
@@ -672,23 +696,10 @@ namespace CAMel.Types
             double X = 0, Y = 0, Z = 0, A = 0, B = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
 
-            string Xpattern = @".*X([0-9\-.]+).*";
-            string Ypattern = @".*Y([0-9\-.]+).*";
-            string Zpattern = @".*Z([0-9\-.]+).*";
-            string Apattern = @".*A([0-9\-.]+).*";
-            string Bpattern = @".*B([0-9\-.]+).*";
-            string Fpattern = @".*F([0-9\-.]+).*";
-            string Spattern = @".*S([0-9\-.]+).*";
-            string G0pattern = @"G0.*";
-            string LinePattern = @".*";
+            char[] seps = { '\n', '\r' };
+            String[] Lines = Code.Split(seps,StringSplitOptions.RemoveEmptyEntries);
 
-            System.Text.RegularExpressions.MatchCollection Lines;
-
-            Lines = System.Text.RegularExpressions.Regex.Matches(Code, LinePattern);
-
-            int i = 0;
-
-            foreach (System.Text.RegularExpressions.Match line in Lines)
+            foreach (String line in Lines)
             {
                 changed = false;
                 Fchanged = false;
@@ -697,16 +708,16 @@ namespace CAMel.Types
                 feedfound = false;
                 speedfound = false;
 
-                X = GetValue(line.ToString(), Xpattern, X, ref found, ref changed);
-                Y = GetValue(line.ToString(), Ypattern, Y, ref found, ref changed);
-                Z = GetValue(line.ToString(), Zpattern, Z, ref found, ref changed);
-                A = GetValue(line.ToString(), Apattern, A, ref found, ref changed);
-                B = GetValue(line.ToString(), Bpattern, B, ref found, ref changed);
-                F = GetValue(line.ToString(), Fpattern, F, ref feedfound, ref Fchanged);
-                S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
+                X = GetValue(line, 'X', X, ref found, ref changed);
+                Y = GetValue(line, 'Y', Y, ref found, ref changed);
+                Z = GetValue(line, 'Z', Z, ref found, ref changed);
+                A = GetValue(line, 'A', A, ref found, ref changed);
+                B = GetValue(line, 'B', B, ref found, ref changed);
+                F = GetValue(line, 'F', F, ref feedfound, ref Fchanged);
+                S = GetValue(line, 'S', S, ref speedfound, ref Schanged);
 
                 //interpret a G0 command.
-                if (System.Text.RegularExpressions.Regex.IsMatch(line.ToString(), G0pattern))
+                if (line.Contains(@"G00") || line.ToString().Contains(@"G0 ") )
                 {
                     feedfound = true;
                     if (F != 0)
@@ -725,7 +736,6 @@ namespace CAMel.Types
                     {
                         TP.Pts[TP.Pts.Count-1].localCode = "Z";
                     }
-                    i++;
                 }
 
             }
@@ -758,21 +768,12 @@ namespace CAMel.Types
             double X=0, Y = 0, Z = 0, F = -1, S = -1;
             bool changed, found, Fchanged, feedfound, Schanged, speedfound;
 
-            string Xpattern = @".*X([0-9\-.]+).*";
-            string Ypattern = @".*Y([0-9\-.]+).*";
-            string Zpattern = @".*Z([0-9\-.]+).*";
-            string Fpattern = @".*F([0-9\-.]+).*";
-            string Spattern = @".*S([0-9\-.]+).*";
-            string G0pattern = @"G0.*";
-            string LinePattern = @".*";
-
-            System.Text.RegularExpressions.MatchCollection Lines;
-
-            Lines = System.Text.RegularExpressions.Regex.Matches(Code, LinePattern);
+            char[] seps = { '\n', '\r' };
+            String[] Lines = Code.Split(seps, StringSplitOptions.RemoveEmptyEntries);
 
             int i = 0;
 
-            foreach( System.Text.RegularExpressions.Match line in Lines )
+            foreach(String line in Lines )
             {
                 changed = false;
                 Fchanged = false;
@@ -781,14 +782,15 @@ namespace CAMel.Types
                 feedfound = false;
                 speedfound = false;
 
-                X = GetValue(line.ToString(), Xpattern, X, ref found, ref changed);
-                Y = GetValue(line.ToString(), Ypattern, Y, ref found, ref changed);
-                Z = GetValue(line.ToString(), Zpattern, Z, ref found, ref changed);
-                F = GetValue(line.ToString(), Fpattern, F, ref feedfound, ref Fchanged);
-                S = GetValue(line.ToString(), Spattern, S, ref speedfound, ref Schanged);
+                X = GetValue(line.ToString(), 'X', X, ref found, ref changed);
+                Y = GetValue(line.ToString(), 'Y', Y, ref found, ref changed);
+                Z = GetValue(line.ToString(), 'Z', Z, ref found, ref changed);
+                F = GetValue(line.ToString(), 'F', F, ref feedfound, ref Fchanged);
+                S = GetValue(line.ToString(), 'S', S, ref speedfound, ref Schanged);
 
                 //interpret a G0 command.
-                if( System.Text.RegularExpressions.Regex.IsMatch(line.ToString(), G0pattern))
+
+                if (line.Contains(@"G00") || line.ToString().Contains(@"G0 "))
                 {
                     feedfound = true;
                     if( F != 0 )
@@ -810,12 +812,13 @@ namespace CAMel.Types
             return TP;
         }
          
-        static private double GetValue(string line, string pattern, double old, ref bool found, ref bool changed)
+        static private double GetValue(string line, char split, double old, ref bool found, ref bool changed)
         {
             double val = old;
-            string monkey;
-            if ( System.Text.RegularExpressions.Regex.IsMatch(line, pattern) ) {
-                monkey = System.Text.RegularExpressions.Regex.Replace(line, pattern, "$1");
+            string[] splitLine = line.Split(split);
+            if (splitLine.Length > 1 && numbPattern.IsMatch(splitLine[1]))
+            {
+                string monkey = numbPattern.Replace(splitLine[1], "$1");
                 val = Convert.ToDouble(monkey);
                 found = true;
                 if (val != old) changed = true;
@@ -866,8 +869,14 @@ namespace CAMel.Types
             // Check ends are safe, or throw error
             // If the end is safe in one that is good enough.
             // Give a little wiggle as we just pull back to the safe distance.
-            if ((TPfrom.MatForm.SafePoint(TPfrom.Pts[TPfrom.Pts.Count - 1]) < -0.001 && TPto.MatForm.SafePoint(TPfrom.Pts[TPfrom.Pts.Count - 1]) < -0.001)
-                || (TPfrom.MatForm.SafePoint(TPto.Pts[0]) < -0.001 && TPto.MatForm.SafePoint(TPto.Pts[0]) < -0.001))
+            
+            if ((
+                TPfrom.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPfrom.MatForm.safeDistance).thrDist > 0.0001
+                && TPto.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.MatForm.safeDistance).thrDist > 0.0001
+                ) || (
+                TPfrom.MatForm.intersect(TPto.Pts[0], TPfrom.MatForm.safeDistance).thrDist > 0.0001
+                && TPto.MatForm.intersect(TPto.Pts[0], TPto.MatForm.safeDistance).thrDist > 0.0001
+               ))
             {
                 throw new ArgumentException("End points of a safe move are not in safe space.");
             }
@@ -882,45 +891,23 @@ namespace CAMel.Types
                     List<Point3d> route = new List<Point3d>();
                     route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
                     route.Add(TPto.Pts[0].Pt);
-
-                    Vector3d away;
-                    Point3d cPt;
+                    
                     int i;
-                    double dist = TPfrom.MatForm.closestDanger( route, TPto.MatForm, out cPt, out away, out i);
-                    double safeD = Math.Max(TPfrom.MatForm.safeDistance, TPto.MatForm.safeDistance);
+                    intersects inters;
+                    intersects fromMid;
 
-                    double dS,dE;
-                    Point3d pS, pE;
-
-                    // loop through adding points at problem places until we have 
-                    // everything sorted!
-                    // Warning this could race, it shouldn't though.
-
-                    // Arbitrary epsilon of 1 millionth of a division use to take care of
-                    // really really close distances that are not exactly equal.
-
-                    while(dist + 1.0E-6 < safeD)
+                    // loop through intersecting with safe bubble and adding points
+                    for (i = 0; i < (route.Count - 1) && i < 100;)
                     {
-                        // add a new point to stay clear of danger
-                        // DOC: How we find the new point so we do not get into an infinite loop
-                        // Avoid a sphere of correct radius around cPt
-                        // 
-                        // Work in plane given by CPt, away and each end point of our path
-                        // can now just avoid a circle as CPt is the center of the sphere
-
-                        pS = Machine.missSphere(route[i], cPt, away, safeD, out dS);
-                        pE = Machine.missSphere(route[i+1], cPt, away, safeD, out dE);
-
-                        // add the point that is further along the vector away
-                        // it might make more sense to add the closer one, this loop 
-                        // will run more, the toolpath will be shorter but have 
-                        // more points
-                        if (dS > dE)
-                            route.Insert(i + 1, pS);
+                        if(TPto.MatForm.intersect(route[i], route[i + 1], TPto.MatForm.safeDistance, out inters))
+                        {
+                            fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
+                            route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
+                        }
                         else
-                            route.Insert(i+1,pE);
-
-                        dist = TPfrom.MatForm.closestDanger( route, TPto.MatForm, out cPt, out away, out i);
+                        {
+                            i++;
+                        }
                     }
 
                     // get rid of start and end points that are already in the paths
@@ -937,36 +924,28 @@ namespace CAMel.Types
 
                 case MachineTypes.PocketNC:
 
-                    // Start with a straight line, with a maximum rotation of pi/30 between points, 
-                    // see how close it comes to danger. If its too close add a new
-                    // point and try again.
+                    // new method using intersect
 
                     route = new List<Point3d>();
+
                     route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
-
                     route.Add(TPto.Pts[0].Pt);
-                   
-                    dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
 
-                    safeD = Math.Max(TPfrom.MatForm.safeDistance, TPto.MatForm.safeDistance);
-
-                    // loop through adding points at problem places until we have 
-                    // everything sorted!
-                    // Warning this could race, it shouldn't though.
-                    int checker = 0;
-                    while (dist + 1.0E-6 < safeD && checker < 100)
+                    // loop through intersecting with safe bubble and adding points
+                    for(i=0;i<(route.Count-1)&&route.Count < 1000;)
                     {
-                        checker++;
-                        // add or edit a point by pushing it to safeD plus a little
                         
-                        route.Insert(i + 1, cPt + (safeD - dist + .125) * away);
-
-                        if(away*new Vector3d(0,1,0) >.1 )
+                        if (TPto.MatForm.intersect(route[i], route[i + 1], TPto.MatForm.safeDistance, out inters))
                         {
-                            int u = 1;
-                        }
+                            fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
+                            route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
 
-                        dist = TPfrom.MatForm.closestDanger(route, TPto.MatForm, out cPt, out away, out i);
+                            intersects test = TPto.MatForm.intersect(route[i + 1], inters.midOut, TPto.MatForm.safeDistance);
+                        }
+                        else
+                        {
+                            i++;
+                        }
                     }
 
                     // add extra points if the angle change between steps is too large (pi/30)
@@ -976,7 +955,7 @@ namespace CAMel.Types
                     Vector3d mixDir;
                     bool lng = false;
                     // ask machine how far it has to move in angle. 
-                    double angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.Pts[0],lng);
+                    double angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1].Dir, TPto.Pts[0].Dir,lng);
 
                     int steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
                     if (steps == 0) steps = 1; // Need to add at least one point even if angSpread is 0
@@ -991,21 +970,24 @@ namespace CAMel.Types
                         // add new point at speed 0 to describe rapid move.
                         for(j=0;j<steps;j++)
                         {
-                            mixDir=Machine.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*(route.Count-1)),lng);
+                            mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*(route.Count-1)),lng);
+
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
-                            if((TPfrom.MatForm.TPRayIntersect(newTP) || TPto.MatForm.TPRayIntersect(newTP)))
+                            if(TPfrom.MatForm.intersect(newTP,0).thrDist > 0
+                                || TPto.MatForm.intersect(newTP, 0).thrDist > 0)
                             {
                                 if(lng) 
                                 {   // something has gone horribly wrong and 
                                     // both angle change directions will hit the material
  
-                                    //throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
+                                    throw new System.Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
                                 } else
                                 { // start again with the longer angle change
+                                    
                                     lng=true;
                                     i=0;
                                     j=0;
-                                    angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.Pts[0],lng);
+                                    angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1].Dir, TPto.Pts[0].Dir,lng);
                                     steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
                                     Move = TPto.copyWithNewPoints(new List<ToolPoint>());
                                 }
@@ -1033,12 +1015,12 @@ namespace CAMel.Types
         }
         // find the (maximum absolute) angular movement between too toolpoints
 
-        private double angDiff(ToolPoint tpFrom, ToolPoint tpTo, bool lng)
+        private double angDiff(Vector3d tpFrom, Vector3d tpTo, bool lng)
         {
             if (this.type == MachineTypes.PocketNC)
             {
-                Vector2d ang1 = Machine.Orient_FiveAxisABP(tpFrom);
-                Vector2d ang2 = Machine.Orient_FiveAxisABP(tpTo);
+                Vector3d ang1 = Machine.Orient_FiveAxisABP(tpFrom);
+                Vector3d ang2 = Machine.Orient_FiveAxisABP(tpTo);
 
                 Vector2d diff = new Vector2d();
                 if(lng)
@@ -1058,22 +1040,30 @@ namespace CAMel.Types
             }
         }
 
-        // Create a vector a proportion p of the rotation between two vectors.
-        // if lng is true go the long way
-        static private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p, bool lng)
+        // Interpolate the machine axes linearly between two positions. 
+        // If both axes have full rotation then there are four ways to do this.
+        // If lng is true then reverse the direction on the B axis (for PocketNC)
+        // TODO work with anything other than AB machine
+        // TODO give more options for long turns. 
+        private Vector3d angShift(Vector3d fromDir, Vector3d toDir, double p, bool lng)
         {
-            double ang;
-            if (lng)
+            Vector3d fromAB = Orient_FiveAxisABP(fromDir);
+            Vector3d toAB = Orient_FiveAxisABP(toDir);
+            Vector3d outAB;
+
+            outAB = (1-p) * fromAB + p * toAB;
+            // switch to long way round or short way round depending on gap between angles
+            if((lng && Math.Abs(fromAB.Y - toAB.Y) <= Math.PI) ||
+               (!lng && Math.Abs(fromAB.Y -toAB.Y) > Math.PI))
             {
-                ang = Vector3d.VectorAngle(fromDir, toDir) - 2*Math.PI;
+                Vector3d alt;
+                if (fromAB.Y > toAB.Y) { alt = new Vector3d(0, 2 * Math.PI, 0); }
+                else { alt = new Vector3d(0, -2 * Math.PI, 0); }
+                outAB = (1-p) * fromAB + p * (toAB+alt);
             }
-            else
-            {
-                ang = Vector3d.VectorAngle(fromDir, toDir);
-            }
-            Vector3d newDir = fromDir;
-            newDir.Rotate(ang*p,Vector3d.CrossProduct(fromDir,toDir));
-            return newDir;
+            // TODO this is kludgy make a consistent interface for Kinematics and Inverse Kinematics
+            // Probably a separate library that machines can refer to. 
+            return this.ReadTP_PocketNC(0,0,0,180.0*outAB.X/Math.PI,180.0*outAB.Y/Math.PI,0,0,0).Dir;
         }
 
         static private Point3d missSphere(Point3d pPt, Point3d cPt, Vector3d away, double safeD, out double d)
@@ -1094,10 +1084,14 @@ namespace CAMel.Types
             return cPt + d * away;
         }
 
+        ICAMel_Base ICAMel_Base.Duplicate()
+        {
+            throw new NotImplementedException("Machine has not yet implemented Duplicate.");
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_Machine : CA_Goo<Machine>
+    public class GH_Machine : CAMel_Goo<Machine>
     {
         // Default constructor
         public GH_Machine()
