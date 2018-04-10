@@ -84,9 +84,9 @@ namespace CAMel
                 {
                     if (tpc == null)
                         Invalids++;
-                    else if (tpc.TypeName == "ToolPath") op.TPs.Add((ToolPath)tpc);
+                    else if (tpc.TypeName == "ToolPath") op.Add((ToolPath)tpc);
                 }
-                if (op.TPs.Count > 0) MO.Add(op);
+                if (op.Count > 0) MO.Add(op);
             }
             else if (hasTP || hasMO) // Mix Machine operations and toolpaths each turned into their own operation. 
             {
@@ -103,7 +103,7 @@ namespace CAMel
                                 break;
                             case "ToolPath":
                                 MO.Add(new MachineOperation());
-                                MO[MO.Count - 1].TPs.Add((ToolPath)tpc);
+                                MO[MO.Count - 1].Add((ToolPath)tpc);
                                 break;
                             default:
                                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Objects other than Machine Operations and ToolPaths are ignored.");
@@ -117,8 +117,7 @@ namespace CAMel
 
             if (MO.Count > 0)
             {
-                Inst = new MachineInstruction(name, M);
-                Inst.MOs = MO;
+                Inst = new MachineInstruction(name, M, MO);
                 if (Invalids > 1) 
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of "+Invalids.ToString()+" invalid elements (probably nulls) were ignored.");
                 else if (Invalids > 0)

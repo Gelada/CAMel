@@ -283,10 +283,7 @@ namespace CAMel.Types
                             PNplaneN = newTPs[j][i].Dir;
                             // find vector normal to tangent and in the plane of tangent and projection
                             newTPs[j][i].Dir = Vector3d.CrossProduct(tangent,PTplaneN);
-                            if (Math.Abs(newTPs[j][i].Dir.Y) > .01)
-                            {
-                                int u = 17;
-                            }
+                           
                             break;
                         case SurfToolDir.Normal: // set to negative Norm as we use the direction
                                                  // from pivot to tool
@@ -305,8 +302,7 @@ namespace CAMel.Types
             }
 
             // make the machine operation
-            MachineOperation MO = new MachineOperation(this.ToString());
-            MO.TPs = newTPs;
+            MachineOperation MO = new MachineOperation(this.ToString(), TPs);
             return MO;
         }
 

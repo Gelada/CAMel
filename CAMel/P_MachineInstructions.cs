@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
@@ -9,9 +10,10 @@ namespace CAMel.Types
 {
     // List of toolpaths forming a complete set of instructions 
     // for the machine
-    public class MachineInstruction : IToolPointContainer
+    public class MachineInstruction : IList<MachineOperation>,IToolPointContainer
     {
-        public List<MachineOperation> MOs;
+        private List<MachineOperation> MOs;
+
         public Machine Mach { get; set; }
 
         // Default Constructor
@@ -38,6 +40,13 @@ namespace CAMel.Types
             this.MOs = new List<MachineOperation>();
             this.localCode = "";
         }
+        // Name, Machine and Operations
+        public MachineInstruction(string name, Machine Mach, List<MachineOperation> MOs)
+        {
+            this.name = name;
+            this.Mach = Mach;
+            this.MOs = MOs;
+        }
         // Copy Constructor
         public MachineInstruction(MachineInstruction Op)
         {
@@ -50,6 +59,8 @@ namespace CAMel.Types
                 this.MOs.Add(new MachineOperation(MO));
             }
         }
+
+
 
         // Copy basic information but add new paths
         public MachineInstruction copyWithNewPaths(List<MachineOperation> MOs)
@@ -86,17 +97,23 @@ namespace CAMel.Types
             }
         }
 
+        public int Count => ((IList<MachineOperation>)MOs).Count;
+
+        public bool IsReadOnly => ((IList<MachineOperation>)MOs).IsReadOnly;
+
+        public MachineOperation this[int index] { get => ((IList<MachineOperation>)MOs)[index]; set => ((IList<MachineOperation>)MOs)[index] = value; }
+
         public override string ToString()
         {
             int total_TP = 0;
-            foreach(MachineOperation MO in this.MOs)
+            foreach(MachineOperation MO in this)
             {
-                foreach (ToolPath TP in MO.TPs)
+                foreach (ToolPath TP in MO)
                 {
                     total_TP = total_TP + TP.Count;
                 }
             }
-            return "Machine Instruction: " + this.name + ", " + this.MOs.Count + " operations, " + total_TP + " total Instructions.";
+            return "Machine Instruction: " + this.name + ", " + this.Count + " operations, " + total_TP + " total Instructions.";
         }
 
         // Main functions
@@ -105,7 +122,7 @@ namespace CAMel.Types
         {
             List<MachineOperation> procOps = new List<MachineOperation>();
 
-            foreach(MachineOperation MO in this.MOs)
+            foreach(MachineOperation MO in this)
             {
                 procOps.Add(MO.ProcessAdditions(this.Mach));
             }
@@ -125,21 +142,21 @@ namespace CAMel.Types
                 + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             if (this.Mach.name != "") Co.AppendComment("  for " + this.Mach.name);
             Co.AppendComment(" Starting with: ");
-            Co.AppendComment("  Tool: "+this.MOs[0].TPs[0].MatTool.Tool_name);
-            Co.AppendComment("  in " + this.MOs[0].TPs[0].MatTool.Mat_name+ " with shape " + this.MOs[0].TPs[0].MatForm.ToString());
+            Co.AppendComment("  Tool: "+this[0][0].MatTool.Tool_name);
+            Co.AppendComment("  in " + this[0][0].MatTool.Mat_name+ " with shape " + this[0][0].MatForm.ToString());
             Co.AppendComment("");
             Co.AppendLine(this.Mach.SectionBreak);
             Co.Append(this.Mach.header);
             Co.Append(this.localCode);
 
             // Let the Code writer know the Material Tool and Form so can report changes
-            Co.currentMT = this.MOs[0].TPs[0].MatTool;
-            Co.currentMF = this.MOs[0].TPs[0].MatForm;
+            Co.currentMT = this[0][0].MatTool;
+            Co.currentMF = this[0][0].MatForm;
 
             ToolPath startPath = null;
             ToolPath endPath;
 
-            foreach(MachineOperation MO in this.MOs)
+            foreach(MachineOperation MO in this)
             {
                 MO.WriteCode(ref Co, Mach, out endPath, startPath);
                 startPath = endPath;
@@ -157,6 +174,56 @@ namespace CAMel.Types
         ICAMel_Base ICAMel_Base.Duplicate()
         {
             return new MachineInstruction(this);
+        }
+
+        public int IndexOf(MachineOperation item)
+        {
+            return ((IList<MachineOperation>)MOs).IndexOf(item);
+        }
+
+        public void Insert(int index, MachineOperation item)
+        {
+            ((IList<MachineOperation>)MOs).Insert(index, item);
+        }
+
+        public void RemoveAt(int index)
+        {
+            ((IList<MachineOperation>)MOs).RemoveAt(index);
+        }
+
+        public void Add(MachineOperation item)
+        {
+            ((IList<MachineOperation>)MOs).Add(item);
+        }
+
+        public void Clear()
+        {
+            ((IList<MachineOperation>)MOs).Clear();
+        }
+
+        public bool Contains(MachineOperation item)
+        {
+            return ((IList<MachineOperation>)MOs).Contains(item);
+        }
+
+        public void CopyTo(MachineOperation[] array, int arrayIndex)
+        {
+            ((IList<MachineOperation>)MOs).CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(MachineOperation item)
+        {
+            return ((IList<MachineOperation>)MOs).Remove(item);
+        }
+
+        public IEnumerator<MachineOperation> GetEnumerator()
+        {
+            return ((IList<MachineOperation>)MOs).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IList<MachineOperation>)MOs).GetEnumerator();
         }
     }
 

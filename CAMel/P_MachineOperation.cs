@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
@@ -12,9 +13,9 @@ namespace CAMel.Types
     // creating a surface, drilling a whole, cutting out an object...
     // When paths within an operation have a stepdown then all first 
     // step downs with be completed, then the second and so on.
-    public class MachineOperation : IToolPointContainer
+    public class MachineOperation : IList<ToolPath>,IToolPointContainer
     {
-        public List<ToolPath> TPs;
+        private List<ToolPath> TPs;
 
         // Default Constructor
         public MachineOperation()
@@ -30,15 +31,22 @@ namespace CAMel.Types
             this.TPs = new List<ToolPath>();
             this.localCode = "";
         }
+        // Name and ToolPaths
+        public MachineOperation(string name, List<ToolPath> TPs)
+        {
+            this.name = name;
+            this.TPs = TPs;
+            this.localCode = "";
+        }
         // Copy Constructor
         public MachineOperation(MachineOperation Op)
         {
             this.name = Op.name;
             this.localCode = Op.localCode;
             this.TPs = new List<ToolPath>();
-            foreach (ToolPath TP in Op.TPs)
+            foreach (ToolPath TP in Op)
             {
-                this.TPs.Add(new ToolPath(TP));
+                this.Add(new ToolPath(TP));
             }
         }
 
@@ -75,14 +83,20 @@ namespace CAMel.Types
             }
         }
 
+        public int Count => ((IList<ToolPath>)TPs).Count;
+
+        public bool IsReadOnly => ((IList<ToolPath>)TPs).IsReadOnly;
+
+        public ToolPath this[int index] { get => ((IList<ToolPath>)TPs)[index]; set => ((IList<ToolPath>)TPs)[index] = value; }
+
         public override string ToString()
         {
             int total_TP = 0;
-            foreach (ToolPath TP in this.TPs)
+            foreach (ToolPath TP in this)
             {
                 total_TP = total_TP + TP.Count;
             }
-            return "Machine Operation: " + this.name + ", " + this.TPs.Count + " toolpaths, " + total_TP + " total tool points.";
+            return "Machine Operation: " + this.name + ", " + this.Count + " toolpaths, " + total_TP + " total tool points.";
         }
 
         // Process the toolpaths for additions
@@ -97,7 +111,7 @@ namespace CAMel.Types
             // TODO reorder cutting to increase efficency
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
 
-            foreach (ToolPath TP in this.TPs)
+            foreach (ToolPath TP in this)
                 newPaths.Add(TP.ProcessAdditions(M));
 
             // Create the list for the output
@@ -149,7 +163,7 @@ namespace CAMel.Types
             if (sP == null || sP.Count == 0) { lastPoint = null; }
             else { lastPoint = sP[sP.Count - 1]; }
 
-            foreach (ToolPath TP in this.TPs)
+            foreach (ToolPath TP in this)
             {
                 if (TP.Count > 0) // If path has length 0 just ignore
                 {
@@ -195,7 +209,7 @@ namespace CAMel.Types
             List<List<Point3d>> paths = new List<List<Point3d>>();
             List<Vector3d> dirs = null;
             Dirs = new List<List<Vector3d>>();
-            foreach(ToolPath TP in this.TPs)
+            foreach(ToolPath TP in this)
             {
                 paths.Add(TP.GetPointsandDirs(out dirs));
                 Dirs.Add(dirs);
@@ -206,6 +220,56 @@ namespace CAMel.Types
         ICAMel_Base ICAMel_Base.Duplicate()
         {
             return new MachineOperation(this);
+        }
+
+        public int IndexOf(ToolPath item)
+        {
+            return ((IList<ToolPath>)TPs).IndexOf(item);
+        }
+
+        public void Insert(int index, ToolPath item)
+        {
+            ((IList<ToolPath>)TPs).Insert(index, item);
+        }
+
+        public void RemoveAt(int index)
+        {
+            ((IList<ToolPath>)TPs).RemoveAt(index);
+        }
+
+        public void Add(ToolPath item)
+        {
+            ((IList<ToolPath>)TPs).Add(item);
+        }
+
+        public void Clear()
+        {
+            ((IList<ToolPath>)TPs).Clear();
+        }
+
+        public bool Contains(ToolPath item)
+        {
+            return ((IList<ToolPath>)TPs).Contains(item);
+        }
+
+        public void CopyTo(ToolPath[] array, int arrayIndex)
+        {
+            ((IList<ToolPath>)TPs).CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(ToolPath item)
+        {
+            return ((IList<ToolPath>)TPs).Remove(item);
+        }
+
+        public IEnumerator<ToolPath> GetEnumerator()
+        {
+            return ((IList<ToolPath>)TPs).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IList<ToolPath>)TPs).GetEnumerator();
         }
     }
 

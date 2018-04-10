@@ -52,8 +52,7 @@ namespace CAMel
             if (!DA.GetData(0, ref name)) return;
             if (!DA.GetDataList(1, TPs)) return;
 
-            MachineOperation MO = new MachineOperation(name);
-            MO.TPs = TPs;
+            MachineOperation MO = new MachineOperation(name, TPs);
 
             DA.SetData(0, MO);
         }

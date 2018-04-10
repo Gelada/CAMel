@@ -92,7 +92,7 @@ namespace CAMel
                 TP.Add(new ToolPoint(D.Center, D.Normal,-1,MT.feedPlunge));
             }
 
-            Op.TPs.Add(TP);
+            Op.Add(TP);
 
             DA.SetData(0, Op);
 

@@ -84,7 +84,7 @@ namespace CAMel
                 // Turn Curve into path
 
                 if (TP.ConvertCurve(c, Dir))
-                    Op.TPs.Add(TP);
+                    Op.Add(TP);
                 else
                     InvalidCurves++;
                 i++;
@@ -96,7 +96,7 @@ namespace CAMel
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored.");
 
 
-            if (Op.TPs.Count > 0) { DA.SetData(0, Op); }
+            if (Op.Count > 0) { DA.SetData(0, Op); }
             else { DA.SetData(0, null); }
         }
 
