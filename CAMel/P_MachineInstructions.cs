@@ -93,7 +93,7 @@ namespace CAMel.Types
             {
                 foreach (ToolPath TP in MO.TPs)
                 {
-                    total_TP = total_TP + TP.Pts.Count;
+                    total_TP = total_TP + TP.Count;
                 }
             }
             return "Machine Instruction: " + this.name + ", " + this.MOs.Count + " operations, " + total_TP + " total Instructions.";

@@ -78,7 +78,7 @@ namespace CAMel
 
             if (D.Normal.Length == 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Cannot process a circle who's normal is given as the zero vector. Check for null inputs.");
 
-            TP.Pts.Add(new ToolPoint(D.Center, D.Normal,-1,MT.feedPlunge));
+            TP.Add(new ToolPoint(D.Center, D.Normal,-1,MT.feedPlunge));
 
             // calculate the number of pecks we need to do
 
@@ -88,8 +88,8 @@ namespace CAMel
 
             for (int j = 1; j <= steps; j++)
             {
-                TP.Pts.Add(new ToolPoint(D.Center - ((double)j / (double)steps) * D.Radius * D.Normal, D.Normal,-1,MT.feedPlunge));
-                TP.Pts.Add(new ToolPoint(D.Center, D.Normal,-1,MT.feedPlunge));
+                TP.Add(new ToolPoint(D.Center - ((double)j / (double)steps) * D.Radius * D.Normal, D.Normal,-1,MT.feedPlunge));
+                TP.Add(new ToolPoint(D.Center, D.Normal,-1,MT.feedPlunge));
             }
 
             Op.TPs.Add(TP);

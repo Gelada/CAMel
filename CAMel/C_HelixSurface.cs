@@ -137,7 +137,7 @@ namespace CAMel
             {
                 for (i = 0; i < addangle; i++)
                 {
-                    CTP.Pts.Add(new ToolPoint(new Point3d(outerradius, 2 * Math.PI * i / addangle, 0)));
+                    CTP.Add(new ToolPoint(new Point3d(outerradius, 2 * Math.PI * i / addangle, 0)));
                 }
                 Zmin = Zmax = 0;
             }
@@ -149,7 +149,7 @@ namespace CAMel
                 double turns = 0;
                 double angle = 0;
                 // convert to cylindrical coordinates
-                foreach (ToolPoint tp in CTP.Pts)
+                foreach (ToolPoint tp in CTP)
                 {
                     Dir.RemapToPlaneSpace(tp.Pt, out CylPt);
                     Point3d temp = ToCyl(CylPt);
@@ -181,8 +181,8 @@ namespace CAMel
 
                 // complete loop by adding points going from
                 // the end point to the start point
-                Point3d startPt = CTP.Pts[0].Pt;
-                Point3d endPt = CTP.Pts[CTP.Pts.Count - 1].Pt;
+                Point3d startPt = CTP[0].Pt;
+                Point3d endPt = CTP[CTP.Count - 1].Pt;
                 if (endPt.Y > 0)
                 { startPt.Y = startPt.Y + turns + 2.0 * Math.PI; }
                 else
@@ -192,7 +192,7 @@ namespace CAMel
                 int shiftl = (int)Math.Ceiling(addangle*Math.Abs((startPt.Y - endPt.Y)/(2.0*Math.PI)));
                 for (i = 1; i < shiftl; i++)
                 {
-                    CTP.Pts.Add(new ToolPoint(
+                    CTP.Add(new ToolPoint(
                         new Point3d(outerradius,
                             (i * startPt.Y + (shiftl - i) * endPt.Y) / shiftl,
                             (i * startPt.Z + (shiftl - i) * endPt.Z) / shiftl)
@@ -202,7 +202,7 @@ namespace CAMel
             }
 
             // Create spiral from the loop
-            double winding = (CTP.Pts[CTP.Pts.Count - 1].Pt.Y - CTP.Pts[0].Pt.Y)/(2.0*Math.PI);
+            double winding = (CTP[CTP.Count - 1].Pt.Y - CTP[0].Pt.Y)/(2.0*Math.PI);
             double raisePer =(stepOver * MT.toolWidth); // height dealt with by each loop
             double rot =
                 ((BB.Max.Z - BB.Min.Z) // eight of surface
@@ -217,12 +217,12 @@ namespace CAMel
             Point3d tempPt;
             for(i=-1;i<=Math.Abs(rot);i++) // strange limits to make sure we go top to bottom
             {
-                for (int j = 0; j < CTP.Pts.Count; j++)
+                for (int j = 0; j < CTP.Count; j++)
                 {
                     tempPt = FromCyl(new Point3d(
                         outerradius,
-                        -CTP.Pts[j].Pt.Y, 
-                        BB.Min.Z - Zmax + CTP.Pts[j].Pt.Z + (2.0 * Math.PI * winding * i + CTP.Pts[j].Pt.Y) * raisePer));
+                        -CTP[j].Pt.Y, 
+                        BB.Min.Z - Zmax + CTP[j].Pt.Z + (2.0 * Math.PI * winding * i + CTP[j].Pt.Y) * raisePer));
                     tempPt = Dir.PointAt(tempPt.X, tempPt.Y, tempPt.Z);
                     SpiralPath.Add(tempPt);
                 }

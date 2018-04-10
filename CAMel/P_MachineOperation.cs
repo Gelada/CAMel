@@ -80,7 +80,7 @@ namespace CAMel.Types
             int total_TP = 0;
             foreach (ToolPath TP in this.TPs)
             {
-                total_TP = total_TP + TP.Pts.Count;
+                total_TP = total_TP + TP.Count;
             }
             return "Machine Operation: " + this.name + ", " + this.TPs.Count + " toolpaths, " + total_TP + " total tool points.";
         }
@@ -146,12 +146,12 @@ namespace CAMel.Types
             bool first = true;
             ToolPoint lastPoint; // let the next path know where it is coming from (details like speed and feed can be transferred).
 
-            if (sP == null || sP.Pts.Count == 0) { lastPoint = null; }
-            else { lastPoint = sP.Pts[sP.Pts.Count - 1]; }
+            if (sP == null || sP.Count == 0) { lastPoint = null; }
+            else { lastPoint = sP[sP.Count - 1]; }
 
             foreach (ToolPath TP in this.TPs)
             {
-                if (TP.Pts.Count > 0) // If path has length 0 just ignore
+                if (TP.Count > 0) // If path has length 0 just ignore
                 {
                     if (oldPath != null)
                     {
@@ -175,7 +175,7 @@ namespace CAMel.Types
 
                         // Add transition to Code if needed
 
-                        if (Transition.Pts.Count > 0)
+                        if (Transition.Count > 0)
                             lastPoint = Transition.WriteCode(ref Co, M, lastPoint);
                     }
                     // Add Path to Code

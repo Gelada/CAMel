@@ -197,12 +197,12 @@ namespace CAMel.Types
 
             foreach(ToolPath TP in TPs)
             {
-                var intersectInfo = new ConcurrentDictionary<ToolPoint, firstIntersectResponse>(Environment.ProcessorCount, TP.Pts.Count);
+                var intersectInfo = new ConcurrentDictionary<ToolPoint, firstIntersectResponse>(Environment.ProcessorCount, TP.Count);
 
-                foreach (ToolPoint TPt in TP.Pts) //initialise dictionary
+                foreach (ToolPoint TPt in TP) //initialise dictionary
                     intersectInfo[TPt] = new firstIntersectResponse();
 
-                Parallel.ForEach(TP.Pts, TPtP =>
+                Parallel.ForEach(TP, TPtP =>
                  {
                      intersectInfo[TPtP] = firstIntersect(TPtP);
                  }
@@ -212,18 +212,18 @@ namespace CAMel.Types
                 tempN = new List<Vector3d>();
                 firstIntersectResponse fIR;
 
-                foreach( ToolPoint TPt in TP.Pts)
+                foreach( ToolPoint TPt in TP)
                 {
 
                     fIR = intersectInfo[TPt];
                     if (fIR.hit)
                     {
-                        tempTP.Pts.Add(fIR.TP);
+                        tempTP.Add(fIR.TP);
                         tempN.Add(fIR.Norm); 
                     }
-                    else if(tempTP.Pts.Count > 0 )
+                    else if(tempTP.Count > 0 )
                     {
-                        if (tempTP.Pts.Count > 1)
+                        if (tempTP.Count > 1)
                         {
                             newTPs.Add(tempTP);
                             Norms.Add(tempN);
@@ -232,7 +232,7 @@ namespace CAMel.Types
                         tempN = new List<Vector3d>();
                     }
                 }
-                if (tempTP.Pts.Count > 1)
+                if (tempTP.Count > 1)
                 {
                     newTPs.Add(tempTP);
                     Norms.Add(tempN);
@@ -243,7 +243,7 @@ namespace CAMel.Types
  
             for(int j=0;j<newTPs.Count;j++)
             {
-                for (int i = 0; i < newTPs[j].Pts.Count; i++)
+                for (int i = 0; i < newTPs[j].Count; i++)
                 {
                     // find the tangent vector, assume the curve is not too jagged
                     // this is reasonable for most paths, but not for space 
@@ -252,20 +252,20 @@ namespace CAMel.Types
                     // Some cases to deal with the start, end and short paths. 
                     // TODO Smooth this out by taking into account individual tangencies?
                     int lookback, lookforward;
-                    if (i == newTPs[j].Pts.Count - 1)
+                    if (i == newTPs[j].Count - 1)
                     {
                         lookback = 3;
-                        if( i < lookback) { lookback = newTPs[j].Pts.Count - 1; }
+                        if( i < lookback) { lookback = newTPs[j].Count - 1; }
                         lookforward = 0;
                     }
                     else
                     {
                         lookback = Math.Min(i, 2);
                         lookforward = 3-lookback;
-                        if(lookforward + i >= newTPs[j].Pts.Count) { lookforward = newTPs[j].Pts.Count - i - 1; }
+                        if(lookforward + i >= newTPs[j].Count) { lookforward = newTPs[j].Count - i - 1; }
                     }
 
-                    tangent = newTPs[j].Pts[i+lookforward].Pt - newTPs[j].Pts[i - lookback].Pt;
+                    tangent = newTPs[j][i+lookforward].Pt - newTPs[j][i - lookback].Pt;
                     switch (this.STD)
                     {
                         case SurfToolDir.Projection: // already set
@@ -273,34 +273,34 @@ namespace CAMel.Types
                         case SurfToolDir.PathNormal:
                             // get normal to tangent on surface
                             STNorm = Vector3d.CrossProduct(Norms[j][i], tangent);
-                            PNplaneN = Vector3d.CrossProduct(newTPs[j].Pts[i].Dir, STNorm);
+                            PNplaneN = Vector3d.CrossProduct(newTPs[j][i].Dir, STNorm);
                             // find vector normal to the surface in the line orthogonal to the tangent
-                            newTPs[j].Pts[i].Dir = Vector3d.CrossProduct(STNorm,PNplaneN);
+                            newTPs[j][i].Dir = Vector3d.CrossProduct(STNorm,PNplaneN);
                             break;
                         case SurfToolDir.PathTangent:
                             // get normal to proj and tangent
-                            PTplaneN = Vector3d.CrossProduct(newTPs[j].Pts[i].Dir, tangent);
-                            PNplaneN = newTPs[j].Pts[i].Dir;
+                            PTplaneN = Vector3d.CrossProduct(newTPs[j][i].Dir, tangent);
+                            PNplaneN = newTPs[j][i].Dir;
                             // find vector normal to tangent and in the plane of tangent and projection
-                            newTPs[j].Pts[i].Dir = Vector3d.CrossProduct(tangent,PTplaneN);
-                            if (Math.Abs(newTPs[j].Pts[i].Dir.Y) > .01)
+                            newTPs[j][i].Dir = Vector3d.CrossProduct(tangent,PTplaneN);
+                            if (Math.Abs(newTPs[j][i].Dir.Y) > .01)
                             {
                                 int u = 17;
                             }
                             break;
                         case SurfToolDir.Normal: // set to negative Norm as we use the direction
                                                  // from pivot to tool
-                            newTPs[j].Pts[i].Dir = -Norms[j][i]; 
+                            newTPs[j][i].Dir = -Norms[j][i]; 
                             break;
                     }
                     // Adjust the tool position based on the surface normal and the tool orientation
                     // so that the cutting surface not the tooltip is at the correct point
 
-                    newTPs[j].Pts[i].Pt = newTPs[j].Pts[i].Pt + MT.CutOffset(newTPs[j].Pts[i].Dir,Norms[j][i]);
+                    newTPs[j][i].Pt = newTPs[j][i].Pt + MT.CutOffset(newTPs[j][i].Dir,Norms[j][i]);
 
                     // Move to offset using normal
 
-                    newTPs[j].Pts[i].Pt = newTPs[j].Pts[i].Pt + offset*Norms[j][i];
+                    newTPs[j][i].Pt = newTPs[j][i].Pt + offset*Norms[j][i];
                 }
             }
 

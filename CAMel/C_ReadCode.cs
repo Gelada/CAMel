@@ -58,7 +58,7 @@ namespace CAMel
             List<Point3d> selPt = new List<Point3d>();
             List<Vector3d> selDir = new List<Vector3d>();
 
-            foreach(ToolPoint tp in TP.Pts)
+            foreach(ToolPoint tp in TP)
             {
                 if(true)
                 {

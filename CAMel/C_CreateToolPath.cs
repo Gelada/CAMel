@@ -147,7 +147,7 @@ namespace CAMel
                     if (Co1.Count == 1) useCo = Co1[0];
                     else useCo = Co1[i];
 
-                    TP.Pts.Add(new ToolPoint(pts[i], usedir, useCo, useSF.X, useSF.Y));
+                    TP.Add(new ToolPoint(pts[i], usedir, useCo, useSF.X, useSF.Y));
                 }
 
             }

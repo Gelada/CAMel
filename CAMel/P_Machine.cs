@@ -284,10 +284,10 @@ namespace CAMel.Types
 
             if (beforePoint == null) // There were no previous points
             {
-                if (TP.Pts.Count > 0)
+                if (TP.Count > 0)
                 {
-                    feed = TP.Pts[0].feed;
-                    speed = TP.Pts[0].speed;
+                    feed = TP[0].feed;
+                    speed = TP[0].speed;
                     FChange = true;
                     SChange = true;
                 }
@@ -307,7 +307,7 @@ namespace CAMel.Types
             if (speed < 0) speed = TP.MatTool.speed;
             string PtCode;
 
-            foreach(ToolPoint Pt in TP.Pts)
+            foreach(ToolPoint Pt in TP)
             {
                 if (Pt.error != null)
                 {
@@ -393,9 +393,9 @@ namespace CAMel.Types
             // return the last point or the beforePoint if the path had no elements
             ToolPoint PtOut;
 
-            if(TP.Pts.Count > 0)
+            if(TP.Count > 0)
             {
-                PtOut = new ToolPoint(TP.Pts[TP.Pts.Count-1]);
+                PtOut = new ToolPoint(TP[TP.Count-1]);
                 PtOut.feed = feed;
                 PtOut.speed = speed;
             }
@@ -427,13 +427,13 @@ namespace CAMel.Types
            
             if (beforePoint == null) // There were no previous points
             {
-                if (TP.Pts.Count > 0)
+                if (TP.Count > 0)
                 {
-                    feed = TP.Pts[0].feed;
-                    speed = TP.Pts[0].speed;
+                    feed = TP[0].feed;
+                    speed = TP[0].speed;
                     if (feed < 0) { feed = TP.MatTool.feedCut; }
                     if (speed < 0) { speed = TP.MatTool.speed; }
-                    AB = Machine.Orient_FiveAxisABP(TP.Pts[0].Dir);
+                    AB = Machine.Orient_FiveAxisABP(TP[0].Dir);
                     FChange = true;
                     SChange = false;
                     // making the first move. Orient the tool first
@@ -463,9 +463,9 @@ namespace CAMel.Types
             int i,j;
             ToolPoint Pt;
             Point3d MachPos = new Point3d(0,0,0);
-            for(i=0;i<TP.Pts.Count;i++)
+            for(i=0;i<TP.Count;i++)
             {
-                Pt = TP.Pts[i];
+                Pt = TP[i];
 
                 if (Pt.error != null)
                 {
@@ -548,18 +548,18 @@ namespace CAMel.Types
                     {
                         j = i+1;
 
-                        while (j < (TP.Pts.Count-1) && Math.Abs(Orient_FiveAxisABP(TP.Pts[j].Dir).X - Math.PI/2.0) < AngleAcc) j++;
+                        while (j < (TP.Count-1) && Math.Abs(Orient_FiveAxisABP(TP[j].Dir).X - Math.PI/2.0) < AngleAcc) j++;
 
                         // If we are at the start of a path and vertical then we can just use the first non-vertical 
                         // position for the whole run. 
                         if (Math.Abs(AB.X - Math.PI / 2.0) < AngleAcc) 
                         {
-                            Bto = Orient_FiveAxisABP(TP.Pts[j].Dir).Y;
+                            Bto = Orient_FiveAxisABP(TP[j].Dir).Y;
                             Bsteps = j - i;
                             newAB.Y = Bto;
                         }
                         // if we get to the end and it is still vertical we do not need to rotate.
-                        else if (Math.Abs(Orient_FiveAxisABP(TP.Pts[j].Dir).X) < AngleAcc)
+                        else if (Math.Abs(Orient_FiveAxisABP(TP[j].Dir).X) < AngleAcc)
                         {
                             Bto = AB.X;
                             Bsteps = j - i;
@@ -567,7 +567,7 @@ namespace CAMel.Types
                         }
                         else
                         {
-                            Bto = Orient_FiveAxisABP(TP.Pts[j].Dir).Y;
+                            Bto = Orient_FiveAxisABP(TP[j].Dir).Y;
                             Bsteps = j - i;
                             newAB.Y = AB.Y;
                         }
@@ -635,9 +635,9 @@ namespace CAMel.Types
             // return the last point or the beforePoint if the path had no elements
             ToolPoint PtOut;
 
-            if (TP.Pts.Count > 0)
+            if (TP.Count > 0)
             {
-                PtOut = new ToolPoint(TP.Pts[TP.Pts.Count - 1]);
+                PtOut = new ToolPoint(TP[TP.Count - 1]);
                 PtOut.feed = feed;
                 PtOut.speed = speed;
 
@@ -731,10 +731,10 @@ namespace CAMel.Types
                 // add a new point. 
                 if (changed || (found && Fchanged))
                 {
-                    TP.Pts.Add(ReadTP_PocketNC(X,Y,Z,A,B,F,S,toolLength));
+                    TP.Add(ReadTP_PocketNC(X,Y,Z,A,B,F,S,toolLength));
                     if(Z<-3.3)
                     {
-                        TP.Pts[TP.Pts.Count-1].localCode = "Z";
+                        TP[TP.Count-1].localCode = "Z";
                     }
                 }
 
@@ -804,7 +804,7 @@ namespace CAMel.Types
                 // add a new point. 
                 if( changed || (found && Fchanged)) 
                 {
-                    TP.Pts.Add(new ToolPoint(new Point3d(X,Y,Z),new Vector3d(0,0,0),S,F));
+                    TP.Add(new ToolPoint(new Point3d(X,Y,Z),new Vector3d(0,0,0),S,F));
                     i++;
                 }
             }
@@ -871,11 +871,11 @@ namespace CAMel.Types
             // Give a little wiggle as we just pull back to the safe distance.
             
             if ((
-                TPfrom.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPfrom.MatForm.safeDistance).thrDist > 0.0001
-                && TPto.MatForm.intersect(TPfrom.Pts[TPfrom.Pts.Count - 1], TPto.MatForm.safeDistance).thrDist > 0.0001
+                TPfrom.MatForm.intersect(TPfrom[TPfrom.Count - 1], TPfrom.MatForm.safeDistance).thrDist > 0.0001
+                && TPto.MatForm.intersect(TPfrom[TPfrom.Count - 1], TPto.MatForm.safeDistance).thrDist > 0.0001
                 ) || (
-                TPfrom.MatForm.intersect(TPto.Pts[0], TPfrom.MatForm.safeDistance).thrDist > 0.0001
-                && TPto.MatForm.intersect(TPto.Pts[0], TPto.MatForm.safeDistance).thrDist > 0.0001
+                TPfrom.MatForm.intersect(TPto[0], TPfrom.MatForm.safeDistance).thrDist > 0.0001
+                && TPto.MatForm.intersect(TPto[0], TPto.MatForm.safeDistance).thrDist > 0.0001
                ))
             {
                 throw new ArgumentException("End points of a safe move are not in safe space.");
@@ -889,8 +889,8 @@ namespace CAMel.Types
                     // point and try again.
 
                     List<Point3d> route = new List<Point3d>();
-                    route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
-                    route.Add(TPto.Pts[0].Pt);
+                    route.Add(TPfrom[TPfrom.Count - 1].Pt);
+                    route.Add(TPto[0].Pt);
                     
                     int i;
                     intersects inters;
@@ -917,7 +917,7 @@ namespace CAMel.Types
                     foreach(Point3d Pt in route)
                     {
                         // add new point at speed 0 to describe rapid move.
-                        Move.Pts.Add(new ToolPoint(Pt,new Vector3d(0,0,0),"",-1,0));
+                        Move.Add(new ToolPoint(Pt,new Vector3d(0,0,0),"",-1,0));
                     }
 
                     break;
@@ -928,8 +928,8 @@ namespace CAMel.Types
 
                     route = new List<Point3d>();
 
-                    route.Add(TPfrom.Pts[TPfrom.Pts.Count - 1].Pt);
-                    route.Add(TPto.Pts[0].Pt);
+                    route.Add(TPfrom[TPfrom.Count - 1].Pt);
+                    route.Add(TPto[0].Pt);
 
                     // loop through intersecting with safe bubble and adding points
                     for(i=0;i<(route.Count-1)&&route.Count < 1000;)
@@ -950,12 +950,12 @@ namespace CAMel.Types
 
                     // add extra points if the angle change between steps is too large (pi/30)
 
-                    Vector3d fromDir = TPfrom.Pts[TPfrom.Pts.Count - 1].Dir;
-                    Vector3d toDir = TPto.Pts[0].Dir;
+                    Vector3d fromDir = TPfrom[TPfrom.Count - 1].Dir;
+                    Vector3d toDir = TPto[0].Dir;
                     Vector3d mixDir;
                     bool lng = false;
                     // ask machine how far it has to move in angle. 
-                    double angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1].Dir, TPto.Pts[0].Dir,lng);
+                    double angSpread = this.angDiff(TPfrom[TPfrom.Count - 1].Dir, TPto[0].Dir,lng);
 
                     int steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
                     if (steps == 0) steps = 1; // Need to add at least one point even if angSpread is 0
@@ -987,17 +987,17 @@ namespace CAMel.Types
                                     lng=true;
                                     i=0;
                                     j=0;
-                                    angSpread = this.angDiff(TPfrom.Pts[TPfrom.Pts.Count - 1].Dir, TPto.Pts[0].Dir,lng);
+                                    angSpread = this.angDiff(TPfrom[TPfrom.Count - 1].Dir, TPto[0].Dir,lng);
                                     steps = (int)Math.Ceiling(30*angSpread/(Math.PI*route.Count));
                                     Move = TPto.copyWithNewPoints(new List<ToolPoint>());
                                 }
                             } else { 
-                                Move.Pts.Add(newTP);
+                                Move.Add(newTP);
                             }
                         }
                     }
                     // get rid of start point that was already in the paths
-                    Move.Pts.RemoveAt(0);
+                    Move.RemoveAt(0);
 
                     break;
 
