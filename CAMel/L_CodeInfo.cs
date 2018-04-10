@@ -7,6 +7,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {
@@ -26,7 +27,7 @@ namespace CAMel.Types
         private Machine Mach; // Machine for language handling.
 
         public MaterialTool currentMT;
-        public MaterialForm.IMaterialForm currentMF;
+        public IMaterialForm currentMF;
         private int lines;
 
         public CodeInfo()
