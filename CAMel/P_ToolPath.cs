@@ -52,9 +52,9 @@ namespace CAMel.Types
     public class ToolPath : IToolPointContainer
     {
         public List<ToolPoint> Pts;     // Positions of the machine
-        public MaterialTool MatTool;    // Material and tool to cut it with
-        public IMaterialForm MatForm;    // Shape of the material
-        public ToolPathAdditions Additions;       // Features we might add to the path 
+        public MaterialTool MatTool { get; set; }   // Material and tool to cut it with
+        public IMaterialForm MatForm { get; set; }    // Shape of the material
+        public ToolPathAdditions Additions { get; set; }       // Features we might add to the path 
 
         // Default Constructor, set everything to empty
         public ToolPath()
@@ -85,26 +85,6 @@ namespace CAMel.Types
             this.Additions = new ToolPathAdditions(TPA);
             this.localCode = "";
         }
-        // MaterialTool and Code
-        public ToolPath(string name, MaterialTool MT, string Co)
-        {
-            this.name = name;
-            this.Pts = new List<ToolPoint>();
-            this.MatTool = MT;
-            this.MatForm = null;
-            this.localCode = Co;
-            this.Additions = new ToolPathAdditions();
-        }
-        // MaterialTool, Code and features
-        public ToolPath(string name, MaterialTool MT, string Co, ToolPathAdditions TPA)
-        {
-            this.name = name;
-            this.Pts = new List<ToolPoint>();
-            this.MatTool = MT;
-            this.MatForm = null;
-            this.localCode = Co;
-            this.Additions = new ToolPathAdditions(TPA);
-        }
         // MaterialTool and Form
         public ToolPath(string name, MaterialTool MT, IMaterialForm MF)
         {
@@ -124,16 +104,6 @@ namespace CAMel.Types
             this.MatForm = MF;
             this.Additions = new ToolPathAdditions(TPA);
             this.localCode = "";
-        }
-        // MaterialTool, Form and Code
-        public ToolPath(string name, MaterialTool MT, IMaterialForm MF, string Co)
-        {
-            this.name = name;
-            this.Pts = new List<ToolPoint>();
-            this.MatTool = MT;
-            this.MatForm = MF;
-            this.localCode = Co;
-            this.Additions = new ToolPathAdditions();
         }
         // MaterialTool, Form, Code and features
         public ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA, string Co)
@@ -448,18 +418,7 @@ namespace CAMel.Types
 
             return NewPaths;
         }
-        // Create a path with the points 
-        internal List<Point3d> RawPath(out List<Vector3d> Dirs)
-        {
-            List<Point3d> Ptsout = new List<Point3d>();
-            Dirs = new List<Vector3d>();
-            foreach(ToolPoint P in this.Pts) {
-                Ptsout.Add(P.Pt);
-                Dirs.Add(P.Dir);
-            }
-            return Ptsout;
-        }
-
+        
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
         // TODO make this guarantee that it does not gouge locally. There is a problem 
         // with paths that are steep down, followed by some bottom moves followed by steep out. 
@@ -673,6 +632,18 @@ namespace CAMel.Types
                 Dirs.Add(tP.Dir);
             return Dirs;
         }
+        // Create a path with the points 
+        public List<Point3d> GetPointsandDirs(out List<Vector3d> Dirs)
+        {
+            List<Point3d> Ptsout = new List<Point3d>();
+            Dirs = new List<Vector3d>();
+            foreach (ToolPoint P in this.Pts)
+            {
+                Ptsout.Add(P.Pt);
+                Dirs.Add(P.Dir);
+            }
+            return Ptsout;
+        }
 
         // Get the list of speeds and feeds (a vector with speed in X and feed in Y)
         public List<Vector3d> GetSpeedFeed()
@@ -718,52 +689,21 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_ToolPath : GH_ToolPointContainer<ToolPath>
+    public class GH_ToolPath : GH_ToolPointContainer<ToolPath>, IGH_PreviewData
     {
+        public BoundingBox ClippingBox
+        {
+            get
+            {
+                BoundingBox BB = new Polyline(Value.GetPoints()).BoundingBox;
+                BB.Inflate(1);
+                return BB; 
+            }
+        }
         // Default Constructor
         public GH_ToolPath()
         {
             this.Value = new ToolPath();
-        }
-        // Just a list of points and MaterialTool
-        public GH_ToolPath(string name, MaterialTool MT)
-        {
-            this.Value = new ToolPath(name, MT);
-        }
-        // Just a list of points, MaterialTool and features
-        public GH_ToolPath(string name, MaterialTool MT, ToolPathAdditions TPA)
-        {
-            this.Value = new ToolPath(name, MT, TPA);
-        }
-        // Points, MaterialTool and Code
-        public GH_ToolPath(string name, MaterialTool MT, string Co)
-        {
-            this.Value = new ToolPath(name, MT, Co);
-        }
-        // Points, MaterialTool, Code and features
-        public GH_ToolPath(string name, MaterialTool MT, string Co, ToolPathAdditions TPA)
-        {
-            this.Value = new ToolPath(name, MT, Co, TPA);
-        }
-        // Points, MaterialTool and Form
-        public GH_ToolPath(string name, MaterialTool MT, IMaterialForm MF)
-        {
-            this.Value = new ToolPath(name, MT, MF);
-        }
-        // Points, MaterialTool, Form and features
-        public GH_ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
-        {
-            this.Value = new ToolPath(name, MT, MF, TPA);
-        }
-        // Points, MaterialTool, Form and Code
-        public GH_ToolPath(string name, MaterialTool MT, IMaterialForm MF, string Co)
-        {
-            this.Value = new ToolPath(name, MT, MF, Co);
-        }
-        // Points, MaterialTool, Form, Code and features
-        public GH_ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA, string Co)
-        {
-            this.Value = new ToolPath(name, MT, MF, TPA, Co);
         }
         // Create from unwrapped version
         public GH_ToolPath(ToolPath TP)
@@ -783,22 +723,26 @@ namespace CAMel.Types
 
         public override bool CastTo<Q>(ref Q target)
         {
-            if (typeof(Q).IsAssignableFrom(typeof(List<Point3d>)))
+            if (typeof(Q).IsAssignableFrom(typeof(Polyline)))
             {
-                List<Point3d> li = new List<Point3d>();
-                foreach (ToolPoint p in this.Value.Pts)
-                {
-                    li.Add(p.Pt);
-                }
-                object ptr = li;
-                target = (Q)ptr;
+                target = (Q)(object) new Polyline(Value.GetPoints());
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(Curve)))
+            {
+                target = (Q)(object)new PolylineCurve(Value.GetPoints());
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
+            {
+                Curve C = (Curve)new PolylineCurve(Value.GetPoints());
+                target = (Q)(object)new GH_Curve(C);
                 return true;
             }
 
             if (typeof(Q).IsAssignableFrom(typeof(ToolPath)))
             {
-                object ptr = this.Value;
-                target = (Q)ptr;
+                target = (Q)(object)Value;
                 return true;
             }
             return false;
@@ -813,6 +757,13 @@ namespace CAMel.Types
             }
             return false;
         }
+
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        {
+            args.Pipeline.DrawCurve(new PolylineCurve(Value.GetPoints()), args.Color);
+        }
+
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper

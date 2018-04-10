@@ -168,7 +168,7 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_ToolPoint : GH_ToolPointContainer<ToolPoint>
+    public class GH_ToolPoint : GH_ToolPointContainer<ToolPoint>, IGH_PreviewData
     {
         // Default Constructor, set up at the origin with direction set to 0 vector.
         public GH_ToolPoint()
@@ -220,24 +220,56 @@ namespace CAMel.Types
         {
             if (typeof(Q).IsAssignableFrom(typeof(Point3d)))
             {
-                object ptr = new Point3d(this.Value.Pt);
-                target = (Q)ptr;
+                target = (Q)(object)this.Value.Pt;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Point)))
+            {
+                target = (Q)(object)new GH_Point(this.Value.Pt);
                 return true;
             }
             return false;
         }
-
+        
         public override bool CastFrom(object source)
         {
             if (source == null) return false;
-            Point3d Pt = new Point3d(0, 0, 0);
-            if (GH_Convert.ToPoint3d(source, ref Pt, GH_Conversion.Primary))
+
+            if (source is Point3d)
+            {
+                Value = new ToolPoint((Point3d)source);
+                return true;
+            }
+            GH_Point pointGoo = source as GH_Point;
+            if (pointGoo != null)
+            {
+                Value = new ToolPoint(pointGoo.Value);
+                return true;
+            }
+            Point3d Pt = Point3d.Unset;
+            if (GH_Convert.ToPoint3d(source, ref Pt, GH_Conversion.Both))
             {
                 this.Value = new ToolPoint(Pt);
                 return true;
             }
             return false;
         }
+
+        public BoundingBox ClippingBox
+        {
+            get {
+                BoundingBox BB = new BoundingBox();
+                BB.Union(Value.Pt);
+                BB.Union(Value.Pt + Value.Dir);
+                return BB;
+            }
+        }
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        {
+            args.Pipeline.DrawPoint(Value.Pt, args.Color);
+            args.Pipeline.DrawArrow(new Line(Value.Pt, Value.Pt + Value.Dir), args.Color);
+        }
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper

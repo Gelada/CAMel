@@ -197,7 +197,7 @@ namespace CAMel.Types
             Dirs = new List<List<Vector3d>>();
             foreach(ToolPath TP in this.TPs)
             {
-                paths.Add(TP.RawPath(out dirs));
+                paths.Add(TP.GetPointsandDirs(out dirs));
                 Dirs.Add(dirs);
             }
             return paths;
