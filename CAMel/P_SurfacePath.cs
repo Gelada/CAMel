@@ -8,6 +8,7 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using Rhino.Geometry.Intersect;
 using CAMel.Types.MaterialForm;
+using System.Collections;
 
 namespace CAMel.Types
 {
@@ -43,9 +44,9 @@ namespace CAMel.Types
 
     // A path that will project to a surface for surfacing
     // TODO write a subclass for each projection
-    public class SurfacePath : ICAMel_Base
+    public class SurfacePath : IList<Curve>, ICAMel_Base
     {
-        public List<Curve> Paths; // Curves to project
+        private List<Curve> Paths; // Curves to project
         public SurfProj SP; // Type of projection
         public Curve CylOnto; // centre line for Cylindrical projection
         public Vector3d dir; // direction for parallel projection, or line direction for cylindrical
@@ -124,6 +125,12 @@ namespace CAMel.Types
                 throw new NotImplementedException("SurfacePath has not implemented IsValid");
             }
         }
+
+        public int Count => ((IList<Curve>)Paths).Count;
+
+        public bool IsReadOnly => ((IList<Curve>)Paths).IsReadOnly;
+
+        public Curve this[int index] { get => ((IList<Curve>)Paths)[index]; set => ((IList<Curve>)Paths)[index] = value; }
 
         public override string ToString()
         {
@@ -416,6 +423,56 @@ namespace CAMel.Types
         {
             throw new NotImplementedException("Surface Path has not implemented Duplicate");
         }
+
+        public int IndexOf(Curve item)
+        {
+            return ((IList<Curve>)Paths).IndexOf(item);
+        }
+
+        public void Insert(int index, Curve item)
+        {
+            ((IList<Curve>)Paths).Insert(index, item);
+        }
+
+        public void RemoveAt(int index)
+        {
+            ((IList<Curve>)Paths).RemoveAt(index);
+        }
+
+        public void Add(Curve item)
+        {
+            ((IList<Curve>)Paths).Add(item);
+        }
+
+        public void Clear()
+        {
+            ((IList<Curve>)Paths).Clear();
+        }
+
+        public bool Contains(Curve item)
+        {
+            return ((IList<Curve>)Paths).Contains(item);
+        }
+
+        public void CopyTo(Curve[] array, int arrayIndex)
+        {
+            ((IList<Curve>)Paths).CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(Curve item)
+        {
+            return ((IList<Curve>)Paths).Remove(item);
+        }
+
+        public IEnumerator<Curve> GetEnumerator()
+        {
+            return ((IList<Curve>)Paths).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IList<Curve>)Paths).GetEnumerator();
+        }
     }
 
     // Grasshopper Type Wrapper
@@ -448,8 +505,12 @@ namespace CAMel.Types
         {
             if (typeof(Q).IsAssignableFrom(typeof(SurfacePath)))
             {
-                object ptr = this.Value;
-                target = (Q)ptr;
+                target = (Q)(object)target;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(SurfacePath)))
+            {
+                target = (Q)(object)target;
                 return true;
             }
 
