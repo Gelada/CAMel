@@ -6,6 +6,8 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types.MaterialForm;
 using System.Collections;
+using Rhino;
+using Rhino.DocObjects;
 
 namespace CAMel.Types
 {
@@ -651,6 +653,18 @@ namespace CAMel.Types
             }
             return Ptsout;
         }
+        // Create a polyline
+        public PolylineCurve GetLine()
+        {
+            return new PolylineCurve(this.GetPoints());
+        }
+        // Lines for each toolpoint
+        public List<Line> ToolLines()
+        {
+            List<Line> lines = new List<Line>();
+            foreach(ToolPoint TP in this.Pts) { lines.Add(TP.ToolLine()); }
+            return lines;
+        }
 
         // Get the list of speeds and feeds (a vector with speed in X and feed in Y)
         public List<Vector3d> GetSpeedFeed()
@@ -746,7 +760,7 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_ToolPath : GH_ToolPointContainer<ToolPath>, IGH_PreviewData
+    public class GH_ToolPath : GH_ToolPointContainer<ToolPath>, IGH_PreviewData, IGH_BakeAwareData
     {
         public BoundingBox ClippingBox
         {
@@ -787,13 +801,12 @@ namespace CAMel.Types
             }
             if (typeof(Q).IsAssignableFrom(typeof(Curve)))
             {
-                target = (Q)(object)new PolylineCurve(Value.GetPoints());
+                target = (Q)(object)Value.GetLine();
                 return true;
             }
             if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
             {
-                Curve C = (Curve)new PolylineCurve(Value.GetPoints());
-                target = (Q)(object)new GH_Curve(C);
+                target = (Q)(object)new GH_Curve(Value.GetLine());
                 return true;
             }
 
@@ -817,10 +830,20 @@ namespace CAMel.Types
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            args.Pipeline.DrawCurve(new PolylineCurve(Value.GetPoints()), args.Color);
+            args.Pipeline.DrawCurve(Value.GetLine(), args.Color);
+            args.Pipeline.DrawArrows(Value.ToolLines(), args.Color);
         }
-
         public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+
+        public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
+        {
+            obj_guid = Guid.Empty;
+            if (att == null)
+                att = doc.CreateDefaultAttributes();
+
+            obj_guid = doc.Objects.AddCurve(Value.GetLine());
+            return true;
+        }
     }
 
     // Grasshopper Parameter Wrapper

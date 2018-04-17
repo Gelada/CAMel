@@ -165,6 +165,11 @@ namespace CAMel.Types
         {
             return new ToolPoint(this);
         }
+
+        internal Line ToolLine()
+        {
+            return new Line(Pt, Pt + Dir);
+        }
     }
 
     // Grasshopper Type Wrapper
@@ -257,17 +262,12 @@ namespace CAMel.Types
 
         public BoundingBox ClippingBox
         {
-            get {
-                BoundingBox BB = new BoundingBox();
-                BB.Union(Value.Pt);
-                BB.Union(Value.Pt + Value.Dir);
-                return BB;
-            }
+            get { return Value.ToolLine().BoundingBox; }
         }
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
             args.Pipeline.DrawPoint(Value.Pt, args.Color);
-            args.Pipeline.DrawArrow(new Line(Value.Pt, Value.Pt + Value.Dir), args.Color);
+            args.Pipeline.DrawArrow(Value.ToolLine(), args.Color);
         }
         public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
     }
