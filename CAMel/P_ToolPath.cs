@@ -178,7 +178,7 @@ namespace CAMel.Types
         // Write the code describing this path
         public ToolPoint WriteCode(ref CodeInfo Co, Machine M, ToolPoint beforePoint)
         {
-            Co.AppendLine(M.SectionBreak);
+            Co.AppendComment(M.SectionBreak);
             bool preamble = false;
             if (this.name != "")
             {
@@ -198,7 +198,7 @@ namespace CAMel.Types
                 preamble = true;
             }
 
-            if (preamble) { Co.AppendLine(M.SectionBreak); }
+            if (preamble) { Co.AppendComment(M.SectionBreak); }
 
             if (this.localCode != "") Co.Append(this.localCode);
 
@@ -662,7 +662,7 @@ namespace CAMel.Types
         public List<Line> ToolLines()
         {
             List<Line> lines = new List<Line>();
-            foreach(ToolPoint TP in this.Pts) { lines.Add(TP.ToolLine()); }
+            foreach(ToolPoint TP in this) { lines.Add(TP.ToolLine()); }
             return lines;
         }
 
@@ -838,10 +838,8 @@ namespace CAMel.Types
         public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
         {
             obj_guid = Guid.Empty;
-            if (att == null)
-                att = doc.CreateDefaultAttributes();
-
-            obj_guid = doc.Objects.AddCurve(Value.GetLine());
+            if (att == null) { att = doc.CreateDefaultAttributes(); }
+            obj_guid = doc.Objects.AddCurve(Value.GetLine(),att);
             return true;
         }
     }

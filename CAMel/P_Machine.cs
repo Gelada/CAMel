@@ -37,8 +37,8 @@ namespace CAMel.Types
         public string header { get; set; }
         public string footer { get; set; }
         public string fileend { get; set; }
-        public char CommentChar { get; set; }
-        public char endCommentChar { get; set; }
+        public string CommentChar { get; set; }
+        public string endCommentChar { get; set; }
         public string SpeedChangeCommand { get; set; }
         public double PathJump { get; set; } // Max distance allowed between paths in material.
         public string SectionBreak { get; set; }
@@ -53,9 +53,9 @@ namespace CAMel.Types
             this.footer = "";
             this.filestart = "";
             this.fileend = "";
-            this.CommentChar = '(';
-            this.endCommentChar = ')';
-            this.SectionBreak = "(------------------------------------------)";
+            this.CommentChar = "(";
+            this.endCommentChar = ")";
+            this.SectionBreak = "------------------------------------------";
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
@@ -69,9 +69,9 @@ namespace CAMel.Types
             this.footer = "";
             this.filestart = "";
             this.fileend = "";
-            this.CommentChar = '(';
-            this.endCommentChar = ')';
-            this.SectionBreak = "(------------------------------------------)";
+            this.CommentChar = "(";
+            this.endCommentChar = ")";
+            this.SectionBreak = "------------------------------------------";
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
@@ -85,9 +85,9 @@ namespace CAMel.Types
             this.footer = Footer;
             this.filestart = filestart;
             this.fileend = fileend;
-            this.CommentChar = '(';
-            this.endCommentChar = ')';
-            this.SectionBreak = "(------------------------------------------)";
+            this.CommentChar = "(";
+            this.endCommentChar = ")";
+            this.SectionBreak = "------------------------------------------";
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;

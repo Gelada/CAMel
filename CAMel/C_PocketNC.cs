@@ -56,9 +56,9 @@ namespace CAMel
             Machine M = new Machine("PocketNC", MachineTypes.PocketNC, head, foot, "%","%");
             M.Pivot = new Vector3d(0, 0, 3.6);
             M.PathJump = PJ;
-            M.CommentChar = '(';
-            M.endCommentChar = ')';
-            M.SectionBreak = "(------------------------------------------)";
+            M.CommentChar = "(";
+            M.endCommentChar = ")";
+            M.SectionBreak = "------------------------------------------";
             M.SpeedChangeCommand = "M03 ";
 
             DA.SetData(0, M);

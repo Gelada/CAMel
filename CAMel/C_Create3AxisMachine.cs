@@ -29,6 +29,7 @@ namespace CAMel
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, "");
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, "");
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
+            pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list,"");
         }
 
         /// <summary>
@@ -49,6 +50,8 @@ namespace CAMel
             string name = "";
             string head = "";
             string foot = "";
+            List<string> CC = new List<string>();
+
             double PJ = 0;
 
             if (!DA.GetData(0, ref name)) return;
@@ -57,6 +60,13 @@ namespace CAMel
             if (!DA.GetData(3, ref PJ)) return;
 
             Machine M = new Machine(name, MachineTypes.ThreeAxis, head, foot,"","");
+
+            if (DA.GetDataList(4, CC) && CC[0] != "")
+            {
+                M.CommentChar = CC[0];
+                if (CC.Count > 1) { M.endCommentChar = CC[1]; }
+                if (CC.Count > 2) { M.SectionBreak = CC[2]; }
+            }
 
             DA.SetData(0, M);
         }

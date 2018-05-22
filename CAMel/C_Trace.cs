@@ -70,22 +70,24 @@ namespace CAMel
         {
             Stopwatch watch = Stopwatch.StartNew();
             string filename = "";
-            Bitmap BM;
+            //Bitmap BM;
             if (!DA.GetData(0, ref filename)) return;
-            try { BM = (Bitmap)Image.FromFile(filename); }
-            catch(System.IO.FileNotFoundException e)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Image File: "+e.FileName+" not found");
-                return;
-            }
-            if(BM.Size.Width*BM.Size.Height > 1000000*MaxFile)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Image File too large. If you have a fast machine or enough patience adjust the maximum file size in the component conext menu.");
-                return;
-            }
+            //try { BM = (Bitmap)Image.FromFile(filename); }
+            //catch(System.IO.FileNotFoundException e)
+            //{
+            //    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Image File: "+e.FileName+" not found");
+            //    return;
+            //}
+
+            //if(BM.Size.Width*BM.Size.Height > 1000000*MaxFile)
+            //{
+            //    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Image File too large. If you have a fast machine or enough patience adjust the maximum file size in the component conext menu.");
+            //    return;
+            //}
             string filepath= System.IO.Path.GetDirectoryName(filename);
 
             string exp = "";
+            
             if (!DA.GetData(1, ref exp)) { return; }
             GH_ExpressionParser EP = new GH_ExpressionParser(true);
 
@@ -95,7 +97,7 @@ namespace CAMel
             List<Curve> curves = new List<Curve>();
             times = new List<string>();
 
-            Image<Gray, Byte> img = new Image<Gray, Byte>(BM);
+            Image<Gray, Byte> img = new Image<Gray, Byte>(filename) ;
 
             CvInvoke.GaussianBlur(img, img, new Size(2*Blur+1,2*Blur+1), 0, 0);
 

@@ -121,7 +121,7 @@ namespace CAMel.Types
         // Return string with all warnings
         public string GetWarnings()
         {
-            System.Text.StringBuilder outP = new System.Text.StringBuilder();
+            StringBuilder outP = new StringBuilder();
             if (Warnings.Count > 0)
             {
                 outP.AppendLine("Warnings: ");
@@ -134,7 +134,7 @@ namespace CAMel.Types
         // Return string with warnings and ignored errors
         public string GetWarnings(List<string> ignore)
         {
-            System.Text.StringBuilder outP = new System.Text.StringBuilder();
+            StringBuilder outP = new StringBuilder();
             if (Warnings.Count > 0)
             {
                 outP.AppendLine("Warnings: ");
@@ -246,7 +246,7 @@ namespace CAMel.Types
 
             if (L.Length > 0)
             {
-                if (L[0] != Mach.CommentChar)
+                if (L[0] != Mach.CommentChar[0])
                 {
                     line = "N" + this.lines.ToString("0000") + "0 " + L;
                     this.lines++;

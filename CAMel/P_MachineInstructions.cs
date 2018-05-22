@@ -134,7 +134,7 @@ namespace CAMel.Types
         {
             DateTime thisDay = DateTime.Now;
             Co.AppendLineNoNum(this.Mach.filestart);
-            Co.AppendLine(this.Mach.SectionBreak);
+            Co.AppendComment(this.Mach.SectionBreak);
             if (this.name != "") Co.AppendLine(this.Mach.CommentChar + " " + this.name + this.Mach.endCommentChar);
             Co.AppendComment("");
             Co.AppendComment(" Machine Instructions Created " + thisDay.ToString("f"));
@@ -145,7 +145,7 @@ namespace CAMel.Types
             Co.AppendComment("  Tool: "+this[0][0].MatTool.Tool_name);
             Co.AppendComment("  in " + this[0][0].MatTool.Mat_name+ " with shape " + this[0][0].MatForm.ToString());
             Co.AppendComment("");
-            Co.AppendLine(this.Mach.SectionBreak);
+            Co.AppendComment(this.Mach.SectionBreak);
             Co.Append(this.Mach.header);
             Co.Append(this.localCode);
 
@@ -163,9 +163,9 @@ namespace CAMel.Types
             }
 
 
-            Co.AppendLine(this.Mach.SectionBreak);
+            Co.AppendComment(this.Mach.SectionBreak);
             Co.AppendComment(" End of ToolPaths");
-            Co.AppendLine(this.Mach.SectionBreak);
+            Co.AppendComment(this.Mach.SectionBreak);
 
             Co.Append(this.Mach.footer);
             Co.AppendLineNoNum(this.Mach.fileend);

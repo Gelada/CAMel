@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
+using Rhino;
+using Rhino.DocObjects;
 using Rhino.Geometry;
 
 namespace CAMel.Types
@@ -148,7 +150,7 @@ namespace CAMel.Types
         // Write GCode for this operation
         public void WriteCode(ref CodeInfo Co, Machine M, out ToolPath eP, ToolPath sP = null)
         {
-            Co.AppendLine(M.SectionBreak);
+            Co.AppendComment(M.SectionBreak);
             Co.AppendComment("");
             Co.AppendComment(" Operation: " + this.name);
             Co.AppendComment("");
@@ -203,18 +205,47 @@ namespace CAMel.Types
             eP = oldPath;
         }
 
-        // Give the lists of paths as polyline
-        public List<List<Point3d>> RawPaths(out List<List<Vector3d>> Dirs)
+        // Get the list of tooltip locations
+        public List<List<Point3d>> GetPoints()
         {
-            List<List<Point3d>> paths = new List<List<Point3d>>();
-            List<Vector3d> dirs = null;
+            List<List<Point3d>> Pts = new List<List<Point3d>>();
+            foreach (ToolPath TP in this) { Pts.Add(TP.GetPoints()); }
+            return Pts;
+        }
+        // Get the list of tool directions
+        public List<List<Vector3d>> GetDirs()
+        {
+            List<List<Vector3d>> Dirs = new List<List<Vector3d>>();
+            foreach (ToolPath TP in this) { Dirs.Add(TP.GetDirs()); }
+            return Dirs;
+        }
+        // Create a path with the points 
+        public List<List<Point3d>> GetPointsandDirs(out List<List<Vector3d>> Dirs)
+        {
+            List<List<Point3d>> Ptsout = new List<List<Point3d>>();
             Dirs = new List<List<Vector3d>>();
-            foreach(ToolPath TP in this)
+            List<Vector3d> TPDirs;
+            foreach (ToolPath TP in this)
             {
-                paths.Add(TP.GetPointsandDirs(out dirs));
-                Dirs.Add(dirs);
+                TPDirs = new List<Vector3d>();
+                Ptsout.Add(TP.GetPointsandDirs(out TPDirs));
+                Dirs.Add(TPDirs);
             }
-            return paths;
+            return Ptsout;
+        }
+        // Create a polyline
+        public List<PolylineCurve> GetLines()
+        {
+            List<PolylineCurve> lines = new List<PolylineCurve>();
+            foreach(ToolPath TP in this) { lines.Add(TP.GetLine()); }
+            return lines;
+        }
+        // Lines for each toolpoint
+        public List<Line> ToolLines()
+        {
+            List<Line> lines = new List<Line>();
+            foreach (ToolPath TP in this) { lines.AddRange(TP.ToolLines()); }
+            return lines;
         }
 
         ICAMel_Base ICAMel_Base.Duplicate()
@@ -271,11 +302,18 @@ namespace CAMel.Types
         {
             return ((IList<ToolPath>)TPs).GetEnumerator();
         }
+
+        internal Curve GetLine()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MachineOperation : CAMel_Goo<MachineOperation>
+    public class GH_MachineOperation : CAMel_Goo<MachineOperation>, IGH_BakeAwareData, IGH_PreviewData
     {
+        public BoundingBox ClippingBox => throw new NotImplementedException();
+
         // Default Constructor
         public GH_MachineOperation()
         {
@@ -322,6 +360,29 @@ namespace CAMel.Types
             }
             return false;
         }
+
+        public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
+        {/*
+            obj_guid = Guid;
+            if (att == null) { att = doc.CreateDefaultAttributes(); }
+            foreach (PolylineCurve L in Value.GetLines())
+            {
+                obj_guid.Add(doc.Objects.AddCurve(L,att));
+            }*/
+            obj_guid = Guid.Empty; 
+            return false;
+        }
+
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        {
+            foreach (PolylineCurve L in Value.GetLines())
+            {
+                args.Pipeline.DrawCurve(L, args.Color);
+            }
+            args.Pipeline.DrawArrows(Value.ToolLines(), args.Color);
+        }
+
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args) {}
     }
 
     // Grasshopper Parameter Wrapper
