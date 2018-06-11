@@ -70,20 +70,9 @@ namespace CAMel
         {
             Stopwatch watch = Stopwatch.StartNew();
             string filename = "";
-            //Bitmap BM;
-            if (!DA.GetData(0, ref filename)) return;
-            //try { BM = (Bitmap)Image.FromFile(filename); }
-            //catch(System.IO.FileNotFoundException e)
-            //{
-            //    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Image File: "+e.FileName+" not found");
-            //    return;
-            //}
 
-            //if(BM.Size.Width*BM.Size.Height > 1000000*MaxFile)
-            //{
-            //    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Image File too large. If you have a fast machine or enough patience adjust the maximum file size in the component conext menu.");
-            //    return;
-            //}
+            if (!DA.GetData(0, ref filename)) return;
+           
             string filepath= System.IO.Path.GetDirectoryName(filename);
 
             string exp = "";
@@ -97,9 +86,11 @@ namespace CAMel
             List<Curve> curves = new List<Curve>();
             times = new List<string>();
 
-            Image<Gray, Byte> img = new Image<Gray, Byte>(filename) ;
+            Mat imgMat = new Mat(filename);
 
-            CvInvoke.GaussianBlur(img, img, new Size(2*Blur+1,2*Blur+1), 0, 0);
+            CvInvoke.CvtColor(imgMat, imgMat,ColorConversion.Bgr2Gray);
+
+            CvInvoke.GaussianBlur(imgMat, imgMat, new Size(2*Blur+1,2*Blur+1), 0, 0);
 
             if (debug)
             {
@@ -108,23 +99,24 @@ namespace CAMel
                 watch = Stopwatch.StartNew();
             }
 
-            // Adaptive Threshold to get the basic path region
-            img = img.ThresholdAdaptive(new Gray(255), AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 51, new Gray(15));
-
-            img = 255 - img;
+            Mat Thresh = new Mat();
+            CvInvoke.AdaptiveThreshold(imgMat, Thresh, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 51, 15);
+            imgMat.Dispose();
+            
+            CvInvoke.BitwiseNot(Thresh,Thresh);
 
             if (debug)
             {
                 watch.Stop();
                 times.Add("Threshold: " + watch.ElapsedMilliseconds + " ms");
-                img.Save(filepath + "\\CAMelTrace_Thresholded.png");
+                Thresh.Save(System.IO.Path.Combine(filepath,"CAMelTrace_Thresholded.png"));
                 watch = Stopwatch.StartNew();
             }
 
             // Find the outer contour, this will fill in any holes in the path
             // It does assume that no paths are loops. 
             VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
-            CvInvoke.FindContours(img, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
+            CvInvoke.FindContours(Thresh, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
 
             VectorOfVectorOfPoint usecontours = new VectorOfVectorOfPoint();
             for (int i = 0; i < contours.Size; i++)
@@ -134,27 +126,32 @@ namespace CAMel
                     usecontours.Push(contours[i]);
                 }
             }
-            img = img * 0;
-            CvInvoke.DrawContours(img, usecontours, -1, new MCvScalar(255), -1);
+
+            Mat ContourBM = new Mat(Thresh.Size, Thresh.Depth, 1);
+            ContourBM.SetTo(new MCvScalar(0));
+            Thresh.Dispose();
+
+            CvInvoke.DrawContours(ContourBM, usecontours, -1, new MCvScalar(255), -1);
 
             if (debug)
             {
                 watch.Stop();
                 times.Add("Redraw Main paths: " + watch.ElapsedMilliseconds + " ms");
-                img.Save(filepath + "\\CAMelTrace_Redrawn.png");
+                ContourBM.Save(System.IO.Path.Combine(filepath,"CAMelTrace_Redrawn.png"));
                 watch = Stopwatch.StartNew();
             }
 
             // Thin the region to get the center of the curve, with some small branches
 
-            Image<Gray, Byte> thin = new Image<Gray, Byte>(img.Size);
-            XImgprocInvoke.Thinning(img, thin, ThinningTypes.GuoHall);
+            Mat thin = new Mat();
+            XImgprocInvoke.Thinning(ContourBM, thin, ThinningTypes.GuoHall);
+            ContourBM.Dispose();
 
             if (debug)
             {
                 watch.Stop();
                 times.Add("Thin: " + watch.ElapsedMilliseconds + " ms");
-                thin.Save(filepath + "\\CAMelTrace_Thinned.png");
+                thin.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Thinned.png"));
                 watch = Stopwatch.StartNew();
             }
 
@@ -165,15 +162,14 @@ namespace CAMel
             System.Drawing.Point an = new System.Drawing.Point(-1, -1);
             Mat element = CvInvoke.GetStructuringElement(sh, new Size(3, 3), an);
 
-            Image<Gray, Byte> thrpts = new Image<Gray, Byte>(img.Size);
-            Image<Gray, Byte> thinf = new Image<Gray, Byte>(img.Size);
+            Mat thrpts = new Mat(thin.Size,DepthType.Cv8U,1);
+            Mat thinf = new Mat();
 
             for (int i = 0; i < Prune; i++)
             {
-                thinf = 0.25 * (255 - thin);
-                thinf = 64 - thinf;
+                CvInvoke.Threshold(thin, thinf, 128, 64, ThresholdType.Binary);
                 CvInvoke.Filter2D(thinf, thrpts, element, an);
-                thrpts._ThresholdBinary(new Gray(129), new Gray(255));
+                CvInvoke.Threshold(thrpts, thrpts, 129, 255, ThresholdType.Binary);
                 CvInvoke.BitwiseAnd(thin, thrpts, thin);
             }
 
@@ -181,24 +177,24 @@ namespace CAMel
             {
                 watch.Stop();
                 times.Add("Prune: " + watch.ElapsedMilliseconds + " ms");
-                thin.Save(filepath + "\\CAMelTrace_Pruned.png");
+                thin.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Pruned.png"));
                 watch = Stopwatch.StartNew();
             }
 
             // Now remove triple points to cut off branches
 
-            thinf = 0.25 * (255-thin);
-            thinf = 64 - thinf;
+
+            CvInvoke.Threshold(thin, thinf, 128, 64, ThresholdType.Binary);
             CvInvoke.Filter2D(thinf, thrpts, element, an);
-            thrpts._ThresholdBinary(new Gray(200), new Gray(255));
-            thrpts = 255 - thrpts;
+            CvInvoke.Threshold(thrpts, thrpts, 200, 255, ThresholdType.Binary);
+            CvInvoke.BitwiseNot(thrpts, thrpts);
             CvInvoke.BitwiseAnd(thin, thrpts, thin);
 
             if (debug)
             {
                 watch.Stop();
                 times.Add("Remove 3 points: " + watch.ElapsedMilliseconds + " ms");
-                thin.Save(filepath + "\\CAMelTrace_JustLines.png");
+                thin.Save(System.IO.Path.Combine(filepath,"CAMelTrace_JustLines.png"));
                 watch = Stopwatch.StartNew();
             }
 
@@ -207,7 +203,7 @@ namespace CAMel
             contours = new VectorOfVectorOfPoint();
             CvInvoke.FindContours(thin, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
             VectorOfPoint cont;
-
+            
             // The contours are loops and there are small paths we want to ignore.
             // We run ApproxPolyDP to simplify the curve
             // Finally we convert to a Rhino curve
@@ -257,7 +253,7 @@ namespace CAMel
             List<Curve> Jcurves = new List<Curve>();
             List<Curve> Tcurves = new List<Curve>();
 
-            Tcurves.Add(curves[0]);
+            if (curves.Count > 0) { Tcurves.Add(curves[0]); }
             Jcurves = Tcurves;
             for(int i=1; i<curves.Count;i++)
             {
@@ -346,13 +342,13 @@ namespace CAMel
         {
             base.AppendAdditionalComponentMenuItems(menu);
 
-            Menu_AppendNumber(menu, "Mega Pixels", this.MaxFile, "Largest file to process (in megapixels)");
+            //Menu_AppendNumber(menu, "Mega Pixels", this.MaxFile, "Largest file to process (in megapixels)");
             Menu_AppendSeparator(menu);
 
             Menu_AppendItem(menu, "Tracing Settings");
-            Menu_AppendNumber(menu, "Jump", this.Jump,"Distance to connect edges (in pixels)");
-            Menu_AppendNumber(menu, "Blur", this.Blur,"Radius of blur (in pixels)");
-            Menu_AppendNumber(menu, "Prune", this.Prune,"Pixels to prune of ends of every branch");
+            //Menu_AppendNumber(menu, "Jump", this.Jump,"Distance to connect edges (in pixels)");
+            //Menu_AppendNumber(menu, "Blur", this.Blur,"Radius of blur (in pixels)");
+            //Menu_AppendNumber(menu, "Prune", this.Prune,"Pixels to prune of ends of every branch");
 
             Menu_AppendSeparator(menu);
             Menu_AppendItem(menu, "Debug", Debug_Clicked, true, debug);
@@ -400,8 +396,9 @@ namespace CAMel
             System.Text.StringBuilder TraceData = new System.Text.StringBuilder();
 
             for(int i=0;i<times.Count;i++) { TraceData.AppendLine(times[i]); }
-
+            
             Clipboard.SetText(TraceData.ToString());
+            
         }
         private void Debug_Clicked(object sender, EventArgs e)
         {

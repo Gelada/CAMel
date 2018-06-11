@@ -235,8 +235,10 @@
     <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
 Copy "$(TargetPath)" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
 Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"
+Copy "$(TargetPath)" "C:\Users\eharriss\Google Drive\CAMel\$(ProjectName).gha"
 Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\Emgu.CV.World.dll"
-Copy "$(TargetDir)Emgu.CV.World.dll" "\\tsclient\Onto windows\CAMel\Emgu.CV.World.dll"</PostBuildEvent>
+Copy "$(TargetDir)Emgu.CV.World.dll" "\\tsclient\Onto windows\CAMel\Emgu.CV.World.dll"
+Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\Google Drive\CAMel\Emgu.CV.World.dll"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <StartArguments>
