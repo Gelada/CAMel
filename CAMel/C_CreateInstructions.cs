@@ -115,7 +115,6 @@ namespace CAMel
 
             MachineInstruction Inst = null;
 
-
             if (MO.Count > 0)
             {
                 Inst = new MachineInstruction(name, M, MO);
@@ -125,7 +124,7 @@ namespace CAMel
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored.");
             }
             else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input paramter MO failed to collect usable data");
-            Inst.localCode = "";
+            
             DA.SetData(0, Inst);
         }
 

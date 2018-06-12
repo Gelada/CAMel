@@ -24,27 +24,31 @@ namespace CAMel.Types
         {
             this.TPs = new List<ToolPath>();
             this.name = "";
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Just name
         public MachineOperation(string name)
         {
             this.name = name;
             this.TPs = new List<ToolPath>();
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Name and ToolPaths
         public MachineOperation(string name, List<ToolPath> TPs)
         {
             this.name = name;
             this.TPs = TPs;
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Copy Constructor
         public MachineOperation(MachineOperation Op)
         {
             this.name = Op.name;
-            this.localCode = Op.localCode;
+            this.preCode = Op.preCode;
+            this.postCode = Op.postCode;
             this.TPs = new List<ToolPath>();
             foreach (ToolPath TP in Op)
             {
@@ -56,7 +60,8 @@ namespace CAMel.Types
         public MachineOperation copyWithNewPaths(List<ToolPath> procPaths)
         {
             MachineOperation outOp = new MachineOperation();
-            outOp.localCode = this.localCode;
+            outOp.preCode = this.preCode;
+            outOp.postCode = this.postCode;
             outOp.name = this.name;
             outOp.TPs = procPaths;
 
@@ -75,7 +80,8 @@ namespace CAMel.Types
 
         public string name { get; set; }
 
-        public string localCode { get; set; }
+        public string preCode { get; set; }
+        public string postCode { get; set; }
 
         public bool IsValid
         {
@@ -154,7 +160,7 @@ namespace CAMel.Types
             Co.AppendComment("");
             Co.AppendComment(" Operation: " + this.name);
             Co.AppendComment("");
-            if (this.localCode != "") Co.Append(this.localCode);
+            Co.Append(this.preCode);
 
             ToolPath oldPath = sP;
             bool inMaterial;
@@ -202,6 +208,8 @@ namespace CAMel.Types
                     first = false;
                 }
             }
+
+            Co.Append(this.postCode);
             eP = oldPath;
         }
 

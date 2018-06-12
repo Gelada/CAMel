@@ -133,6 +133,10 @@ namespace CAMel.Types
             }
         }
 
+        public bool dim2 { get; internal set; } // True if machine is 2d
+        public string InsertCode { get; internal set; } // Code to place before insert
+        public string RetractCode { get; internal set; } // Code to place after retract
+
         public override string ToString()
         {
             return this.type.ToString("g") + " CNC Machine: " + this.name;
@@ -371,10 +375,7 @@ namespace CAMel.Types
                 }
                 SChange = false;
 
-                if(Pt.localCode != "")
-                {
-                    PtCode = PtCode + Pt.localCode;
-                }
+                PtCode = Pt.preCode + PtCode + Pt.postCode;
 
                 if(Pt.name != "")
                 {
@@ -612,10 +613,8 @@ namespace CAMel.Types
                 }
                 SChange = false;
 
-                if (Pt.localCode != "")
-                {
-                    PtCode = PtCode + Pt.localCode;
-                }
+                PtCode = Pt.preCode + PtCode + Pt.postCode;
+
 
                 if (Pt.name != "")
                 {
@@ -653,6 +652,18 @@ namespace CAMel.Types
             else { PtOut = beforePoint; }
 
             return PtOut;
+        }
+
+        internal ToolPath InsertRetract(ToolPath TP)
+        {
+            ToolPath newPath;
+            if (this.dim2) { newPath = new ToolPath(TP);}
+            else { newPath = TP.MatForm.InsertRetract(TP); }
+
+            if ( TP.Additions.insert && this.InsertCode != "" ) { newPath.preCode = newPath.preCode + "\n" + this.InsertCode; }
+            if (TP.Additions.retract && this.RetractCode != "") { newPath.postCode = newPath.postCode + "\n" + this.RetractCode; }
+
+            return newPath;
         }
 
         public Vector3d ToolDir(ToolPoint TP)
@@ -732,10 +743,6 @@ namespace CAMel.Types
                 if (changed || (found && Fchanged))
                 {
                     TP.Add(ReadTP_PocketNC(X,Y,Z,A,B,F,S,toolLength));
-                    if(Z<-3.3)
-                    {
-                        TP[TP.Count-1].localCode = "Z";
-                    }
                 }
 
             }
@@ -917,7 +924,7 @@ namespace CAMel.Types
                     foreach(Point3d Pt in route)
                     {
                         // add new point at speed 0 to describe rapid move.
-                        Move.Add(new ToolPoint(Pt,new Vector3d(0,0,0),"",-1,0));
+                        Move.Add(new ToolPoint(Pt,new Vector3d(0,0,0),-1,0));
                     }
 
                     break;
@@ -972,7 +979,7 @@ namespace CAMel.Types
                         {
                             mixDir=this.angShift(fromDir,toDir,(double)(steps*i+j)/(double)(steps*(route.Count-1)),lng);
 
-                            ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, "", -1, 0);
+                            ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
                             if(TPfrom.MatForm.intersect(newTP,0).thrDist > 0
                                 || TPto.MatForm.intersect(newTP, 0).thrDist > 0)
                             {

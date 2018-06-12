@@ -66,7 +66,8 @@ namespace CAMel.Types
             this.MatTool = null;
             this.MatForm = null;
             this.Additions = new ToolPathAdditions();
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Just a MaterialTool
         public ToolPath(string name, MaterialTool MT)
@@ -76,7 +77,8 @@ namespace CAMel.Types
             this.MatTool = MT;
             this.MatForm = null;
             this.Additions = new ToolPathAdditions();
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // MaterialTool and features
         public ToolPath(string name, MaterialTool MT, ToolPathAdditions TPA)
@@ -86,7 +88,8 @@ namespace CAMel.Types
             this.MatTool = MT;
             this.MatForm = null;
             this.Additions = new ToolPathAdditions(TPA);
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // MaterialTool and Form
         public ToolPath(string name, MaterialTool MT, IMaterialForm MF)
@@ -96,7 +99,8 @@ namespace CAMel.Types
             this.MatTool = MT;
             this.MatForm = MF;
             this.Additions = new ToolPathAdditions();
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // MaterialTool, Form and features
         public ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
@@ -106,17 +110,8 @@ namespace CAMel.Types
             this.MatTool = MT;
             this.MatForm = MF;
             this.Additions = new ToolPathAdditions(TPA);
-            this.localCode = "";
-        }
-        // MaterialTool, Form, Code and features
-        public ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA, string Co)
-        {
-            this.name = name;
-            this.Pts = new List<ToolPoint>();
-            this.MatTool = MT;
-            this.MatForm = MF;
-            this.localCode = Co;
-            this.Additions = new ToolPathAdditions(TPA);
+            this.preCode = "";
+            this.postCode = "";
         }
         // Copy Constructor
         public ToolPath(ToolPath TP)
@@ -129,13 +124,16 @@ namespace CAMel.Types
             }
             this.MatTool = new MaterialTool(TP.MatTool);
             this.MatForm = (IMaterialForm) TP.MatForm.Duplicate();
-            this.localCode = TP.localCode;
+            this.preCode = TP.preCode;
+            this.postCode = TP.postCode;
             this.Additions = new ToolPathAdditions(TP.Additions);
         }
 
         public ToolPath copyWithNewPoints(List<ToolPoint> Pts)
         {
-            ToolPath newTP = new ToolPath(this.name,this.MatTool,this.MatForm,this.Additions,this.localCode);
+            ToolPath newTP = new ToolPath(this.name,this.MatTool,this.MatForm,this.Additions);
+            newTP.preCode = this.preCode;
+            newTP.postCode = this.postCode;
             newTP.Pts = Pts;
             return newTP;
         }
@@ -152,7 +150,8 @@ namespace CAMel.Types
 
         public string name { get; set; }
 
-        public string localCode { get; set; }
+        public string preCode { get; set; }
+        public string postCode { get; set; }
 
         public bool IsValid
         {
@@ -200,12 +199,16 @@ namespace CAMel.Types
 
             if (preamble) { Co.AppendComment(M.SectionBreak); }
 
-            if (this.localCode != "") Co.Append(this.localCode);
+            Co.Append(this.preCode);
 
             if (this.Additions.any)
                 throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.\n");
 
-            return M.WriteCode(ref Co, this, beforePoint);
+            ToolPoint end = M.WriteCode(ref Co, this, beforePoint);
+
+            Co.Append(this.postCode);
+
+            return end;
         }
         // Process any additions to the path and return 
         // list of list of toolpaths (for stepdown)
@@ -423,7 +426,7 @@ namespace CAMel.Types
 
             for (i = 0; i < NewPaths.Count; i++)
                 for (j = 0; j < NewPaths[i].Count;j++ )
-                    NewPaths[i][j] = useTP.MatForm.InsertRetract(NewPaths[i][j]);
+                    NewPaths[i][j] = M.InsertRetract(NewPaths[i][j]);
 
             return NewPaths;
         }

@@ -26,7 +26,8 @@ namespace CAMel.Types
         public List<string> error { get; private set; }
         public List<string> warning { get; private set; }
         public string name { get; set; }
-        public string localCode { get; set; }
+        public string preCode { get; set; }
+        public string postCode { get; set; }
 
         // Default Constructor, set up at the origin with direction set to 0 vector.
         public ToolPoint()
@@ -38,7 +39,8 @@ namespace CAMel.Types
             this.error = null;
             this.warning = null;
             this.name = "";
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Just a point, set direction to 0 vector.
         public ToolPoint(Point3d Pt)
@@ -50,7 +52,8 @@ namespace CAMel.Types
             this.error = null;
             this.warning = null;
             this.name = "";
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Use point and direction, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D)
@@ -62,20 +65,23 @@ namespace CAMel.Types
             this.error = null;
             this.warning = null;
             this.name = "";
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Use point direction and extra Code, normalise direction if not 0 vector.
-        public ToolPoint(Point3d Pt, Vector3d D, string Code)
+        public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode)
         {
             this.Pt = Pt;
             this.Dir = D;
-            this.localCode = Code;
+            this.preCode = preCode;
+            this.postCode = postCode;
             this.speed = -1;
             this.feed = -1;
             this.error = null;
             this.warning = null;
             this.name = "";
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Use point direction and override speed and feed, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
@@ -87,34 +93,34 @@ namespace CAMel.Types
             this.error = null;
             this.warning = null;
             this.name = "";
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
-        // Use point direction extra Code and override speed and feed, normalise direction if not 0 vector.
-        public ToolPoint(Point3d Pt, Vector3d D, string Code, double speed, double feed)
+        // Use point direction, override speed and feed and add extra Code, normalise direction if not 0 vector.
+        public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode, double speed, double feed)
         {
             this.Pt = Pt;
             this.Dir = D;
-            this.localCode = Code;
+            this.preCode = preCode;
+            this.postCode = postCode;
             this.speed = speed;
             this.feed = feed;
             this.error = null;
             this.warning = null;
             this.name = "";
-            this.localCode = "";
         }
         // Copy Constructor
         public ToolPoint(ToolPoint TP)
         {
             this.Pt = TP.Pt;
             this.Dir = TP.Dir;
-            this.localCode = TP.localCode;
+            this.preCode = TP.preCode;
+            this.postCode = TP.postCode;
             this.speed = TP.speed;
             this.feed = TP.feed;
             this.name = TP.name;
             this.error = TP.error;
             this.warning = TP.warning;
-            this.name = "";
-            this.localCode = "";
         }
 
         public void AddError(string err)
@@ -150,14 +156,15 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            string outp = "";
-            if (name != "")
-                outp = outp + name;
+            string outp = this.name;
+            if(outp != "") { outp = outp + " "; }
             outp = outp + "Pt: " + this.Pt.ToString() + " Dir: " + this.Dir.ToString();
-            if (localCode != "")
-                outp = outp + "\n" + localCode;
+            if (preCode != "") { outp = preCode + "\n" + outp; }
             if (speed >= 0 || feed >= 0)
+            {
                 outp = "\n" + outp + "Speed: " + this.speed.ToString() + " Feed: " + this.feed.ToString();
+            }
+            if (postCode != "") { outp = outp + "\n" + postCode; }
             return outp;
         }
 
@@ -191,20 +198,15 @@ namespace CAMel.Types
             this.Value = new ToolPoint(Pt, D);
         }
         // Use point direction and extra Code, normalise direction if not 0 vector.
-        public GH_ToolPoint(Point3d Pt, Vector3d D, string Code)
+        public GH_ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode)
         {
-            this.Value = new ToolPoint(Pt,D,Code);
+            this.Value = new ToolPoint(Pt,D,preCode, postCode);
         }
         // Use point direction and override speed and feed, normalise direction if not 0 vector.
         public GH_ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
         {
             this.Value = new ToolPoint(Pt,D,speed,feed);
-        }
-        // Use point direction extra Code and override speed and feed, normalise direction if not 0 vector.
-        public GH_ToolPoint(Point3d Pt, Vector3d D, string Code, double speed, double feed)
-        {
-            this.Value = new ToolPoint(Pt,D,Code,speed,feed);
-        }        
+        }       
         // Create from unwrapped version
         public GH_ToolPoint(ToolPoint TP)
         {

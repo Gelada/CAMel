@@ -31,7 +31,8 @@ namespace CAMel
             pManager.AddPointParameter("Path", "P", "List of toolpoint locations", GH_ParamAccess.list);
             pManager.AddVectorParameter("Directions", "D", "List of vectors giving tool direction", GH_ParamAccess.list,new Vector3d(0,0,1));
             pManager.AddVectorParameter("Speed and Feed", "SF", "List of vectors giving speed (X) and feed (Y) at each toolpoint.", GH_ParamAccess.list, new Vector3d(-1, -1, 0));
-            pManager.AddTextParameter("Point Code", "C1", "List of additional CNC codes to run with each point. The code will run on the same line. Use a newline to run on the next line, but this will mess with line numbering.", GH_ParamAccess.list,"");
+            pManager.AddTextParameter("pre Code", "prC", "List of additional CNC codes to run before the points. The code will run on the same line. Use a newline to run on the next line, but this will mess with line numbering.", GH_ParamAccess.list,"");
+            pManager.AddTextParameter("post Code", "poC", "List of additional CNC codes to run after the points. The code will run on the same line. Use a newline to run on the next line, but this will mess with line numbering.", GH_ParamAccess.list, "");
             pManager.AddTextParameter("Name", "N", "Name of path", GH_ParamAccess.item,"");
             pManager.AddGenericParameter("Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             pManager.AddGenericParameter("Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
@@ -59,22 +60,24 @@ namespace CAMel
             List<Point3d> pts = new List<Point3d>();
             List<Vector3d> dirs = new List<Vector3d>();
             List<Vector3d> SF = new List<Vector3d>();
-            List<String> Co1 = new List<String>();
+            List<String> preCode = new List<String>();
+            List<String> postCode = new List<String>();
             string name = "";
             MaterialTool MT = null;
             IMaterialForm MF = null;
-            string Co2 = "";
+            string Co = "";
             List<double> TPAd = new List<double>();
 
             if (!DA.GetDataList(0, pts)) return;
             if (!DA.GetDataList(1, dirs)) return;
             if (!DA.GetDataList(2, SF)) return;
-            if (!DA.GetDataList(3, Co1)) return;
-            if (!DA.GetData(4, ref name)) return;
-            if (!DA.GetData(5, ref MT)) return;
-            if (!DA.GetData(6, ref MF)) return;
-            if (!DA.GetDataList(7, TPAd)) return; 
-            if (!DA.GetData(8, ref Co2)) return;
+            if (!DA.GetDataList(3, preCode)) return;
+            if (!DA.GetDataList(4, postCode)) return;
+            if (!DA.GetData(5, ref name)) return;
+            if (!DA.GetData(6, ref MT)) return;
+            if (!DA.GetData(7, ref MF)) return;
+            if (!DA.GetDataList(8, TPAd)) return; 
+            if (!DA.GetData(9, ref Co)) return;
 
             // Process the TPA vector
 
@@ -126,15 +129,16 @@ namespace CAMel
                     break;
             }
 
-            ToolPath TP = new ToolPath(name, MT, MF, TPA, Co2);
+            ToolPath TP = new ToolPath(name, MT, MF, TPA);
 
             Vector3d usedir;
             Vector3d useSF;
-            String useCo;
+            String usePreCo, usePostCo;
 
             if ((dirs.Count == 1 || dirs.Count == pts.Count) &&
                 (SF.Count == 1 || SF.Count == pts.Count) &&
-                (Co1.Count == 1 || Co1.Count == pts.Count))
+                (preCode.Count == 1 || preCode.Count == pts.Count)&&
+                (postCode.Count == 1 || postCode.Count == pts.Count))
             {
                 for (int i = 0; i < pts.Count; i++)
                 {
@@ -144,10 +148,14 @@ namespace CAMel
                     if (SF.Count == 1) useSF = SF[0];
                     else useSF = SF[i];
 
-                    if (Co1.Count == 1) useCo = Co1[0];
-                    else useCo = Co1[i];
+                    if (preCode.Count == 1) usePreCo = preCode[0];
+                    else usePreCo = preCode[i];
 
-                    TP.Add(new ToolPoint(pts[i], usedir, useCo, useSF.X, useSF.Y));
+                    if (postCode.Count == 1) usePostCo = postCode[0];
+                    else usePostCo = postCode[i];
+
+                    TP.Add(new ToolPoint(pts[i], usedir, usePreCo,usePostCo, useSF.X, useSF.Y));
+
                 }
 
             }

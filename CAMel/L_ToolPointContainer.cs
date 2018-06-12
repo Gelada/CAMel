@@ -11,7 +11,8 @@ namespace CAMel.Types
     public interface IToolPointContainer : ICAMel_Base
     {
         string name { get; set; }
-        string localCode { get; set; }
+        string preCode { get; set; }
+        string postCode { get; set; }
     }
 
     public class GH_ToolPointContainer<T> : CAMel_Goo<T> where T : IToolPointContainer

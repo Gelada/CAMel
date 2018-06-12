@@ -30,6 +30,11 @@ namespace CAMel
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, "");
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
             pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list,"");
+            pManager.AddTextParameter("Features", "O", "Other features of the machine\n"+
+                "{2d, Insert Code, Retract Code\n}" +
+                "2d is a Boolean (0 or 1), that specifies a 2d machine like a Plasma cutter, \n"+ 
+                "Insert and Retract Codes are added before an insert and after a rectract move.", 
+                GH_ParamAccess.list, "");
         }
 
         /// <summary>
@@ -51,6 +56,7 @@ namespace CAMel
             string head = "";
             string foot = "";
             List<string> CC = new List<string>();
+            List<string> Fe = new List<string>();
 
             double PJ = 0;
 
@@ -66,6 +72,13 @@ namespace CAMel
                 M.CommentChar = CC[0];
                 if (CC.Count > 1) { M.endCommentChar = CC[1]; }
                 if (CC.Count > 2) { M.SectionBreak = CC[2]; }
+            }
+            if (DA.GetDataList(5, Fe) && (Fe.Count > 1 || Fe[0] != ""))
+            {
+                int dim = 0;
+                if(int.TryParse(Fe[0], out dim)){ if(dim!=0) { M.dim2 = true; } }
+                if (Fe.Count > 1) { M.InsertCode = Fe[1]; }
+                if (Fe.Count > 2) { M.RetractCode = Fe[2]; }
             }
 
             DA.SetData(0, M);

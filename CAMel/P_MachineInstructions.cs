@@ -22,7 +22,8 @@ namespace CAMel.Types
             this.MOs = new List<MachineOperation>();
             this.Mach = new Machine();
             this.name = "";
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Just name
         public MachineInstruction(string name)
@@ -30,7 +31,8 @@ namespace CAMel.Types
             this.name = name;
             this.MOs = new List<MachineOperation>();
             this.Mach = new Machine();
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Name and Machine
         public MachineInstruction(string name, Machine Ma)
@@ -38,7 +40,8 @@ namespace CAMel.Types
             this.name = name;
             this.Mach = Ma;
             this.MOs = new List<MachineOperation>();
-            this.localCode = "";
+            this.preCode = "";
+            this.postCode = "";
         }
         // Name, Machine and Operations
         public MachineInstruction(string name, Machine Mach, List<MachineOperation> MOs)
@@ -46,12 +49,15 @@ namespace CAMel.Types
             this.name = name;
             this.Mach = Mach;
             this.MOs = MOs;
+            this.preCode = "";
+            this.postCode = "";
         }
         // Copy Constructor
         public MachineInstruction(MachineInstruction Op)
         {
             this.name = Op.name;
-            this.localCode = Op.localCode;
+            this.preCode = Op.preCode;
+            this.postCode = Op.postCode;
             this.Mach = Op.Mach;
             this.MOs = new List<MachineOperation>();
             foreach(MachineOperation MO in Op.MOs)
@@ -66,7 +72,8 @@ namespace CAMel.Types
         public MachineInstruction copyWithNewPaths(List<MachineOperation> MOs)
         {
             MachineInstruction outInst = new MachineInstruction();
-            outInst.localCode = this.localCode;
+            outInst.preCode = this.preCode;
+            outInst.postCode = this.postCode;
             outInst.name = this.name;
             outInst.Mach = this.Mach;
             outInst.MOs = MOs;
@@ -87,7 +94,8 @@ namespace CAMel.Types
 
         public string name { get; set; }
 
-        public string localCode { get; set; }
+        public string preCode { get; set; }
+        public string postCode { get; set; }
 
         public bool IsValid
         {
@@ -147,7 +155,7 @@ namespace CAMel.Types
             Co.AppendComment("");
             Co.AppendComment(this.Mach.SectionBreak);
             Co.Append(this.Mach.header);
-            Co.Append(this.localCode);
+            Co.Append(this.preCode);
 
             // Let the Code writer know the Material Tool and Form so can report changes
             Co.currentMT = this[0][0].MatTool;
@@ -166,7 +174,7 @@ namespace CAMel.Types
             Co.AppendComment(this.Mach.SectionBreak);
             Co.AppendComment(" End of ToolPaths");
             Co.AppendComment(this.Mach.SectionBreak);
-
+            Co.Append(this.postCode);
             Co.Append(this.Mach.footer);
             Co.AppendLineNoNum(this.Mach.fileend);
         }
