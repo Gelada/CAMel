@@ -261,12 +261,15 @@ namespace CAMel.Types
 
         public void Append(string L)
         {
-            char[] seps = { '\n', '\r' };
-            String[] Lines = L.Split(seps, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (String line in Lines)
+            if (L != "")
             {
-                this.AppendLine(line);
+                char[] seps = { '\n', '\r' };
+                String[] Lines = L.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (String line in Lines)
+                {
+                    this.AppendLine(line);
+                }
             }
         }
 
