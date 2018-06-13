@@ -12,27 +12,16 @@ using Rhino.DocObjects;
 namespace CAMel.Types
 {
     // Features we might add to the path
-    public class ToolPathAdditions
+    public struct ToolPathAdditions
     {
-        public bool insert;
-        public bool retract;
-        public bool stepDown;
-        public bool threeAxisHeightOffset;
-        public bool sdDropStart;    // How stepdown will deal with 
-        public double sdDropMiddle; // points that have reached  
-        public bool sdDropEnd;      // the required depth (Middle is dropped if length greater than value);
-
-        // Force creation before setting variables so 
-        public ToolPathAdditions()
-        {
-            this.insert = false;
-            this.retract = false;
-            this.stepDown = false;
-            this.sdDropStart = false;
-            this.sdDropMiddle = 0;
-            this.sdDropEnd = false;
-            this.threeAxisHeightOffset = false;
-        }
+        public bool insert { get; set; }
+        public bool retract { get; set; }
+        public bool stepDown { get; set; }
+        public bool threeAxisHeightOffset { get; set; }
+        public bool sdDropStart { get; set; }    // How stepdown will deal with 
+        public double sdDropMiddle { get; set; } // points that have reached  
+        public bool sdDropEnd { get; set; }      // the required depth (Middle is dropped if length greater than value);
+        public double leadFactor { get; set; }   // if leading in or out what factor of standard value to use
 
         public ToolPathAdditions(ToolPathAdditions TPA)
         {
@@ -43,6 +32,7 @@ namespace CAMel.Types
             this.sdDropMiddle = TPA.sdDropMiddle;
             this.sdDropEnd = TPA.sdDropEnd;
             this.threeAxisHeightOffset = TPA.threeAxisHeightOffset;
+            this.leadFactor = TPA.leadFactor;
         }
 
         public bool any
@@ -689,9 +679,14 @@ namespace CAMel.Types
             // Check we are dealing with a valid curve.
 
             if (c != null && c.IsValid)
-                c.ToPolyline(0, 5000, Math.PI, 0, 0, this.MatTool.tolerance, this.MatTool.minStep, this.MatTool.toolWidth / 4, true).TryGetPolyline(out PL);
-            else
-                return false;
+            {
+                if (!c.TryGetPolyline(out PL))
+                {
+                    Curve c2 = c.ToPolyline(0, 5000, Math.PI, 0, 0, this.MatTool.tolerance, this.MatTool.minStep, this.MatTool.toolWidth / 4, true);
+                    c2.TryGetPolyline(out PL);
+                }
+            }
+            else { return false; }
 
 
             this.Pts = new List<ToolPoint>();
