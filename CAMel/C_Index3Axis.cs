@@ -27,7 +27,7 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddCurveParameter("Curves", "C", "The curves for the tip of the tool to follow", GH_ParamAccess.list);
-            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0,0,-1));
+            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0,0,1));
             pManager.AddGenericParameter("Material/Tool", "MT", "The material to cut and the tool to do it", GH_ParamAccess.item);
             pManager.AddGenericParameter("MaterialForm", "MF","The shape of the material to cut", GH_ParamAccess.item);
         }
@@ -70,7 +70,8 @@ namespace CAMel
             foreach(Curve c in C)
             {
                 // Create and add name, material/tool and material form
-                TP = new ToolPath("Index 3-Axis Path " + i.ToString(), MT, MF);
+                TP = new ToolPath("Index 3-Axis Path", MT, MF);
+                if(C.Count > 1) { TP.name = TP.name + " " + i.ToString(); }
 
                 // Additions for toolpath
                 TP.Additions.insert = true;
