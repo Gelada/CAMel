@@ -47,7 +47,7 @@ namespace CAMel.Types
         private List<ToolPoint> Pts;     // Positions of the machine
         public MaterialTool MatTool { get; set; }   // Material and tool to cut it with
         public IMaterialForm MatForm { get; set; }    // Shape of the material
-        public ToolPathAdditions Additions { get; set; }       // Features we might add to the path 
+        public ToolPathAdditions Additions;       // Features we might add to the path 
 
         // Default Constructor, set everything to empty
         public ToolPath()

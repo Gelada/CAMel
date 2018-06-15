@@ -59,6 +59,9 @@ namespace CAMel.Types
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
+            this.dim2 = false;
+            this.InsertCode = "";
+            this.RetractCode = "";
         }
         // Just name.
         public Machine(string Name)
@@ -75,6 +78,9 @@ namespace CAMel.Types
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
+            this.dim2 = false;
+            this.InsertCode = "";
+            this.RetractCode = "";
         }
         // All details
         public Machine(string Name, MachineTypes Type, string Header, string Footer, string filestart, string fileend)
@@ -91,6 +97,9 @@ namespace CAMel.Types
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
+            this.dim2 = false;
+            this.InsertCode = "";
+            this.RetractCode = "";
         }
 
         // Copy Constructor
@@ -108,6 +117,9 @@ namespace CAMel.Types
             this.SpeedChangeCommand = M.SpeedChangeCommand;
             this.PathJump = M.PathJump;
             this.Pivot = M.Pivot;
+            this.dim2 = M.dim2;
+            this.InsertCode = M.InsertCode;
+            this.RetractCode = M.RetractCode;
         }
         // Duplicate
         public Machine Duplicate()
@@ -133,7 +145,11 @@ namespace CAMel.Types
             }
         }
 
+        // TODO replace this flag with separate machine type for 2d vs 3d.
+        // Really need to refactor to subclass machine types 
         public bool dim2 { get; internal set; } // True if machine is 2d
+        public bool leads { get; internal set; } // Apply lead in and out paths. 
+
         public string InsertCode { get; internal set; } // Code to place before insert
         public string RetractCode { get; internal set; } // Code to place after retract
 
@@ -163,6 +179,14 @@ namespace CAMel.Types
             Point3d OP = TP.Pt;
             string GPoint = "";
             GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000") + " Z" + OP.Z.ToString("0.000");
+
+            return GPoint;
+        }
+        static private string IK_TwoAxis(ToolPoint TP, MaterialTool MT)
+        {
+            Point3d OP = TP.Pt;
+            string GPoint = "";
+            GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000");
 
             return GPoint;
         }
@@ -290,15 +314,20 @@ namespace CAMel.Types
             {
                 if (TP.Count > 0)
                 {
-                    feed = TP[0].feed;
-                    speed = TP[0].speed;
-                    FChange = true;
-                    SChange = true;
+                    if (TP[0].feed >= 0) { feed = TP[0].feed; }
+                    else { feed = TP.MatTool.feedCut; }
+                    if (TP[0].speed >= 0) { speed = TP[0].speed; }
+                    else { speed = TP.MatTool.speed; }
+
+                    // Only call Feed/speed if non-negative 
+                    // so Material Tool can have -1 for speed/feed and ignore them
+                    if (feed >= 0) { FChange = true; }
+                    if (speed >= 0) { SChange = true; }
                 }
                 else
                 {
-                    feed = -1;
-                    speed = -1;
+                    feed = TP.MatTool.feedCut;
+                    speed = TP.MatTool.speed;
                 }
             }
             else
@@ -306,9 +335,7 @@ namespace CAMel.Types
                 feed = beforePoint.feed;
                 speed = beforePoint.speed;
             }
-
-            if (feed < 0) feed = TP.MatTool.feedCut;
-            if (speed < 0) speed = TP.MatTool.speed;
+            
             string PtCode;
 
             foreach(ToolPoint Pt in TP)
@@ -356,7 +383,8 @@ namespace CAMel.Types
                 }
 
                 // Add the position information
-                PtCode =  IK_ThreeAxis(Pt, TP.MatTool);
+                if (!dim2) { PtCode = IK_ThreeAxis(Pt, TP.MatTool); }
+                else { PtCode = IK_TwoAxis(Pt, TP.MatTool); }
 
                 // Act if feed has changed
                 if (FChange)
@@ -381,7 +409,7 @@ namespace CAMel.Types
                 {
                     PtCode = PtCode + " " + this.CommentChar + Pt.name + this.endCommentChar;
                 }
-                Co.AppendLine(PtCode);
+                Co.Append(PtCode);
 
                 // Adjust ranges
 
@@ -657,7 +685,12 @@ namespace CAMel.Types
         internal ToolPath InsertRetract(ToolPath TP)
         {
             ToolPath newPath;
-            if (this.dim2) { newPath = new ToolPath(TP);}
+            if (this.dim2) {
+                // lead in and out called here
+                newPath = new ToolPath(TP);
+                newPath.Additions.insert = false;
+                newPath.Additions.retract = false;
+            }
             else { newPath = TP.MatForm.InsertRetract(TP); }
 
             if ( TP.Additions.insert && this.InsertCode != "" ) { newPath.preCode = newPath.preCode + "\n" + this.InsertCode; }

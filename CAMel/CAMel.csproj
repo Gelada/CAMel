@@ -87,6 +87,7 @@
     </None>
     <None Include="ClassDiagram1.cd" />
     <None Include="C_PhotoContours.cs" />
+    <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_PhotoSurface.cs" />
     <Compile Include="C_Trace.cs" />
     <Compile Include="C_CreatePocketingPath.cs" />
@@ -102,7 +103,7 @@
     <Compile Include="C_CreateToolPath.cs" />
     <Compile Include="CAMelInfo.cs" />
     <Compile Include="C_CreateInstructions.cs" />
-    <Compile Include="C_Drill_Operation.cs" />
+    <Compile Include="C_Index2dCut.cs" />
     <Compile Include="C_Index3Axis.cs" />
     <Compile Include="C_ReadCode.cs" />
     <Compile Include="L_MFBox.cs" />
