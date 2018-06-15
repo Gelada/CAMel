@@ -52,11 +52,7 @@ namespace CAMel
             IMaterialForm MF = null;
 
 
-            if (!DA.GetData(0, ref D))
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter D failed to collect data");
-                return;
-            }
+            if (!DA.GetData(0, ref D)) return;
             if (!DA.GetData(1, ref peck)) return;
             if (!DA.GetData(2, ref MT)) return;
             if (!DA.GetData(3, ref MF)) return;
