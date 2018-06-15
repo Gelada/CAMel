@@ -238,7 +238,9 @@ namespace CAMel.Types
         
         public void AppendLineNoNum(string L)
         {
-            if (L.Length > 0) { this.Code.AppendLine(L); }  
+            // Add \r\n manually to ensure consistency of 
+            // files between OSX and Windows. 
+            if (L.Length > 0) { this.Code.Append(L+ "\r\n"); }  
         }
         public void AppendLine(string L)
         {
