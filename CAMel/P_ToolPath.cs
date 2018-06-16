@@ -194,8 +194,7 @@ namespace CAMel.Types
 
             Co.Append(this.preCode);
 
-            if (this.Additions.any)
-                throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.\n");
+            if (this.Additions.any) { throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.\n"); }
 
             ToolPoint end = M.WriteCode(ref Co, this, beforePoint);
 

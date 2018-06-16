@@ -504,19 +504,11 @@ namespace CAMel.Types
 
                 if (Pt.error != null)
                 {
-                    foreach (string err in Pt.error)
-                    {
-                        Co.AddError(err);
-                        Co.AppendComment(err);
-                    }
+                    foreach (string err in Pt.error) { Co.AddError(err);}
                 }
                 if (Pt.warning != null)
                 {
-                    foreach (string warn in Pt.warning)
-                    {
-                        Co.AddWarning(warn);
-                        Co.AppendComment(warn);
-                    }
+                    foreach (string warn in Pt.warning) { Co.AddWarning(warn); }
                 }
 
                 // Establish new feed value
@@ -614,12 +606,10 @@ namespace CAMel.Types
                 if (Math.Abs(180.0*newAB.Y/(Math.PI)) > 999999)
                 {
                     Co.AddError("Out of bounds on B");
-                    Co.AppendComment("Out of bounds on B");
                 }
                 if ((180.0 * newAB.X / Math.PI > 95) || (180.0 * newAB.X / Math.PI < -5))
                 {
                     Co.AddError("Out of bounds on A");
-                    Co.AppendComment("Out of bounds on A");
                 }
                 
                 // update AB value
