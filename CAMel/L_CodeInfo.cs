@@ -86,6 +86,7 @@ namespace CAMel.Types
                 this.Warnings.Add(warn, 1);
                 newWarning = true;
             }
+            this.AppendComment(warn);
             return newWarning;
         }
         public bool AddError(string err)
