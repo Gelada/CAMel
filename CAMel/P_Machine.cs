@@ -5,6 +5,7 @@ using System.Text;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
+using Rhino.Geometry.Intersect;
 using CAMel.Types.MaterialForm;
 using System.Text.RegularExpressions;
 
@@ -43,6 +44,10 @@ namespace CAMel.Types
         public double PathJump { get; set; } // Max distance allowed between paths in material.
         public string SectionBreak { get; set; }
         public Vector3d Pivot { get; set; }
+        // TODO replace this flag with separate machine type for 2d vs 3d.
+        // Really need to refactor to subclass machine types 
+        public bool dim2 { get; internal set; } // True if machine is 2d
+        public double leads { get; internal set; } // Apply lead in and out paths. 
 
         // Default Constructor (un-named 3 Axis)
         public Machine()
@@ -60,6 +65,7 @@ namespace CAMel.Types
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
             this.dim2 = false;
+            this.leads = 0;
             this.InsertCode = "";
             this.RetractCode = "";
         }
@@ -79,6 +85,7 @@ namespace CAMel.Types
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
             this.dim2 = false;
+            this.leads = 0;
             this.InsertCode = "";
             this.RetractCode = "";
         }
@@ -98,6 +105,7 @@ namespace CAMel.Types
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
             this.dim2 = false;
+            this.leads = 0;
             this.InsertCode = "";
             this.RetractCode = "";
         }
@@ -118,6 +126,7 @@ namespace CAMel.Types
             this.PathJump = M.PathJump;
             this.Pivot = M.Pivot;
             this.dim2 = M.dim2;
+            this.leads = M.leads;
             this.InsertCode = M.InsertCode;
             this.RetractCode = M.RetractCode;
         }
@@ -145,10 +154,7 @@ namespace CAMel.Types
             }
         }
 
-        // TODO replace this flag with separate machine type for 2d vs 3d.
-        // Really need to refactor to subclass machine types 
-        public bool dim2 { get; internal set; } // True if machine is 2d
-        public bool leads { get; internal set; } // Apply lead in and out paths. 
+        
 
         public string InsertCode { get; internal set; } // Code to place before insert
         public string RetractCode { get; internal set; } // Code to place after retract
@@ -682,12 +688,68 @@ namespace CAMel.Types
             return PtOut;
         }
 
+        // Assumes XY machine
+        internal static ToolPath LeadInOut(ToolPath TP, double lead)
+        {
+            double leadLen = lead * TP.Additions.leadFactor;
+            ToolPath newTP = new ToolPath(TP);
+            PolylineCurve toolL = TP.GetLine();
+
+            // Find the point on a circle furthest from the toolpath. 
+            int testNumber = 50;
+            Point3d LeadStart = new Point3d(), testPt;
+            double testdist, dist = -1;
+            bool noInter, correctSide;
+            for(int i = 0; i<testNumber; i++)
+            {
+                double ang = 2.0 * Math.PI * i / (double)testNumber;
+                testPt = TP[0].Pt+leadLen*new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
+
+                // Check point is inside (or outside) the curve
+                correctSide = toolL.Contains(testPt) == PointContainment.Inside;
+                if (leadLen > 0) { correctSide = !correctSide; }
+
+                // if on the correct side find the distance to the curve and 
+                // update the point if there is a line from point to curve that
+                // does not hit material.
+                if (correctSide)
+                {
+                    toolL.ClosestPoint(testPt, out testdist);
+                    testdist = testPt.DistanceTo(toolL.PointAt(testdist));
+                    noInter = Intersection.CurveCurve(toolL, new Line(TP[0].Pt, testPt).ToNurbsCurve(), 0.00001, 0.00001).Count <= 1;
+
+                    if (noInter && testdist > dist)
+                    {
+                        dist = testdist;
+                        LeadStart = testPt;
+                    }
+                }
+            }
+            // If no suitable point found throw an error, otherwise add point to 
+            // start and end
+            if(dist < 0)
+            {
+                newTP[0].AddError("No suitable point for lead in and out found.");
+            }
+            else
+            {
+                ToolPoint LeadTP = new ToolPoint(TP[0]);
+                LeadTP.Pt = LeadStart;
+                newTP.Add(new ToolPoint(LeadTP));
+                LeadTP.feed = 0;
+                newTP.Insert(0, LeadTP);
+            }
+
+            newTP.Additions.leadFactor = 0;
+            return newTP;
+        }
+
         internal ToolPath InsertRetract(ToolPath TP)
         {
             ToolPath newPath;
             if (this.dim2) {
                 // lead in and out called here
-                newPath = new ToolPath(TP);
+                newPath = Machine.LeadInOut(TP, this.leads);
                 newPath.Additions.insert = false;
                 newPath.Additions.retract = false;
             }
@@ -695,7 +757,7 @@ namespace CAMel.Types
 
             if ( TP.Additions.insert && this.InsertCode != "" ) { newPath.preCode = newPath.preCode + "\n" + this.InsertCode; }
             if (TP.Additions.retract && this.RetractCode != "") { newPath.postCode = newPath.postCode + "\n" + this.RetractCode; }
-
+            newPath.Additions.leadFactor = 0;
             return newPath;
         }
 
@@ -933,8 +995,8 @@ namespace CAMel.Types
                     route.Add(TPto[0].Pt);
                     
                     int i;
-                    intersects inters;
-                    intersects fromMid;
+                    MFintersects inters;
+                    MFintersects fromMid;
 
                     // loop through intersecting with safe bubble and adding points
                     for (i = 0; i < (route.Count - 1) && i < 100;)
@@ -980,7 +1042,7 @@ namespace CAMel.Types
                             fromMid = TPto.MatForm.intersect(inters.mid, inters.midOut, TPto.MatForm.safeDistance * 1.1);
                             route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
 
-                            intersects test = TPto.MatForm.intersect(route[i + 1], inters.midOut, TPto.MatForm.safeDistance);
+                            MFintersects test = TPto.MatForm.intersect(route[i + 1], inters.midOut, TPto.MatForm.safeDistance);
                         }
                         else
                         {

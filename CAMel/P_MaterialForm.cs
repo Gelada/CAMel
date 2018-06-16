@@ -10,9 +10,9 @@ using CAMel.Types.MaterialForm;
 namespace CAMel.Types.MaterialForm
 {
 
-    public struct intersection
+    public struct MFintersection
     {
-        public intersection(Point3d Pt, Vector3d Away,double lineP)
+        public MFintersection(Point3d Pt, Vector3d Away,double lineP)
         {
             this.Pt = Pt;
             this.lineP = lineP;
@@ -35,22 +35,22 @@ namespace CAMel.Types.MaterialForm
     }
 
     
-    public class intersects
+    public class MFintersects
     {
-        public intersects()
+        public MFintersects()
         {
-            inters = new List<intersection>();
-            through = new intersection(); // creates an unset value
-            first = new intersection(); // creates and unset value
+            inters = new List<MFintersection>();
+            through = new MFintersection(); // creates an unset value
+            first = new MFintersection(); // creates and unset value
             midOut = new Vector3d();
         }
-        public List<intersection> inters { get; private set; } // List of intersections 
+        public List<MFintersection> inters { get; private set; } // List of intersections 
 
         public double thrDist { get { return this.through.lineP; } }
         public double firstDist { get { return this.first.lineP; } }
 
-        public intersection through { get; protected set; }// intersection with highest lineParameter
-        public intersection first { get; protected set; } // intersection with lowest lineParameter
+        public MFintersection through { get; protected set; }// intersection with highest lineParameter
+        public MFintersection first { get; protected set; } // intersection with lowest lineParameter
 
         public Point3d mid // midpoint through material
         {
@@ -67,7 +67,7 @@ namespace CAMel.Types.MaterialForm
             }
         }
 
-        public void Add(intersection inter)
+        public void Add(MFintersection inter)
         {
             this.inters.Add(inter);
 
@@ -76,7 +76,7 @@ namespace CAMel.Types.MaterialForm
         }
         public void Add(Point3d Pt, Vector3d away, double lineP)
         {
-            this.Add(new intersection(Pt, away, lineP));
+            this.Add(new MFintersection(Pt, away, lineP));
         }
 
         public int Count
@@ -96,7 +96,7 @@ namespace CAMel.Types.MaterialForm
             irTP.Additions.insert = false;
             irTP.Additions.retract = false;
 
-            intersection inter;
+            MFintersection inter;
 
             double utol = MF.safeDistance * 1.05;
             ToolPoint tempTP;
@@ -180,7 +180,7 @@ namespace CAMel.Types.MaterialForm
         }
 
         // Does the line intersect the surface of the material?
-        internal static bool lineIntersect(IMaterialForm MF,Point3d start, Point3d end, double tolerance, out intersects inters)
+        internal static bool lineIntersect(IMaterialForm MF,Point3d start, Point3d end, double tolerance, out MFintersects inters)
         {
             inters = MF.intersect(start, end - start, tolerance);
             double lLength = (end - start).Length;
@@ -204,7 +204,7 @@ namespace CAMel.Types.MaterialForm
             if (TP.Count > 0) { refined.Add(TP[0]); }
             
             double lineLen;
-            intersects inters;
+            MFintersects inters;
 
             // TODO refine on significant changes of direction
             for (int i = 0; i < TP.Count - 1; i++)
@@ -242,9 +242,9 @@ namespace CAMel.Types.MaterialForm
         double safeDistance { get; set; }
         double materialTolerance { get; set; }
 
-        intersects intersect(Point3d Pt, Vector3d direction, double tolerance);
-        intersects intersect(ToolPoint TP, double tolerance);
-        bool intersect(Point3d start, Point3d end, double tolerance, out intersects inters); 
+        MFintersects intersect(Point3d Pt, Vector3d direction, double tolerance);
+        MFintersects intersect(ToolPoint TP, double tolerance);
+        bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inters); 
 
         ToolPath refine(ToolPath TP, Machine M);
         ToolPath InsertRetract(ToolPath TP);

@@ -28,6 +28,24 @@ namespace CAMel.Types
             List<List<IntPoint>> oP = Clipper.OffsetPolygons(IP, d*sc, JoinType.jtRound);
 
             List<PolylineCurve> oPL = InttoPL(oP,sc);
+            // find point closest to first of original curve
+
+            int cp = 0;
+            double pos = 0;
+            double di,t, dist = 1000000000000000000;
+            for (int i = 0; i < oPL.Count; i++)
+            {
+                oPL[i].ClosestPoint(P.PointAt(0), out t, dist);
+                di = oPL[i].PointAt(t).DistanceTo(P.PointAt(0));
+                if(di<dist)
+                {
+                    dist = d;
+                    cp = i;
+                    pos = t;
+                }
+            }
+
+            oPL[cp].ChangeClosedCurveSeam(pos);
 
             return oPL;
         }

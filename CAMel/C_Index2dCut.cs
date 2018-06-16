@@ -103,11 +103,7 @@ namespace CAMel
             // offSet
             List<PolylineCurve> osC = new List<PolylineCurve>();
             if (Os == 0) { osC.Add(TP.GetLine()); }
-            else
-            {
-                if (Os > 0) { osC = Offsetting.offset(TP.GetLine(), MT.toolWidth / 2.0); }
-                else { osC = Offsetting.offset(TP.GetLine(), -MT.toolWidth / 2.0); }
-            }
+            else { osC = Offsetting.offset(TP.GetLine(), Os*MT.toolWidth / 2.0); }
 
             // create Operation
 
@@ -131,6 +127,8 @@ namespace CAMel
                 TP.Additions.sdDropMiddle = 8 * MF.safeDistance;
                 TP.Additions.sdDropEnd = true;
                 TP.Additions.threeAxisHeightOffset = true;
+                TP.Additions.tabbing = tabs;
+                TP.Additions.leadFactor = leadInOut;
 
                 // return to original orientation
 

@@ -38,17 +38,17 @@ namespace CAMel.Types.MaterialForm
             return MFDefault.InsertRetract(this, TP);
         }
 
-        public intersects intersect(ToolPoint TP, double tolerance)
+        public MFintersects intersect(ToolPoint TP, double tolerance)
         {
             return this.intersect(TP.Pt,-TP.Dir, tolerance);
         }
 
-        public bool intersect(Point3d start, Point3d end, double tolerance, out intersects inter)
+        public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter)
         {
             return MFDefault.lineIntersect(this, start, end, tolerance, out inter);
         }
 
-        public intersects intersect(Point3d PtIn, Vector3d dirIn, double tolerance)
+        public MFintersects intersect(Point3d PtIn, Vector3d dirIn, double tolerance)
         {
             dirIn.Unitize();
             Box exB = this.B;
@@ -63,7 +63,7 @@ namespace CAMel.Types.MaterialForm
 
             // test to hit each face (could stop after 2, if efficiency worth it)
 
-            intersects inters = new intersects();
+            MFintersects inters = new MFintersects();
             double dist;
             if(testFace(exB.X.Max,exB.Y,exB.Z,Pt, dir, out dist))
             { inters.Add(this.fromPlane(Pt + dir * dist), this.B.Plane.XAxis, dist); }

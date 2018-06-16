@@ -21,6 +21,7 @@ namespace CAMel.Types
         public bool sdDropStart { get; set; }    // How stepdown will deal with 
         public double sdDropMiddle { get; set; } // points that have reached  
         public bool sdDropEnd { get; set; }      // the required depth (Middle is dropped if length greater than value);
+        public bool tabbing { get; set; }        // add tabs if machine wants to.
         public double leadFactor { get; set; }   // if leading in or out what factor of standard value to use
 
         public ToolPathAdditions(ToolPathAdditions TPA)
@@ -32,13 +33,15 @@ namespace CAMel.Types
             this.sdDropMiddle = TPA.sdDropMiddle;
             this.sdDropEnd = TPA.sdDropEnd;
             this.threeAxisHeightOffset = TPA.threeAxisHeightOffset;
+            this.tabbing = TPA.tabbing;
             this.leadFactor = TPA.leadFactor;
         }
 
         public bool any
         {
-            get { return insert || retract || stepDown || threeAxisHeightOffset; }
+            get { return insert || retract || stepDown || threeAxisHeightOffset || tabbing || leadFactor !=0; }
         }
+
     }
 
     // One action of the machine, such as cutting a line
@@ -241,7 +244,7 @@ namespace CAMel.Types
                 // ask the material form to refine the path
 
                 ToolPath refPath = useTP.MatForm.refine(useTP, M);
-                MaterialForm.intersection inter;
+                MaterialForm.MFintersection inter;
 
                 foreach(ToolPoint TP in refPath)
                 {

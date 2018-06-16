@@ -50,17 +50,17 @@ namespace CAMel.Types.MaterialForm
             return MFDefault.InsertRetract(this, TP);
         }
 
-        public intersects intersect(ToolPoint TP, double tolerance)
+        public MFintersects intersect(ToolPoint TP, double tolerance)
         {
             return this.intersect(TP.Pt, -TP.Dir, tolerance);
         }
 
-        public bool intersect(Point3d start, Point3d end, double tolerance, out intersects inter)
+        public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter)
         {
             return MFDefault.lineIntersect(this, start, end, tolerance, out inter);
         }
 
-        public intersects intersect(Point3d PtIn, Vector3d dirIn, double tolerance)
+        public MFintersects intersect(Point3d PtIn, Vector3d dirIn, double tolerance)
         {
             double utol = tolerance + this.materialTolerance;
 
@@ -82,7 +82,7 @@ namespace CAMel.Types.MaterialForm
             double flatDist = dir2d.Length;
             // test to see where the cylinder is hit. 
 
-            intersects inters = new intersects();
+            MFintersects inters = new MFintersects();
             Vector3d intPt;
             double lineP;
             double linePcen;

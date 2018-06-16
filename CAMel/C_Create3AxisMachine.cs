@@ -31,8 +31,9 @@ namespace CAMel
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
             pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list,"");
             pManager.AddTextParameter("Features", "O", "Other features of the machine\n"+
-                "{2d, Insert Code, Retract Code\n}" +
-                "2d is a Boolean (0 or 1), that specifies a 2d machine like a Plasma cutter, \n"+ 
+                "{2d, lead, Insert Code, Retract Code\n}" +
+                "2d is a Boolean (0 or 1), that specifies a 2d machine like a Plasma cutter. \n"+
+                "lead gives the distance for the lead in or out. \n"+
                 "Insert and Retract Codes are added before an insert and after a rectract move.", 
                 GH_ParamAccess.list, "");
         }
@@ -77,8 +78,9 @@ namespace CAMel
             {
                 int dim = 0;
                 if(int.TryParse(Fe[0], out dim)){ if(dim!=0) { M.dim2 = true; } }
-                if (Fe.Count > 1) { M.InsertCode = Fe[1]; }
-                if (Fe.Count > 2) { M.RetractCode = Fe[2]; }
+                if (Fe.Count > 1) { M.leads = Convert.ToDouble(Fe[1]); }
+                if (Fe.Count > 2) { M.InsertCode = Fe[2]; }
+                if (Fe.Count > 3) { M.RetractCode = Fe[3]; }
             }
 
             DA.SetData(0, M);
