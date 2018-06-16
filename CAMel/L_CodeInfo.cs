@@ -100,6 +100,7 @@ namespace CAMel.Types
                 this.Errors.Add(err, 1);
                 newError = true;
             }
+            this.AppendComment(err);
             return newError;
         }
 
