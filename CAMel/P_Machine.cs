@@ -44,7 +44,7 @@ namespace CAMel.Types
         public string SpeedChangeCommand { get; set; }
         public double PathJump { get; set; } // Max distance allowed between paths in material.
         public string SectionBreak { get; set; }
-        public Vector3d Pivot { get; set; }
+        private Vector3d Pivot { get; set; }
         // TODO replace this flag with separate machine type for 2d vs 3d.
         // Really need to refactor to subclass machine types 
         //public bool dim2 { get; internal set; } // True if machine is 2d

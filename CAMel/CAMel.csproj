@@ -115,6 +115,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="clipper.cs" />
+    <Compile Include="P_Machine - Copy.cs" />
     <Compile Include="P_MachineInstructions.cs" />
     <Compile Include="P_PocketPath.cs" />
     <Compile Include="P_SurfacePath.cs" />

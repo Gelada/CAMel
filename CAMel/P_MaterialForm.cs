@@ -376,7 +376,7 @@ namespace CAMel.Types
         // Construct from unwrapped object
         public GH_MaterialForm(IMaterialForm MF)
         {
-            this.Value = MF;
+            this.Value = (IMaterialForm)MF.Duplicate();
         }
 
         // Copy Constructor.
@@ -435,7 +435,7 @@ namespace CAMel.Types
             }
             if (source is IMaterialForm)
             {
-                this.Value = (IMaterialForm) source;
+                this.Value = (IMaterialForm)((IMaterialForm) source).Duplicate();
                 return true;
             }
             return false;
