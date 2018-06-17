@@ -16,7 +16,7 @@ namespace CAMel.Types
     {
         public static List<PolylineCurve> offset(PolylineCurve P, double d)
         {
-            
+            // Bring path into clipper, scaling to take advantage of interger arithmetic
             BoundingBox BB = P.GetBoundingBox(false);
             double md = BB.Max.X;
             if(BB.Max.Y > md) { md = BB.Max.Y; }
@@ -25,12 +25,31 @@ namespace CAMel.Types
             double sc = 2000000000.0/md;
 
             List<List<IntPoint>> IP = PLtoInt(P,sc);
-            List<List<IntPoint>> oP = Clipper.OffsetPolygons(IP, d*sc, JoinType.jtRound);
+
+            // Offset the paths.
+
+            EndType et;
+            if(P.IsClosed) { et = EndType.etClosedPolygon; }
+            else { et = EndType.etOpenRound; }
+
+            ClipperOffset co = new ClipperOffset();
+            co.AddPaths(IP, JoinType.jtRound, et);
+            List<List<IntPoint>> oPf = new List<List<IntPoint>>();
+            co.Execute(ref oPf, d*sc);
+
+            // Clean the paths.
+
+            List<List<IntPoint>> oP = new List<List<IntPoint>>();
+            foreach (List<IntPoint> p in oPf)
+            {
+                List<IntPoint> clp = Clipper.CleanPolygon(p);
+                oP.Add(clp);
+            }
 
             List<PolylineCurve> oPL = InttoPL(oP,sc);
             // find point closest to first of original curve
 
-            int cp = 0;
+            int cp = -1;
             double pos = 0;
             double di,t, dist = 1000000000000000000;
             for (int i = 0; i < oPL.Count; i++)
@@ -45,7 +64,7 @@ namespace CAMel.Types
                 }
             }
 
-            oPL[cp].ChangeClosedCurveSeam(pos);
+            if (cp >= 0) { oPL[cp].ChangeClosedCurveSeam(pos); }
 
             return oPL;
         }
@@ -65,6 +84,7 @@ namespace CAMel.Types
             Polyline P;
             PC.TryGetPolyline(out P);
             foreach(Point3d p in P) { IntP.Add(dtoi(p,sc)); }
+            //List<List<IntPoint>> IntPL = Clipper.SimplifyPolygon(IntP,);
             List<List<IntPoint>> IntPL = new List<List<IntPoint>>();
             IntPL.Add(IntP);
 

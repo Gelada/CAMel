@@ -124,7 +124,7 @@ namespace CAMel.Types
 
         public ToolPath copyWithNewPoints(List<ToolPoint> Pts)
         {
-            ToolPath newTP = new ToolPath(this.name,this.MatTool,this.MatForm,this.Additions);
+            ToolPath newTP = new ToolPath(this.name, this.MatTool, this.MatForm, this.Additions);
             newTP.preCode = this.preCode;
             newTP.postCode = this.postCode;
             newTP.Pts = Pts;
@@ -177,13 +177,13 @@ namespace CAMel.Types
                 Co.AppendComment(" ToolPath: " + this.name);
                 preamble = true;
             }
-            if (Co.currentMT==null || this.MatTool.Tool_name != Co.currentMT.Tool_name)
+            if (Co.currentMT == null || this.MatTool.Tool_name != Co.currentMT.Tool_name)
             {
                 Co.AppendComment(" using: " + this.MatTool.Tool_name + " into " + this.MatTool.Mat_name);
                 Co.currentMT = this.MatTool;
                 preamble = true;
             }
-            if (Co.currentMF==null || this.MatForm.ToString() != Co.currentMF.ToString())
+            if (Co.currentMF == null || this.MatForm.ToString() != Co.currentMF.ToString())
             {
                 Co.AppendComment(" material: " + this.MatForm.ToString());
                 Co.currentMF = this.MatForm;
@@ -273,18 +273,18 @@ namespace CAMel.Types
 
                 ToolPath tempTP;
 
-                for(i = 0; i < CutLevel.Count;i++)
+                for(i = 0; i < CutLevel.Count; i++)
                 {
                     NewPaths.Add(new List<ToolPath>());
                     tempTP = (ToolPath)useTP.copyWithNewPoints(new List<ToolPoint>());
-                    tempTP.name = useTP.name + " Pass " + (i+1).ToString();
+                    tempTP.name = useTP.name + " Pass " + (i + 1).ToString();
                     tempTP.Additions.stepDown = false;
 
                     start = true;
                     end = false;
                     droplength = 0;
 
-                    for(j = 0; j< refPath.Count && !end; j++)
+                    for(j = 0; j < refPath.Count && !end; j++)
                     {
                         if(i < NumSteps[j]) // We need to cut here
                         {
@@ -294,7 +294,7 @@ namespace CAMel.Types
                             {
                                 TPt = new ToolPoint(refPath[j - 1]);
                                 height = useTP.MatTool.finishDepth;
-                                if (height > MatDist[j-1] ) height = 0;
+                                if (height > MatDist[j - 1]) height = 0;
                                 TPt.Pt = -TPt.Dir * height + TPt.Pt; // stay finishDepth above final path
 
                                 tempTP.Add(TPt);
@@ -306,21 +306,21 @@ namespace CAMel.Types
                             tempTP.Add(TPt);
                             start = false;
                             droplength = 0;
-                        } 
+                        }
                         else if(start) // We have not hit any cutting yet;
                         {
                             if(!useTP.Additions.sdDropStart) // we are not dropping the start
                             {
                                 TPt = new ToolPoint(refPath[j]);
                                 height = useTP.MatTool.finishDepth;
-                                if (height > MatDist[j] ) height = 0;
-                                TPt.Pt = -TPt.Dir * height +TPt.Pt;
+                                if (height > MatDist[j]) height = 0;
+                                TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                 tempTP.Add(TPt);
                             } // otherwise we do nothing
                         }
                         else // We need to look ahead
                         {
-                            for(k = j; k < refPath.Count && i >= NumSteps[k] ; k++); // Look ahead to the next cut
+                            for(k = j; k < refPath.Count && i >= NumSteps[k]; k++) ; // Look ahead to the next cut
 
                             if(k == refPath.Count) // No more cutting required
                             {
@@ -330,50 +330,50 @@ namespace CAMel.Types
                                     // then set end to true so we finish
                                     TPt = new ToolPoint(refPath[j]);
                                     height = useTP.MatTool.finishDepth;
-                                    if (height > MatDist[j] ) height = 0;
-                                    TPt.Pt = -TPt.Dir *height + TPt.Pt;
+                                    if (height > MatDist[j]) height = 0;
+                                    TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                     tempTP.Add(TPt);
                                     end = true;
-                                } 
+                                }
                                 else // add point
                                 {
                                     TPt = new ToolPoint(refPath[j]);
                                     height = useTP.MatTool.finishDepth;
-                                    if (height > MatDist[j] ) height = 0;
-                                    TPt.Pt = -TPt.Dir *height + TPt.Pt;
+                                    if (height > MatDist[j]) height = 0;
+                                    TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                     tempTP.Add(TPt);
                                 }
-                            } 
+                            }
                             else // into the middle
                             {
-                                if(useTP.Additions.sdDropMiddle < 0 || (k - j) < 3) // we are not dropping middle or there are not enough points to justify it
+                                if (useTP.Additions.sdDropMiddle < 0 || (k - j) < 3) // we are not dropping middle or there are not enough points to justify it
                                 {
                                     TPt = new ToolPoint(refPath[j]);
                                     height = useTP.MatTool.finishDepth;
-                                    if (height > MatDist[j] ) height = 0;
+                                    if (height > MatDist[j]) height = 0;
                                     TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                     tempTP.Add(TPt);
                                 }
                                 else //check length of drop
                                 {
-                                    if(droplength == 0) // If we are at the start of a possible drop Add the length until we hit the end or go over 
+                                    if (droplength == 0) // If we are at the start of a possible drop Add the length until we hit the end or go over 
                                     {
-                                        for(l = j; droplength < useTP.Additions.sdDropMiddle && l < k; l++) 
-                                            droplength += refPath[l].Pt.DistanceTo(refPath[l+1].Pt);
+                                        for (l = j; droplength < useTP.Additions.sdDropMiddle && l < k; l++)
+                                            droplength += refPath[l].Pt.DistanceTo(refPath[l + 1].Pt);
                                     }
-                                    if(droplength > useTP.Additions.sdDropMiddle) 
+                                    if (droplength > useTP.Additions.sdDropMiddle)
                                     {
                                         // add point, as previous point was in material
                                         TPt = new ToolPoint(refPath[j]);
                                         height = useTP.MatTool.finishDepth;
-                                        if (height > MatDist[j] ) height = 0;
-                                        TPt.Pt = -TPt.Dir *height + TPt.Pt;
+                                        if (height > MatDist[j]) height = 0;
+                                        TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                         tempTP.Add(TPt);
                                         // leap forward cut path and start a new one
                                         // giving settings to add inserts and retracts
-                                        
+
                                         tempTP.Additions.retract = true;
-                                        NewPaths[NewPaths.Count-1].Add(tempTP); // add path and create a new one
+                                        NewPaths[NewPaths.Count - 1].Add(tempTP); // add path and create a new one
 
                                         tempTP = (ToolPath)useTP.copyWithNewPoints(new List<ToolPoint>());
                                         tempTP.name = useTP.name + " Continuing Pass " + i.ToString();
@@ -384,25 +384,25 @@ namespace CAMel.Types
                                         // this will not result in a double point as we checked (k-j) >=3
                                         TPt = new ToolPoint(refPath[k - 1]);
                                         height = useTP.MatTool.finishDepth;
-                                        if (height > MatDist[k-1] ) height = 0;
+                                        if (height > MatDist[k - 1]) height = 0;
                                         TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                         tempTP.Add(TPt);
                                         j = k - 1; //set j to k-1 so it deals with the k point next
-                                      
+
                                     }
                                     else // after all that we still need to add the point
                                     {
                                         TPt = new ToolPoint(refPath[j]);
                                         height = useTP.MatTool.finishDepth;
-                                        if (height > MatDist[j] ) height = 0;
+                                        if (height > MatDist[j]) height = 0;
                                         TPt.Pt = -TPt.Dir * height + TPt.Pt;
                                         tempTP.Add(TPt);
                                     }
                                 }
                             }
                         }
-                    } 
-                    NewPaths[NewPaths.Count-1].Add(tempTP);
+                    }
+                    NewPaths[NewPaths.Count - 1].Add(tempTP);
                 }
             }
 
@@ -410,19 +410,19 @@ namespace CAMel.Types
             // if passes were added, rename with "Final Pass"
 
             NewPaths.Add(new List<ToolPath>());
-            NewPaths[NewPaths.Count-1].Add(new ToolPath(useTP));
-            NewPaths[NewPaths.Count-1][0].Additions.stepDown = false;
+            NewPaths[NewPaths.Count - 1].Add(new ToolPath(useTP));
+            NewPaths[NewPaths.Count - 1][0].Additions.stepDown = false;
             if (NewPaths.Count > 1) NewPaths[NewPaths.Count - 1][0].name = useTP.name + " Final Pass";
 
             // add insert and retract moves
 
             for (i = 0; i < NewPaths.Count; i++)
-                for (j = 0; j < NewPaths[i].Count;j++ )
+                for (j = 0; j < NewPaths[i].Count; j++)
                     NewPaths[i][j] = M.InsertRetract(NewPaths[i][j]);
 
             return NewPaths;
         }
-        
+
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
         // TODO make this guarantee that it does not gouge locally. There is a problem 
         // with paths that are steep down, followed by some bottom moves followed by steep out. 
@@ -430,18 +430,18 @@ namespace CAMel.Types
         {
             List<ToolPoint> offsetPath = new List<ToolPoint>();
 
-            Vector3d dir = (Vector3d)(this[1].Pt -this[0].Pt); 
+            Vector3d dir = (Vector3d)(this[1].Pt - this[0].Pt);
             dir.Unitize();
 
             ToolPoint point;
-            Vector3d orth = new Vector3d(0,0,0);
+            Vector3d orth = new Vector3d(0, 0, 0);
             bool orthSet = false;
 
             if (dir == this[0].Dir) point = this[0];
             else
             {
                 orth = Vector3d.CrossProduct(dir, this[0].Dir);
-                point = this.MatTool.threeAxisHeightOffset(this[0], dir,orth);
+                point = this.MatTool.threeAxisHeightOffset(this[0], dir, orth);
                 orthSet = true;
             }
 
@@ -461,16 +461,16 @@ namespace CAMel.Types
             // loop through the lines of the toolpath finding their offset path 
             // and then travelling to the closest point to the next offset path
 
-            for (int i = 1; i < this.Count-1;i++ )
+            for (int i = 1; i < this.Count - 1; i++)
             {
                 // Keep track of tool point direction to warn if it changes (but only once)
-                if(this[i-1].Dir != this[i].Dir && !changeDirection)
+                if (this[i - 1].Dir != this[i].Dir && !changeDirection)
                 {
                     this[i].warning.Add("Height offsetting is not designed for 5-Axis motion, it may be unpredictable.");
                     changeDirection = true;
                 }
                 // Find the next offset line
-                dir = (Vector3d)(this[i+1].Pt - this[i].Pt);
+                dir = (Vector3d)(this[i + 1].Pt - this[i].Pt);
                 // Check for vertical moves
                 if (dir == this[i].Dir)
                 {
@@ -499,7 +499,7 @@ namespace CAMel.Types
                 // loop until we find a suitable line, removing previous points that are now problematic
                 // checking the length of offsetPath should ensure we don't try to go past the start 
                 // and osLines is always at least 2 long, but we check both just in case.
-                while(orient < 0 && offsetPath.Count > 1 && osLines.Count > 1)
+                while (orient < 0 && offsetPath.Count > 1 && osLines.Count > 1)
                 {
                     // remove the reversing line
                     osLines.RemoveAt(osLines.Count - 2);
@@ -507,7 +507,7 @@ namespace CAMel.Types
                     offsetPath.RemoveRange(offsetPath.Count - 1, 1);
                     // find the new intersection and orientation
                     Rhino.Geometry.Intersect.Intersection.LineLine(osLines[osLines.Count - 2], osLines[osLines.Count - 1], out inter, out nextinter);
-                    orient = (osLines[osLines.Count - 2].PointAt(inter) - offsetPath[offsetPath.Count - 1].Pt) * osLines[osLines.Count - 2].UnitTangent;              
+                    orient = (osLines[osLines.Count - 2].PointAt(inter) - offsetPath[offsetPath.Count - 1].Pt) * osLines[osLines.Count - 2].UnitTangent;
                 }
 
                 // if we got to the start and things are still bad we have to deal with things differently
@@ -524,7 +524,7 @@ namespace CAMel.Types
                     startCP = (ToolPoint)this[i].Duplicate();
                     startCP.Pt = osLines[osLines.Count - 1].PointAt(nextinter);
                     offsetPath.Add(startCP);
-                    
+
                 }
                 else
                 {
@@ -547,7 +547,7 @@ namespace CAMel.Types
 
             // add the final point.
 
-            if (dir == this[this.Count-1].Dir)
+            if (dir == this[this.Count - 1].Dir)
             {
                 if (orthSet) nextPoint = this.MatTool.threeAxisHeightOffset(this[this.Count - 1], dir, orth);
                 else nextPoint = this[this.Count - 1];
@@ -566,55 +566,9 @@ namespace CAMel.Types
             if (!retPath.Additions.insert)
                 retPath[0].warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour.");
             if (!retPath.Additions.retract)
-                retPath[retPath.Count-1].warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour.");
+                retPath[retPath.Count - 1].warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour.");
 
             return retPath;
-        }
-
-        // Move safely from one toolpath to another.
-        // We assume that the safe space to move is the union 
-        // of the safe spaces from both material forms.
-        public ToolPath TransitionTo(Machine M, ToolPath TP, out bool inMaterial, out double Length)
-        {
-            // Throw error if either toolpath is empty
-            // This is not generally a problem but does 
-            // not give the information we need here and 
-            // could be dangerous.
-
-            if (this.Count == 0 || TP.Count == 0)
-            {
-                throw new ArgumentOutOfRangeException("Toolpath","Trying to transition to or from an empty path.");
-            }
-
-            ToolPath TransPath;
-            Length = this[this.Count - 1].Pt.DistanceTo(TP[0].Pt);
-
-            // See if we lie in the material
-            // Check end of this path and start of TP
-            // For each see if it is safe in one Material Form
-            // As we pull back to safe distance we allow a little wiggle.
-
-            if ((
-                this.MatForm.intersect(this[this.Count - 1], this.MatForm.safeDistance).thrDist > 0.0001 
-                && TP.MatForm.intersect(this[this.Count-1], TP.MatForm.safeDistance).thrDist > 0.0001
-                ) || (
-                this.MatForm.intersect(TP[0], this.MatForm.safeDistance).thrDist > 0.0001
-                && TP.MatForm.intersect(TP[0], TP.MatForm.safeDistance).thrDist > 0.0001
-               ))
-            {
-                inMaterial = true;
-                TransPath = TP.copyWithNewPoints(new List<ToolPoint>());
-                TransPath.name = "";
-            }
-            else
-            {
-                // Throw the challenge to the Machine which knows what to do
-                // Machine can also throw in a tool change.
-                inMaterial = false;
-                TransPath = M.SafeMove(this, TP);
-            }
-
-            return TransPath;
         }
 
         // Get the list of tooltip locations
@@ -657,7 +611,7 @@ namespace CAMel.Types
         public List<Line> ToolLines()
         {
             List<Line> lines = new List<Line>();
-            foreach(ToolPoint TP in this) { lines.Add(TP.ToolLine()); }
+            foreach (ToolPoint TP in this) { lines.Add(TP.ToolLine()); }
             return lines;
         }
 
@@ -667,7 +621,7 @@ namespace CAMel.Types
             List<Vector3d> SF = new List<Vector3d>();
 
             foreach (ToolPoint tP in this)
-                SF.Add(new Vector3d(tP.speed,tP.feed,0));
+                SF.Add(new Vector3d(tP.speed, tP.feed, 0));
             return SF;
         }
 
@@ -682,11 +636,8 @@ namespace CAMel.Types
 
             if (c != null && c.IsValid)
             {
-                if (!c.TryGetPolyline(out PL))
-                {
-                    Curve c2 = c.ToPolyline(0, 5000, Math.PI, 0, 0, this.MatTool.tolerance, this.MatTool.minStep, this.MatTool.toolWidth / 4, true);
+                    Curve c2 = c.ToPolyline(0, 0, Math.PI, 0, 0, this.MatTool.tolerance, this.MatTool.minStep, 20.0*this.MatTool.toolWidth, true);
                     c2.TryGetPolyline(out PL);
-                }
             }
             else { return false; }
 
@@ -695,12 +646,24 @@ namespace CAMel.Types
 
             // Add the points to the Path
 
-            foreach(Point3d Pt in PL)
+            foreach (Point3d Pt in PL)
             {
                 TPt = new ToolPoint(Pt, d);
                 this.Add(TPt);
             }
             return true;
+        }
+
+        public static PolylineCurve ConvertAccurate(Curve C)
+        {
+            double accTol = 0.000000001;
+            Polyline P;
+            PolylineCurve PlC;
+            // Check if already a polyline, otherwise make one
+            if(C.TryGetPolyline(out P)) { PlC = new PolylineCurve(P); }
+            else { PlC = C.ToPolyline(0,0,Math.PI,0,0,accTol,0,0,true); }
+
+            return PlC;
         }
 
         ICAMel_Base ICAMel_Base.Duplicate()

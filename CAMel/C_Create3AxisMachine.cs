@@ -77,7 +77,7 @@ namespace CAMel
             if (DA.GetDataList(5, Fe) && (Fe.Count > 1 || Fe[0] != ""))
             {
                 int dim = 0;
-                if(int.TryParse(Fe[0], out dim)){ if(dim!=0) { M.dim2 = true; } }
+                if(int.TryParse(Fe[0], out dim)){ if(dim!=0) { M.type = MachineTypes.TwoAxisXY; } }
                 if (Fe.Count > 1) { M.leads = Convert.ToDouble(Fe[1]); }
                 if (Fe.Count > 2) { M.InsertCode = Fe[2]; }
                 if (Fe.Count > 3) { M.RetractCode = Fe[3]; }

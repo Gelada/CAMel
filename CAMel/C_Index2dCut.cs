@@ -41,7 +41,8 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Operation", "O", "Machine Operation", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Operation", "O", "2d cut Operation", GH_ParamAccess.item);
+            pManager.AddCurveParameter("Path", "P", "Offset Path", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -95,22 +96,20 @@ namespace CAMel
             BoundingBox BB = C.GetBoundingBox(true);
             double useZ = (BB.Max.Z + BB.Min.Z) / 2.0;
 
-            // turn the curve into a ToolPath
-
-            ToolPath TP = new ToolPath("", MT, MF);
-            TP.ConvertCurve(C, D);
+            // turn the curve into a Polyline
+            PolylineCurve PL = ToolPath.ConvertAccurate(C);
 
             // offSet
             List<PolylineCurve> osC = new List<PolylineCurve>();
-            if (Os == 0) { osC.Add(TP.GetLine()); }
-            else { osC = Offsetting.offset(TP.GetLine(), Os*MT.toolWidth / 2.0); }
+            if (Os == 0) { osC.Add(PL); }
+            else { osC = Offsetting.offset(PL, Os*MT.toolWidth / 2.0); }
 
             // create Operation
 
             MachineOperation Op = new MachineOperation();
-
             Op.name = "2d Cut Path";
-
+            ToolPath TP;
+            List<PolylineCurve> Cs = new List<PolylineCurve>();
             int i = 1;
             foreach (PolylineCurve c in osC)
             {
@@ -137,10 +136,12 @@ namespace CAMel
 
                 // Add to Operation
                 TP.ConvertCurve(c, D);
-                Op.Add(TP);              
+                Op.Add(TP);
+                Cs.Add(TP.GetLine());
             }
 
             DA.SetData(0, Op);
+            DA.SetDataList(1, Cs);
         }
 
         /// <summary>

@@ -163,8 +163,6 @@ namespace CAMel.Types
             Co.Append(this.preCode);
 
             ToolPath oldPath = sP;
-            bool inMaterial;
-            double Length;
             bool first = true;
             ToolPoint lastPoint; // let the next path know where it is coming from (details like speed and feed can be transferred).
 
@@ -175,33 +173,10 @@ namespace CAMel.Types
             {
                 if (TP.Count > 0) // If path has length 0 just ignore
                 {
-                    if (oldPath != null)
-                    {
-                        // Create transition move from sP with mf to first point of path array
-                        ToolPath Transition = oldPath.TransitionTo(M, TP, out inMaterial, out Length);
-
-                        // Error if changing operations in material
-
-                        if (inMaterial && first)
-                        {
-                            Co.AddError("Transition between operations might be in material.");
-                            Co.AppendComment(" Transition between operations might be in material.");
-                        }
-                        else if (inMaterial && Length > M.PathJump)
-                        {
-                            Co.AddError("Long Transition between paths in material. \n"
-                                + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
-                                + M.PathJump.ToString() + " to at least: " + Length.ToString());
-                            Co.AppendComment(" Long Transition between paths in material.");
-                        }
-
-                        // Add transition to Code if needed
-
-                        if (Transition.Count > 0)
-                            lastPoint = Transition.WriteCode(ref Co, M, lastPoint);
-                    }
+                    // Move from one path to the next 
+                    if (oldPath != null) { lastPoint = M.Transition(ref Co, oldPath, TP, first,lastPoint); }
+                    
                     // Add Path to Code
-
                     lastPoint = TP.WriteCode(ref Co, M, lastPoint);
 
                     oldPath = TP;

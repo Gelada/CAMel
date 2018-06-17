@@ -13,6 +13,7 @@ namespace CAMel.Types
 {
 
     public enum MachineTypes {
+        TwoAxisXY,
         ThreeAxis,
         FiveAxisBCHead,
         FiveAxisACHead,
@@ -46,8 +47,10 @@ namespace CAMel.Types
         public Vector3d Pivot { get; set; }
         // TODO replace this flag with separate machine type for 2d vs 3d.
         // Really need to refactor to subclass machine types 
-        public bool dim2 { get; internal set; } // True if machine is 2d
-        public double leads { get; internal set; } // Apply lead in and out paths. 
+        //public bool dim2 { get; internal set; } // True if machine is 2d
+        public double leads { get; internal set; } // Apply lead in and out paths.
+        public string InsertCode { get; internal set; } // Code to place before insert
+        public string RetractCode { get; internal set; } // Code to place after retract 
 
         // Default Constructor (un-named 3 Axis)
         public Machine()
@@ -64,7 +67,7 @@ namespace CAMel.Types
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
-            this.dim2 = false;
+            //this.dim2 = false;
             this.leads = 0;
             this.InsertCode = "";
             this.RetractCode = "";
@@ -84,7 +87,7 @@ namespace CAMel.Types
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
-            this.dim2 = false;
+            //this.dim2 = false;
             this.leads = 0;
             this.InsertCode = "";
             this.RetractCode = "";
@@ -104,7 +107,7 @@ namespace CAMel.Types
             this.SpeedChangeCommand = "M03 ";
             this.PathJump = 2;
             this.Pivot = Vector3d.Zero;
-            this.dim2 = false;
+            //this.dim2 = false;
             this.leads = 0;
             this.InsertCode = "";
             this.RetractCode = "";
@@ -125,7 +128,7 @@ namespace CAMel.Types
             this.SpeedChangeCommand = M.SpeedChangeCommand;
             this.PathJump = M.PathJump;
             this.Pivot = M.Pivot;
-            this.dim2 = M.dim2;
+            //this.dim2 = M.dim2;
             this.leads = M.leads;
             this.InsertCode = M.InsertCode;
             this.RetractCode = M.RetractCode;
@@ -154,10 +157,6 @@ namespace CAMel.Types
             }
         }
 
-        
-
-        public string InsertCode { get; internal set; } // Code to place before insert
-        public string RetractCode { get; internal set; } // Code to place after retract
 
         public override string ToString()
         {
@@ -276,7 +275,6 @@ namespace CAMel.Types
             return new Vector3d(Ao, Bo,0);
         }
 
-
         // Call the correct Code Writer
 
         public ToolPoint WriteCode(ref CodeInfo Co, ToolPath TP, ToolPoint beforePoint)
@@ -284,6 +282,7 @@ namespace CAMel.Types
             ToolPoint lastPoint;
             switch (this.type)
             {
+                case MachineTypes.TwoAxisXY:
                 case MachineTypes.ThreeAxis:
                     lastPoint = this.WriteCode_ThreeAxis(ref Co,TP,beforePoint);
                         break;
@@ -389,7 +388,7 @@ namespace CAMel.Types
                 }
 
                 // Add the position information
-                if (!dim2) { PtCode = IK_ThreeAxis(Pt, TP.MatTool); }
+                if (this.type==MachineTypes.ThreeAxis) { PtCode = IK_ThreeAxis(Pt, TP.MatTool); }
                 else { PtCode = IK_TwoAxis(Pt, TP.MatTool); }
 
                 // Act if feed has changed
@@ -678,6 +677,44 @@ namespace CAMel.Types
             return PtOut;
         }
 
+        internal ToolPoint Transition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first, ToolPoint beforePoint)
+        {
+            ToolPoint outPoint = beforePoint;
+            // check there is anything to transition from
+            if (fP != null) 
+            {
+                // See if we lie in the material
+                // Check end of this path and start of TP
+                // For each see if it is safe in one Material Form
+                // As we pull back to safe distance we allow a little wiggle.
+                if (this.type != MachineTypes.TwoAxisXY && ((  
+                    fP.MatForm.intersect(fP[fP.Count - 1], fP.MatForm.safeDistance).thrDist > 0.0001
+                    && tP.MatForm.intersect(fP[fP.Count - 1], tP.MatForm.safeDistance).thrDist > 0.0001
+                    ) || (
+                    fP.MatForm.intersect(tP[0],fP.MatForm.safeDistance).thrDist > 0.0001
+                    && tP.MatForm.intersect(tP[0], tP.MatForm.safeDistance).thrDist > 0.0001
+                    )))
+                {
+                    // If in material we probably need to throw an error
+                    // first path in an operation
+                    double Length = fP[fP.Count - 1].Pt.DistanceTo(tP[0].Pt);
+                    if (first) { Co.AddError("Transition between operations might be in material.");}
+                    else if (Length > this.PathJump) // changing between paths in material
+                    {
+                        Co.AddError("Long Transition between paths in material. \n"
+                            + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
+                            + this.PathJump.ToString() + " to at least: " + Length.ToString());
+                    }
+                }
+                else // Safely move from one safe point to another.
+                {
+                    ToolPath mv = this.SafeMove(fP, tP);
+                    outPoint = mv.WriteCode(ref Co, this, beforePoint);
+                }
+            }
+            return outPoint;
+        }
+
         // Assumes XY machine
         internal static ToolPath LeadInOut(ToolPath TP, double lead)
         {
@@ -726,7 +763,6 @@ namespace CAMel.Types
                 ToolPoint LeadTP = new ToolPoint(TP[0]);
                 LeadTP.Pt = LeadStart;
                 newTP.Add(new ToolPoint(LeadTP));
-                LeadTP.feed = 0;
                 newTP.Insert(0, LeadTP);
             }
 
@@ -737,7 +773,7 @@ namespace CAMel.Types
         internal ToolPath InsertRetract(ToolPath TP)
         {
             ToolPath newPath;
-            if (this.dim2) {
+            if (this.type == MachineTypes.TwoAxisXY) {
                 // lead in and out called here
                 newPath = Machine.LeadInOut(TP, this.leads);
                 newPath.Additions.insert = false;
@@ -755,6 +791,7 @@ namespace CAMel.Types
         {
             switch (this.type)
             {
+                case MachineTypes.TwoAxisXY:
                 case MachineTypes.ThreeAxis:
                     return -Vector3d.ZAxis;
                 case MachineTypes.FiveAxisBCHead:
@@ -772,6 +809,7 @@ namespace CAMel.Types
         {
             switch (this.type)
             {
+                case MachineTypes.TwoAxisXY:
                 case MachineTypes.ThreeAxis:
                     return ReadCode_ThreeAxis(Code);
                 case MachineTypes.PocketNC:
@@ -924,6 +962,7 @@ namespace CAMel.Types
             ToolPoint TPo = new ToolPoint(toolPoint1);
             switch (this.type)
             {
+                case MachineTypes.TwoAxisXY:
                 case MachineTypes.ThreeAxis:
                     TPo.Pt = toolPoint1.Pt * par + toolPoint2.Pt * (1 - par);
                     break;
@@ -962,25 +1001,37 @@ namespace CAMel.Types
             // If the end is safe in one that is good enough.
             // Give a little wiggle as we just pull back to the safe distance.
             
-            if ((
+            if (this.type != MachineTypes.TwoAxisXY &&((
                 TPfrom.MatForm.intersect(TPfrom[TPfrom.Count - 1], TPfrom.MatForm.safeDistance).thrDist > 0.0001
                 && TPto.MatForm.intersect(TPfrom[TPfrom.Count - 1], TPto.MatForm.safeDistance).thrDist > 0.0001
                 ) || (
                 TPfrom.MatForm.intersect(TPto[0], TPfrom.MatForm.safeDistance).thrDist > 0.0001
                 && TPto.MatForm.intersect(TPto[0], TPto.MatForm.safeDistance).thrDist > 0.0001
-               ))
+               )))
             {
                 throw new ArgumentException("End points of a safe move are not in safe space.");
             }
 
             switch (type)
             {
+                case MachineTypes.TwoAxisXY:
+
+                    List<Point3d> route = new List<Point3d>();
+                    route.Add(TPfrom[TPfrom.Count - 1].Pt);
+                    route.Add(TPto[0].Pt);
+
+                    foreach (Point3d Pt in route)
+                    {
+                        // add new point at speed 0 to describe rapid move.
+                        Move.Add(new ToolPoint(Pt, new Vector3d(), -1, 0));
+                    }
+                    break;
                 case MachineTypes.ThreeAxis:
                     // Start with a straight line, see how close it 
                     // comes to danger. If its too close add a new
                     // point and try again.
 
-                    List<Point3d> route = new List<Point3d>();
+                    route = new List<Point3d>();
                     route.Add(TPfrom[TPfrom.Count - 1].Pt);
                     route.Add(TPto[0].Pt);
                     
@@ -1009,7 +1060,7 @@ namespace CAMel.Types
                     foreach(Point3d Pt in route)
                     {
                         // add new point at speed 0 to describe rapid move.
-                        Move.Add(new ToolPoint(Pt,new Vector3d(0,0,0),-1,0));
+                        Move.Add(new ToolPoint(Pt,new Vector3d(),-1,0));
                     }
 
                     break;
