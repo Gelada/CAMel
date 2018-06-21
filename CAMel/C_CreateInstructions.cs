@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.Machine;
 
 namespace CAMel
 {
@@ -47,7 +48,7 @@ namespace CAMel
             List<MachineOperation> MO = new List<MachineOperation>();
             List<IToolPointContainer> tempMO = new List<IToolPointContainer>();
 
-            Machine M = new Machine();
+            IMachine M = null;
             string name = "";
 
             if (!DA.GetData(0, ref name)) return;

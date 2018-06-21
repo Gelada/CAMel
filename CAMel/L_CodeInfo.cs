@@ -8,6 +8,7 @@ using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 using CAMel.Types.MaterialForm;
+using CAMel.Types.Machine;
 
 namespace CAMel.Types
 {
@@ -24,7 +25,7 @@ namespace CAMel.Types
         private Dictionary<string, Interval> Ranges; // Highest and lowest value for each coordinate
         private Dictionary<string, int> Warnings; // Warning text and number of occurences
         private Dictionary<string, int> Errors; // Error text and number of occurences
-        private Machine Mach; // Machine for language handling.
+        private IMachine Mach; // Machine for language handling.
 
         public MaterialTool currentMT;
         public IMaterialForm currentMF;
@@ -33,7 +34,6 @@ namespace CAMel.Types
         public CodeInfo()
         {
             this.Code = new StringBuilder();
-            this.Mach = new Machine();
             this.Ranges = new Dictionary<string,Interval>();
             this.Errors = new Dictionary<string,int>();
             this.Warnings = new Dictionary<string, int>();
@@ -41,7 +41,7 @@ namespace CAMel.Types
             this.lines = 0;
         }
 
-        public CodeInfo(Machine M)
+        public CodeInfo(IMachine M)
         {
             this.Code = new StringBuilder();
             this.Mach = M;
@@ -250,17 +250,14 @@ namespace CAMel.Types
 
             if (L.Length > 0)
             {
-                if (L[0] != Mach.CommentChar[0])
-                {
                     line = "N" + this.lines.ToString("0000") + "0 " + L;
                     this.lines++;
-                }
                 this.AppendLineNoNum(line);
             }
         }
         public void AppendComment(string L)
         {
-            AppendLine(Mach.CommentChar+L+" "+Mach.endCommentChar);
+            this.AppendLineNoNum(this.Mach.comment(L));
         }
 
         public void Append(string L)

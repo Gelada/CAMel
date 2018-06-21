@@ -7,6 +7,7 @@ using Grasshopper.Kernel.Types;
 using Rhino;
 using Rhino.DocObjects;
 using Rhino.Geometry;
+using CAMel.Types.Machine;
 
 namespace CAMel.Types
 {
@@ -108,7 +109,7 @@ namespace CAMel.Types
         }
 
         // Process the toolpaths for additions
-        public MachineOperation ProcessAdditions(Machine M)
+        public MachineOperation ProcessAdditions(IMachine M)
         {
             // Wow a 3d block of ToolPaths
             // Each of the stepdown paths can have several pieces (1st level)
@@ -154,13 +155,9 @@ namespace CAMel.Types
 
 
         // Write GCode for this operation
-        public void WriteCode(ref CodeInfo Co, Machine M, out ToolPath eP, ToolPath sP = null)
+        public void WriteCode(ref CodeInfo Co, IMachine M, out ToolPath eP, ToolPath sP = null)
         {
-            Co.AppendComment(M.SectionBreak);
-            Co.AppendComment("");
-            Co.AppendComment(" Operation: " + this.name);
-            Co.AppendComment("");
-            Co.Append(this.preCode);
+            M.writeOpStart(ref Co, this);
 
             ToolPath oldPath = sP;
             bool first = true;
@@ -174,7 +171,7 @@ namespace CAMel.Types
                 if (TP.Count > 0) // If path has length 0 just ignore
                 {
                     // Move from one path to the next 
-                    if (oldPath != null) { lastPoint = M.Transition(ref Co, oldPath, TP, first,lastPoint); }
+                    if (oldPath != null) { lastPoint = M.writeTransition(ref Co, oldPath, TP, first,lastPoint); }
                     
                     // Add Path to Code
                     lastPoint = TP.WriteCode(ref Co, M, lastPoint);

@@ -134,7 +134,7 @@ namespace CAMel
 
             lock (this.SaveCode)
             {
-                this.SaveCode = new CodeInfo(MI.Mach);
+                this.SaveCode = new CodeInfo(MI.M);
 
                 MachineInstruction procMI = MI.ProcessAdditions();
 

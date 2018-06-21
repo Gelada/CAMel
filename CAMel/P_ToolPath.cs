@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
-using CAMel.Types.MaterialForm;
-using System.Collections;
 using Rhino;
+using Rhino.Geometry;
 using Rhino.DocObjects;
+
+using CAMel.Types.MaterialForm;
+using CAMel.Types.Machine;
 
 namespace CAMel.Types
 {
@@ -168,43 +170,15 @@ namespace CAMel.Types
         // Main functions
 
         // Write the code describing this path
-        public ToolPoint WriteCode(ref CodeInfo Co, Machine M, ToolPoint beforePoint)
+        public ToolPoint WriteCode(ref CodeInfo Co,IMachine M, ToolPoint beforePoint)
         {
-            Co.AppendComment(M.SectionBreak);
-            bool preamble = false;
-            if (this.name != "")
-            {
-                Co.AppendComment(" ToolPath: " + this.name);
-                preamble = true;
-            }
-            if (Co.currentMT == null || this.MatTool.Tool_name != Co.currentMT.Tool_name)
-            {
-                Co.AppendComment(" using: " + this.MatTool.Tool_name + " into " + this.MatTool.Mat_name);
-                Co.currentMT = this.MatTool;
-                preamble = true;
-            }
-            if (Co.currentMF == null || this.MatForm.ToString() != Co.currentMF.ToString())
-            {
-                Co.AppendComment(" material: " + this.MatForm.ToString());
-                Co.currentMF = this.MatForm;
-                preamble = true;
-            }
-
-            if (preamble) { Co.AppendComment(M.SectionBreak); }
-
-            Co.Append(this.preCode);
-
             if (this.Additions.any) { throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.\n"); }
 
-            ToolPoint end = M.WriteCode(ref Co, this, beforePoint);
-
-            Co.Append(this.postCode);
-
-            return end;
+            return M.writeCode(ref Co, this, beforePoint);
         }
         // Process any additions to the path and return 
         // list of list of toolpaths (for stepdown)
-        public List<List<ToolPath>> ProcessAdditions(Machine M)
+        public List<List<ToolPath>> ProcessAdditions(IMachine M)
         {
             int i, j, k, l;
             List<List<ToolPath>> NewPaths = new List<List<ToolPath>>();
@@ -217,7 +191,7 @@ namespace CAMel.Types
 
             foreach(ToolPoint tp in this)
             {
-                tp.Dir = M.ToolDir(tp);
+                tp.Dir = M.toolDir(tp);
             }
 
             // adjust path for three axis (or index three axis)
@@ -418,7 +392,7 @@ namespace CAMel.Types
 
             for (i = 0; i < NewPaths.Count; i++)
                 for (j = 0; j < NewPaths[i].Count; j++)
-                    NewPaths[i][j] = M.InsertRetract(NewPaths[i][j]);
+                    NewPaths[i][j] = M.insertRetract(NewPaths[i][j]);
 
             return NewPaths;
         }

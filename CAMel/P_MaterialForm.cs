@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
-using Rhino.Geometry.Intersect;
 using CAMel.Types.MaterialForm;
+using CAMel.Types.Machine;
 
 namespace CAMel.Types.MaterialForm
 {
@@ -190,7 +190,7 @@ namespace CAMel.Types.MaterialForm
                 );
         }
 
-        internal static ToolPath refine(IMaterialForm MF, ToolPath TP, Machine M)
+        internal static ToolPath refine(IMaterialForm MF, ToolPath TP,IMachine M)
         {
             // for each line check if it intersects 
             // the MF and add those points. 
@@ -246,7 +246,7 @@ namespace CAMel.Types.MaterialForm
         MFintersects intersect(ToolPoint TP, double tolerance);
         bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inters); 
 
-        ToolPath refine(ToolPath TP, Machine M);
+        ToolPath refine(ToolPath TP,IMachine M);
         ToolPath InsertRetract(ToolPath TP);
 
         bool getBrep(ref Brep brep);

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
+using CAMel.Types.Machine;
 
 namespace CAMel.Types
 {
@@ -14,13 +15,12 @@ namespace CAMel.Types
     {
         private List<MachineOperation> MOs;
 
-        public Machine Mach { get; set; }
+        public IMachine M { get; set; }
 
         // Default Constructor
         public MachineInstruction()
         {
             this.MOs = new List<MachineOperation>();
-            this.Mach = new Machine();
             this.name = "";
             this.preCode = "";
             this.postCode = "";
@@ -30,24 +30,23 @@ namespace CAMel.Types
         {
             this.name = name;
             this.MOs = new List<MachineOperation>();
-            this.Mach = new Machine();
             this.preCode = "";
             this.postCode = "";
         }
         // Name and Machine
-        public MachineInstruction(string name, Machine Ma)
+        public MachineInstruction(string name, IMachine Ma)
         {
             this.name = name;
-            this.Mach = Ma;
+            this.M = Ma;
             this.MOs = new List<MachineOperation>();
             this.preCode = "";
             this.postCode = "";
         }
         // Name, Machine and Operations
-        public MachineInstruction(string name, Machine Mach, List<MachineOperation> MOs)
+        public MachineInstruction(string name, IMachine Mach, List<MachineOperation> MOs)
         {
             this.name = name;
-            this.Mach = Mach;
+            this.M = Mach;
             this.MOs = MOs;
             this.preCode = "";
             this.postCode = "";
@@ -58,7 +57,7 @@ namespace CAMel.Types
             this.name = Op.name;
             this.preCode = Op.preCode;
             this.postCode = Op.postCode;
-            this.Mach = Op.Mach;
+            this.M = Op.M;
             this.MOs = new List<MachineOperation>();
             foreach(MachineOperation MO in Op.MOs)
             {
@@ -75,7 +74,7 @@ namespace CAMel.Types
             outInst.preCode = this.preCode;
             outInst.postCode = this.postCode;
             outInst.name = this.name;
-            outInst.Mach = this.Mach;
+            outInst.M = this.M;
             outInst.MOs = MOs;
 
             return outInst;
@@ -132,7 +131,7 @@ namespace CAMel.Types
 
             foreach(MachineOperation MO in this)
             {
-                procOps.Add(MO.ProcessAdditions(this.Mach));
+                procOps.Add(MO.ProcessAdditions(this.M));
             }
 
             return this.copyWithNewPaths(procOps);
@@ -140,24 +139,12 @@ namespace CAMel.Types
 
         public void WriteCode(ref CodeInfo Co)
         {
-            DateTime thisDay = DateTime.Now;
-            Co.AppendLineNoNum(this.Mach.filestart);
-            Co.AppendComment(this.Mach.SectionBreak);
-            if (this.name != "") Co.AppendLine(this.Mach.CommentChar + " " + this.name + this.Mach.endCommentChar);
-            Co.AppendComment("");
-            Co.AppendComment(" Machine Instructions Created " + thisDay.ToString("f"));
-            Co.AppendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
-                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
-            if (this.Mach.name != "") Co.AppendComment("  for " + this.Mach.name);
-            Co.AppendComment(" Starting with: ");
-            Co.AppendComment("  Tool: "+this[0][0].MatTool.Tool_name);
-            Co.AppendComment("  in " + this[0][0].MatTool.Mat_name+ " with shape " + this[0][0].MatForm.ToString());
-            Co.AppendComment("");
-            Co.AppendComment(this.Mach.SectionBreak);
-            Co.Append(this.Mach.header);
-            Co.Append(this.preCode);
+            this.M.writeFileStart(ref Co, this);
 
             // Let the Code writer know the Material Tool and Form so can report changes
+            // for consistency this might also do speed and feed, 
+            // at the moment that is handled by passing a toolPoint around.
+
             Co.currentMT = this[0][0].MatTool;
             Co.currentMF = this[0][0].MatForm;
 
@@ -166,17 +153,11 @@ namespace CAMel.Types
 
             foreach(MachineOperation MO in this)
             {
-                MO.WriteCode(ref Co, Mach, out endPath, startPath);
+                MO.WriteCode(ref Co, M, out endPath, startPath);
                 startPath = endPath;
             }
 
-
-            Co.AppendComment(this.Mach.SectionBreak);
-            Co.AppendComment(" End of ToolPaths");
-            Co.AppendComment(this.Mach.SectionBreak);
-            Co.Append(this.postCode);
-            Co.Append(this.Mach.footer);
-            Co.AppendLineNoNum(this.Mach.fileend);
+            this.M.writeFileEnd(ref Co, this);
         }
 
         ICAMel_Base ICAMel_Base.Duplicate()
@@ -250,7 +231,7 @@ namespace CAMel.Types
             this.Value = new MachineInstruction(name);
         }
         // Name and Machine
-        public GH_MachineInstruction(string name, Machine Ma)
+        public GH_MachineInstruction(string name, IMachine Ma)
         {
             this.Value = new MachineInstruction(name, Ma);
         }

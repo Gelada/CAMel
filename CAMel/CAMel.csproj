@@ -92,10 +92,10 @@
     <Compile Include="C_CreateSurfacePath.cs" />
     <Compile Include="C_ParallelSurface.cs" />
     <Compile Include="C_Surfacing.cs" />
-    <Compile Include="C_PocketNC.cs" />
+    <None Include="C_PocketNC.cs" />
     <Compile Include="C_CreateMaterialTool.cs" />
     <Compile Include="C_CreateMaterialForm.cs" />
-    <Compile Include="C_Create3AxisMachine.cs" />
+    <None Include="C_Create3AxisMachine.cs" />
     <Compile Include="C_CreateOperation.cs" />
     <Compile Include="C_CreateToolPath.cs" />
     <Compile Include="CAMelInfo.cs" />
@@ -103,6 +103,7 @@
     <Compile Include="C_Index2dCut.cs" />
     <Compile Include="C_Index3Axis.cs" />
     <Compile Include="C_ReadCode.cs" />
+    <Compile Include="L_MachThreeAxis.cs" />
     <Compile Include="L_MFBox.cs" />
     <Compile Include="L_MFCylinder.cs" />
     <Compile Include="L_CodeInfo.cs" />
@@ -115,9 +116,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="clipper.cs" />
-    <Compile Include="P_Machine - Copy.cs" />
+    <None Include="P_Machine - Copy %282%29.cs" />
+    <Compile Include="L_Machine.cs" />
     <Compile Include="P_MachineInstructions.cs" />
-    <Compile Include="P_PocketPath.cs" />
+    <None Include="P_PocketPath.cs" />
     <Compile Include="P_SurfacePath.cs" />
     <Compile Include="P_MachineOperation.cs" />
     <Compile Include="P_MaterialForm.cs" />

@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.Machine;
 
 namespace CAMel
 {
@@ -47,7 +48,7 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             string Code = "";
-            Machine M = new Machine();
+            IMachine M = null;
 
             if (!DA.GetData(0, ref Code)) return;
             if (!DA.GetData(1, ref M)) return;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Rhino.Geometry;
+using CAMel.Types.Machine;
 
 namespace CAMel.Types.MaterialForm
 {
@@ -158,7 +159,7 @@ namespace CAMel.Types.MaterialForm
             return outD;
         }
 
-        public ToolPath refine(ToolPath TP, Machine M)
+        public ToolPath refine(ToolPath TP, IMachine M)
         {
             return MFDefault.refine(this, TP, M);
         }
