@@ -44,7 +44,7 @@ namespace CAMel.Types
         public string SpeedChangeCommand { get; set; }
         public double PathJump { get; set; } // Max distance allowed between paths in material.
         public string SectionBreak { get; set; }
-        private Vector3d Pivot { get; set; }
+        public Vector3d Pivot { get; set; }
         // TODO replace this flag with separate machine type for 2d vs 3d.
         // Really need to refactor to subclass machine types 
         //public bool dim2 { get; internal set; } // True if machine is 2d
@@ -350,7 +350,6 @@ namespace CAMel.Types
                     foreach (string err in Pt.error)
                     {
                         Co.AddError(err);
-                        Co.AppendComment(err);
                     }
                 }
                 if (Pt.warning != null)
@@ -681,8 +680,19 @@ namespace CAMel.Types
         {
             ToolPoint outPoint = beforePoint;
             // check there is anything to transition from
-            if (fP != null) 
+            if (fP == null)
             {
+                if(this.type == MachineTypes.TwoAxisXY)
+                {
+                    ToolPath startPath = tP.copyWithNewPoints(new List<ToolPoint>());
+                    startPath.Add(tP[0]);
+                    startPath[0].feed = 0;
+                    startPath.preCode = String.Empty;
+                    startPath.postCode = String.Empty;
+                    outPoint = startPath.WriteCode(ref Co, this, beforePoint);
+                }
+            }
+            else {
                 // See if we lie in the material
                 // Check end of this path and start of TP
                 // For each see if it is safe in one Material Form
@@ -995,7 +1005,9 @@ namespace CAMel.Types
         public ToolPath SafeMove(ToolPath TPfrom, ToolPath TPto)
         {
             ToolPath Move = TPto.copyWithNewPoints(new List<ToolPoint>());
-            Move.name = "";
+            Move.preCode = string.Empty;
+            Move.postCode = string.Empty;
+            Move.name = string.Empty;
 
             // Check ends are safe, or throw error
             // If the end is safe in one that is good enough.
