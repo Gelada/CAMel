@@ -84,6 +84,7 @@
     </None>
     <None Include="ClassDiagram1.cd" />
     <None Include="C_PhotoContours.cs" />
+    <None Include="C_Create2AxisMachine.cs" />
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_PhotoSurface.cs" />
     <Compile Include="C_Trace.cs" />
@@ -95,7 +96,7 @@
     <None Include="C_PocketNC.cs" />
     <Compile Include="C_CreateMaterialTool.cs" />
     <Compile Include="C_CreateMaterialForm.cs" />
-    <None Include="C_Create3AxisMachine.cs" />
+    <Compile Include="C_Create3AxisMachine.cs" />
     <Compile Include="C_CreateOperation.cs" />
     <Compile Include="C_CreateToolPath.cs" />
     <Compile Include="CAMelInfo.cs" />

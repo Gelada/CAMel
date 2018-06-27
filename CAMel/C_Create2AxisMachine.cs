@@ -5,7 +5,6 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
-using CAMel.Types.Machine;
 
 namespace CAMel
 {
@@ -67,13 +66,21 @@ namespace CAMel
             if (!DA.GetData(2, ref foot)) return;
             if (!DA.GetData(3, ref PJ)) return;
 
-            IGCodeMachine M = new ThreeAxis(name, head, foot);
+            Machine M = new Machine(name, MachineTypes.ThreeAxis, head, foot,"","");
 
             if (DA.GetDataList(4, CC) && CC[0] != "")
             {
-                M.commentStart = CC[0];
-                if (CC.Count > 1) { M.commentEnd = CC[1]; }
-                if (CC.Count > 2) { M.sectionBreak = CC[2]; }
+                M.CommentChar = CC[0];
+                if (CC.Count > 1) { M.endCommentChar = CC[1]; }
+                if (CC.Count > 2) { M.SectionBreak = CC[2]; }
+            }
+            if (DA.GetDataList(5, Fe) && (Fe.Count > 1 || Fe[0] != ""))
+            {
+                int dim = 0;
+                if(int.TryParse(Fe[0], out dim)){ if(dim!=0) { M.type = MachineTypes.TwoAxisXY; } }
+                if (Fe.Count > 1) { M.leads = Convert.ToDouble(Fe[1]); }
+                if (Fe.Count > 2) { M.InsertCode = Fe[2]; }
+                if (Fe.Count > 3) { M.RetractCode = Fe[3]; }
             }
 
             DA.SetData(0, M);

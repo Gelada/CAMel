@@ -24,6 +24,8 @@ namespace CAMel.Types.Machine
         string fileEnd { get; set; }
         string commentStart { get; set; }
         string commentEnd { get; set; }
+
+        ToolPoint readTP(Dictionary<char, double> vals);
     }
 
     public struct TPchanges
@@ -123,7 +125,6 @@ namespace CAMel.Types.Machine
         }
     }
 
-
     public static class GCode
     { 
         // Formatting structure for GCode
@@ -205,5 +206,48 @@ namespace CAMel.Types.Machine
             Co.Append(TP.postCode);
         }
 
+        // GCode reading
+        static private Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);
+        static private double GetValue(string line, char split, double old, ref bool changed)
+        {
+            double val = old;
+            string[] splitLine = line.Split(split);
+            if (splitLine.Length > 1 && numbPattern.IsMatch(splitLine[1]))
+            {
+                string monkey = numbPattern.Replace(splitLine[1], "$1");
+                val = Convert.ToDouble(monkey);
+                if (val != old) changed = true;
+            }
+            return val;
+        }
+
+        static public ToolPath Read(IGCodeMachine M, string Code, List<char> terms)
+        {
+            ToolPath TP = new ToolPath();
+            Dictionary<char, double> vals = new Dictionary<char, double>();
+            foreach(char c in terms) { vals.Add(c, 0); }
+
+            char[] seps = { '\n', '\r' };
+            String[] Lines = Code.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+            bool changed;
+
+            foreach (String line in Lines)
+            {
+                changed = false;
+                foreach (char t in terms)
+                { vals[t] = GetValue(line, t, vals[t], ref changed); }
+                //interpret a G0 command.
+                if (line.Contains(@"G00") || line.ToString().Contains(@"G0 "))
+                {
+                    if (vals.ContainsKey('F') && vals['F'] != 0)
+                    {
+                        changed = true;
+                        vals['F'] = 0;
+                    }
+                }
+                if (changed){TP.Add(M.readTP(vals));}
+            }
+            return TP;
+        }
     }
 }
