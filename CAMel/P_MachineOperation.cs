@@ -171,7 +171,7 @@ namespace CAMel.Types
                 if (TP.Count > 0) // If path has length 0 just ignore
                 {
                     // Move from one path to the next 
-                    if (oldPath != null) { lastPoint = M.writeTransition(ref Co, oldPath, TP, first,lastPoint); }
+                    lastPoint = M.writeTransition(ref Co, oldPath, TP, first,lastPoint);
                     
                     // Add Path to Code
                     lastPoint = TP.WriteCode(ref Co, M, lastPoint);

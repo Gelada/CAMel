@@ -239,8 +239,8 @@ namespace CAMel.Types.Machine
         public ToolPoint writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first, ToolPoint beforePoint)
         {
             ToolPoint outPoint = beforePoint;
-            // check there is anything to transition from
-            if (fP != null)
+            // check there is anything to transition from or to
+            if (fP != null && fP.Count > 0 && tP != null && tP.Count > 0)
             {
                 // See if we lie in the material
                 // Check end of this path and start of TP

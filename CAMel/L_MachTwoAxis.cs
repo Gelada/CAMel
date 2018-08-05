@@ -243,7 +243,17 @@ namespace CAMel.Types.Machine
         {
             ToolPoint outPoint = beforePoint;
             // check there is anything to transition from
-            if (fP != null)
+            if ((fP == null || fP.Count == 0) && tP!= null && tP.Count > 0)
+            {
+                ToolPath startPath = tP.copyWithNewPoints(new List<ToolPoint>());
+                startPath.Add(tP[0]);
+                startPath[0].feed = 0;
+                startPath.name = String.Empty;
+                startPath.preCode = String.Empty;
+                startPath.postCode = String.Empty;
+                outPoint = startPath.WriteCode(ref Co, this, beforePoint);
+            }
+            else if (tP!=null && tP.Count > 0)
             {
                 List<Point3d> route = new List<Point3d>();
                 route.Add(fP[fP.Count - 1].Pt);
