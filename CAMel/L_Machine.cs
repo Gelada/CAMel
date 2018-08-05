@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using Rhino.Geometry.Intersect;
 using CAMel.Types.MaterialForm;
@@ -122,6 +120,63 @@ namespace CAMel.Types.Machine
             }
 
             return new Vector3d(Ao, Bo, 0);
+        }
+    }
+
+    public static class Utility
+    {
+        public static ToolPath LeadInOut2d(ToolPath TP, double lead)
+        {
+            double leadLen = lead * TP.Additions.leadFactor;
+            ToolPath newTP = new ToolPath(TP);
+            PolylineCurve toolL = TP.GetLine();
+
+            // Find the point on a circle furthest from the toolpath. 
+            int testNumber = 50;
+            Point3d LeadStart = new Point3d(), testPt;
+            double testdist, dist = -1;
+            bool noInter, correctSide;
+            for (int i = 0; i < testNumber; i++)
+            {
+                double ang = 2.0 * Math.PI * i / (double)testNumber;
+                testPt = TP[0].Pt + leadLen * new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
+
+                // Check point is inside (or outside) the curve
+                correctSide = toolL.Contains(testPt) == PointContainment.Inside;
+                if (leadLen > 0) { correctSide = !correctSide; }
+
+                // if on the correct side find the distance to the curve and 
+                // update the point if there is a line from point to curve that
+                // does not hit material.
+                if (correctSide)
+                {
+                    toolL.ClosestPoint(testPt, out testdist);
+                    testdist = testPt.DistanceTo(toolL.PointAt(testdist));
+                    noInter = Intersection.CurveCurve(toolL, new Line(TP[0].Pt, testPt).ToNurbsCurve(), 0.00001, 0.00001).Count <= 1;
+
+                    if (noInter && testdist > dist)
+                    {
+                        dist = testdist;
+                        LeadStart = testPt;
+                    }
+                }
+            }
+            // If no suitable point found throw an error, otherwise add point to 
+            // start and end
+            if (dist < 0)
+            {
+                newTP[0].AddError("No suitable point for lead in and out found.");
+            }
+            else
+            {
+                ToolPoint LeadTP = new ToolPoint(TP[0]);
+                LeadTP.Pt = LeadStart;
+                newTP.Add(new ToolPoint(LeadTP));
+                newTP.Insert(0, LeadTP);
+            }
+
+            newTP.Additions.leadFactor = 0;
+            return newTP;
         }
     }
 

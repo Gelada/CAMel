@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 using CAMel.Types.MaterialForm;
 using CAMel.Types.Machine;

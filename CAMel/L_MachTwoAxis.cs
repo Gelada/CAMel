@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace CAMel.Types.Machine
 {
-    public class ThreeAxis : IGCodeMachine
+    public class TwoAxis : IGCodeMachine
     {
         public double pathJump { get; set; }
         public string sectionBreak { get; set; }
@@ -22,9 +22,11 @@ namespace CAMel.Types.Machine
         public string commentStart { get; set; }
         public string commentEnd { get; set; }
 
+        public double leads { get; set; }
+
         public bool IsValid => throw new NotImplementedException();
 
-        public ThreeAxis()
+        public TwoAxis()
         {
             this.name = "Unamed Machine";
             this.header = String.Empty;
@@ -36,8 +38,9 @@ namespace CAMel.Types.Machine
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
             this.pathJump = 1;
+            this.leads = 1;
         }
-        public ThreeAxis(string name, string header, string footer)
+        public TwoAxis(string name, string header, string footer)
         {
             this.name = name;
             this.header = header;
@@ -49,8 +52,9 @@ namespace CAMel.Types.Machine
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
             this.pathJump = 1;
+            this.leads = 1;
         }
-        public ThreeAxis(ThreeAxis TA)
+        public TwoAxis(TwoAxis TA)
         {
             this.name = TA.name;
             this.header = TA.header;
@@ -62,21 +66,21 @@ namespace CAMel.Types.Machine
             this.sectionBreak = TA.sectionBreak;
             this.speedChangeCommand = TA.speedChangeCommand;
             this.pathJump = TA.pathJump;
+            this.leads = TA.leads;
         }
 
-        public string TypeDescription
-        { get { return @"Instructions for a 3-Axis machine"; } }
-        public string TypeName
-        { get { return @"CAMelThreeAxis"; } }
+        public string TypeDescription => @"Instructions for a 2-Axis machine";
+        public string TypeName => @"CAMelTwoAxis";
+
         public string comment(string L)
         {
             if (L == "" || L == " ") { return " "; }
             else { return this.commentStart + " " + L + " " + this.commentEnd; }
         }
 
-        public ICAMel_Base Duplicate() => new ThreeAxis(this);
+        public ICAMel_Base Duplicate() => new TwoAxis(this);
 
-        public ToolPath insertRetract(ToolPath tP) => tP.MatForm.InsertRetract(tP);
+        public ToolPath insertRetract(ToolPath tP) => Utility.LeadInOut2d(tP, this.leads);
 
         public ToolPoint Interpolate(ToolPoint toolPoint1, ToolPoint toolPoint2, double par)
         {
@@ -90,12 +94,11 @@ namespace CAMel.Types.Machine
             List<char> terms = new List<char>();
             terms.Add('X');
             terms.Add('Y');
-            terms.Add('Z');
             terms.Add('S');
             terms.Add('F');
             return GCode.Read(this,Code,terms);
         }
-        public ToolPoint readTP(Dictionary<char, double> vals) => new ToolPoint(new Point3d(vals['X'], vals['Y'], vals['Z']), new Vector3d(0, 0, 0), vals['S'], vals['F']);
+        public ToolPoint readTP(Dictionary<char, double> vals) => new ToolPoint(new Point3d(vals['X'], vals['Y'],0), new Vector3d(0, 0, 0), vals['S'], vals['F']);
 
         public Vector3d toolDir(ToolPoint TP) => -Vector3d.ZAxis;
 
@@ -242,71 +245,20 @@ namespace CAMel.Types.Machine
             // check there is anything to transition from
             if (fP != null)
             {
-                // See if we lie in the material
-                // Check end of this path and start of TP
-                // For each see if it is safe in one Material Form
-                // As we pull back to safe distance we allow a little wiggle.
-                if ((
-                    fP.MatForm.intersect(fP[fP.Count - 1], fP.MatForm.safeDistance).thrDist > 0.0001
-                    && tP.MatForm.intersect(fP[fP.Count - 1], tP.MatForm.safeDistance).thrDist > 0.0001
-                    ) || (
-                    fP.MatForm.intersect(tP[0], fP.MatForm.safeDistance).thrDist > 0.0001
-                    && tP.MatForm.intersect(tP[0], tP.MatForm.safeDistance).thrDist > 0.0001
-                    ))
+                List<Point3d> route = new List<Point3d>();
+                route.Add(fP[fP.Count - 1].Pt);
+                route.Add(tP[0].Pt);
+
+                ToolPath Move = tP.copyWithNewPoints(new List<ToolPoint>());
+                Move.name = String.Empty;
+                Move.preCode = String.Empty;
+                Move.postCode = String.Empty;
+                foreach (Point3d Pt in route)
                 {
-                    // If in material we probably need to throw an error
-                    // first path in an operation
-                    double Length = fP[fP.Count - 1].Pt.DistanceTo(tP[0].Pt);
-                    if (first) { Co.AddError("Transition between operations might be in material."); }
-                    else if (Length > this.pathJump) // changing between paths in material
-                    {
-                        Co.AddError("Long Transition between paths in material. \n"
-                            + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
-                            + this.pathJump.ToString() + " to at least: " + Length.ToString());
-                    }
+                    // add new point at speed 0 to describe rapid move.
+                    Move.Add(new ToolPoint(Pt, new Vector3d(), -1, 0));
                 }
-                else // Safely move from one safe point to another.
-                {
-                    // Start with a straight line, see how close it 
-                    // comes to danger. If its too close add a new
-                    // point and try again.
-
-                    List<Point3d> route = new List<Point3d>();
-                    route.Add(fP[fP.Count - 1].Pt);
-                    route.Add(tP[0].Pt);
-
-                    int i;
-                    MFintersects inters;
-                    MFintersects fromMid;
-
-                    // loop through intersecting with safe bubble and adding points
-                    for (i = 0; i < (route.Count - 1) && i < 100;)
-                    {
-                        if (tP.MatForm.intersect(route[i], route[i + 1], tP.MatForm.safeDistance, out inters))
-                        {
-                            fromMid = tP.MatForm.intersect(inters.mid, inters.midOut, tP.MatForm.safeDistance * 1.1);
-                            route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-                        }
-                        else {  i++; }
-                    }
-
-                    // get rid of start and end points that are already in the paths
-                    route.RemoveAt(0);
-                    route.RemoveAt(route.Count - 1);
-
-                    ToolPath Move = tP.copyWithNewPoints(new List<ToolPoint>());
-                    Move.name = String.Empty;
-                    Move.preCode = String.Empty;
-                    Move.postCode = String.Empty;
-
-                    foreach (Point3d Pt in route)
-                    {
-                        // add new point at speed 0 to describe rapid move.
-                        Move.Add(new ToolPoint(Pt, new Vector3d(), -1, 0));
-                    }
-
-                    outPoint = Move.WriteCode(ref Co, this, beforePoint);
-                }
+                outPoint = Move.WriteCode(ref Co, this, beforePoint);
             }
             return outPoint;
         }

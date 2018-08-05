@@ -21,7 +21,7 @@ namespace CAMel.Types
     }
 
     // Settings for a machine (this is the POST!)
-    // This is the only place we handle language
+    // This is the only plazace we handle language
     // So other languages can be used.
     // 
     // TODO This is not the right way to do it. 

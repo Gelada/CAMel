@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 using ClipperLib;
 
