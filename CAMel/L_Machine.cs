@@ -125,6 +125,14 @@ namespace CAMel.Types.Machine
 
     public static class Utility
     {
+        private static Curve blendIn(Point3d fPt, Point3d bPt, Vector3d Dir, double sAng, double eAng)
+        {
+            if(sAng == eAng) // straight line
+            {
+
+            }
+        }
+
         public static ToolPath LeadInOut2d(ToolPath TP, double lead)
         {
             double leadLen = lead * TP.Additions.leadFactor;
