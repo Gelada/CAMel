@@ -135,22 +135,20 @@ namespace CAMel.Types
         /// <summary>
         /// Offset toolpoint so that it does not gouge an angled path. 
         /// </summary>
-        public ToolPoint threeAxisHeightOffset(ToolPoint toolPoint, Vector3d travel, Vector3d orth)
+        public ToolPoint threeAxisHeightOffset(ToolPoint tP, Vector3d travel, Vector3d orth)
         {
             // TODO at the moment this offset assumes a round end mill.
 
             Vector3d os = travel;
             os.Unitize();
             os.Transform(Transform.Rotation(Math.PI / 2, orth,new Point3d(0,0,0)));
-            double testd = os * toolPoint.Dir;
+            double testd = os * tP.Dir;
             if (testd < 0) os = -1*os;
 
-            ToolPoint osTp = new ToolPoint(toolPoint);   
+            ToolPoint osTp = new ToolPoint(tP);   
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
-            osTp.Pt = osTp.Pt + this.toolWidth*(os - toolPoint.Dir)/2;
-
-            //osTp.Pt = osTp.Pt + 1*(os - toolPoint.Dir)/2;
+            osTp.Pt = osTp.Pt + this.toolWidth*(os - tP.Dir)/2;
         
             return osTp;
         }

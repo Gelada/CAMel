@@ -21,12 +21,13 @@ namespace CAMel.Types.Machine
         public string name { get; set; }
         public string commentStart { get; set; }
         public string commentEnd { get; set; }
+        List<char> terms;
 
         public bool IsValid => throw new NotImplementedException();
 
         public ThreeAxis()
         {
-            this.name = "Unamed Machine";
+            this.name = "Unamed 3-Axis Machine";
             this.header = String.Empty;
             this.footer = String.Empty;
             this.fileStart = String.Empty;
@@ -36,6 +37,7 @@ namespace CAMel.Types.Machine
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
             this.pathJump = 1;
+            setTerms();
         }
         public ThreeAxis(string name, string header, string footer)
         {
@@ -49,6 +51,7 @@ namespace CAMel.Types.Machine
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
             this.pathJump = 1;
+            setTerms();
         }
         public ThreeAxis(ThreeAxis TA)
         {
@@ -62,6 +65,17 @@ namespace CAMel.Types.Machine
             this.sectionBreak = TA.sectionBreak;
             this.speedChangeCommand = TA.speedChangeCommand;
             this.pathJump = TA.pathJump;
+            setTerms();
+        }
+
+        private void setTerms()
+        {
+            terms = new List<char>();
+            terms.Add('X');
+            terms.Add('Y');
+            terms.Add('Z');
+            terms.Add('S');
+            terms.Add('F');
         }
 
         public string TypeDescription
@@ -78,24 +92,14 @@ namespace CAMel.Types.Machine
 
         public ToolPath insertRetract(ToolPath tP) => tP.MatForm.InsertRetract(tP);
 
-        public ToolPoint Interpolate(ToolPoint toolPoint1, ToolPoint toolPoint2, double par)
-        {
-            ToolPoint TPo = new ToolPoint(toolPoint1);
-            TPo.Pt = toolPoint1.Pt * par + toolPoint2.Pt * (1 - par);
-            return TPo;
-        }
+        public ToolPoint Interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
+        => Kinematics.Interpolate_Linear(fP, tP, par);
 
-        public ToolPath ReadCode(string Code)
-        {
-            List<char> terms = new List<char>();
-            terms.Add('X');
-            terms.Add('Y');
-            terms.Add('Z');
-            terms.Add('S');
-            terms.Add('F');
-            return GCode.Read(this,Code,terms);
-        }
-        public ToolPoint readTP(Dictionary<char, double> vals) => new ToolPoint(new Point3d(vals['X'], vals['Y'], vals['Z']), new Vector3d(0, 0, 0), vals['S'], vals['F']);
+        public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng) => 0;
+
+        public ToolPath ReadCode(List<MaterialTool> MTs, string Code) => GCode.GcRead(this,MTs,Code,terms);
+
+        public ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT) => new ToolPoint(new Point3d(vals['X'], vals['Y'], vals['Z']), new Vector3d(0, 0, 0), vals['S'], vals['F']);
 
         public Vector3d toolDir(ToolPoint TP) => -Vector3d.ZAxis;
 
@@ -182,7 +186,7 @@ namespace CAMel.Types.Machine
                 }
 
                 // Add the position information
-                PtCode = Kinematics.IK_ThreeAxis(Pt, tP.MatTool);
+                PtCode = GCode.GcThreeAxis(Pt);
                 
                 // Act if feed has changed
                 if (FChange)

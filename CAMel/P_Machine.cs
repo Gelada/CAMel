@@ -34,11 +34,12 @@ namespace CAMel.Types.Machine
         ToolPoint writeCode(ref CodeInfo Co, ToolPath tP, ToolPoint beforePoint);
         ToolPoint writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first, ToolPoint beforePoint);
 
-        ToolPath ReadCode(string Code);
+        ToolPath ReadCode(List<MaterialTool> MTs, string Code);
 
         ToolPath insertRetract(ToolPath tP);
         Vector3d toolDir(ToolPoint TP);
-        ToolPoint Interpolate(ToolPoint toolPoint1, ToolPoint toolPoint2, double par);
+        ToolPoint Interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng);
+        double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng); // max change for orientation axes
     }
 
  

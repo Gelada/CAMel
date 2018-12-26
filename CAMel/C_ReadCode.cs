@@ -28,6 +28,7 @@ namespace CAMel
         {
             pManager.AddTextParameter("Code", "C", "CNC code file", GH_ParamAccess.item);
             pManager.AddGenericParameter("Machine", "M", "Machine to read code", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Material Tool", "MT", "List of Material/Tools used (currently only first will be used)", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -49,12 +50,14 @@ namespace CAMel
         {
             string Code = "";
             IMachine M = null;
+            List<MaterialTool> MTs = new List<MaterialTool>();
 
             if (!DA.GetData(0, ref Code)) return;
             if (!DA.GetData(1, ref M)) return;
+            if (!DA.GetDataList(2, MTs)) return;
 
 
-            ToolPath TP = M.ReadCode(Code);
+            ToolPath TP = M.ReadCode(MTs, Code);
 
             List<Point3d> selPt = new List<Point3d>();
             List<Vector3d> selDir = new List<Vector3d>();

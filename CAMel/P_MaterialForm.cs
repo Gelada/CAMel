@@ -217,16 +217,16 @@ namespace CAMel.Types.MaterialForm
 
                     if (inters.firstDist > 0) // add first intersection if on line
                     {
-                        refined.Add(M.Interpolate(TP[i], TP[i + 1], inters.firstDist / lineLen));
+                        refined.Add(M.Interpolate(TP[i], TP[i + 1],TP.MatTool, inters.firstDist / lineLen, false));
                     }
                    
                     if(inters.firstDist > 0 && lineLen > inters.thrDist) // add midpoint of intersection if it passes right through
                     {
-                        refined.Add(M.Interpolate(TP[i], TP[i + 1], (inters.firstDist+inters.thrDist) / (2.0*lineLen)));
+                        refined.Add(M.Interpolate(TP[i], TP[i + 1],TP.MatTool, (inters.firstDist+inters.thrDist) / (2.0*lineLen),false));
                     }
                     if(lineLen > inters.thrDist) // add last intersection if on line
                     {
-                        refined.Add(M.Interpolate(TP[i], TP[i + 1], inters.thrDist / lineLen));
+                        refined.Add(M.Interpolate(TP[i], TP[i + 1], TP.MatTool, inters.thrDist / lineLen,false));
                     }
 
                 }
