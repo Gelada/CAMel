@@ -53,7 +53,7 @@ namespace CAMel.Types.MaterialForm
 
         public MFintersects intersect(ToolPoint TP, double tolerance)
         {
-            return this.intersect(TP.Pt, -TP.Dir, tolerance);
+            return this.intersect(TP.Pt, TP.Dir, tolerance);
         }
 
         public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter)

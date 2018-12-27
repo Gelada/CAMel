@@ -28,7 +28,7 @@ namespace CAMel
         {
             pManager.AddTextParameter("Code", "C", "CNC code file", GH_ParamAccess.item);
             pManager.AddGenericParameter("Machine", "M", "Machine to read code", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Material Tool", "MT", "List of Material/Tools used (currently only first will be used)", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Material Tool", "MT", "List of Material/Tools used (currently only first will be used)", GH_ParamAccess.list);
         }
 
         /// <summary>

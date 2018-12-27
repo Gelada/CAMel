@@ -33,7 +33,7 @@ namespace CAMel.Types
         public ToolPoint()
         {
             this.Pt = new Point3d(0, 0, 0);
-            this.Dir = new Vector3d(0, 0, 0);
+            this.Dir = new Vector3d(0, 0, 1);
             this.speed = -1;
             this.feed = -1;
             this.error = null;
@@ -46,7 +46,7 @@ namespace CAMel.Types
         public ToolPoint(Point3d Pt)
         {
             this.Pt = Pt;
-            this.Dir = new Vector3d(0, 0, 0);
+            this.Dir = new Vector3d(0, 0, 1);
             this.speed = -1;
             this.feed = -1;
             this.error = null;
@@ -158,11 +158,15 @@ namespace CAMel.Types
         {
             string outp = this.name;
             if(outp != "") { outp = outp + " "; }
-            outp = outp + "Pt: " + this.Pt.ToString() + " Dir: " + this.Dir.ToString();
+            outp = outp + "Pt: (" +
+                this.Pt.X.ToString("0.000") + ", " + this.Pt.Y.ToString("0.000") + ", " + this.Pt.Z.ToString("0.000") +
+                ") Dir: (" +
+                this.Dir.X.ToString("0.000") + ", " + this.Dir.Y.ToString("0.000") + ", " + this.Dir.Z.ToString("0.000") +
+                ")";
             if (preCode != "") { outp = preCode + "\n" + outp; }
             if (speed >= 0 || feed >= 0)
             {
-                outp = "\n" + outp + "Speed: " + this.speed.ToString() + " Feed: " + this.feed.ToString();
+                outp = outp + " Speed: " + this.speed.ToString("0.000") + " Feed: " + this.feed.ToString("0.000");
             }
             if (postCode != "") { outp = outp + "\n" + postCode; }
             return outp;

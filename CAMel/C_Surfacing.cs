@@ -80,7 +80,7 @@ namespace CAMel
                 ST = SurfaceType.Brep;
             } else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The surface parameter must be a Brep, Surface of Mesh");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The surface parameter must be a Brep, Surface or Mesh");
                 return;
             }
             if (!DA.GetData(1, ref R)) return;
@@ -133,7 +133,7 @@ namespace CAMel
             DataTree<Vector3d> RDTree = new DataTree<Vector3d>();
             GH_Path path;
 
-            Pts = Rough.RawPaths(out Dirs);
+            Pts = Rough.GetPointsandDirs(out Dirs);
             for(int i = 0; i<Pts.Count; i++)
             {
                 path = new GH_Path(i);

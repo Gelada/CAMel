@@ -189,15 +189,10 @@ namespace CAMel.Types
 
             // make sure the directions are correct for the machine
 
-            foreach(ToolPoint tp in this)
-            {
-                tp.Dir = M.toolDir(tp);
-            }
-
             // adjust path for three axis (or index three axis)
             if(this.Additions.threeAxisHeightOffset)
             {
-                useTP = this.threeAxisHeightOffset();
+                useTP = this.threeAxisHeightOffset(M);
             }
             else
             {
@@ -269,14 +264,14 @@ namespace CAMel.Types
                                 TPt = new ToolPoint(refPath[j - 1]);
                                 height = useTP.MatTool.finishDepth;
                                 if (height > MatDist[j - 1]) height = 0;
-                                TPt.Pt = -TPt.Dir * height + TPt.Pt; // stay finishDepth above final path
+                                TPt.Pt = M.toolDir(TPt) * height + TPt.Pt; // stay finishDepth above final path
 
                                 tempTP.Add(TPt);
                             }
                             height = MatDist[j] - CutLevel[i];
                             if (height < useTP.MatTool.finishDepth) height = useTP.MatTool.finishDepth; // stay finishDepth above final path
                             TPt = new ToolPoint(refPath[j]);
-                            TPt.Pt = -TPt.Dir * height + TPt.Pt;
+                            TPt.Pt = M.toolDir(TPt) * height + TPt.Pt;
                             tempTP.Add(TPt);
                             start = false;
                             droplength = 0;
@@ -288,7 +283,7 @@ namespace CAMel.Types
                                 TPt = new ToolPoint(refPath[j]);
                                 height = useTP.MatTool.finishDepth;
                                 if (height > MatDist[j]) height = 0;
-                                TPt.Pt = -TPt.Dir * height + TPt.Pt;
+                                TPt.Pt = M.toolDir(TPt) * height + TPt.Pt;
                                 tempTP.Add(TPt);
                             } // otherwise we do nothing
                         }
@@ -305,7 +300,7 @@ namespace CAMel.Types
                                     TPt = new ToolPoint(refPath[j]);
                                     height = useTP.MatTool.finishDepth;
                                     if (height > MatDist[j]) height = 0;
-                                    TPt.Pt = -TPt.Dir * height + TPt.Pt;
+                                    TPt.Pt = M.toolDir(TPt) * height + TPt.Pt;
                                     tempTP.Add(TPt);
                                     end = true;
                                 }
@@ -314,7 +309,7 @@ namespace CAMel.Types
                                     TPt = new ToolPoint(refPath[j]);
                                     height = useTP.MatTool.finishDepth;
                                     if (height > MatDist[j]) height = 0;
-                                    TPt.Pt = -TPt.Dir * height + TPt.Pt;
+                                    TPt.Pt = M.toolDir(TPt) * height + TPt.Pt;
                                     tempTP.Add(TPt);
                                 }
                             }
@@ -325,7 +320,7 @@ namespace CAMel.Types
                                     TPt = new ToolPoint(refPath[j]);
                                     height = useTP.MatTool.finishDepth;
                                     if (height > MatDist[j]) height = 0;
-                                    TPt.Pt = -TPt.Dir * height + TPt.Pt;
+                                    TPt.Pt = M.toolDir(TPt) * height + TPt.Pt;
                                     tempTP.Add(TPt);
                                 }
                                 else //check length of drop
@@ -341,7 +336,7 @@ namespace CAMel.Types
                                         TPt = new ToolPoint(refPath[j]);
                                         height = useTP.MatTool.finishDepth;
                                         if (height > MatDist[j]) height = 0;
-                                        TPt.Pt = -TPt.Dir * height + TPt.Pt;
+                                        TPt.Pt = M.toolDir(TPt) * height + TPt.Pt;
                                         tempTP.Add(TPt);
                                         // leap forward cut path and start a new one
                                         // giving settings to add inserts and retracts
@@ -359,7 +354,7 @@ namespace CAMel.Types
                                         TPt = new ToolPoint(refPath[k - 1]);
                                         height = useTP.MatTool.finishDepth;
                                         if (height > MatDist[k - 1]) height = 0;
-                                        TPt.Pt = -TPt.Dir * height + TPt.Pt;
+                                        TPt.Pt = M.toolDir(TPt) * height + TPt.Pt;
                                         tempTP.Add(TPt);
                                         j = k - 1; //set j to k-1 so it deals with the k point next
 
@@ -369,7 +364,7 @@ namespace CAMel.Types
                                         TPt = new ToolPoint(refPath[j]);
                                         height = useTP.MatTool.finishDepth;
                                         if (height > MatDist[j]) height = 0;
-                                        TPt.Pt = -TPt.Dir * height + TPt.Pt;
+                                        TPt.Pt = M.toolDir(TPt) * height + TPt.Pt;
                                         tempTP.Add(TPt);
                                     }
                                 }
@@ -400,7 +395,7 @@ namespace CAMel.Types
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
         // TODO make this guarantee that it does not gouge locally. There is a problem 
         // with paths that are steep down, followed by some bottom moves followed by steep out. 
-        public ToolPath threeAxisHeightOffset()
+        public ToolPath threeAxisHeightOffset(IMachine M)
         {
             List<ToolPoint> offsetPath = new List<ToolPoint>();
 
@@ -411,11 +406,11 @@ namespace CAMel.Types
             Vector3d orth = new Vector3d(0, 0, 0);
             bool orthSet = false;
 
-            if (dir == this[0].Dir) point = this[0];
+            if (dir == M.toolDir(this[0]) || dir == -M.toolDir(this[0])) { point = this[0]; }
             else
             {
-                orth = Vector3d.CrossProduct(dir, this[0].Dir);
-                point = this.MatTool.threeAxisHeightOffset(this[0], dir, orth);
+                orth = Vector3d.CrossProduct(dir, M.toolDir(this[0]));
+                point = this.MatTool.threeAxisHeightOffset(M, this[0], dir, orth);
                 orthSet = true;
             }
 
@@ -438,7 +433,7 @@ namespace CAMel.Types
             for (int i = 1; i < this.Count - 1; i++)
             {
                 // Keep track of tool point direction to warn if it changes (but only once)
-                if (this[i - 1].Dir != this[i].Dir && !changeDirection)
+                if (M.toolDir(this[i - 1]) != M.toolDir(this[i]) && !changeDirection)
                 {
                     this[i].warning.Add("Height offsetting is not designed for 5-Axis motion, it may be unpredictable.");
                     changeDirection = true;
@@ -446,16 +441,16 @@ namespace CAMel.Types
                 // Find the next offset line
                 dir = (Vector3d)(this[i + 1].Pt - this[i].Pt);
                 // Check for vertical moves
-                if (dir == this[i].Dir)
+                if (dir == M.toolDir(this[i]) || dir == -M.toolDir(this[i]))
                 {
-                    if (orthSet) nextPoint = this.MatTool.threeAxisHeightOffset(this[i], dir, orth);
+                    if (orthSet) nextPoint = this.MatTool.threeAxisHeightOffset(M, this[i], dir, orth);
                     else nextPoint = this[i];
                 }
                 else
                 {
-                    orth = Vector3d.CrossProduct(dir, this[i].Dir);
+                    orth = Vector3d.CrossProduct(dir, M.toolDir(this[i]));
                     orthSet = true;
-                    nextPoint = this.MatTool.threeAxisHeightOffset(this[i], dir, orth);
+                    nextPoint = this.MatTool.threeAxisHeightOffset(M,this[i], dir, orth);
                 }
 
                 // find the next line we will travel along
@@ -521,15 +516,15 @@ namespace CAMel.Types
 
             // add the final point.
 
-            if (dir == this[this.Count - 1].Dir)
+            if (dir == M.toolDir(this[this.Count - 1]))
             {
-                if (orthSet) nextPoint = this.MatTool.threeAxisHeightOffset(this[this.Count - 1], dir, orth);
+                if (orthSet) nextPoint = this.MatTool.threeAxisHeightOffset(M,this[this.Count - 1], dir, orth);
                 else nextPoint = this[this.Count - 1];
             }
             else
             {
-                orth = Vector3d.CrossProduct(dir, this[this.Count - 1].Dir);
-                nextPoint = this.MatTool.threeAxisHeightOffset(this[this.Count - 1], dir, orth);
+                orth = Vector3d.CrossProduct(dir, M.toolDir(this[this.Count - 1]));
+                nextPoint = this.MatTool.threeAxisHeightOffset(M,this[this.Count - 1], dir, orth);
             }
 
             offsetPath.Add(nextPoint);

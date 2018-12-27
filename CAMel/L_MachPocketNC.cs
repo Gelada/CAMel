@@ -26,7 +26,7 @@ namespace CAMel.Types.Machine
         private double Amin;
         private double Amax;
 
-        private Vector3d Pivot { get; set; }
+        public Vector3d Pivot { get; set; }
 
         public bool IsValid => throw new NotImplementedException();
 
@@ -41,8 +41,8 @@ namespace CAMel.Types.Machine
             this.commentEnd = ")";
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
-            this.pathJump = 1;
-            this.Pivot = Vector3d.Zero;
+            this.pathJump = .25;
+            this.Pivot = new Vector3d(0, 0, 3.6);
             this.Amin = 0;
             this.Amax = Math.PI/2.0;
             setTerms();
@@ -52,14 +52,14 @@ namespace CAMel.Types.Machine
             this.name = "PocketNC";
             this.header = String.Empty;
             this.footer = String.Empty;
-            this.fileStart = String.Empty;
-            this.fileEnd = String.Empty;
+            this.fileStart = "%";
+            this.fileEnd = "%";
             this.commentStart = "(";
             this.commentEnd = ")";
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
-            this.pathJump = 1;
-            this.Pivot = Vector3d.Zero;
+            this.pathJump = .25;
+            this.Pivot = new Vector3d(0, 0, 3.6);
             this.Amin = Amin;
             this.Amax = Amax;
             setTerms();
@@ -75,8 +75,8 @@ namespace CAMel.Types.Machine
             this.commentEnd = ")";
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
-            this.pathJump = 1;
-            this.Pivot = Vector3d.Zero;
+            this.pathJump = .25;
+            this.Pivot = new Vector3d(0,0,3.6);
             this.Amin = Amin;
             this.Amax = Amax;
             setTerms();
@@ -136,7 +136,7 @@ namespace CAMel.Types.Machine
         public ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT)
         {
             Point3d MachPt = new Point3d(vals['X'], vals['Y'], vals['Z']);
-            Vector3d AB = new Vector3d(vals['A'], vals['B'], 0);
+            Vector3d AB = new Vector3d(vals['A']*Math.PI/180.0, vals['B'] * Math.PI/180.0, 0);
 
             ToolPoint TP = new ToolPoint();
             TP.speed = vals['S'];
@@ -247,15 +247,15 @@ namespace CAMel.Types.Machine
 
                 // Work on tool orientation
 
-                // get naive orientation
-                newAB = Kinematics.IK_FiveAxisABTable(tP[0], this.Pivot, tP.MatTool.toolLength, out machPt);
+                // get naive orientation and Machine XYZ position
+                newAB = Kinematics.IK_FiveAxisABTable(Pt, this.Pivot, tP.MatTool.toolLength, out machPt);
 
                 // adjust B to correct period
                 newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((AB.Y - newAB.Y) / (2.0 * Math.PI));
 
                 // set A to 90 if it is close (to avoid a lot of messing with B for no real reason)
 
-                if (Math.Abs(newAB.X - Math.PI) < AngleAcc) newAB.X = Math.PI / 2.0;
+                if (Math.Abs(newAB.X - Math.PI/2.0) < AngleAcc) newAB.X = Math.PI / 2.0;
 
                 // take advantage of the double stance for A between 45 and 90 degrees
 
@@ -334,8 +334,7 @@ namespace CAMel.Types.Machine
 
                 // Add the position information
 
-                Kinematics.IK_FiveAxisABTable(Pt, this.Pivot, tP.MatTool.toolLength, out machPt);
-                PtCode = GCode.GcFiveAxisAB(machPt,AB);
+                 PtCode = GCode.GcFiveAxisAB(machPt,AB);
 
                 // Act if feed has changed
                 if (FChange)
@@ -355,11 +354,10 @@ namespace CAMel.Types.Machine
                 SChange = false;
 
                 PtCode = Pt.preCode + PtCode + Pt.postCode;
-
-
+                
                 if (Pt.name != "")
                 {
-                    PtCode = PtCode + this.commentStart + Pt.name + this.commentEnd;
+                    PtCode = PtCode + " " + this.commentStart + Pt.name + this.commentEnd;
                 }
 
                 Co.Append(PtCode);
@@ -457,8 +455,6 @@ namespace CAMel.Types.Machine
                         {
                             fromMid = tP.MatForm.intersect(inters.mid, inters.midOut, tP.MatForm.safeDistance * 1.1);
                             route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-
-                            MFintersects test = tP.MatForm.intersect(route[i + 1], inters.midOut, tP.MatForm.safeDistance);
                         }
                         else
                         {
@@ -470,7 +466,7 @@ namespace CAMel.Types.Machine
 
                     Vector3d mixDir;
                     bool lng = false;
-                    // ask machine how far it has to move in angle. 
+                    // work out how fare angle needs to move 
                     double angSpread = this.angDiff(fP[fP.Count - 1], tP[0],fP.MatTool, lng);
 
                     int steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
@@ -519,7 +515,7 @@ namespace CAMel.Types.Machine
                     }
                     // get rid of start point that was already in the paths
                     Move.RemoveAt(0);
-
+                    outPoint = Move.WriteCode(ref Co, this, beforePoint);
                 }
             }
             return outPoint;

@@ -292,9 +292,8 @@ namespace CAMel.Types
                             newTPs[j][i].Dir = Vector3d.CrossProduct(tangent,PTplaneN);
                            
                             break;
-                        case SurfToolDir.Normal: // set to negative Norm as we use the direction
-                                                 // from pivot to tool
-                            newTPs[j][i].Dir = -Norms[j][i]; 
+                        case SurfToolDir.Normal: // set to Norm
+                            newTPs[j][i].Dir = Norms[j][i]; 
                             break;
                     }
                     // Adjust the tool position based on the surface normal and the tool orientation
@@ -309,7 +308,7 @@ namespace CAMel.Types
             }
 
             // make the machine operation
-            MachineOperation MO = new MachineOperation(this.ToString(), TPs);
+            MachineOperation MO = new MachineOperation(this.ToString(), newTPs);
             return MO;
         }
 
@@ -359,7 +358,7 @@ namespace CAMel.Types
                     if (inter>=0)
                     {
                         fIR.hit = true;
-                        fIR.TP= new ToolPoint(RayL.PointAt(inter),proj);
+                        fIR.TP= new ToolPoint(RayL.PointAt(inter),-proj);
                         List<int> Lfaces = new List<int>();
                         Lfaces.AddRange(faces);
                         fIR.Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
@@ -505,12 +504,7 @@ namespace CAMel.Types
         {
             if (typeof(Q).IsAssignableFrom(typeof(SurfacePath)))
             {
-                target = (Q)(object)target;
-                return true;
-            }
-            if (typeof(Q).IsAssignableFrom(typeof(SurfacePath)))
-            {
-                target = (Q)(object)target;
+                target = (Q)(object)this.Value;
                 return true;
             }
 

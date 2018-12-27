@@ -24,7 +24,7 @@ namespace CAMel.Types
         public PocketPath()
         {
             this.Paths = new List<Curve>();
-            this.dir = new Vector3d(0.0, 0.0, -1.0);
+            this.dir = new Vector3d(0.0, 0.0, 1.0);
             this.depth = 1.0;
         }
 
@@ -41,7 +41,7 @@ namespace CAMel.Types
         {
             this.Paths = Paths;
             this.depth = depth;
-            this.dir = new Vector3d(0.0, 0.0, -1.0);
+            this.dir = new Vector3d(0.0, 0.0, 1.0);
         }
 
         // Fully saturated Constructor

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
+using CAMel.Types.Machine;
 
 namespace CAMel.Types
 {
@@ -135,20 +136,20 @@ namespace CAMel.Types
         /// <summary>
         /// Offset toolpoint so that it does not gouge an angled path. 
         /// </summary>
-        public ToolPoint threeAxisHeightOffset(ToolPoint tP, Vector3d travel, Vector3d orth)
+        public ToolPoint threeAxisHeightOffset(IMachine M, ToolPoint tP, Vector3d travel, Vector3d orth)
         {
             // TODO at the moment this offset assumes a round end mill.
 
             Vector3d os = travel;
             os.Unitize();
             os.Transform(Transform.Rotation(Math.PI / 2, orth,new Point3d(0,0,0)));
-            double testd = os * tP.Dir;
+            double testd = os * M.toolDir(tP);
             if (testd < 0) os = -1*os;
 
             ToolPoint osTp = new ToolPoint(tP);   
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
-            osTp.Pt = osTp.Pt + this.toolWidth*(os - tP.Dir)/2;
+            osTp.Pt = osTp.Pt + this.toolWidth*(os - M.toolDir(tP))/2;
         
             return osTp;
         }

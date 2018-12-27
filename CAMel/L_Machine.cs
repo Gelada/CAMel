@@ -60,8 +60,8 @@ namespace CAMel.Types.Machine
         static public Vector3d IK_FiveAxisABTable(ToolPoint TP, Vector3d Pivot, double toolLength, out Point3d MachPt)
         {
             // Always gives B from -pi to pi and A from -pi/2 to pi/2.
-            double Ao = Math.Asin(-TP.Dir.Y);
-            double Bo = Math.Atan2(TP.Dir.X, -TP.Dir.Z);
+            double Ao = Math.Asin(TP.Dir.Y);
+            double Bo = Math.Atan2(-TP.Dir.X, TP.Dir.Z);
 
             if (Ao > Math.PI / 2.0)
             {
@@ -97,17 +97,17 @@ namespace CAMel.Types.Machine
             OP = OP + Pivot - Vector3d.ZAxis * toolLength;
 
             // rotate from machine orientation to material orientation
-            OP.Transform(Transform.Rotation(-Math.PI * AB.X / 180.0, Vector3d.XAxis, Point3d.Origin));
-            OP.Transform(Transform.Rotation(-Math.PI * AB.Y / 180.0, Vector3d.YAxis, Point3d.Origin));
+            OP.Transform(Transform.Rotation(-AB.X, Vector3d.XAxis, Point3d.Origin));
+            OP.Transform(Transform.Rotation(-AB.Y, Vector3d.YAxis, Point3d.Origin));
 
             Vector3d Dir = Vector3d.ZAxis;
             // rotate from machine orientation to material orientation
-            Dir.Transform(Transform.Rotation(-Math.PI * AB.X / 180.0, Vector3d.XAxis, Point3d.Origin));
-            Dir.Transform(Transform.Rotation(-Math.PI * AB.Y / 180.0, Vector3d.YAxis, Point3d.Origin));
+            Dir.Transform(Transform.Rotation(-AB.X, Vector3d.XAxis, Point3d.Origin));
+            Dir.Transform(Transform.Rotation(-AB.Y, Vector3d.YAxis, Point3d.Origin));
 
             ToolPoint outTP = (ToolPoint)TP.Duplicate();
             outTP.Pt = OP;
-            outTP.Dir = -Dir;
+            outTP.Dir = Dir;
 
             return outTP;
         }
@@ -141,13 +141,13 @@ namespace CAMel.Types.Machine
         public static double AngDiff_FiveAxisABTable(Vector3d Pivot, double toolLength, ToolPoint fP, ToolPoint tP,bool lng)
         {
             Point3d MachPt = new Point3d();
-            Vector3d ang1 = IK_FiveAxisABTable(fP,Pivot,toolLength,out MachPt);
-            Vector3d ang2 = IK_FiveAxisABTable(fP, Pivot, toolLength, out MachPt);
+            Vector3d ang1 = IK_FiveAxisABTable(fP, Pivot, toolLength, out MachPt);
+            Vector3d ang2 = IK_FiveAxisABTable(tP, Pivot, toolLength, out MachPt);
 
             Vector2d diff = new Vector2d();
             if (lng)
             {
-                diff.X = 2 * Math.PI - Math.Abs(ang1.X - ang2.X);
+                diff.X = Math.Abs(ang1.X - ang2.X);
                 diff.Y = 2 * Math.PI - Math.Abs(ang1.Y - ang2.Y);
             }
             else
@@ -158,29 +158,6 @@ namespace CAMel.Types.Machine
             return Math.Max(diff.X, diff.Y);
         }
 
-        // Unused function useful to have in case we need to set up a BC machine.
-        static public string IK_FiveAxisBC(ToolPoint TP, MaterialTool MT)
-        {
-            Point3d Point = TP.Pt;
-            Vector3d UV = TP.Dir;
-            double Tooltip = MT.toolLength;
-            double Bo = Math.Acos(UV.Z);
-            double Co = Math.Atan2(UV.Y, UV.X);
-
-            if (Co > Math.PI) Co = Co - 2 * Math.PI;
-
-            Vector3d Offset = new Vector3d();
-
-            Offset = UV * Tooltip;
-
-            Point3d OP = Point + Offset;
-
-            String GPoint = "";
-            GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000") + " Z" + OP.Z.ToString("0.000") + " ";
-            GPoint += "B" + (180 * Bo / Math.PI).ToString("0.000") + " C" + (180 * Co / Math.PI).ToString("0.000");
-
-            return GPoint;
-        }
     }
 
     public static class Utility
@@ -356,8 +333,8 @@ namespace CAMel.Types.Machine
             GPtBd.Append(machPt.X.ToString("0.000"));
             GPtBd.Append(@" Y"); GPtBd.Append(machPt.Y.ToString("0.000"));
             GPtBd.Append(@" Z"); GPtBd.Append(machPt.Z.ToString("0.000"));
-            GPtBd.Append(@" A"); GPtBd.Append((180 * AB.X / Math.PI).ToString("0.000"));
-            GPtBd.Append(@" B"); GPtBd.Append((180 * AB.Y / Math.PI).ToString("0.000"));
+            GPtBd.Append(@" A"); GPtBd.Append((180.0 * AB.X / Math.PI).ToString("0.000"));
+            GPtBd.Append(@" B"); GPtBd.Append((180.0 * AB.Y / Math.PI).ToString("0.000"));
 
             return GPtBd.ToString();
         }
@@ -365,11 +342,10 @@ namespace CAMel.Types.Machine
         static public string GcFiveAxisAB_orient(Point3d machPt, Vector3d AB)
         {
             String GPoint = "";
-            GPoint += "A" + (180 * AB.X / Math.PI).ToString("0.000") + " B" + (180 * AB.Y / Math.PI).ToString("0.000");
+            GPoint += "A" + (180.0 * AB.X / Math.PI).ToString("0.000") + " B" + (180.0 * AB.Y / Math.PI).ToString("0.000");
 
             return GPoint;
         }
-
 
         // GCode reading
         static private Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);

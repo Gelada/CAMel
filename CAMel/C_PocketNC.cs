@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
-using CAMel.Types;
+using CAMel.Types.Machine;
 
 namespace CAMel
 {
@@ -25,6 +25,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
+            pManager.AddIntegerParameter("Version", "V", "Machine version, 1 or 2", GH_ParamAccess.item, 2);
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, "");
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, "");
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
@@ -44,23 +45,36 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-
             string head = "";
             string foot = "";
             double PJ = 0;
+            int V = 0;
 
-            if (!DA.GetData(0, ref head)) return;
-            if (!DA.GetData(1, ref foot)) return;
-            if (!DA.GetData(2, ref PJ)) return;
+            if (!DA.GetData(0, ref V)) { return; }
+            if(V!=1 && V!=2)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Only two version of the PocketNC known.");
+                return;
+            }
+            if (V == 1) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "All testing done on a V2 machine, please be careful."); }
+            if (!DA.GetData(1, ref head)) { return; }
+            if (!DA.GetData(2, ref foot)) { return; }
+            if (!DA.GetData(3, ref PJ)) { return; }
 
-            Machine M = new Machine("PocketNC", MachineTypes.PocketNC, head, foot, "%","%");
-            M.Pivot = new Vector3d(0, 0, 3.6);
-            M.PathJump = PJ;
-            M.CommentChar = "(";
-            M.endCommentChar = ")";
-            M.SectionBreak = "------------------------------------------";
-            M.SpeedChangeCommand = "M03 ";
+            double Amin = 0, Amax = Math.PI/2.0;
+            if(V==1)
+            {
+                Amin = -5 * Math.PI / 180.0;
+                Amax = 95 * Math.PI / 180.0;
+            }
+            if(V==2)
+            {
+                Amin = -5 * Math.PI / 180.0;
+                Amax = 95 * Math.PI / 180.0;
+            }
 
+            PocketNC M = new PocketNC("PocketNC V" + V.ToString(), head, foot, Amin, Amax);
+            
             DA.SetData(0, M);
         }
 

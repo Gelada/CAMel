@@ -93,7 +93,7 @@
     <Compile Include="C_CreateSurfacePath.cs" />
     <Compile Include="C_ParallelSurface.cs" />
     <Compile Include="C_Surfacing.cs" />
-    <None Include="C_PocketNC.cs" />
+    <Compile Include="C_PocketNC.cs" />
     <Compile Include="C_CreateMaterialTool.cs" />
     <Compile Include="C_CreateMaterialForm.cs" />
     <Compile Include="C_Create3AxisMachine.cs" />
