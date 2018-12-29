@@ -27,12 +27,13 @@ namespace CAMel
         {
             pManager.AddTextParameter("Material Name", "MN", "Name of the material", GH_ParamAccess.item, "");
             pManager.AddTextParameter("Tool Name", "TN", "Name of the tool", GH_ParamAccess.item, "");
+            pManager.AddIntegerParameter("Tool Number", "T", "Number of the tool", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("Speed", "S", "Speed of Spindle", GH_ParamAccess.item);
             pManager.AddNumberParameter("Cut Feed", "CF", "Feed rate when cutting", GH_ParamAccess.item);
             pManager.AddNumberParameter("Plunge Feed", "PF", "Feed rate when plunging into material", GH_ParamAccess.item);
             pManager.AddNumberParameter("Cut Depth", "CD", "Maximum depth of material to cut", GH_ParamAccess.item);
             pManager.AddNumberParameter("Finish Depth", "FD", "Maximum depth of material in final cut", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Tolerance", "T", "Tolerance when converting curves to toolpaths", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Tolerance", "To", "Tolerance when converting curves to toolpaths", GH_ParamAccess.item);
             pManager.AddNumberParameter("minStep", "mS", "Minimum distance between machine positions", GH_ParamAccess.item);
             pManager.AddNumberParameter("Tool Width", "TW", "Width of tool", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis)", GH_ParamAccess.item, 0);
@@ -56,23 +57,25 @@ namespace CAMel
             string matName = "";
             string toolName = "";
 
-            double S = 0, CF = 0, PF = 0, CD = 0, FD = 0, T = 0, mS = 0, TW = 0, TL = 0;
+            int T = 1;
+            double S = 0, CF = 0, PF = 0, CD = 0, FD = 0, To = 0, mS = 0, TW = 0, TL = 0;
 
             string toolShape = "";
             EndShape ES;
 
             if (!DA.GetData(0, ref matName)) return;
             if (!DA.GetData(1, ref toolName)) return;
-            if (!DA.GetData(2, ref S)) return;
-            if (!DA.GetData(3, ref CF)) return;
-            if (!DA.GetData(4, ref PF)) return;
-            if (!DA.GetData(5, ref CD)) return;
-            if (!DA.GetData(6, ref FD)) return;
-            if (!DA.GetData(7, ref T)) return;
-            if (!DA.GetData(8, ref mS)) return;
-            if (!DA.GetData(9, ref TW)) return;
-            if (!DA.GetData(10, ref TL)) return;
-            if (!DA.GetData(11, ref toolShape))
+            if (!DA.GetData(2, ref T)) return;
+            if (!DA.GetData(3, ref S)) return;
+            if (!DA.GetData(4, ref CF)) return;
+            if (!DA.GetData(5, ref PF)) return;
+            if (!DA.GetData(6, ref CD)) return;
+            if (!DA.GetData(7, ref FD)) return;
+            if (!DA.GetData(8, ref To)) return;
+            if (!DA.GetData(9, ref mS)) return;
+            if (!DA.GetData(10, ref TW)) return;
+            if (!DA.GetData(11, ref TL)) return;
+            if (!DA.GetData(12, ref toolShape))
             {
                 return;
             }
@@ -99,7 +102,7 @@ namespace CAMel
                 }
             }
 
-            MaterialTool MT = new MaterialTool(matName, toolName, S, CF, PF, CD, FD, TW, TL, ES, T, mS);
+            MaterialTool MT = new MaterialTool(matName, toolName, T, S, CF, PF, CD, FD, TW, TL, ES, To, mS);
 
             DA.SetData(0, MT);
         }

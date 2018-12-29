@@ -24,6 +24,7 @@ namespace CAMel.Types.Machine
     {
         string name { get; set; }
         double pathJump { get; set; } // Maximum jump between toolpaths in material
+        bool TLC { get; set; } // Tool Length Compensation
 
         void writeFileStart(ref CodeInfo Co, MachineInstruction MI);
         void writeFileEnd(ref CodeInfo Co, MachineInstruction MI);

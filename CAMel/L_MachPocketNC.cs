@@ -14,6 +14,7 @@ namespace CAMel.Types.Machine
         public double pathJump { get; set; }
         public string sectionBreak { get; set; }
         public string speedChangeCommand { get; set; }
+        public string toolChangeCommand { get; set; }
         public string fileStart { get; set; }
         public string fileEnd { get; set; }
         public string header { get; set; }
@@ -23,16 +24,19 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; set; }
         private List<char> terms;
 
-        private double Amin;
-        private double Amax;
+        private double Amin { get; set; }
+        private double Amax { get; set; }
+        private double Bmax { get; set; }
+        public bool TLC { get; set; }
 
-        public Vector3d Pivot { get; set; }
+        public Vector3d Pivot { get; set; } // Position of machine origin in design space.
 
         public bool IsValid => throw new NotImplementedException();
 
         public PocketNC()
         {
             this.name = "PocketNC";
+            this.TLC = false;
             this.header = String.Empty;
             this.footer = String.Empty;
             this.fileStart = String.Empty;
@@ -41,32 +45,18 @@ namespace CAMel.Types.Machine
             this.commentEnd = ")";
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
+            this.toolChangeCommand = "G43H";
             this.pathJump = .25;
-            this.Pivot = new Vector3d(0, 0, 3.6);
+            this.Pivot = new Vector3d(0, 0, 0);
             this.Amin = 0;
             this.Amax = Math.PI/2.0;
+            this.Bmax = 9999.0 * Math.PI / 180.0;
             setTerms();
         }
-        public PocketNC(double Amin, double Amax)
-        {
-            this.name = "PocketNC";
-            this.header = String.Empty;
-            this.footer = String.Empty;
-            this.fileStart = "%";
-            this.fileEnd = "%";
-            this.commentStart = "(";
-            this.commentEnd = ")";
-            this.sectionBreak = "------------------------------------------";
-            this.speedChangeCommand = "M03";
-            this.pathJump = .25;
-            this.Pivot = new Vector3d(0, 0, 3.6);
-            this.Amin = Amin;
-            this.Amax = Amax;
-            setTerms();
-        }
-        public PocketNC(string name, string header, string footer, double Amin, double Amax)
+        public PocketNC(string name, string header, string footer, double Amin, double Amax, double Bmax, bool TLC)
         {
             this.name = name;
+            this.TLC = TLC;
             this.header = header;
             this.footer = footer;
             this.fileStart = String.Empty;
@@ -75,15 +65,18 @@ namespace CAMel.Types.Machine
             this.commentEnd = ")";
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
+            this.toolChangeCommand = "G43H";
             this.pathJump = .25;
-            this.Pivot = new Vector3d(0,0,3.6);
+            this.Pivot = new Vector3d(0,0,0);
             this.Amin = Amin;
             this.Amax = Amax;
+            this.Bmax = Bmax;
             setTerms();
         }
         public PocketNC(PocketNC TA)
         {
             this.name = TA.name;
+            this.TLC = TA.TLC;
             this.header = TA.header;
             this.footer = TA.footer;
             this.fileStart = TA.fileStart;
@@ -92,10 +85,12 @@ namespace CAMel.Types.Machine
             this.commentEnd = TA.commentEnd;
             this.sectionBreak = TA.sectionBreak;
             this.speedChangeCommand = TA.speedChangeCommand;
+            this.toolChangeCommand = TA.toolChangeCommand;
             this.pathJump = TA.pathJump;
             this.Pivot = TA.Pivot;
             this.Amin = TA.Amin;
             this.Amax = TA.Amax;
+            this.Bmax = TA.Bmax;
             this.terms = new List<char>();
             this.terms.AddRange(TA.terms);
         }
@@ -127,9 +122,17 @@ namespace CAMel.Types.Machine
         public ToolPath insertRetract(ToolPath tP) => tP.MatForm.InsertRetract(tP);
 
         public ToolPoint Interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
-            => Kinematics.Interpolate_FiveAxisABTable(this.Pivot, MT.toolLength, fP, tP, par, lng);
+        {
+            double toolLength = MT.toolLength;
+            if (this.TLC) { toolLength = 0; }
+            return Kinematics.Interpolate_FiveAxisABTable(this.Pivot, toolLength, fP, tP, par, lng);
+        }
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng)
-            => Kinematics.AngDiff_FiveAxisABTable(this.Pivot, MT.toolLength, tP1, tP2, lng);
+        {
+            double toolLength = MT.toolLength;
+            if (this.TLC) { toolLength = 0; }
+            return Kinematics.AngDiff_FiveAxisABTable(this.Pivot, toolLength, tP1, tP2, lng);
+        }
 
         public ToolPath ReadCode(List<MaterialTool> MTs, string Code) => GCode.GcRead(this,MTs,Code,terms);
 
@@ -141,7 +144,10 @@ namespace CAMel.Types.Machine
             ToolPoint TP = new ToolPoint();
             TP.speed = vals['S'];
             TP.feed = vals['F'];
-            return Kinematics.K_FiveAxisABTable(TP, this.Pivot, MT.toolLength, MachPt, AB);        
+            double toolLength = MT.toolLength;
+            if(this.TLC) { toolLength = 0; }
+
+            return Kinematics.K_FiveAxisABTable(TP, this.Pivot, toolLength, MachPt, AB);        
         }
 
         public Vector3d toolDir(ToolPoint TP) => TP.Dir;
@@ -169,6 +175,9 @@ namespace CAMel.Types.Machine
             string PtCode;
             Point3d machPt = new Point3d();
 
+            double toolLength = tP.MatTool.toolLength;
+            if(this.TLC) { toolLength = 0; }
+
             if (beforePoint == null) // There were no previous points
             {
                 if (tP.Count > 0)
@@ -177,7 +186,7 @@ namespace CAMel.Types.Machine
                     speed = tP[0].speed;
                     if (feed < 0) { feed = tP.MatTool.feedCut; }
                     if (speed < 0) { speed = tP.MatTool.speed; }
-                    AB = Kinematics.IK_FiveAxisABTable(tP[0], this.Pivot, tP.MatTool.toolLength, out machPt );
+                    AB = Kinematics.IK_FiveAxisABTable(tP[0], this.Pivot, toolLength, out machPt );
                     FChange = true;
                     SChange = false;
                     // making the first move. Orient the tool first
@@ -248,7 +257,7 @@ namespace CAMel.Types.Machine
                 // Work on tool orientation
 
                 // get naive orientation and Machine XYZ position
-                newAB = Kinematics.IK_FiveAxisABTable(Pt, this.Pivot, tP.MatTool.toolLength, out machPt);
+                newAB = Kinematics.IK_FiveAxisABTable(Pt, this.Pivot, toolLength, out machPt);
 
                 // adjust B to correct period
                 newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((AB.Y - newAB.Y) / (2.0 * Math.PI));
@@ -256,22 +265,6 @@ namespace CAMel.Types.Machine
                 // set A to 90 if it is close (to avoid a lot of messing with B for no real reason)
 
                 if (Math.Abs(newAB.X - Math.PI/2.0) < AngleAcc) newAB.X = Math.PI / 2.0;
-
-                // take advantage of the double stance for A between 45 and 90 degrees
-
-                if (newAB.X > (Math.PI / 2.0 - Math.PI / 4.0))
-                {
-                    if ((newAB.Y - AB.Y) > Math.PI)
-                    {
-                        newAB.X = Math.PI - newAB.X;
-                        newAB.Y = newAB.Y - Math.PI;
-                    }
-                    else if ((newAB.Y - AB.Y) < -Math.PI)
-                    {
-                        newAB.X = Math.PI - newAB.X;
-                        newAB.Y = newAB.Y + Math.PI;
-                    }
-                }
 
                 // adjust through cusp
 
@@ -289,7 +282,7 @@ namespace CAMel.Types.Machine
 
                         while (j < (tP.Count - 1) &&
                             Math.Abs(
-                                Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, tP.MatTool.toolLength, out machPt).X
+                                Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, toolLength, out machPt).X
                                 - Math.PI / 2.0) < AngleAcc)
                         { j++; }
 
@@ -297,12 +290,12 @@ namespace CAMel.Types.Machine
                         // position for the whole run. 
                         if (Math.Abs(AB.X - Math.PI / 2.0) < AngleAcc)
                         {
-                            Bto = Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, tP.MatTool.toolLength, out machPt).Y;
+                            Bto = Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, toolLength, out machPt).Y;
                             Bsteps = j - i;
                             newAB.Y = Bto;
                         }
                         // if we get to the end and it is still vertical we do not need to rotate.
-                        else if (Math.Abs(Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, tP.MatTool.toolLength, out machPt).X) < AngleAcc)
+                        else if (Math.Abs(Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, toolLength, out machPt).X) < AngleAcc)
                         {
                             Bto = AB.X;
                             Bsteps = j - i;
@@ -310,16 +303,37 @@ namespace CAMel.Types.Machine
                         }
                         else
                         {
-                            Bto = Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, tP.MatTool.toolLength, out machPt).Y;
+                            Bto = Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, toolLength, out machPt).Y;
                             Bsteps = j - i;
                             newAB.Y = AB.Y;
                         }
                     }
                 }
 
-                // (throw bounds error if B goes past +-999999 degrees or A is not between Amin and Amax)
+                // take advantage of the double stance for A, 
+                // up until now, A is between -90 and 90, all paths start in 
+                // that region, but can rotate out of it if necessary.
+                // This will mean some cutable paths bcome impossible.
+                // This assumes only a double stance in positive position.
 
-                if (Math.Abs(180.0 * newAB.Y / (Math.PI)) > 999999)
+                if (newAB.X > (Math.PI - this.Amax)) // check if double stance is possible
+                {
+                    if ((newAB.Y - AB.Y) > Math.PI) // check for big rotation in B
+                    {
+                        newAB.X = Math.PI - newAB.X;
+                        newAB.Y = newAB.Y - Math.PI;
+                    }
+                    else if ((newAB.Y - AB.Y) < -Math.PI) // check for big rotation in B
+                    {
+                        newAB.X = Math.PI - newAB.X;
+                        newAB.Y = newAB.Y + Math.PI;
+                    }
+                }
+
+                // (throw bounds error if B goes past +-Bmax degrees or A is not between Amin and Amax)
+
+
+                if (Math.Abs(newAB.Y) > Bmax)
                 {
                     Co.AddError("Out of bounds on B");
                 }

@@ -11,14 +11,16 @@ namespace CAMel.Types.Machine
 {
     public class ThreeAxis : IGCodeMachine
     {
+        public string name { get; set; }
         public double pathJump { get; set; }
+        public bool TLC { get; set; } // Tool Length Compensation
         public string sectionBreak { get; set; }
         public string speedChangeCommand { get; set; }
+        public string toolChangeCommand { get; set; }
         public string fileStart { get; set; }
         public string fileEnd { get; set; }
         public string header { get; set; }
         public string footer { get; set; }
-        public string name { get; set; }
         public string commentStart { get; set; }
         public string commentEnd { get; set; }
         List<char> terms;
@@ -28,6 +30,7 @@ namespace CAMel.Types.Machine
         public ThreeAxis()
         {
             this.name = "Unamed 3-Axis Machine";
+            this.TLC = false;
             this.header = String.Empty;
             this.footer = String.Empty;
             this.fileStart = String.Empty;
@@ -36,12 +39,14 @@ namespace CAMel.Types.Machine
             this.commentEnd = ")";
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
+            this.toolChangeCommand = "G43H";
             this.pathJump = 1;
             setTerms();
         }
         public ThreeAxis(string name, string header, string footer)
         {
             this.name = name;
+            this.TLC = false;
             this.header = header;
             this.footer = footer;
             this.fileStart = String.Empty;
@@ -50,12 +55,14 @@ namespace CAMel.Types.Machine
             this.commentEnd = ")";
             this.sectionBreak = "------------------------------------------";
             this.speedChangeCommand = "M03";
+            this.toolChangeCommand = "G43H";
             this.pathJump = 1;
             setTerms();
         }
         public ThreeAxis(ThreeAxis TA)
         {
             this.name = TA.name;
+            this.TLC = TA.TLC;
             this.header = TA.header;
             this.footer = TA.footer;
             this.fileStart = TA.fileStart;
@@ -64,6 +71,7 @@ namespace CAMel.Types.Machine
             this.commentEnd = TA.commentEnd;
             this.sectionBreak = TA.sectionBreak;
             this.speedChangeCommand = TA.speedChangeCommand;
+            this.toolChangeCommand = TA.toolChangeCommand;
             this.pathJump = TA.pathJump;
             setTerms();
         }

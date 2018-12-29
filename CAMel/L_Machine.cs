@@ -16,6 +16,7 @@ namespace CAMel.Types.Machine
         string footer { get; set; }
 
         string speedChangeCommand { get; set; }
+        string toolChangeCommand { get; set; }
 
         string sectionBreak { get; set; }
         string fileStart { get; set; }
@@ -287,6 +288,7 @@ namespace CAMel.Types.Machine
             {
                 Co.AppendComment(" using: " + TP.MatTool.Tool_name + " into " + TP.MatTool.Mat_name);
                 Co.currentMT = TP.MatTool;
+                if (M.TLC) { Co.Append(M.toolChangeCommand + TP.MatTool.Tool_number); }
                 ch.MT = true;
                 preamble = true;
             }

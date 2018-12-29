@@ -18,6 +18,7 @@ namespace CAMel.Types
     {
         public string Mat_name    { get; set; } // Name of the material
         public string Tool_name   { get; set; } // Name of the tool 
+        public int Tool_number    { get; set; } // Number of the tool
         public double speed       { get; set; } // speed of spindle (assumed unset for negative values)
         public double feedCut     { get; set; } // feed rate for cutting (assumed unset for negative values)
         public double feedPlunge  { get; set; } // feed rate for plunging (assumed unset for negative values)
@@ -37,6 +38,7 @@ namespace CAMel.Types
         {
             this.Mat_name = "";
             this.Tool_name = "";
+            this.Tool_number = 1;
             this.speed = -1;
             this.feedCut = -1;
             this.feedPlunge = -1;
@@ -52,6 +54,7 @@ namespace CAMel.Types
         {
             this.Mat_name = Mat;
             this.Tool_name = Tool;
+            this.Tool_number = 1;
             this.speed = -1;
             this.feedCut = -1;
             this.feedPlunge = -1;
@@ -64,10 +67,11 @@ namespace CAMel.Types
             this.ES = EndShape.Ball;
         }
         // Everything, with defaults
-        public MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0)
+        public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0)
         {
             this.Mat_name = Mat;
             this.Tool_name = Tool;
+            this.Tool_number = ToolN;
             this.speed = speed;
             this.feedCut = feedCut;
             this.feedPlunge = feedPlunge;
@@ -84,6 +88,7 @@ namespace CAMel.Types
         {
             this.Mat_name = MT.Mat_name;
             this.Tool_name = MT.Tool_name;
+            this.Tool_number = MT.Tool_number;
             this.speed = MT.speed;
             this.feedCut = MT.feedCut;
             this.feedPlunge = MT.feedPlunge;
@@ -113,14 +118,7 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            string outp = this.Tool_name + " into " + this.Mat_name + "\n"
-                + " Speed: " + this.speed.ToString() + " Cut Feed: " + this.feedCut.ToString()
-                + " Plunge feed: " + this.feedPlunge.ToString() + " Cut Depth: " + this.cutDepth.ToString();
-            if (this.finishDepth > 0) outp = outp + " Finish Depth: " + this.toolLength.ToString();
-            if (this.tolerance > 0) outp = outp + " Tolerance: " + this.toolLength.ToString();
-            if (this.minStep > 0) outp = outp + " Min Step: " + this.toolLength.ToString();
-            if (this.toolWidth > 0) outp = outp + " Tool Width: " + this.toolWidth.ToString();
-            if (this.toolLength > 0) outp = outp + " Tool Length: " + this.toolLength.ToString();
+            string outp = "Tool " + this.Tool_number + " " + this.Tool_name + " into " + this.Mat_name + " Plunge feed: " + this.feedPlunge.ToString() + " Cut Depth: " + this.cutDepth.ToString();
             return outp;
         }
 
@@ -139,6 +137,7 @@ namespace CAMel.Types
         public ToolPoint threeAxisHeightOffset(IMachine M, ToolPoint tP, Vector3d travel, Vector3d orth)
         {
             // TODO at the moment this offset assumes a round end mill.
+            // CutOffset does most of the work. 
 
             Vector3d os = travel;
             os.Unitize();
@@ -164,7 +163,7 @@ namespace CAMel.Types
             switch (this.ES)
             {
                 case EndShape.Ball: // find correct position of ball centre and then push to tip. 
-                    os = this.toolWidth * (uNorm + uDir) / 2;
+                    os = this.toolWidth * (uNorm - uDir) / 2;
                     break;
                 case EndShape.Square: // Cut with corner if the angle is greate than .01 radians
                     if(Vector3d.VectorAngle(uDir,uNorm)-Math.PI < .01)
@@ -208,9 +207,9 @@ namespace CAMel.Types
             this.Value = new MaterialTool(Mat, Tool);
         }
         // Name, speed, feed and cut
-        public GH_MaterialTool(string Mat, string Tool, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = 0, double length = 0, EndShape ES = EndShape.Ball,double tolerance = 0, double minStep = 0)
+        public GH_MaterialTool(string Mat, string Tool, int ToolNumber, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = 0, double length = 0, EndShape ES = EndShape.Ball,double tolerance = 0, double minStep = 0)
         {
-            this.Value = new MaterialTool(Mat, Tool, speed, feedCut, feedPlunge, cutDepth, finishDepth, width, length, ES, tolerance, minStep);
+            this.Value = new MaterialTool(Mat, Tool, ToolNumber, speed, feedCut, feedPlunge, cutDepth, finishDepth, width, length, ES, tolerance, minStep);
         }
         // construct from unwrapped type
         public GH_MaterialTool(MaterialTool MT)
