@@ -286,10 +286,10 @@ namespace CAMel.Types
                             break;
                         case SurfToolDir.PathTangent:
                             // get normal to proj and tangent
-                            PTplaneN = Vector3d.CrossProduct(newTPs[j][i].Dir, tangent);
+                            PTplaneN = Vector3d.CrossProduct(tangent,newTPs[j][i].Dir);
                             PNplaneN = newTPs[j][i].Dir;
                             // find vector normal to tangent and in the plane of tangent and projection
-                            newTPs[j][i].Dir = Vector3d.CrossProduct(tangent,PTplaneN);
+                            newTPs[j][i].Dir = Vector3d.CrossProduct(PTplaneN, tangent);
                            
                             break;
                         case SurfToolDir.Normal: // set to Norm
