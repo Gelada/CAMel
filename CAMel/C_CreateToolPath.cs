@@ -27,7 +27,12 @@ namespace CAMel
         {
             List<double> TPAdef = new List<double>();
             for (int i = 0; i < 7; i++) TPAdef.Add(0);
-
+            TPAdef[0] = 1; // Insert
+            TPAdef[1] = 1; // Retract
+            TPAdef[2] = 1; // Stepdown
+            TPAdef[3] = 1; // Drop Start
+            TPAdef[4] = 1; // Drop Middle
+            TPAdef[5] = 1; // Drop End
             pManager.AddPointParameter("Path", "P", "List of toolpoint locations", GH_ParamAccess.list);
             pManager.AddVectorParameter("Directions", "D", "List of vectors giving tool direction", GH_ParamAccess.list,new Vector3d(0,0,1));
             pManager.AddVectorParameter("Speed and Feed", "SF", "List of vectors giving speed (X) and feed (Y) at each toolpoint.", GH_ParamAccess.list, new Vector3d(-1, -1, 0));
@@ -39,7 +44,7 @@ namespace CAMel
             pManager.AddNumberParameter("Additions", "TPA", "Additional operations to apply to the path, given by a list of numbers:\n"+
                 "{Insert, Retract, Stepdown, Drop Start, Drop Middle, Drop End, 3Axis Height Offset}\n" +
                 "all but drop middle are boolean with 0 being false.", GH_ParamAccess.list, TPAdef);
-            pManager.AddTextParameter("Code", "C2", "Addition CNC code to run before this path.", GH_ParamAccess.item,"");
+            pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item,"");
 
         }
 
