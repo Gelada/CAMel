@@ -49,8 +49,8 @@ namespace CAMel.Types
         private List<Curve> Paths; // Curves to project
         public SurfProj surfProj { get; set;} // Type of projection
         public Curve cylOnto { get; set;}// centre line for Cylindrical projection
-    public Vector3d dir { get; set;}// direction for parallel projection, or line direction for cylindrical
-public Point3d cen { get; set; } // centre for spherical projection
+        public Vector3d dir { get; set;}// direction for parallel projection, or line direction for cylindrical
+        public Point3d cen { get; set; } // centre for spherical projection
         public SurfToolDir surfToolDir { get; set; } // method to calculate tool direction
 
         // private storage when processing a model
