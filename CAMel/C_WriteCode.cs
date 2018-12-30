@@ -145,9 +145,9 @@ namespace CAMel
             // TODO report errors and warnings in an output parameter
 
             if (this.SaveCode.HasErrors(ignore))
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.GetErrors(ignore));
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.GetErrors(ignore)); }
             if (this.SaveCode.HasWarnings(ignore))
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, this.SaveCode.GetWarnings(ignore));
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, this.SaveCode.GetWarnings(ignore)); }
 
             // Extract Ranges
 

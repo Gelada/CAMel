@@ -121,7 +121,7 @@ namespace CAMel.Types
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
 
             foreach (ToolPath TP in this)
-                newPaths.Add(TP.ProcessAdditions(M));
+            { newPaths.Add(TP.ProcessAdditions(M)); }
 
             // Create the list for the output
             List<ToolPath> procPaths = new List<ToolPath>();
@@ -131,20 +131,20 @@ namespace CAMel.Types
             // Find path with most levels
             int levels = 0;
             foreach (List<List<ToolPath>> LTP in newPaths)
-                if (LTP.Count > levels) levels = LTP.Count;
+            { if (LTP.Count > levels) { levels = LTP.Count; } }
             // do the roughing layers
             for (int i = 0; i < levels - 1; i++)
             {
                 levelPaths = new List<ToolPath>();
                 foreach (List<List<ToolPath>> LTP in newPaths)
-                    if (i < LTP.Count - 1) levelPaths.AddRange(LTP[i]);
+                { if (i < LTP.Count - 1) { levelPaths.AddRange(LTP[i]); } }
                 // sort here (remember to only move chunks that are outside the material!)
                 procPaths.AddRange(levelPaths);
             }
             // final cut of everything
             levelPaths = new List<ToolPath>();
             foreach (List<List<ToolPath>> LTP in newPaths)
-                levelPaths.AddRange(LTP[LTP.Count - 1]);
+            { levelPaths.AddRange(LTP[LTP.Count - 1]); }
             // sort here (remember to only move chunks that are outside the material!)
             procPaths.AddRange(levelPaths);
 

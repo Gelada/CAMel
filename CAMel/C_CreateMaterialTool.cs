@@ -63,18 +63,18 @@ namespace CAMel
             string toolShape = "";
             EndShape ES;
 
-            if (!DA.GetData(0, ref matName)) return;
-            if (!DA.GetData(1, ref toolName)) return;
-            if (!DA.GetData(2, ref T)) return;
-            if (!DA.GetData(3, ref S)) return;
-            if (!DA.GetData(4, ref CF)) return;
-            if (!DA.GetData(5, ref PF)) return;
-            if (!DA.GetData(6, ref CD)) return;
-            if (!DA.GetData(7, ref FD)) return;
-            if (!DA.GetData(8, ref To)) return;
-            if (!DA.GetData(9, ref mS)) return;
-            if (!DA.GetData(10, ref TW)) return;
-            if (!DA.GetData(11, ref TL)) return;
+            if (!DA.GetData(0, ref matName)) { return; }
+            if (!DA.GetData(1, ref toolName)) { return; }
+            if (!DA.GetData(2, ref T)) { return; }
+            if (!DA.GetData(3, ref S)) { return; }
+            if (!DA.GetData(4, ref CF)) { return; }
+            if (!DA.GetData(5, ref PF)) { return; }
+            if (!DA.GetData(6, ref CD)) { return; }
+            if (!DA.GetData(7, ref FD)) { return; }
+            if (!DA.GetData(8, ref To)) { return; }
+            if (!DA.GetData(9, ref mS)) { return; }
+            if (!DA.GetData(10, ref TW)) { return; }
+            if (!DA.GetData(11, ref TL)) { return; }
             if (!DA.GetData(12, ref toolShape))
             {
                 return;

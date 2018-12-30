@@ -244,7 +244,7 @@ namespace CAMel.Types
         
         public override bool CastFrom(object source)
         {
-            if (source == null) return false;
+            if (source == null) { return false; }
 
             if (source is Point3d)
             {

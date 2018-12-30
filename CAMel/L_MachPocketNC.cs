@@ -264,7 +264,7 @@ namespace CAMel.Types.Machine
 
                 // set A to 90 if it is close (to avoid a lot of messing with B for no real reason)
 
-                if (Math.Abs(newAB.X - Math.PI/2.0) < AngleAcc) newAB.X = Math.PI / 2.0;
+                if (Math.Abs(newAB.X - Math.PI / 2.0) < AngleAcc) { newAB.X = Math.PI / 2.0; }
 
                 // adjust through cusp
 
@@ -353,10 +353,8 @@ namespace CAMel.Types.Machine
                 // Act if feed has changed
                 if (FChange)
                 {
-                    if (feed == 0)
-                        PtCode = "G00 " + PtCode;
-                    else
-                        PtCode = "G01 " + PtCode + " F" + feed.ToString("0.00");
+                    if (feed == 0) { PtCode = "G00 " + PtCode; }
+                    else { PtCode = "G01 " + PtCode + " F" + feed.ToString("0.00"); }
                 }
                 FChange = false;
 

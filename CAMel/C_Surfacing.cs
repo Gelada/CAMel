@@ -69,7 +69,7 @@ namespace CAMel
             MaterialTool MTF = null;
             IMaterialForm MF = null;
 
-            if (!DA.GetData(0, ref G)) {return;}
+            if (!DA.GetData(0, ref G)) { return; }
             if(G.GetType() == typeof(Mesh))
             {
                 ST = SurfaceType.Mesh;
@@ -83,11 +83,11 @@ namespace CAMel
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The surface parameter must be a Brep, Surface or Mesh");
                 return;
             }
-            if (!DA.GetData(1, ref R)) return;
-            if (!DA.GetData(2, ref MTR)) return;
-            if (!DA.GetData(3, ref F)) return;
-            if (!DA.GetData(4, ref MTF)) return;
-            if (!DA.GetData(5, ref MF)) return;
+            if (!DA.GetData(1, ref R)) { return; }
+            if (!DA.GetData(2, ref MTR)) { return; }
+            if (!DA.GetData(3, ref F)) { return; }
+            if (!DA.GetData(4, ref MTF)) { return; }
+            if (!DA.GetData(5, ref MF)) { return; }
 
             MachineOperation Rough = new MachineOperation();
             MachineOperation Finish = new MachineOperation();

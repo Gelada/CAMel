@@ -206,7 +206,7 @@ namespace CAMel.Types
                 var intersectInfo = new ConcurrentDictionary<ToolPoint, firstIntersectResponse>(Environment.ProcessorCount, TP.Count);
 
                 foreach (ToolPoint TPt in TP) //initialise dictionary
-                    intersectInfo[TPt] = new firstIntersectResponse();
+                { intersectInfo[TPt] = new firstIntersectResponse(); }
 
                 Parallel.ForEach(TP, TPtP =>
                  {

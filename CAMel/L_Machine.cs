@@ -68,14 +68,14 @@ namespace CAMel.Types.Machine
             {
                 Ao = Math.PI - Ao;
                 Bo = Bo - Math.PI;
-                if (Bo < 0) Bo = Bo + 2.0 * Math.PI;
+                if (Bo < 0) { Bo = Bo + 2.0 * Math.PI; }
             }
 
             if (Ao < -Math.PI / 2.0)
             {
                 Ao = Math.PI - Ao;
                 Bo = Bo - Math.PI;
-                if (Bo < 0) Bo = Bo + 2.0 * Math.PI;
+                if (Bo < 0) { Bo = Bo + 2.0 * Math.PI; }
             }
      
             Point3d OP = TP.Pt;
@@ -237,12 +237,12 @@ namespace CAMel.Types.Machine
             DateTime thisDay = DateTime.Now;
             Co.AppendLineNoNum(M.fileStart);
             Co.AppendComment(M.sectionBreak);
-            if (MI.name != "") Co.AppendComment(MI.name);
+            if (MI.name != "") { Co.AppendComment(MI.name); }
             Co.AppendComment("");
             Co.AppendComment(" Machine Instructions Created " + thisDay.ToString("f"));
             Co.AppendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
                 + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
-            if (M.name != "") Co.AppendComment("  for " + M.name);
+            if (M.name != "") { Co.AppendComment("  for " + M.name); }
             Co.AppendComment(" Starting with: ");
             Co.AppendComment("  Tool: " + MI[0][0].MatTool.toolName);
             Co.AppendComment("  in " + MI[0][0].MatTool.matName + " with shape " + MI[0][0].MatForm.ToString());

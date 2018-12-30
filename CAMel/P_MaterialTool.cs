@@ -143,7 +143,7 @@ namespace CAMel.Types
             os.Unitize();
             os.Transform(Transform.Rotation(Math.PI / 2, orth,new Point3d(0,0,0)));
             double testd = os * M.toolDir(tP);
-            if (testd < 0) os = -1*os;
+            if (testd < 0) { os = -1 * os; }
 
             ToolPoint osTp = new ToolPoint(tP);   
 

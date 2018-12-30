@@ -205,10 +205,8 @@ namespace CAMel.Types.Machine
                 // Act if feed has changed
                 if (FChange)
                 {
-                    if (feed == 0)
-                        PtCode = "G00 " + PtCode;
-                    else
-                        PtCode = "G01 " + PtCode + " F" + feed.ToString("0");
+                    if (feed == 0) { PtCode = "G00 " + PtCode; }
+                    else { PtCode = "G01 " + PtCode + " F" + feed.ToString("0"); }
                 }
                 FChange = false;
 
@@ -244,7 +242,7 @@ namespace CAMel.Types.Machine
                 PtOut.feed = feed;
                 PtOut.speed = speed;
             }
-            else PtOut = beforePoint;
+            else { PtOut = beforePoint; }
 
             return PtOut;
         }

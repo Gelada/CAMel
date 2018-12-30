@@ -25,7 +25,7 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             List<double> TPAdef = new List<double>();
-            for (int i = 0; i < 7; i++) TPAdef.Add(0);
+            for (int i = 0; i < 7; i++) { TPAdef.Add(0); }
 
             pManager.AddCurveParameter("Paths", "P", "Paths to project onto surface", GH_ParamAccess.list);
             pManager.AddNumberParameter("Projection", "Pr", "Type of projection to use.\n 0: Parallel\n 1: Cylindrical\n 2: Spherical", GH_ParamAccess.item,0);
@@ -60,8 +60,8 @@ namespace CAMel
 
             SurfacePath SP;
 
-            if (!DA.GetDataList(0, Paths)) return;
-            if (!DA.GetData(5, ref TDd)) return;
+            if (!DA.GetDataList(0, Paths)) { return; }
+            if (!DA.GetData(5, ref TDd)) { return; }
             TD = (int)TDd;
             // set Surfacing direction
             SurfToolDir STD;
@@ -85,21 +85,21 @@ namespace CAMel
             }
 
             // find the projection type (will effect the information we wish to use)
-            if (!DA.GetData(1, ref Prd)) return;
+            if (!DA.GetData(1, ref Prd)) { return; }
             Pr = (int)Prd;
             switch (Pr)
             {
                 case 0: // Parallel
-                    if (!DA.GetData(3, ref Dir)) return;
+                    if (!DA.GetData(3, ref Dir)) { return; }
                     SP = new SurfacePath(Paths, Dir, STD);
                     break;
                 case 1: // Cylindrical
-                    if (!DA.GetData(2, ref CC)) return;
-                    if (!DA.GetData(3, ref Dir)) return;
+                    if (!DA.GetData(2, ref CC)) { return; }
+                    if (!DA.GetData(3, ref Dir)) { return; }
                     SP = new SurfacePath(Paths,Dir,CC,STD);
                     break;
                 case 2: // Spherical
-                    if (!DA.GetData(4, ref Cen)) return;
+                    if (!DA.GetData(4, ref Cen)) { return; }
                     SP = new SurfacePath(Paths, Cen, STD);
                     break;
                 default:

@@ -52,9 +52,9 @@ namespace CAMel
             IMachine M = null;
             List<MaterialTool> MTs = new List<MaterialTool>();
 
-            if (!DA.GetData(0, ref Code)) return;
-            if (!DA.GetData(1, ref M)) return;
-            if (!DA.GetDataList(2, MTs)) return;
+            if (!DA.GetData(0, ref Code)) { return; }
+            if (!DA.GetData(1, ref M)) { return; }
+            if (!DA.GetDataList(2, MTs)) { return; }
 
 
             ToolPath TP = M.ReadCode(MTs, Code);

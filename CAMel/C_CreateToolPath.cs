@@ -26,7 +26,7 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             List<double> TPAdef = new List<double>();
-            for (int i = 0; i < 7; i++) TPAdef.Add(0);
+            for (int i = 0; i < 7; i++) { TPAdef.Add(0); }
             TPAdef[0] = 1; // Insert
             TPAdef[1] = 1; // Retract
             TPAdef[2] = 1; // Stepdown
@@ -73,16 +73,16 @@ namespace CAMel
             string Co = "";
             List<double> TPAd = new List<double>();
 
-            if (!DA.GetDataList(0, pts)) return;
-            if (!DA.GetDataList(1, dirs)) return;
-            if (!DA.GetDataList(2, SF)) return;
-            if (!DA.GetDataList(3, preCode)) return;
-            if (!DA.GetDataList(4, postCode)) return;
-            if (!DA.GetData(5, ref name)) return;
-            if (!DA.GetData(6, ref MT)) return;
-            if (!DA.GetData(7, ref MF)) return;
-            if (!DA.GetDataList(8, TPAd)) return; 
-            if (!DA.GetData(9, ref Co)) return;
+            if (!DA.GetDataList(0, pts)) { return; }
+            if (!DA.GetDataList(1, dirs)) { return; }
+            if (!DA.GetDataList(2, SF)) { return; }
+            if (!DA.GetDataList(3, preCode)) { return; }
+            if (!DA.GetDataList(4, postCode)) { return; }
+            if (!DA.GetData(5, ref name)) { return; }
+            if (!DA.GetData(6, ref MT)) { return; }
+            if (!DA.GetData(7, ref MF)) { return; }
+            if (!DA.GetDataList(8, TPAd)) { return; } 
+            if (!DA.GetData(9, ref Co)) { return; }
 
             // Process the TPA vector
 
@@ -106,31 +106,31 @@ namespace CAMel
             switch (TPAd.Count)
             {
                 case 7:
-                    if (TPAd[6] > 0) TPA.threeAxisHeightOffset = true;
-                    else TPA.threeAxisHeightOffset = false;
+                    if (TPAd[6] > 0) { TPA.threeAxisHeightOffset = true; }
+                    else { TPA.threeAxisHeightOffset = false; }
                     goto case 6;
                 case 6:
-                    if (TPAd[5] > 0) TPA.sdDropEnd = true;
-                    else TPA.sdDropEnd = false;
+                    if (TPAd[5] > 0) { TPA.sdDropEnd = true; }
+                    else { TPA.sdDropEnd = false; }
                     goto case 5;
                 case 5:
                     TPA.sdDropMiddle = TPAd[4];
                     goto case 4;
                 case 4:
-                    if (TPAd[3] > 0) TPA.sdDropStart = true;
-                    else TPA.sdDropStart = false;
+                    if (TPAd[3] > 0) { TPA.sdDropStart = true; }
+                    else { TPA.sdDropStart = false; }
                     goto case 3;
                 case 3:
-                    if (TPAd[2] > 0) TPA.stepDown = true;
-                    else TPA.stepDown = false;
+                    if (TPAd[2] > 0) { TPA.stepDown = true; }
+                    else { TPA.stepDown = false; }
                     goto case 2;
                 case 2:
-                    if (TPAd[1] > 0) TPA.retract = true;
-                    else TPA.retract = false;
+                    if (TPAd[1] > 0) { TPA.retract = true; }
+                    else { TPA.retract = false; }
                     goto case 1;
                 case 1:
-                    if (TPAd[0] > 0) TPA.insert = true;
-                    else TPA.insert = false;
+                    if (TPAd[0] > 0) { TPA.insert = true; }
+                    else { TPA.insert = false; }
                     break;
             }
 
@@ -147,17 +147,17 @@ namespace CAMel
             {
                 for (int i = 0; i < pts.Count; i++)
                 {
-                    if (dirs.Count == 1) usedir = dirs[0];
-                    else usedir = dirs[i];
+                    if (dirs.Count == 1) { usedir = dirs[0]; }
+                    else { usedir = dirs[i]; }
 
-                    if (SF.Count == 1) useSF = SF[0];
-                    else useSF = SF[i];
+                    if (SF.Count == 1) { useSF = SF[0]; }
+                    else { useSF = SF[i]; }
 
-                    if (preCode.Count == 1) usePreCo = preCode[0];
-                    else usePreCo = preCode[i];
+                    if (preCode.Count == 1) { usePreCo = preCode[0]; }
+                    else { usePreCo = preCode[i]; }
 
-                    if (postCode.Count == 1) usePostCo = postCode[0];
-                    else usePostCo = postCode[i];
+                    if (postCode.Count == 1) { usePostCo = postCode[0]; }
+                    else { usePostCo = postCode[i]; }
 
                     TP.Add(new ToolPoint(pts[i], usedir, usePreCo,usePostCo, useSF.X, useSF.Y));
 
