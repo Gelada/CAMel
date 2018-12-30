@@ -244,8 +244,8 @@ namespace CAMel.Types.Machine
                 + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             if (M.name != "") Co.AppendComment("  for " + M.name);
             Co.AppendComment(" Starting with: ");
-            Co.AppendComment("  Tool: " + MI[0][0].MatTool.Tool_name);
-            Co.AppendComment("  in " + MI[0][0].MatTool.Mat_name + " with shape " + MI[0][0].MatForm.ToString());
+            Co.AppendComment("  Tool: " + MI[0][0].MatTool.toolName);
+            Co.AppendComment("  in " + MI[0][0].MatTool.matName + " with shape " + MI[0][0].MatForm.ToString());
             Co.AppendComment("");
             Co.AppendComment(M.sectionBreak);
             Co.Append(M.header);
@@ -284,11 +284,11 @@ namespace CAMel.Types.Machine
                 Co.AppendComment(" ToolPath: " + TP.name);
                 preamble = true;
             }
-            if (Co.currentMT == null || TP.MatTool.Tool_name != Co.currentMT.Tool_name)
+            if (Co.currentMT == null || TP.MatTool.toolName != Co.currentMT.toolName)
             {
-                Co.AppendComment(" using: " + TP.MatTool.Tool_name + " into " + TP.MatTool.Mat_name);
+                Co.AppendComment(" using: " + TP.MatTool.toolName + " into " + TP.MatTool.matName);
                 Co.currentMT = TP.MatTool;
-                if (M.TLC) { Co.Append(M.toolChangeCommand + TP.MatTool.Tool_number); }
+                if (M.TLC) { Co.Append(M.toolChangeCommand + TP.MatTool.toolNumber); }
                 ch.MT = true;
                 preamble = true;
             }
@@ -351,7 +351,7 @@ namespace CAMel.Types.Machine
 
         // GCode reading
         static private Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);
-        static private double GetValue(string line, char split, double old, ref bool changed)
+        static private double GetValue(string line, char split, double old, ref bool changed, ref bool unset)
         {
             double val = old;
             string[] splitLine = line.Split(split);
@@ -359,8 +359,9 @@ namespace CAMel.Types.Machine
             {
                 string monkey = numbPattern.Replace(splitLine[1], "$1");
                 val = Convert.ToDouble(monkey);
-                if (val != old) changed = true;
+                if (val != old) { changed = true; }
             }
+            if (double.IsNaN(val)) { unset = true; }
             return val;
         }
         // TODO detect tool changes and new paths
@@ -368,17 +369,18 @@ namespace CAMel.Types.Machine
         {
             ToolPath TP = new ToolPath();
             Dictionary<char, double> vals = new Dictionary<char, double>();
-            foreach(char c in terms) { vals.Add(c, 0); }
+            foreach(char c in terms) { vals.Add(c, double.NaN); }
 
             char[] seps = { '\n', '\r' };
             String[] Lines = Code.Split(seps, StringSplitOptions.RemoveEmptyEntries);
-            bool changed;
+            bool changed, unset;
 
             foreach (String line in Lines)
             {
                 changed = false;
+                unset = false;
                 foreach (char t in terms)
-                { vals[t] = GetValue(line, t, vals[t], ref changed); }
+                { vals[t] = GetValue(line, t, vals[t], ref changed, ref unset); }
                 //interpret a G0 command.
                 if (line.Contains(@"G00") || line.ToString().Contains(@"G0 "))
                 {
@@ -388,7 +390,7 @@ namespace CAMel.Types.Machine
                         vals['F'] = 0;
                     }
                 }
-                if (changed){TP.Add(M.readTP(vals, MTs[0]));}
+                if (changed && !unset){TP.Add(M.readTP(vals, MTs[0]));}
             }
             return TP;
         }

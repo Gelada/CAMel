@@ -17,6 +17,7 @@
     <RestorePackages>true</RestorePackages>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -43,17 +44,19 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CsvHelper, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
+      <HintPath>..\packages\CsvHelper.2.16.3.0\lib\net40\CsvHelper.dll</HintPath>
+    </Reference>
     <Reference Include="Emgu.CV.UI, Version=3.4.1.2976, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\EMGU.CV.3.4.1.2976\lib\net35\Emgu.CV.UI.dll</HintPath>
     </Reference>
     <Reference Include="Emgu.CV.World, Version=3.4.1.2976, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\EMGU.CV.3.4.1.2976\lib\net35\Emgu.CV.World.dll</HintPath>
     </Reference>
-    <Reference Include="MIConvexHull, Version=1.0.17.411, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.1019\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
-    </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -86,6 +89,7 @@
     <None Include="C_PhotoContours.cs" />
     <None Include="C_Create2AxisMachine.cs" />
     <Compile Include="C_Drill_Operation.cs" />
+    <Compile Include="C_ReadToolFile.cs" />
     <Compile Include="C_PhotoSurface.cs" />
     <Compile Include="C_Trace.cs" />
     <Compile Include="C_CreatePocketingPath.cs" />
@@ -119,7 +123,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="clipper.cs" />
-    <None Include="P_Machine - Copy %282%29.cs" />
     <Compile Include="L_Machine.cs" />
     <Compile Include="P_MachineInstructions.cs" />
     <None Include="P_PocketPath.cs" />
@@ -212,7 +215,6 @@
     <None Include="Resources\CAMel.png" />
     <None Include="Resources\BW_CAMel.png" />
     <Content Include="License-LGPL.txt" />
-    <Content Include="MIConvexHull.xml" />
     <Content Include="Resources\Image1.png" />
     <None Include="Resources\pocketing.png" />
     <None Include="Resources\surfacinghelix.png" />
@@ -243,7 +245,10 @@ Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"
 Copy "$(TargetPath)" "C:\Users\eharriss\Google Drive\CAMel\$(ProjectName).gha"
 Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\Emgu.CV.World.dll"
 Copy "$(TargetDir)Emgu.CV.World.dll" "\\tsclient\Onto windows\CAMel\Emgu.CV.World.dll"
-Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\Google Drive\CAMel\Emgu.CV.World.dll"</PostBuildEvent>
+Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\Google Drive\CAMel\Emgu.CV.World.dll"
+Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\CsvHelper.dll"
+Copy "$(TargetDir)CsvHelper.dll" "\\tsclient\Onto windows\CAMel\CsvHelper.dll"
+Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eharriss\Google Drive\CsvHelper.dll"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <StartArguments>
@@ -254,6 +259,7 @@ Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\Google Drive\CAMel\Emgu.
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <RegisterForComInterop>false</RegisterForComInterop>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <FallbackCulture>en-US</FallbackCulture>
@@ -263,6 +269,7 @@ Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\Google Drive\CAMel\Emgu.
     <StartArguments>
     </StartArguments>
     <StartAction>Program</StartAction>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Import Project="..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets" Condition="Exists('..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets')" />

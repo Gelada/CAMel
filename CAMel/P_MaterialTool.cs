@@ -11,14 +11,14 @@ namespace CAMel.Types
     // Different end mill shapes to consider
     public enum EndShape
     {
-        Ball, Square, V, Other
+        Ball, Square, V, Other, Error
     }
     // Settings for a particular material and tool
     public class MaterialTool : ICAMel_Base 
     {
-        public string Mat_name    { get; set; } // Name of the material
-        public string Tool_name   { get; set; } // Name of the tool 
-        public int Tool_number    { get; set; } // Number of the tool
+        public string matName    { get; set; } // Name of the material
+        public string toolName   { get; set; } // Name of the tool 
+        public int toolNumber    { get; set; } // Number of the tool
         public double speed       { get; set; } // speed of spindle (assumed unset for negative values)
         public double feedCut     { get; set; } // feed rate for cutting (assumed unset for negative values)
         public double feedPlunge  { get; set; } // feed rate for plunging (assumed unset for negative values)
@@ -26,19 +26,19 @@ namespace CAMel.Types
         public double finishDepth { get; set; } // thickness to cut in a finish pass
         public double toolWidth   { get; set; } // width of tool (assumed unset for negative values)
         public double toolLength  { get; set; } // length from the tip of the tool to the spindle
-        public EndShape ES        { get; set; } // End shape of the tool
+        public EndShape shape     { get; set; } // End shape of the tool
 
         // settings for curve approximation
 
-        public double tolerance; // The maximum permitted distance of approximation from curve
-        public double minStep; // shortest path permitted
+        public double tolerance { get; set; } // The maximum permitted distance of approximation from curve
+        public double minStep { get; set; } // shortest path permitted
 
         // Default Constructor make everything blank.
         public MaterialTool()
         {
-            this.Mat_name = "";
-            this.Tool_name = "";
-            this.Tool_number = 1;
+            this.matName = "";
+            this.toolName = "";
+            this.toolNumber = 1;
             this.speed = -1;
             this.feedCut = -1;
             this.feedPlunge = -1;
@@ -47,14 +47,14 @@ namespace CAMel.Types
             this.toolLength = 0;
             this.tolerance = 0;
             this.minStep = 0;
-            this.ES = EndShape.Ball;
+            this.shape = EndShape.Ball;
         }
         // Just names.
         public MaterialTool(string Mat, string Tool)
         {
-            this.Mat_name = Mat;
-            this.Tool_name = Tool;
-            this.Tool_number = 1;
+            this.matName = Mat;
+            this.toolName = Tool;
+            this.toolNumber = 1;
             this.speed = -1;
             this.feedCut = -1;
             this.feedPlunge = -1;
@@ -64,14 +64,14 @@ namespace CAMel.Types
             this.toolLength = 0;
             this.tolerance = 0;
             this.minStep = 0;
-            this.ES = EndShape.Ball;
+            this.shape = EndShape.Ball;
         }
         // Everything, with defaults
         public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0)
         {
-            this.Mat_name = Mat;
-            this.Tool_name = Tool;
-            this.Tool_number = ToolN;
+            this.matName = Mat;
+            this.toolName = Tool;
+            this.toolNumber = ToolN;
             this.speed = speed;
             this.feedCut = feedCut;
             this.feedPlunge = feedPlunge;
@@ -81,14 +81,14 @@ namespace CAMel.Types
             this.toolLength = tL;
             this.tolerance = tol;
             this.minStep = mS;
-            this.ES = ES;
+            this.shape = ES;
         }
         // Copy Constructor
         public MaterialTool(MaterialTool MT)
         {
-            this.Mat_name = MT.Mat_name;
-            this.Tool_name = MT.Tool_name;
-            this.Tool_number = MT.Tool_number;
+            this.matName = MT.matName;
+            this.toolName = MT.toolName;
+            this.toolNumber = MT.toolNumber;
             this.speed = MT.speed;
             this.feedCut = MT.feedCut;
             this.feedPlunge = MT.feedPlunge;
@@ -98,7 +98,7 @@ namespace CAMel.Types
             this.toolLength = MT.toolLength;
             this.tolerance = MT.tolerance;
             this.minStep = MT.minStep;
-            this.ES = MT.ES;
+            this.shape = MT.shape;
         }
         // Duplicate
         public ICAMel_Base Duplicate()
@@ -118,7 +118,7 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            string outp = "Tool " + this.Tool_number + " " + this.Tool_name + " into " + this.Mat_name + " Plunge feed: " + this.feedPlunge.ToString() + " Cut Depth: " + this.cutDepth.ToString();
+            string outp = "Tool " + this.toolNumber + " " + this.toolName + " into " + this.matName + " Plunge feed: " + this.feedPlunge.ToString() + " Cut Depth: " + this.cutDepth.ToString();
             return outp;
         }
 
@@ -160,13 +160,13 @@ namespace CAMel.Types
             uDir.Unitize();
             uNorm.Unitize();
             Vector3d os;
-            switch (this.ES)
+            switch (this.shape)
             {
                 case EndShape.Ball: // find correct position of ball centre and then push to tip. 
                     os = this.toolWidth * (uNorm - uDir) / 2;
                     break;
-                case EndShape.Square: // Cut with corner if the angle is greate than .01 radians
-                    if(Vector3d.VectorAngle(uDir,uNorm)-Math.PI < .01)
+                case EndShape.Square: // Cut with corner if the angle is greater than .01 radians
+                    if(Vector3d.VectorAngle(uDir,uNorm) < .01)
                     {
                         os = new Vector3d(0, 0, 0);
                     }

@@ -47,11 +47,11 @@ namespace CAMel.Types
     public class SurfacePath : IList<Curve>, ICAMel_Base
     {
         private List<Curve> Paths; // Curves to project
-        public SurfProj SP; // Type of projection
-        public Curve CylOnto; // centre line for Cylindrical projection
-        public Vector3d dir; // direction for parallel projection, or line direction for cylindrical
-        public Point3d Cen; // centre for spherical projection
-        public SurfToolDir STD; // method to calculate tool direction
+        public SurfProj surfProj { get; set;} // Type of projection
+        public Curve cylOnto { get; set;}// centre line for Cylindrical projection
+    public Vector3d dir { get; set;}// direction for parallel projection, or line direction for cylindrical
+public Point3d cen { get; set; } // centre for spherical projection
+        public SurfToolDir surfToolDir { get; set; } // method to calculate tool direction
 
         // private storage when processing a model
 
@@ -68,38 +68,37 @@ namespace CAMel.Types
         // Parallel constructor
         public SurfacePath(List<Curve> Paths, Vector3d dir, SurfToolDir STD)
         {
-
             this.Paths = Paths;
-            this.SP = SurfProj.Parallel;
+            this.surfProj = SurfProj.Parallel;
             this.dir = dir;
-            this.STD = STD;
+            this.surfToolDir = STD;
         }
         // Cylindrical constructor
-        public SurfacePath(List<Curve> Paths, Vector3d dir, Curve CC, SurfToolDir STD)
+        public SurfacePath(List<Curve> Paths, Vector3d dir, Curve CC, SurfToolDir surfToolDir)
         {
             this.Paths = Paths;
-            this.SP = SurfProj.Cylindrical;
+            this.surfProj = SurfProj.Cylindrical;
             this.dir = dir;
-            this.CylOnto = CC;
-            this.STD = STD;
+            this.cylOnto = CC;
+            this.surfToolDir = surfToolDir;
         }
         // Spherical constructor
-        public SurfacePath(List<Curve> Paths, Point3d Cen, SurfToolDir STD)
+        public SurfacePath(List<Curve> Paths, Point3d Cen, SurfToolDir surfToolDir)
         {
             this.Paths = Paths;
-            this.SP = SurfProj.Spherical;
-            this.Cen = Cen;
-            this.STD = STD;
+            this.surfProj = SurfProj.Spherical;
+            this.cen = Cen;
+            this.surfToolDir = surfToolDir;
         }
         // Copy Constructor
         public SurfacePath(SurfacePath Os)
         {
             this.Paths = Os.Paths;
-            this.SP = Os.SP;
-            this.CylOnto = Os.CylOnto;
+            this.surfProj = Os.surfProj;
+            this.cylOnto = Os.cylOnto;
             this.dir = Os.dir;
-            this.Cen = Os.Cen;
-            this.STD = Os.STD;
+            this.cen = Os.cen;
+            this.surfToolDir = Os.surfToolDir;
         }
         // Duplicate
         public SurfacePath Duplicate()
@@ -135,7 +134,7 @@ namespace CAMel.Types
         public override string ToString()
         {
             string op= "Surfacing:";
-            switch (this.SP)
+            switch (this.surfProj)
             {
                 case SurfProj.Parallel:
                     op = op + " Parallel Projection";
@@ -273,7 +272,7 @@ namespace CAMel.Types
                     }
 
                     tangent = newTPs[j][i+lookforward].Pt - newTPs[j][i - lookback].Pt;
-                    switch (this.STD)
+                    switch (this.surfToolDir)
                     {
                         case SurfToolDir.Projection: // already set
                             break; 
@@ -373,7 +372,7 @@ namespace CAMel.Types
         private Vector3d ProjDir(Point3d Pt)
         {
             Vector3d pd = new Vector3d();
-            switch (this.SP)
+            switch (this.surfProj)
             {
                 case SurfProj.Parallel:
                     pd = this.dir;
@@ -381,10 +380,10 @@ namespace CAMel.Types
                 case SurfProj.Cylindrical:
                     Plane Pl = new Plane(Pt,this.dir);
                     
-                    if(this.CylOnto.IsLinear()) // if centre is a line treat it as infinite
+                    if(this.cylOnto.IsLinear()) // if centre is a line treat it as infinite
                     {
                         double lp;
-                        Line cyline = new Line(this.CylOnto.PointAtStart, this.CylOnto.PointAtEnd);
+                        Line cyline = new Line(this.cylOnto.PointAtStart, this.cylOnto.PointAtEnd);
                         if(Intersection.LinePlane(cyline, Pl, out lp))
                         {
                             pd = cyline.PointAt(lp)-Pt;
@@ -394,7 +393,7 @@ namespace CAMel.Types
                         }
                     } else // Use curve and warn if no intersection
                     {
-                        CurveIntersections CI = Intersection.CurvePlane(this.CylOnto,Pl,0.0000001);
+                        CurveIntersections CI = Intersection.CurvePlane(this.cylOnto,Pl,0.0000001);
                         if(CI.Count == 0)
                         {
                             throw new System.ArgumentOutOfRangeException("Short Cylinder", "The cylinder centre curve is shorter than the model."); 
@@ -410,7 +409,7 @@ namespace CAMel.Types
                     }
                     break;
                 case SurfProj.Spherical:
-                    pd = this.Cen-Pt;
+                    pd = this.cen-Pt;
                     break;
                 default:
                     break;
