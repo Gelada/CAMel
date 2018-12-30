@@ -24,7 +24,7 @@ namespace CAMel.Types.Machine
     {
         string name { get; set; }
         double pathJump { get; set; } // Maximum jump between toolpaths in material
-        bool TLC { get; set; } // Tool Length Compensation
+        bool toolLengthCompensation { get; set; } // Tool Length Compensation
 
         void writeFileStart(ref CodeInfo Co, MachineInstruction MI);
         void writeFileEnd(ref CodeInfo Co, MachineInstruction MI);
@@ -35,11 +35,11 @@ namespace CAMel.Types.Machine
         ToolPoint writeCode(ref CodeInfo Co, ToolPath tP, ToolPoint beforePoint);
         ToolPoint writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first, ToolPoint beforePoint);
 
-        ToolPath ReadCode(List<MaterialTool> MTs, string Code);
+        ToolPath readCode(List<MaterialTool> MTs, string Code);
 
         ToolPath insertRetract(ToolPath tP);
         Vector3d toolDir(ToolPoint TP);
-        ToolPoint Interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng);
+        ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng);
         double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng); // max change for orientation axes
     }
 

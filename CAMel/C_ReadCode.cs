@@ -57,7 +57,7 @@ namespace CAMel
             if (!DA.GetDataList(2, MTs)) { return; }
 
 
-            ToolPath TP = M.ReadCode(MTs, Code);
+            ToolPath TP = M.readCode(MTs, Code);
 
             List<Point3d> selPt = new List<Point3d>();
             List<Vector3d> selDir = new List<Vector3d>();
@@ -66,15 +66,15 @@ namespace CAMel
             {
                 if(true)
                 {
-                    selPt.Add(tp.Pt);
-                    selDir.Add(tp.Dir);
+                    selPt.Add(tp.pt);
+                    selDir.Add(tp.dir);
                 }
             }
 
             DA.SetData(0,TP);
             DA.SetDataList(1, selPt);
             DA.SetDataList(2, selDir);
-            DA.SetDataList(3, TP.GetSpeedFeed());
+            DA.SetDataList(3, TP.getSpeedFeed());
             
         }
 

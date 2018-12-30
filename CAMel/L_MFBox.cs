@@ -9,11 +9,11 @@ namespace CAMel.Types.MaterialForm
     class MFBox : IMaterialForm
     {
         public MFBox(Box box, double matTol, double safeD)
-        { this.B = box; this.materialTolerance = matTol; this.safeDistance = safeD; }
+        { this.box = box; this.materialTolerance = matTol; this.safeDistance = safeD; }
 
-        public bool IsValid { get { return B.IsValid; } }
+        public bool IsValid { get { return this.box.IsValid; } }
 
-        public Box B { get; private set; }
+        public Box box { get; private set; }
 
         public double materialTolerance { get; set; }
 
@@ -26,7 +26,7 @@ namespace CAMel.Types.MaterialForm
 
         public override string ToString()
         {
-            return "MFBox "+this.B.ToString();
+            return "MFBox "+this.box.ToString();
         }
 
         public ICAMel_Base Duplicate()
@@ -41,7 +41,7 @@ namespace CAMel.Types.MaterialForm
 
         public MFintersects intersect(ToolPoint TP, double tolerance)
         {
-            return this.intersect(TP.Pt,TP.Dir, tolerance);
+            return this.intersect(TP.pt,TP.dir, tolerance);
         }
 
         public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter)
@@ -52,32 +52,32 @@ namespace CAMel.Types.MaterialForm
         public MFintersects intersect(Point3d PtIn, Vector3d dirIn, double tolerance)
         {
             dirIn.Unitize();
-            Box exB = this.B;
+            Box exB = this.box;
             exB.Inflate(tolerance+this.materialTolerance); // expand to tolerance
 
             // convert to Box coordinates
             Point3d Pt = new Point3d();
             Vector3d dir = new Vector3d();
-            this.B.Plane.RemapToPlaneSpace((Point3d)dirIn, out Pt);
+            this.box.Plane.RemapToPlaneSpace((Point3d)dirIn, out Pt);
             dir = (Vector3d)Pt;
-            this.B.Plane.RemapToPlaneSpace(PtIn, out Pt);
+            this.box.Plane.RemapToPlaneSpace(PtIn, out Pt);
 
             // test to hit each face (could stop after 2, if efficiency worth it)
 
             MFintersects inters = new MFintersects();
             double dist;
             if(testFace(exB.X.Max,exB.Y,exB.Z,Pt, dir, out dist))
-            { inters.Add(this.fromPlane(Pt + dir * dist), this.B.Plane.XAxis, dist); }
+            { inters.Add(this.fromPlane(Pt + dir * dist), this.box.Plane.XAxis, dist); }
             if (testFace(exB.X.Min, exB.Y, exB.Z, Pt, dir, out dist))
-            { inters.Add(this.fromPlane(Pt + dir * dist), -this.B.Plane.XAxis, dist); }
+            { inters.Add(this.fromPlane(Pt + dir * dist), -this.box.Plane.XAxis, dist); }
             if (testFace(exB.Y.Max, exB.X, exB.Z, new Point3d(Pt.Y,Pt.X,Pt.Z), new Vector3d (dir.Y,dir.X,dir.Z), out dist))
-            { inters.Add(this.fromPlane(Pt + dir * dist), this.B.Plane.YAxis, dist); }
+            { inters.Add(this.fromPlane(Pt + dir * dist), this.box.Plane.YAxis, dist); }
             if (testFace(exB.Y.Min, exB.X, exB.Z, new Point3d(Pt.Y, Pt.X, Pt.Z), new Vector3d(dir.Y, dir.X, dir.Z), out dist))
-            { inters.Add(this.fromPlane(Pt + dir * dist), -this.B.Plane.YAxis, dist); }
+            { inters.Add(this.fromPlane(Pt + dir * dist), -this.box.Plane.YAxis, dist); }
             if (testFace(exB.Z.Max, exB.X, exB.Y, new Point3d(Pt.Z, Pt.X, Pt.Y), new Vector3d(dir.Z, dir.X, dir.Y), out dist))
-            { inters.Add(this.fromPlane(Pt + dir * dist), this.B.Plane.ZAxis, dist); }
+            { inters.Add(this.fromPlane(Pt + dir * dist), this.box.Plane.ZAxis, dist); }
             if (testFace(exB.Z.Min, exB.X, exB.Y, new Point3d(Pt.Z, Pt.X, Pt.Y), new Vector3d(dir.Z, dir.X, dir.Y), out dist))
-            { inters.Add(this.fromPlane(Pt + dir * dist), -this.B.Plane.ZAxis, dist); }
+            { inters.Add(this.fromPlane(Pt + dir * dist), -this.box.Plane.ZAxis, dist); }
 
             if (inters.Count > 1)
             {
@@ -119,41 +119,41 @@ namespace CAMel.Types.MaterialForm
 
         private Point3d fromPlane(Point3d Pt)
         {
-            return this.B.Plane.PointAt(Pt.X, Pt.Y, Pt.Z);
+            return this.box.Plane.PointAt(Pt.X, Pt.Y, Pt.Z);
         }
 
         private Vector3d midOutDir(Point3d Pt, double tolerance)
         {
-            double utol = materialTolerance + tolerance;
+            double utol = this.materialTolerance + tolerance;
             double closeD;
             Vector3d outD;
             // check how close to each face, return normal of closest
-            closeD = this.B.X.Max+utol - Pt.X;
-            outD = this.B.Plane.XAxis;
-            if(closeD > (Pt.X-this.B.X.Min-utol))
+            closeD = this.box.X.Max+utol - Pt.X;
+            outD = this.box.Plane.XAxis;
+            if(closeD > (Pt.X-this.box.X.Min-utol))
             {
-                closeD = (Pt.X- this.B.X.Min-utol);
-                outD = -this.B.Plane.XAxis;
+                closeD = (Pt.X- this.box.X.Min-utol);
+                outD = -this.box.Plane.XAxis;
             }
-            if (closeD > (this.B.Y.Max+utol - Pt.Y))
+            if (closeD > (this.box.Y.Max+utol - Pt.Y))
             {
-                closeD = (this.B.Y.Max+utol - Pt.Y);
-                outD = this.B.Plane.YAxis;
+                closeD = (this.box.Y.Max+utol - Pt.Y);
+                outD = this.box.Plane.YAxis;
             }
-            if (closeD > (Pt.Y - this.B.Y.Min-utol))
+            if (closeD > (Pt.Y - this.box.Y.Min-utol))
             {
-                closeD = (Pt.Y - this.B.Y.Min-utol);
-                outD = -this.B.Plane.YAxis;
+                closeD = (Pt.Y - this.box.Y.Min-utol);
+                outD = -this.box.Plane.YAxis;
             }
-            if (closeD > (this.B.Z.Max+utol - Pt.Z))
+            if (closeD > (this.box.Z.Max+utol - Pt.Z))
             {
-                closeD = (this.B.Z.Max+utol - Pt.Z);
-                outD = this.B.Plane.ZAxis;
+                closeD = (this.box.Z.Max+utol - Pt.Z);
+                outD = this.box.Plane.ZAxis;
             }
-            if (closeD > (Pt.Z - this.B.Z.Min-utol))
+            if (closeD > (Pt.Z - this.box.Z.Min-utol))
             {
-                closeD = (Pt.Z - this.B.Z.Min-utol);
-                outD = -this.B.Plane.ZAxis;
+                closeD = (Pt.Z - this.box.Z.Min-utol);
+                outD = -this.box.Plane.ZAxis;
             }
             if(closeD < -2*utol) { throw new FormatException("MidOutDir in MFBox called for point outside the Box."); }
             return outD;
@@ -166,18 +166,18 @@ namespace CAMel.Types.MaterialForm
 
         public bool getBrep(ref object brep)
         {
-            if (this.B.IsValid)
+            if (this.box.IsValid)
             {
-                brep = this.B.ToBrep();
+                brep = this.box.ToBrep();
                 return true;
             } else { return false; }
         }
 
         public bool getBrep(ref Brep brep)
         {
-            if (this.B.IsValid)
+            if (this.box.IsValid)
             {
-                brep = this.B.ToBrep();
+                brep = this.box.ToBrep();
                 return true;
             }
             else { return false; }
@@ -185,9 +185,9 @@ namespace CAMel.Types.MaterialForm
 
         public bool getMesh(ref object mesh)
         {
-            if (this.B.IsValid)
+            if (this.box.IsValid)
             {
-                mesh = Mesh.CreateFromBox(this.B, 1, 1, 1);
+                mesh = Mesh.CreateFromBox(this.box, 1, 1, 1);
                 return true;
             }
             else { return false; }
@@ -196,9 +196,9 @@ namespace CAMel.Types.MaterialForm
 
         public bool getMesh(ref Mesh mesh)
         {
-            if (this.B.IsValid)
+            if (this.box.IsValid)
             {
-                mesh = Mesh.CreateFromBox(this.B, 1, 1, 1);
+                mesh = Mesh.CreateFromBox(this.box, 1, 1, 1);
                 return true;
             }
             else { return false; }

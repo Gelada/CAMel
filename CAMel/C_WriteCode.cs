@@ -32,19 +32,19 @@ namespace CAMel
             this.WS = WriteState.No_path;
             this.writeProgress = 0;
 
-            this.WriteFileThread = new BackgroundWorker();
-            this.WriteFileThread.DoWork += this.BW_WriteFile;
-            this.WriteFileThread.RunWorkerCompleted += this.BW_completedFileWrite;
-            this.WriteFileThread.ProgressChanged += BW_progressWithFile;
-            this.WriteFileThread.WorkerReportsProgress = true;
-            this.WriteFileThread.WorkerSupportsCancellation = true;
+            this.writeFileThread = new BackgroundWorker();
+            this.writeFileThread.DoWork += this.bwWriteFile;
+            this.writeFileThread.RunWorkerCompleted += this.bwCompletedFileWrite;
+            this.writeFileThread.ProgressChanged += bwProgressWithFile;
+            this.writeFileThread.WorkerReportsProgress = true;
+            this.writeFileThread.WorkerSupportsCancellation = true;
 
 
         }
 
         public override void CreateAttributes()
         {
-            m_attributes = new WriteCodeAttributes(this);
+            this.m_attributes = new WriteCodeAttributes(this);
         }
 
         /// <summary>
@@ -52,8 +52,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            List<String> Ig = new List<string>();
-            Ig.Add("Nothing to Ignore.");
+            List<String> Ig = new List<string> { "Nothing to Ignore." };
             pManager.AddGenericParameter("Machine Instructions", "MI", "Complete set of machine instructions to convert to Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list,Ig);
             pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, "");
@@ -90,14 +89,14 @@ namespace CAMel
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
             Menu_AppendItem(menu, "File Extension");
-            Menu_AppendTextItem(menu, this.extension, Menu_ExtensionClick, Menu_ExtensionChange, true);
+            Menu_AppendTextItem(menu, this.extension, menuExtensionClick, menuExtensionChange, true);
         }
 
-        private void Menu_ExtensionClick(object sender, EventArgs e)
+        private void menuExtensionClick(object sender, EventArgs e)
         {
         }
 
-        private void Menu_ExtensionChange(object sender, string text)
+        private void menuExtensionChange(object sender, string text)
         {
             base.RecordUndoEvent("Extension");
             this.extension = text;
@@ -109,9 +108,9 @@ namespace CAMel
             base.BeforeSolveInstance();
 
             // Cancel a write thread if it is running
-            if (this.WriteFileThread.IsBusy)
+            if (this.writeFileThread.IsBusy)
             {
-                this.WriteFileThread.CancelAsync();
+                this.writeFileThread.CancelAsync();
                 this.setOffWriting = false;
             }
         }
@@ -134,11 +133,11 @@ namespace CAMel
 
             lock (this.SaveCode)
             {
-                this.SaveCode = new CodeInfo(MI.M);
+                this.SaveCode = new CodeInfo(MI.mach);
 
-                MachineInstruction procMI = MI.ProcessAdditions();
+                MachineInstruction procMI = MI.processAdditions();
 
-                procMI.WriteCode(ref this.SaveCode);
+                procMI.writeCode(ref this.SaveCode);
             }
             // Detect Errors and warnings
 
@@ -166,12 +165,12 @@ namespace CAMel
             {
                 if(DA.GetData(2, ref this.filePath) && this.filePath != "")
                 {
-                    this.filePath = Path.GetDirectoryName(filePath);
+                    this.filePath = Path.GetDirectoryName(this.filePath);
                     this.filePath = Path.Combine(this.filePath, MI.name+"."+this.extension);
                     // queue up file write
-                    if (!this.WriteFileThread.IsBusy)
+                    if (!this.writeFileThread.IsBusy)
                     {
-                        this.WriteFileThread.RunWorkerAsync();
+                        this.writeFileThread.RunWorkerAsync();
                     }
                     else {
                         this.setOffWriting = true;
@@ -186,17 +185,17 @@ namespace CAMel
             }
         }
 
-        private BackgroundWorker WriteFileThread { get; set; }
+        private BackgroundWorker writeFileThread { get; set; }
         private CodeInfo SaveCode;
         private string filePath;
         private string m_extension;
         public string extension
         {
-            get { return m_extension; }
+            get { return this.m_extension; }
             set
             {
-                m_extension = value;
-                this.Message = "." + m_extension;
+                this.m_extension = value;
+                this.Message = "." + this.m_extension;
             }
         }
         private bool setOffWriting { get; set; }
@@ -204,7 +203,7 @@ namespace CAMel
         public WriteState WS;
         public double writeProgress { get; private set; }
 
-        private void BW_WriteFile(object sender, DoWorkEventArgs e)
+        private void bwWriteFile(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker BW = (BackgroundWorker)sender;
             
@@ -212,27 +211,27 @@ namespace CAMel
             lock (this.filePath) lock (this.SaveCode)
                 {
                     this.WS = WriteState.Writing;
-                    try { File.Delete(filePath); }
+                    try { File.Delete(this.filePath); }
                     catch (Exception) { }
                     BW.ReportProgress(0);
 
-                    using (StreamWriter SW = new StreamWriter(filePath))
+                    using (StreamWriter SW = new StreamWriter(this.filePath))
                     {
-                        for (int i = 0; i < SaveCode.Length; i += saveBlockSize)
+                        for (int i = 0; i < this.SaveCode.Length; i += saveBlockSize)
                         {
                             if (BW.CancellationPending)
                             {
                                 e.Cancel = true;
                                 break;
                             }
-                            SW.Write(SaveCode.ToString(i, saveBlockSize));
-                            BW.ReportProgress((int)Math.Floor(100.0 * i / (double)SaveCode.Length));
+                            SW.Write(this.SaveCode.ToString(i, saveBlockSize));
+                            BW.ReportProgress((int)Math.Floor(100.0 * i / (double)this.SaveCode.Length));
                         }
                     }
                 }
         }
 
-        private void BW_completedFileWrite(object sender, RunWorkerCompletedEventArgs e)
+        private void bwCompletedFileWrite(object sender, RunWorkerCompletedEventArgs e)
         {
             if(e.Cancelled)
             {
@@ -245,13 +244,13 @@ namespace CAMel
             if(this.setOffWriting)
             {
                 this.setOffWriting = false;
-                this.WriteFileThread.RunWorkerAsync();
+                this.writeFileThread.RunWorkerAsync();
             }
         }
 
         private void cancelWrite()
         {
-            File.Delete(filePath);
+            File.Delete(this.filePath);
             this.WS = WriteState.Cancelled;
             this.writeProgress = 0;
             this.OnDisplayExpired(true);
@@ -264,7 +263,7 @@ namespace CAMel
             //this.OnDisplayExpired(true);
         }
 
-        private void BW_progressWithFile(object sender, ProgressChangedEventArgs e)
+        private void bwProgressWithFile(object sender, ProgressChangedEventArgs e)
         {
             this.updateWriteProgress(e.ProgressPercentage / 100.0);
         }

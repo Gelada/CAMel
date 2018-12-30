@@ -115,14 +115,14 @@ namespace CAMel.Types.MaterialForm
                     // point on material surface
 
                     tempTP = new ToolPoint(irTP[0]);
-                    tempTP.Pt = inter.Pt;
-                    tempTP.feed = TP.MatTool.feedPlunge;
+                    tempTP.pt = inter.Pt;
+                    tempTP.feed = TP.matTool.feedPlunge;
                     irTP.Insert(0, tempTP);
 
                     // point out at safe distance
 
                     tempTP = new ToolPoint(irTP[0]);
-                    tempTP.Pt = tempTP.Pt + inter.Away * utol;
+                    tempTP.pt = tempTP.pt + inter.Away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Insert(0, tempTP);
                 } else
@@ -133,7 +133,7 @@ namespace CAMel.Types.MaterialForm
                     {
                         // point out at safe distance
                         tempTP = new ToolPoint(irTP[0]);
-                        tempTP.Pt = inter.Pt;
+                        tempTP.pt = inter.Pt;
                         tempTP.feed = 0; // we can use a rapid move
                         irTP.Insert(0, tempTP);
                     } //  otherwise nothing needs to be added as we do not interact with material
@@ -148,10 +148,10 @@ namespace CAMel.Types.MaterialForm
                     tempTP = new ToolPoint(irTP[irTP.Count - 1]);
 
                     // set speed to the plunge feed rate.
-                    tempTP.feed = TP.MatTool.feedPlunge;
+                    tempTP.feed = TP.matTool.feedPlunge;
 
                     // Pull back to surface
-                    tempTP.Pt = inter.Pt;
+                    tempTP.pt = inter.Pt;
                     tempTP.feed = 0; // we can use a rapid move
 
                     irTP.Add(tempTP);
@@ -159,7 +159,7 @@ namespace CAMel.Types.MaterialForm
                     // Pull away to safe distance
 
                     tempTP = new ToolPoint(irTP[irTP.Count - 1]);
-                    tempTP.Pt = tempTP.Pt + inter.Away * utol;
+                    tempTP.pt = tempTP.pt + inter.Away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Add(tempTP);
                 } else
@@ -170,7 +170,7 @@ namespace CAMel.Types.MaterialForm
                     {
                         // point out at safe distance
                         tempTP = new ToolPoint(irTP[irTP.Count - 1]);
-                        tempTP.Pt = inter.Pt;
+                        tempTP.pt = inter.Pt;
                         tempTP.feed = 0; // we can use a rapid move
                         irTP.Add(tempTP);
                     } //  otherwise nothing needs to be added as we do not interact with material
@@ -211,22 +211,22 @@ namespace CAMel.Types.MaterialForm
             {
                 // for every line between points check if we leave or enter the material
 
-                if(MF.intersect(TP[i].Pt, TP[i + 1].Pt, 0, out inters))
+                if(MF.intersect(TP[i].pt, TP[i + 1].pt, 0, out inters))
                 {
-                    lineLen = (TP[i + 1].Pt - TP[i].Pt).Length;
+                    lineLen = (TP[i + 1].pt - TP[i].pt).Length;
 
                     if (inters.firstDist > 0) // add first intersection if on line
                     {
-                        refined.Add(M.Interpolate(TP[i], TP[i + 1],TP.MatTool, inters.firstDist / lineLen, false));
+                        refined.Add(M.interpolate(TP[i], TP[i + 1],TP.matTool, inters.firstDist / lineLen, false));
                     }
                    
                     if(inters.firstDist > 0 && lineLen > inters.thrDist) // add midpoint of intersection if it passes right through
                     {
-                        refined.Add(M.Interpolate(TP[i], TP[i + 1],TP.MatTool, (inters.firstDist+inters.thrDist) / (2.0*lineLen),false));
+                        refined.Add(M.interpolate(TP[i], TP[i + 1],TP.matTool, (inters.firstDist+inters.thrDist) / (2.0*lineLen),false));
                     }
                     if(lineLen > inters.thrDist) // add last intersection if on line
                     {
-                        refined.Add(M.Interpolate(TP[i], TP[i + 1], TP.MatTool, inters.thrDist / lineLen,false));
+                        refined.Add(M.interpolate(TP[i], TP[i + 1], TP.matTool, inters.thrDist / lineLen,false));
                     }
 
                 }

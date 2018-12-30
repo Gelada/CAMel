@@ -97,7 +97,7 @@ namespace CAMel
             double useZ = (BB.Max.Z + BB.Min.Z) / 2.0;
 
             // turn the curve into a Polyline
-            PolylineCurve PL = ToolPath.ConvertAccurate(C);
+            PolylineCurve PL = ToolPath.convertAccurate(C);
 
             // offSet
             List<PolylineCurve> osC = new List<PolylineCurve>();
@@ -135,9 +135,9 @@ namespace CAMel
                 c.Transform(Transform.PlaneToPlane(Plane.WorldXY, P));
 
                 // Add to Operation
-                TP.ConvertCurve(c, D);
+                TP.convertCurve(c, D);
                 Op.Add(TP);
-                Cs.Add(TP.GetLine());
+                Cs.Add(TP.getLine());
             }
 
             DA.SetData(0, Op);

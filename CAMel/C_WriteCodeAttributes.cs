@@ -12,21 +12,25 @@ namespace CAMel
         public WriteCodeAttributes(C_WriteCode owner) :
             base(owner)
         {
-            WriteMessages = new Dictionary<WriteState, string>();
-            WriteMessages.Add(WriteState.Cancelled, @"Cancelled");
-            WriteMessages.Add(WriteState.Finished, @"File Written");
-            WriteMessages.Add(WriteState.No_path, @"No Path");
-            WriteMessages.Add(WriteState.Writing, @"Writing...");
-            WriteMessages.Add(WriteState.Waiting, @"Waiting");
+            this.WriteMessages = new Dictionary<WriteState, string>
+            {
+                { WriteState.Cancelled, @"Cancelled" },
+                { WriteState.Finished, @"File Written" },
+                { WriteState.No_path, @"No Path" },
+                { WriteState.Writing, @"Writing..." },
+                { WriteState.Waiting, @"Waiting" }
+            };
         }
 
+#pragma warning disable IDE0044 // Add readonly modifier
         private Dictionary<WriteState, String> WriteMessages;
+#pragma warning restore IDE0044 // Add readonly modifier
 
         protected override void Layout()
         {
             base.Layout();
 
-            System.Drawing.Rectangle rec0 = GH_Convert.ToRectangle(Bounds);
+            System.Drawing.Rectangle rec0 = GH_Convert.ToRectangle(this.Bounds);
 
             rec0.Height += 18;
             System.Drawing.Rectangle rec1 = rec0;
@@ -35,9 +39,9 @@ namespace CAMel
             rec1.Inflate(-4, -4);
 
             this.Bounds = rec0;
-            this.ProgressBounds = rec1;
+            this.progressBounds = rec1;
         }
-        private System.Drawing.Rectangle ProgressBounds { get; set; }
+        private System.Drawing.Rectangle progressBounds { get; set; }
 
         protected override void Render(GH_Canvas canvas, System.Drawing.Graphics graphics, GH_CanvasChannel channel)
         {
@@ -46,35 +50,35 @@ namespace CAMel
             if (channel == GH_CanvasChannel.Objects)
             {
                 GH_Capsule progress_ol = GH_Capsule.CreateCapsule(
-                    ProgressBounds, 
+                    this.progressBounds, 
                     GH_Palette.Blue, 
                      0, 1);
 
-                System.Drawing.Rectangle ProgressPercent = this.ProgressBounds;
+                System.Drawing.Rectangle ProgressPercent = this.progressBounds;
                 ProgressPercent.Width = 
-                    (int)(this.ProgressBounds.Width * ((C_WriteCode)Owner).writeProgress);
+                    (int)(this.progressBounds.Width * ((C_WriteCode)this.Owner).writeProgress);
 
                 GH_Capsule progress = GH_Capsule.CreateCapsule(
                     ProgressPercent,
                     GH_Palette.Brown,
                     0, 1);
-                string message = WriteMessages[((C_WriteCode)Owner).WS];
-                if(((C_WriteCode)Owner).WS == WriteState.Writing)
+                string message = this.WriteMessages[((C_WriteCode)this.Owner).WS];
+                if(((C_WriteCode)this.Owner).WS == WriteState.Writing)
                 {
-                    message = message + " " + ((int)(((C_WriteCode)Owner).writeProgress*100)).ToString() + "%";
+                    message = message + " " + ((int)(((C_WriteCode)this.Owner).writeProgress*100)).ToString() + "%";
                 }
 
                 GH_Capsule text_cap = GH_Capsule.CreateTextCapsule(
-                    ProgressBounds,
-                    ProgressBounds,
+                    this.progressBounds,
+                    this.progressBounds,
                     GH_Palette.Transparent,
                     message,
                     0,1);
 
-                progress_ol.Render(graphics, Selected, Owner.Locked, false);
-                if (((C_WriteCode)Owner).writeProgress > 0)
-                { progress.Render(graphics, Selected, Owner.Locked, false); }
-                text_cap.Render(graphics, Selected, Owner.Locked, false);
+                progress_ol.Render(graphics, this.Selected, this.Owner.Locked, false);
+                if (((C_WriteCode)this.Owner).writeProgress > 0)
+                { progress.Render(graphics, this.Selected, this.Owner.Locked, false); }
+                text_cap.Render(graphics, this.Selected, this.Owner.Locked, false);
                 progress_ol.Dispose();
                 progress.Dispose();
                 text_cap.Dispose();

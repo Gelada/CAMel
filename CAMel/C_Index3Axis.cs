@@ -84,7 +84,7 @@ namespace CAMel
 
                 // Turn Curve into path
 
-                if (TP.ConvertCurve(c, Dir))
+                if (TP.convertCurve(c, Dir))
                     Op.Add(TP);
                 else
                     InvalidCurves++;

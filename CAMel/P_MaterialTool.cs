@@ -148,12 +148,12 @@ namespace CAMel.Types
             ToolPoint osTp = new ToolPoint(tP);   
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
-            osTp.Pt = osTp.Pt + this.toolWidth*(os - M.toolDir(tP))/2;
+            osTp.pt = osTp.pt + this.toolWidth*(os - M.toolDir(tP))/2;
         
             return osTp;
         }
         // Find the path offset so the cutting surface of the tool is on the path
-        public Vector3d CutOffset(Vector3d Dir, Vector3d Norm)
+        public Vector3d cutOffset(Vector3d Dir, Vector3d Norm)
         {
             Vector3d uDir = Dir;
             Vector3d uNorm = Norm;

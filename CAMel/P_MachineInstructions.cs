@@ -15,7 +15,7 @@ namespace CAMel.Types
     {
         private List<MachineOperation> MOs;
 
-        public IMachine M { get; set; }
+        public IMachine mach { get; set; }
 
         // Default Constructor
         public MachineInstruction()
@@ -34,19 +34,19 @@ namespace CAMel.Types
             this.postCode = "";
         }
         // Name and Machine
-        public MachineInstruction(string name, IMachine Ma)
+        public MachineInstruction(string name, IMachine mach)
         {
             this.name = name;
-            this.M = Ma;
+            this.mach = mach;
             this.MOs = new List<MachineOperation>();
             this.preCode = "";
             this.postCode = "";
         }
         // Name, Machine and Operations
-        public MachineInstruction(string name, IMachine Mach, List<MachineOperation> MOs)
+        public MachineInstruction(string name, IMachine mach, List<MachineOperation> MOs)
         {
             this.name = name;
-            this.M = Mach;
+            this.mach = mach;
             this.MOs = MOs;
             this.preCode = "";
             this.postCode = "";
@@ -57,7 +57,7 @@ namespace CAMel.Types
             this.name = Op.name;
             this.preCode = Op.preCode;
             this.postCode = Op.postCode;
-            this.M = Op.M;
+            this.mach = Op.mach;
             this.MOs = new List<MachineOperation>();
             foreach(MachineOperation MO in Op.MOs)
             {
@@ -70,11 +70,13 @@ namespace CAMel.Types
         // Copy basic information but add new paths
         public MachineInstruction copyWithNewPaths(List<MachineOperation> MOs)
         {
-            MachineInstruction outInst = new MachineInstruction();
-            outInst.preCode = this.preCode;
-            outInst.postCode = this.postCode;
-            outInst.name = this.name;
-            outInst.M = this.M;
+            MachineInstruction outInst = new MachineInstruction
+            {
+                preCode = this.preCode,
+                postCode = this.postCode,
+                name = this.name,
+                mach = this.mach,
+            };
             outInst.MOs = MOs;
 
             return outInst;
@@ -104,11 +106,11 @@ namespace CAMel.Types
             }
         }
 
-        public int Count => ((IList<MachineOperation>)MOs).Count;
+        public int Count => ((IList<MachineOperation>)this.MOs).Count;
 
-        public bool IsReadOnly => ((IList<MachineOperation>)MOs).IsReadOnly;
+        public bool IsReadOnly => ((IList<MachineOperation>)this.MOs).IsReadOnly;
 
-        public MachineOperation this[int index] { get => ((IList<MachineOperation>)MOs)[index]; set => ((IList<MachineOperation>)MOs)[index] = value; }
+        public MachineOperation this[int index] { get => ((IList<MachineOperation>)this.MOs)[index]; set => ((IList<MachineOperation>)this.MOs)[index] = value; }
 
         public override string ToString()
         {
@@ -125,39 +127,39 @@ namespace CAMel.Types
 
         // Main functions
 
-        public MachineInstruction ProcessAdditions()
+        public MachineInstruction processAdditions()
         {
             List<MachineOperation> procOps = new List<MachineOperation>();
 
             foreach(MachineOperation MO in this)
             {
-                procOps.Add(MO.ProcessAdditions(this.M));
+                procOps.Add(MO.processAdditions(this.mach));
             }
 
             return this.copyWithNewPaths(procOps);
         }
 
-        public void WriteCode(ref CodeInfo Co)
+        public void writeCode(ref CodeInfo Co)
         {
-            this.M.writeFileStart(ref Co, this);
+            this.mach.writeFileStart(ref Co, this);
 
             // Let the Code writer know the Material Tool and Form so can report changes
             // for consistency this might also do speed and feed, 
             // at the moment that is handled by passing a toolPoint around.
 
-            Co.currentMT = this[0][0].MatTool;
-            Co.currentMF = this[0][0].MatForm;
+            Co.currentMT = this[0][0].matTool;
+            Co.currentMF = this[0][0].matForm;
 
             ToolPath startPath = null;
             ToolPath endPath;
 
             foreach(MachineOperation MO in this)
             {
-                MO.WriteCode(ref Co, M, out endPath, startPath);
+                MO.writeCode(ref Co, this.mach, out endPath, startPath);
                 startPath = endPath;
             }
 
-            this.M.writeFileEnd(ref Co, this);
+            this.mach.writeFileEnd(ref Co, this);
         }
 
         ICAMel_Base ICAMel_Base.Duplicate()
@@ -167,52 +169,52 @@ namespace CAMel.Types
 
         public int IndexOf(MachineOperation item)
         {
-            return ((IList<MachineOperation>)MOs).IndexOf(item);
+            return ((IList<MachineOperation>)this.MOs).IndexOf(item);
         }
 
         public void Insert(int index, MachineOperation item)
         {
-            ((IList<MachineOperation>)MOs).Insert(index, item);
+            ((IList<MachineOperation>)this.MOs).Insert(index, item);
         }
 
         public void RemoveAt(int index)
         {
-            ((IList<MachineOperation>)MOs).RemoveAt(index);
+            ((IList<MachineOperation>)this.MOs).RemoveAt(index);
         }
 
         public void Add(MachineOperation item)
         {
-            ((IList<MachineOperation>)MOs).Add(item);
+            ((IList<MachineOperation>)this.MOs).Add(item);
         }
 
         public void Clear()
         {
-            ((IList<MachineOperation>)MOs).Clear();
+            ((IList<MachineOperation>)this.MOs).Clear();
         }
 
         public bool Contains(MachineOperation item)
         {
-            return ((IList<MachineOperation>)MOs).Contains(item);
+            return ((IList<MachineOperation>)this.MOs).Contains(item);
         }
 
         public void CopyTo(MachineOperation[] array, int arrayIndex)
         {
-            ((IList<MachineOperation>)MOs).CopyTo(array, arrayIndex);
+            ((IList<MachineOperation>)this.MOs).CopyTo(array, arrayIndex);
         }
 
         public bool Remove(MachineOperation item)
         {
-            return ((IList<MachineOperation>)MOs).Remove(item);
+            return ((IList<MachineOperation>)this.MOs).Remove(item);
         }
 
         public IEnumerator<MachineOperation> GetEnumerator()
         {
-            return ((IList<MachineOperation>)MOs).GetEnumerator();
+            return ((IList<MachineOperation>)this.MOs).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IList<MachineOperation>)MOs).GetEnumerator();
+            return ((IList<MachineOperation>)this.MOs).GetEnumerator();
         }
     }
 

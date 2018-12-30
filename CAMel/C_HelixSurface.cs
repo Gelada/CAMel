@@ -122,10 +122,11 @@ namespace CAMel
             }
 
             double outerradius = (new Vector3d(BB.Max.X-BB.Min.X,BB.Max.Y-BB.Min.Y,0)).Length/2;
-            Cylinder Cy = new Cylinder(new Circle(Dir, outerradius));
-
-            Cy.Height1 = BB.Min.Z;
-            Cy.Height2 = BB.Max.Z;
+            Cylinder Cy = new Cylinder(new Circle(Dir, outerradius))
+            {
+                Height1 = BB.Min.Z,
+                Height2 = BB.Max.Z
+            };
 
             // Use Toolpath so we standardise Curve convertion
             ToolPath CTP = new ToolPath("", MT);
@@ -143,7 +144,7 @@ namespace CAMel
             }
             else
             {
-                CTP.ConvertCurve(C, new Vector3d(0, 0, 1));
+                CTP.convertCurve(C, new Vector3d(0, 0, 1));
                 Point3d CylPt = new Point3d();
                 bool first = true;
                 double turns = 0;
@@ -151,38 +152,38 @@ namespace CAMel
                 // convert to cylindrical coordinates
                 foreach (ToolPoint tp in CTP)
                 {
-                    Dir.RemapToPlaneSpace(tp.Pt, out CylPt);
-                    Point3d temp = ToCyl(CylPt);
+                    Dir.RemapToPlaneSpace(tp.pt, out CylPt);
+                    Point3d temp = toCyl(CylPt);
                     temp.X = outerradius;
-                    tp.Pt = temp;
+                    tp.pt = temp;
                     if( first )
                     {
-                        Zmin = tp.Pt.Z;
-                        Zmax = tp.Pt.Z;
-                        angle = tp.Pt.Y;
+                        Zmin = tp.pt.Z;
+                        Zmax = tp.pt.Z;
+                        angle = tp.pt.Y;
                         first = false;
                     }
-                    else if (tp.Pt.Z < Zmin) { Zmin = tp.Pt.Z; }
-                    else if (tp.Pt.Z > Zmax) { Zmax = tp.Pt.Z; }
+                    else if (tp.pt.Z < Zmin) { Zmin = tp.pt.Z; }
+                    else if (tp.pt.Z > Zmax) { Zmax = tp.pt.Z; }
 
-                    if (angle > 3.0 * Math.PI / 2.0 && tp.Pt.Y < Math.PI / 2.0)
+                    if (angle > 3.0 * Math.PI / 2.0 && tp.pt.Y < Math.PI / 2.0)
                     {
                         turns = turns + 2.0 * Math.PI;
                     }
-                    else if (angle < Math.PI / 2.0 && tp.Pt.Y > 3.0 * Math.PI / 2.0)
+                    else if (angle < Math.PI / 2.0 && tp.pt.Y > 3.0 * Math.PI / 2.0)
                     {
                         turns = turns - 2.0 * Math.PI;
                     }
-                    angle = tp.Pt.Y;
-                    temp = tp.Pt;
+                    angle = tp.pt.Y;
+                    temp = tp.pt;
                     temp.Y = temp.Y + turns;
-                    tp.Pt = temp;
+                    tp.pt = temp;
                 }
 
                 // complete loop by adding points going from
                 // the end point to the start point
-                Point3d startPt = CTP[0].Pt;
-                Point3d endPt = CTP[CTP.Count - 1].Pt;
+                Point3d startPt = CTP[0].pt;
+                Point3d endPt = CTP[CTP.Count - 1].pt;
                 if (endPt.Y > 0)
                 { startPt.Y = startPt.Y + turns + 2.0 * Math.PI; }
                 else
@@ -202,7 +203,7 @@ namespace CAMel
             }
 
             // Create spiral from the loop
-            double winding = (CTP[CTP.Count - 1].Pt.Y - CTP[0].Pt.Y)/(2.0*Math.PI);
+            double winding = (CTP[CTP.Count - 1].pt.Y - CTP[0].pt.Y)/(2.0*Math.PI);
             double raisePer =(stepOver * MT.toolWidth); // height dealt with by each loop
             double rot =
                 ((BB.Max.Z - BB.Min.Z) // eight of surface
@@ -219,18 +220,19 @@ namespace CAMel
             {
                 for (int j = 0; j < CTP.Count; j++)
                 {
-                    tempPt = FromCyl(new Point3d(
+                    tempPt = fromCyl(new Point3d(
                         outerradius,
-                        -CTP[j].Pt.Y, 
-                        BB.Min.Z - Zmax + CTP[j].Pt.Z + (2.0 * Math.PI * winding * i + CTP[j].Pt.Y) * raisePer));
+                        -CTP[j].pt.Y, 
+                        BB.Min.Z - Zmax + CTP[j].pt.Z + (2.0 * Math.PI * winding * i + CTP[j].pt.Y) * raisePer));
                     tempPt = Dir.PointAt(tempPt.X, tempPt.Y, tempPt.Z);
                     SpiralPath.Add(tempPt);
                 }
             }
 
-            List<Curve> Paths = new List<Curve>();
-
-            Paths.Add(Curve.CreateInterpolatedCurve(SpiralPath,3));
+            List<Curve> Paths = new List<Curve>
+            {
+                Curve.CreateInterpolatedCurve(SpiralPath, 3)
+            };
 
             LineCurve CC = new LineCurve(
                 Dir.PointAt(BB.Center.X, BB.Center.Y, BB.Min.Z),
@@ -243,7 +245,7 @@ namespace CAMel
         }
 
         // convert to cylindrical coordinate
-        Point3d ToCyl(Point3d Pt)
+        Point3d toCyl(Point3d Pt)
         {
             Vector3d PlPt = new Vector3d(Pt.X, Pt.Y, 0);
             double angle = Math.Atan2(Pt.Y, Pt.X);
@@ -251,7 +253,7 @@ namespace CAMel
             return new Point3d(PlPt.Length,angle,Pt.Z);
         }
         // convert from cylindrical coordinate
-        Point3d FromCyl(Point3d Pt)
+        Point3d fromCyl(Point3d Pt)
         {
             return new Point3d(Pt.X*Math.Cos(Pt.Y), Pt.X*Math.Sin(Pt.Y), Pt.Z);
         }

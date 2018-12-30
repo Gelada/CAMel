@@ -10,15 +10,15 @@ namespace CAMel.Types
     // One position of the machine
     public class ToolPoint : IToolPointContainer
     {
-        public Point3d Pt { get; set; }      // Tool Tip position
-        private Vector3d _Dir;
-        public Vector3d Dir     // Tool Direction (away from position)
+        public Point3d pt { get; set; }      // Tool Tip position
+        private Vector3d _dir;
+        public Vector3d dir     // Tool Direction (away from position)
         {
-            get { return this._Dir; }
+            get { return this._dir; }
             set 
             { 
-                this._Dir = value;
-                this._Dir.Unitize();
+                this._dir = value;
+                this._dir.Unitize();
             }
         }
         public double speed { get; set; }    // Considered unset for negative values
@@ -32,8 +32,8 @@ namespace CAMel.Types
         // Default Constructor, set up at the origin with direction set to 0 vector.
         public ToolPoint()
         {
-            this.Pt = new Point3d(0, 0, 0);
-            this.Dir = new Vector3d(0, 0, 1);
+            this.pt = new Point3d(0, 0, 0);
+            this.dir = new Vector3d(0, 0, 1);
             this.speed = -1;
             this.feed = -1;
             this.error = null;
@@ -45,8 +45,8 @@ namespace CAMel.Types
         // Just a point, set direction to 0 vector.
         public ToolPoint(Point3d Pt)
         {
-            this.Pt = Pt;
-            this.Dir = new Vector3d(0, 0, 1);
+            this.pt = Pt;
+            this.dir = new Vector3d(0, 0, 1);
             this.speed = -1;
             this.feed = -1;
             this.error = null;
@@ -58,8 +58,8 @@ namespace CAMel.Types
         // Use point and direction, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D)
         {
-            this.Pt = Pt;
-            this.Dir = D;
+            this.pt = Pt;
+            this.dir = D;
             this.speed = -1;
             this.feed = -1;
             this.error = null;
@@ -71,8 +71,8 @@ namespace CAMel.Types
         // Use point direction and extra Code, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode)
         {
-            this.Pt = Pt;
-            this.Dir = D;
+            this.pt = Pt;
+            this.dir = D;
             this.preCode = preCode;
             this.postCode = postCode;
             this.speed = -1;
@@ -86,8 +86,8 @@ namespace CAMel.Types
         // Use point direction and override speed and feed, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
         {
-            this.Pt = Pt;
-            this.Dir = D;
+            this.pt = Pt;
+            this.dir = D;
             this.speed = speed;
             this.feed = feed;
             this.error = null;
@@ -99,8 +99,8 @@ namespace CAMel.Types
         // Use point direction, override speed and feed and add extra Code, normalise direction if not 0 vector.
         public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode, double speed, double feed)
         {
-            this.Pt = Pt;
-            this.Dir = D;
+            this.pt = Pt;
+            this.dir = D;
             this.preCode = preCode;
             this.postCode = postCode;
             this.speed = speed;
@@ -112,8 +112,8 @@ namespace CAMel.Types
         // Copy Constructor
         public ToolPoint(ToolPoint TP)
         {
-            this.Pt = TP.Pt;
-            this.Dir = TP.Dir;
+            this.pt = TP.pt;
+            this.dir = TP.dir;
             this.preCode = TP.preCode;
             this.postCode = TP.postCode;
             this.speed = TP.speed;
@@ -123,13 +123,13 @@ namespace CAMel.Types
             this.warning = TP.warning;
         }
 
-        public void AddError(string err)
+        public void addError(string err)
         {
             if(this.error == null) { this.error = new List<string>(); }
             this.error.Add(err);
         }
 
-        public void AddWarning(string warn)
+        public void addWarning(string warn)
         {
             if (this.warning == null) { this.warning = new List<string>(); }
             this.error.Add(warn);
@@ -159,16 +159,16 @@ namespace CAMel.Types
             string outp = this.name;
             if(outp != "") { outp = outp + " "; }
             outp = outp + "Pt: (" +
-                this.Pt.X.ToString("0.000") + ", " + this.Pt.Y.ToString("0.000") + ", " + this.Pt.Z.ToString("0.000") +
+                this.pt.X.ToString("0.000") + ", " + this.pt.Y.ToString("0.000") + ", " + this.pt.Z.ToString("0.000") +
                 ") Dir: (" +
-                this.Dir.X.ToString("0.000") + ", " + this.Dir.Y.ToString("0.000") + ", " + this.Dir.Z.ToString("0.000") +
+                this.dir.X.ToString("0.000") + ", " + this.dir.Y.ToString("0.000") + ", " + this.dir.Z.ToString("0.000") +
                 ")";
-            if (preCode != "") { outp = preCode + "\n" + outp; }
-            if (speed >= 0 || feed >= 0)
+            if (this.preCode != "") { outp = this.preCode + "\n" + outp; }
+            if (this.speed >= 0 || this.feed >= 0)
             {
                 outp = outp + " Speed: " + this.speed.ToString("0.000") + " Feed: " + this.feed.ToString("0.000");
             }
-            if (postCode != "") { outp = outp + "\n" + postCode; }
+            if (this.postCode != "") { outp = outp + "\n" + this.postCode; }
             return outp;
         }
 
@@ -177,9 +177,9 @@ namespace CAMel.Types
             return new ToolPoint(this);
         }
 
-        internal Line ToolLine()
+        internal Line toolLine()
         {
-            return new Line(Pt, Pt + Dir);
+            return new Line(this.pt, this.pt + this.dir);
         }
     }
 
@@ -231,12 +231,12 @@ namespace CAMel.Types
         {
             if (typeof(Q).IsAssignableFrom(typeof(Point3d)))
             {
-                target = (Q)(object)this.Value.Pt;
+                target = (Q)(object)this.Value.pt;
                 return true;
             }
             if (typeof(Q).IsAssignableFrom(typeof(GH_Point)))
             {
-                target = (Q)(object)new GH_Point(this.Value.Pt);
+                target = (Q)(object)new GH_Point(this.Value.pt);
                 return true;
             }
             return false;
@@ -248,13 +248,12 @@ namespace CAMel.Types
 
             if (source is Point3d)
             {
-                Value = new ToolPoint((Point3d)source);
+                this.Value = new ToolPoint((Point3d)source);
                 return true;
             }
-            GH_Point pointGoo = source as GH_Point;
-            if (pointGoo != null)
+            if (source is GH_Point pointGoo)
             {
-                Value = new ToolPoint(pointGoo.Value);
+                this.Value = new ToolPoint(pointGoo.Value);
                 return true;
             }
             Point3d Pt = Point3d.Unset;
@@ -268,12 +267,12 @@ namespace CAMel.Types
 
         public BoundingBox ClippingBox
         {
-            get { return Value.ToolLine().BoundingBox; }
+            get { return this.Value.toolLine().BoundingBox; }
         }
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            args.Pipeline.DrawPoint(Value.Pt, args.Color);
-            args.Pipeline.DrawArrow(Value.ToolLine(), args.Color);
+            args.Pipeline.DrawPoint(this.Value.pt, args.Color);
+            args.Pipeline.DrawArrow(this.Value.toolLine(), args.Color);
         }
         public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
     }

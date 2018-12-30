@@ -92,36 +92,40 @@ namespace CAMel
             MachineOperation Rough = new MachineOperation();
             MachineOperation Finish = new MachineOperation();
 
-            ToolPathAdditions AddRough = new ToolPathAdditions();
-            // Additions for Roughing toolpath
-            AddRough.insert = true;
-            AddRough.retract = true;
-            AddRough.stepDown = true;
-            AddRough.sdDropStart = true;
-            AddRough.sdDropMiddle = 8 * MF.safeDistance;
-            AddRough.sdDropEnd = true;
-            AddRough.threeAxisHeightOffset = false;
+            ToolPathAdditions AddRough = new ToolPathAdditions
+            {
+                // Additions for Roughing toolpath
+                insert = true,
+                retract = true,
+                stepDown = true,
+                sdDropStart = true,
+                sdDropMiddle = 8 * MF.safeDistance,
+                sdDropEnd = true,
+                threeAxisHeightOffset = false
+            };
             MTR.finishDepth = MTR.cutDepth; // ignore finish depth for roughing
 
-            ToolPathAdditions AddFinish = new ToolPathAdditions();
-            // Additions for Finishing toolpath
-            AddFinish.insert = true;
-            AddFinish.retract = true;
-            AddFinish.stepDown = false;
-            AddFinish.sdDropStart = false;
-            AddFinish.sdDropMiddle = 0.0;
-            AddFinish.sdDropEnd = false;
-            AddFinish.threeAxisHeightOffset = false;
+            ToolPathAdditions AddFinish = new ToolPathAdditions
+            {
+                // Additions for Finishing toolpath
+                insert = true,
+                retract = true,
+                stepDown = false,
+                sdDropStart = false,
+                sdDropMiddle = 0.0,
+                sdDropEnd = false,
+                threeAxisHeightOffset = false
+            };
 
             switch (ST)
             {
                 case SurfaceType.Brep:
-                    Rough = R.GenerateOperation(B, MTF.finishDepth, MTR, MF, AddRough);
-                    Finish = F.GenerateOperation(B, 0.0, MTF, MF, AddFinish);
+                    Rough = R.generateOperation(B, MTF.finishDepth, MTR, MF, AddRough);
+                    Finish = F.generateOperation(B, 0.0, MTF, MF, AddFinish);
                     break;
                 case SurfaceType.Mesh:
-                    Rough = R.GenerateOperation(M, MTF.finishDepth, MTR, MF, AddRough);
-                    Finish = F.GenerateOperation(M, 0.0, MTF, MF, AddFinish);
+                    Rough = R.generateOperation(M, MTF.finishDepth, MTR, MF, AddRough);
+                    Finish = F.generateOperation(M, 0.0, MTF, MF, AddFinish);
                     break;
             }
             Rough.name = "Rough " + Rough.name;

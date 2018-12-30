@@ -29,12 +29,12 @@ namespace CAMel.Types.Machine
 
     public struct TPchanges
     {
-        public bool MT { get; set; }
-        public bool MF { get; set; }
-        public TPchanges(bool MT, bool MF)
+        public bool mT { get; set; }
+        public bool mF { get; set; }
+        public TPchanges(bool mT, bool mF)
         {
-            this.MT = MT;
-            this.MF = MF;
+            this.mT = mT;
+            this.mF = mF;
         }
     }
 
@@ -45,10 +45,12 @@ namespace CAMel.Types.Machine
         // 2-Axis and 3-Axis don't need any work, so they just need writing functions
         // in the GCode library, plus a general purpose linear interpolation.
 
-        static public ToolPoint Interpolate_Linear(ToolPoint fP, ToolPoint tP, double p)
+        static public ToolPoint interpolateLinear(ToolPoint fP, ToolPoint tP, double p)
         {
-            ToolPoint TPo = new ToolPoint(fP);
-            TPo.Pt = tP.Pt * p + fP.Pt * (1 - p);
+            ToolPoint TPo = new ToolPoint(fP)
+            {
+                pt = tP.pt * p + fP.pt * (1 - p)
+            };
             return TPo;
         }
 
@@ -58,11 +60,11 @@ namespace CAMel.Types.Machine
         //
         // Should really output a machine state type, but not much use for that yet.
 
-        static public Vector3d IK_FiveAxisABTable(ToolPoint TP, Vector3d Pivot, double toolLength, out Point3d MachPt)
+        static public Vector3d ikFiveAxisABTable(ToolPoint TP, Vector3d Pivot, double toolLength, out Point3d MachPt)
         {
             // Always gives B from -pi to pi and A from -pi/2 to pi/2.
-            double Ao = Math.Asin(TP.Dir.Y);
-            double Bo = Math.Atan2(-TP.Dir.X, TP.Dir.Z);
+            double Ao = Math.Asin(TP.dir.Y);
+            double Bo = Math.Atan2(-TP.dir.X, TP.dir.Z);
 
             if (Ao > Math.PI / 2.0)
             {
@@ -78,7 +80,7 @@ namespace CAMel.Types.Machine
                 if (Bo < 0) { Bo = Bo + 2.0 * Math.PI; }
             }
      
-            Point3d OP = TP.Pt;
+            Point3d OP = TP.pt;
 
             // rotate from material orientation to machine orientation
             OP.Transform(Transform.Rotation(Bo, Vector3d.YAxis, Point3d.Origin));
@@ -91,7 +93,7 @@ namespace CAMel.Types.Machine
             return new Vector3d(Ao, Bo, 0);
         }
 
-        static public ToolPoint K_FiveAxisABTable(ToolPoint TP, Vector3d Pivot, double toolLength, Point3d MachPt, Vector3d AB)
+        static public ToolPoint kFiveAxisABTable(ToolPoint TP, Vector3d Pivot, double toolLength, Point3d MachPt, Vector3d AB)
         {
             Point3d OP = MachPt;
             // translate from the tooltip at machine origin origin to pivot at origin
@@ -107,8 +109,8 @@ namespace CAMel.Types.Machine
             Dir.Transform(Transform.Rotation(-AB.Y, Vector3d.YAxis, Point3d.Origin));
 
             ToolPoint outTP = (ToolPoint)TP.Duplicate();
-            outTP.Pt = OP;
-            outTP.Dir = Dir;
+            outTP.pt = OP;
+            outTP.dir = Dir;
 
             return outTP;
         }
@@ -117,15 +119,15 @@ namespace CAMel.Types.Machine
         // If both axes have full rotation then there are four ways to do this.
         // If lng is true then reverse the direction on the B axis (for PocketNC)
 
-        public static ToolPoint Interpolate_FiveAxisABTable(Vector3d Pivot, double toolLength, ToolPoint from, ToolPoint to, double p, bool lng)
+        public static ToolPoint interpolateFiveAxisABTable(Vector3d Pivot, double toolLength, ToolPoint from, ToolPoint to, double p, bool lng)
         {
             Point3d MachPt = new Point3d();
-            Vector3d fromAB = Kinematics.IK_FiveAxisABTable(from, Pivot, toolLength, out MachPt);
-            Vector3d toAB = Kinematics.IK_FiveAxisABTable(to, Pivot, toolLength, out MachPt);
+            Vector3d fromAB = Kinematics.ikFiveAxisABTable(from, Pivot, toolLength, out MachPt);
+            Vector3d toAB = Kinematics.ikFiveAxisABTable(to, Pivot, toolLength, out MachPt);
             Vector3d outAB;
             Point3d outPt;
 
-            outPt = (1 - p) * from.Pt + p * to.Pt;
+            outPt = (1 - p) * from.pt + p * to.pt;
             outAB = (1 - p) * fromAB + p * toAB;
             // switch to long way round or short way round depending on gap between angles
             if ((lng && Math.Abs(fromAB.Y - toAB.Y) <= Math.PI) ||
@@ -136,14 +138,14 @@ namespace CAMel.Types.Machine
                 else { alt = new Vector3d(0, -2 * Math.PI, 0); }
                 outAB = (1 - p) * fromAB + p * (toAB + alt);
             }
-            return K_FiveAxisABTable(from, Pivot, toolLength, outPt, outAB);
+            return kFiveAxisABTable(from, Pivot, toolLength, outPt, outAB);
         }
 
-        public static double AngDiff_FiveAxisABTable(Vector3d Pivot, double toolLength, ToolPoint fP, ToolPoint tP,bool lng)
+        public static double angDiffFiveAxisABTable(Vector3d Pivot, double toolLength, ToolPoint fP, ToolPoint tP,bool lng)
         {
             Point3d MachPt = new Point3d();
-            Vector3d ang1 = IK_FiveAxisABTable(fP, Pivot, toolLength, out MachPt);
-            Vector3d ang2 = IK_FiveAxisABTable(tP, Pivot, toolLength, out MachPt);
+            Vector3d ang1 = ikFiveAxisABTable(fP, Pivot, toolLength, out MachPt);
+            Vector3d ang2 = ikFiveAxisABTable(tP, Pivot, toolLength, out MachPt);
 
             Vector2d diff = new Vector2d();
             if (lng)
@@ -173,11 +175,11 @@ namespace CAMel.Types.Machine
 
 
 
-        public static ToolPath LeadInOut2d(ToolPath TP, double lead)
+        public static ToolPath leadInOut2d(ToolPath TP, double lead)
         {
             double leadLen = lead * TP.Additions.leadFactor;
             ToolPath newTP = new ToolPath(TP);
-            PolylineCurve toolL = TP.GetLine();
+            PolylineCurve toolL = TP.getLine();
 
             // Find the point on a circle furthest from the toolpath. 
             int testNumber = 50;
@@ -187,7 +189,7 @@ namespace CAMel.Types.Machine
             for (int i = 0; i < testNumber; i++)
             {
                 double ang = 2.0 * Math.PI * i / (double)testNumber;
-                testPt = TP[0].Pt + leadLen * new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
+                testPt = TP[0].pt + leadLen * new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
 
                 // Check point is inside (or outside) the curve
                 correctSide = toolL.Contains(testPt) == PointContainment.Inside;
@@ -200,7 +202,7 @@ namespace CAMel.Types.Machine
                 {
                     toolL.ClosestPoint(testPt, out testdist);
                     testdist = testPt.DistanceTo(toolL.PointAt(testdist));
-                    noInter = Intersection.CurveCurve(toolL, new Line(TP[0].Pt, testPt).ToNurbsCurve(), 0.00001, 0.00001).Count <= 1;
+                    noInter = Intersection.CurveCurve(toolL, new Line(TP[0].pt, testPt).ToNurbsCurve(), 0.00001, 0.00001).Count <= 1;
 
                     if (noInter && testdist > dist)
                     {
@@ -213,12 +215,11 @@ namespace CAMel.Types.Machine
             // start and end
             if (dist < 0)
             {
-                newTP[0].AddError("No suitable point for lead in and out found.");
+                newTP[0].addError("No suitable point for lead in and out found.");
             }
             else
             {
-                ToolPoint LeadTP = new ToolPoint(TP[0]);
-                LeadTP.Pt = LeadStart;
+                ToolPoint LeadTP = new ToolPoint(TP[0]) { pt = LeadStart };
                 newTP.Add(new ToolPoint(LeadTP));
                 newTP.Insert(0, LeadTP);
             }
@@ -232,7 +233,7 @@ namespace CAMel.Types.Machine
     { 
         // Formatting structure for GCode
 
-        static public void GcInstStart(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI)
+        static public void gcInstStart(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI)
         {
             DateTime thisDay = DateTime.Now;
             Co.AppendLineNoNum(M.fileStart);
@@ -244,14 +245,14 @@ namespace CAMel.Types.Machine
                 + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             if (M.name != "") { Co.AppendComment("  for " + M.name); }
             Co.AppendComment(" Starting with: ");
-            Co.AppendComment("  Tool: " + MI[0][0].MatTool.toolName);
-            Co.AppendComment("  in " + MI[0][0].MatTool.matName + " with shape " + MI[0][0].MatForm.ToString());
+            Co.AppendComment("  Tool: " + MI[0][0].matTool.toolName);
+            Co.AppendComment("  in " + MI[0][0].matTool.matName + " with shape " + MI[0][0].matForm.ToString());
             Co.AppendComment("");
             Co.AppendComment(M.sectionBreak);
             Co.Append(M.header);
             Co.Append(MI.preCode);
         }
-        static public void GcInstEnd(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI)
+        static public void gcInstEnd(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI)
         {
             Co.AppendComment(M.sectionBreak);
             Co.AppendComment(" End of ToolPaths");
@@ -261,7 +262,7 @@ namespace CAMel.Types.Machine
             Co.AppendLineNoNum(M.fileEnd);
         }
 
-        static public void GcOpStart(IGCodeMachine M, ref CodeInfo Co, MachineOperation MO)
+        static public void gcOpStart(IGCodeMachine M, ref CodeInfo Co, MachineOperation MO)
         {
             Co.AppendComment(M.sectionBreak);
             Co.AppendComment("");
@@ -269,12 +270,12 @@ namespace CAMel.Types.Machine
             Co.AppendComment("");
             Co.Append(MO.preCode);
         }
-        static public void GcOpEnd(IGCodeMachine M, ref CodeInfo Co, MachineOperation MO)
+        static public void gcOpEnd(IGCodeMachine M, ref CodeInfo Co, MachineOperation MO)
         {
             Co.AppendComment(MO.postCode);
         }
 
-        static public TPchanges GcPathStart(IGCodeMachine M, ref CodeInfo Co, ToolPath TP)
+        static public TPchanges gcPathStart(IGCodeMachine M, ref CodeInfo Co, ToolPath TP)
         {
             TPchanges ch = new TPchanges(false, false);
             Co.AppendComment(M.sectionBreak);
@@ -284,19 +285,19 @@ namespace CAMel.Types.Machine
                 Co.AppendComment(" ToolPath: " + TP.name);
                 preamble = true;
             }
-            if (Co.currentMT == null || TP.MatTool.toolName != Co.currentMT.toolName)
+            if (Co.currentMT == null || TP.matTool.toolName != Co.currentMT.toolName)
             {
-                Co.AppendComment(" using: " + TP.MatTool.toolName + " into " + TP.MatTool.matName);
-                Co.currentMT = TP.MatTool;
-                if (M.TLC) { Co.Append(M.toolChangeCommand + TP.MatTool.toolNumber); }
-                ch.MT = true;
+                Co.AppendComment(" using: " + TP.matTool.toolName + " into " + TP.matTool.matName);
+                Co.currentMT = TP.matTool;
+                if (M.toolLengthCompensation) { Co.Append(M.toolChangeCommand + TP.matTool.toolNumber); }
+                ch.mT = true;
                 preamble = true;
             }
-            if (Co.currentMF == null || TP.MatForm.ToString() != Co.currentMF.ToString())
+            if (Co.currentMF == null || TP.matForm.ToString() != Co.currentMF.ToString())
             {
-                Co.AppendComment(" material: " + TP.MatForm.ToString());
-                Co.currentMF = TP.MatForm;
-                ch.MF = true;
+                Co.AppendComment(" material: " + TP.matForm.ToString());
+                Co.currentMF = TP.matForm;
+                ch.mF = true;
                 preamble = true;
             }
 
@@ -305,7 +306,7 @@ namespace CAMel.Types.Machine
             Co.Append(TP.preCode);
             return ch;
         }
-        static public void GcPathEnd(IGCodeMachine M, ref CodeInfo Co, ToolPath TP)
+        static public void gcPathEnd(IGCodeMachine M, ref CodeInfo Co, ToolPath TP)
         {
             Co.Append(TP.postCode);
         }
@@ -313,23 +314,23 @@ namespace CAMel.Types.Machine
         // Toolpoint writers
         // These might be simpler to pull 
         // into a single "write" command taking a dictionary?
-        static public string GcTwoAxis(ToolPoint TP)
+        static public string gcTwoAxis(ToolPoint TP)
         {
-            Point3d OP = TP.Pt;
+            Point3d OP = TP.pt;
             string GPoint = "";
             GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000");
 
             return GPoint;
         }
-        static public string GcThreeAxis(ToolPoint TP)
+        static public string gcThreeAxis(ToolPoint TP)
         {
-            Point3d OP = TP.Pt;
+            Point3d OP = TP.pt;
             string GPoint = "";
             GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000") + " Z" + OP.Z.ToString("0.000");
 
             return GPoint;
         }
-        static public string GcFiveAxisAB(Point3d machPt, Vector3d AB)
+        static public string gcFiveAxisAB(Point3d machPt, Vector3d AB)
         {
             StringBuilder GPtBd = new StringBuilder(@"X", 34);
             GPtBd.Append(machPt.X.ToString("0.000"));
@@ -341,7 +342,7 @@ namespace CAMel.Types.Machine
             return GPtBd.ToString();
         }
         // Give only orientation move
-        static public string GcFiveAxisAB_orient(Point3d machPt, Vector3d AB)
+        static public string gcFiveAxisAB_orient(Point3d machPt, Vector3d AB)
         {
             String GPoint = "";
             GPoint += "A" + (180.0 * AB.X / Math.PI).ToString("0.000") + " B" + (180.0 * AB.Y / Math.PI).ToString("0.000");
@@ -351,7 +352,7 @@ namespace CAMel.Types.Machine
 
         // GCode reading
         static private Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);
-        static private double GetValue(string line, char split, double old, ref bool changed, ref bool unset)
+        static private double getValue(string line, char split, double old, ref bool changed, ref bool unset)
         {
             double val = old;
             string[] splitLine = line.Split(split);
@@ -365,7 +366,7 @@ namespace CAMel.Types.Machine
             return val;
         }
         // TODO detect tool changes and new paths
-        static public ToolPath GcRead(IGCodeMachine M, List<MaterialTool> MTs, string Code, List<char> terms)
+        static public ToolPath gcRead(IGCodeMachine M, List<MaterialTool> MTs, string Code, List<char> terms)
         {
             ToolPath TP = new ToolPath();
             Dictionary<char, double> vals = new Dictionary<char, double>();
@@ -380,7 +381,7 @@ namespace CAMel.Types.Machine
                 changed = false;
                 unset = false;
                 foreach (char t in terms)
-                { vals[t] = GetValue(line, t, vals[t], ref changed, ref unset); }
+                { vals[t] = getValue(line, t, vals[t], ref changed, ref unset); }
                 //interpret a G0 command.
                 if (line.Contains(@"G00") || line.ToString().Contains(@"G0 "))
                 {

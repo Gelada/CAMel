@@ -24,19 +24,19 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; set; }
         private List<char> terms;
 
-        private double Amin { get; set; }
-        private double Amax { get; set; }
-        private double Bmax { get; set; }
-        public bool TLC { get; set; }
+        private double aMin { get; set; }
+        private double aMax { get; set; }
+        private double bMax { get; set; }
+        public bool toolLengthCompensation { get; set; }
 
-        public Vector3d Pivot { get; set; } // Position of machine origin in design space.
+        public Vector3d pivot { get; set; } // Position of machine origin in design space.
 
         public bool IsValid => throw new NotImplementedException();
 
         public PocketNC()
         {
             this.name = "PocketNC";
-            this.TLC = false;
+            this.toolLengthCompensation = false;
             this.header = String.Empty;
             this.footer = String.Empty;
             this.fileStart = String.Empty;
@@ -47,16 +47,16 @@ namespace CAMel.Types.Machine
             this.speedChangeCommand = "M03";
             this.toolChangeCommand = "G43H";
             this.pathJump = .25;
-            this.Pivot = new Vector3d(0, 0, 0);
-            this.Amin = 0;
-            this.Amax = Math.PI/2.0;
-            this.Bmax = 9999.0 * Math.PI / 180.0;
+            this.pivot = new Vector3d(0, 0, 0);
+            this.aMin = 0;
+            this.aMax = Math.PI/2.0;
+            this.bMax = 9999.0 * Math.PI / 180.0;
             setTerms();
         }
         public PocketNC(string name, string header, string footer, double Amin, double Amax, double Bmax, bool TLC)
         {
             this.name = name;
-            this.TLC = TLC;
+            this.toolLengthCompensation = TLC;
             this.header = header;
             this.footer = footer;
             this.fileStart = String.Empty;
@@ -67,16 +67,16 @@ namespace CAMel.Types.Machine
             this.speedChangeCommand = "M03";
             this.toolChangeCommand = "G43H";
             this.pathJump = .25;
-            this.Pivot = new Vector3d(0,0,0);
-            this.Amin = Amin;
-            this.Amax = Amax;
-            this.Bmax = Bmax;
+            this.pivot = new Vector3d(0,0,0);
+            this.aMin = Amin;
+            this.aMax = Amax;
+            this.bMax = Bmax;
             setTerms();
         }
         public PocketNC(PocketNC TA)
         {
             this.name = TA.name;
-            this.TLC = TA.TLC;
+            this.toolLengthCompensation = TA.toolLengthCompensation;
             this.header = TA.header;
             this.footer = TA.footer;
             this.fileStart = TA.fileStart;
@@ -87,24 +87,17 @@ namespace CAMel.Types.Machine
             this.speedChangeCommand = TA.speedChangeCommand;
             this.toolChangeCommand = TA.toolChangeCommand;
             this.pathJump = TA.pathJump;
-            this.Pivot = TA.Pivot;
-            this.Amin = TA.Amin;
-            this.Amax = TA.Amax;
-            this.Bmax = TA.Bmax;
+            this.pivot = TA.pivot;
+            this.aMin = TA.aMin;
+            this.aMax = TA.aMax;
+            this.bMax = TA.bMax;
             this.terms = new List<char>();
             this.terms.AddRange(TA.terms);
         }
 
         private void setTerms()
         {
-            this.terms = new List<char>();
-            this.terms.Add('X');
-            this.terms.Add('Y');
-            this.terms.Add('Z');
-            this.terms.Add('A');
-            this.terms.Add('B');
-            this.terms.Add('S');
-            this.terms.Add('F');
+            this.terms = new List<char> { 'X','Y','Z','A','B','S','F'};
         }
 
         public string TypeDescription
@@ -119,42 +112,44 @@ namespace CAMel.Types.Machine
 
         public ICAMel_Base Duplicate() => new PocketNC(this);
 
-        public ToolPath insertRetract(ToolPath tP) => tP.MatForm.InsertRetract(tP);
+        public ToolPath insertRetract(ToolPath tP) => tP.matForm.InsertRetract(tP);
 
-        public ToolPoint Interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
+        public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
         {
             double toolLength = MT.toolLength;
-            if (this.TLC) { toolLength = 0; }
-            return Kinematics.Interpolate_FiveAxisABTable(this.Pivot, toolLength, fP, tP, par, lng);
+            if (this.toolLengthCompensation) { toolLength = 0; }
+            return Kinematics.interpolateFiveAxisABTable(this.pivot, toolLength, fP, tP, par, lng);
         }
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng)
         {
             double toolLength = MT.toolLength;
-            if (this.TLC) { toolLength = 0; }
-            return Kinematics.AngDiff_FiveAxisABTable(this.Pivot, toolLength, tP1, tP2, lng);
+            if (this.toolLengthCompensation) { toolLength = 0; }
+            return Kinematics.angDiffFiveAxisABTable(this.pivot, toolLength, tP1, tP2, lng);
         }
 
-        public ToolPath ReadCode(List<MaterialTool> MTs, string Code) => GCode.GcRead(this,MTs,Code,terms);
+        public ToolPath readCode(List<MaterialTool> MTs, string Code) => GCode.gcRead(this,MTs,Code, this.terms);
 
         public ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT)
         {
             Point3d MachPt = new Point3d(vals['X'], vals['Y'], vals['Z']);
             Vector3d AB = new Vector3d(vals['A']*Math.PI/180.0, vals['B'] * Math.PI/180.0, 0);
 
-            ToolPoint TP = new ToolPoint();
-            TP.speed = vals['S'];
-            TP.feed = vals['F'];
+            ToolPoint TP = new ToolPoint
+            {
+                speed = vals['S'],
+                feed = vals['F']
+            };
             double toolLength = MT.toolLength;
-            if(this.TLC) { toolLength = 0; }
+            if(this.toolLengthCompensation) { toolLength = 0; }
 
-            return Kinematics.K_FiveAxisABTable(TP, this.Pivot, toolLength, MachPt, AB);        
+            return Kinematics.kFiveAxisABTable(TP, this.pivot, toolLength, MachPt, AB);        
         }
 
-        public Vector3d toolDir(ToolPoint TP) => TP.Dir;
+        public Vector3d toolDir(ToolPoint TP) => TP.dir;
 
         public ToolPoint writeCode(ref CodeInfo Co, ToolPath tP, ToolPoint beforePoint)
         {
-            GCode.GcPathStart(this, ref Co, tP);
+            GCode.gcPathStart(this, ref Co, tP);
 
             double AngleAcc = 0.0001; // accuracy of angles to assume we lie on the cusp.
 
@@ -175,8 +170,8 @@ namespace CAMel.Types.Machine
             string PtCode;
             Point3d machPt = new Point3d();
 
-            double toolLength = tP.MatTool.toolLength;
-            if(this.TLC) { toolLength = 0; }
+            double toolLength = tP.matTool.toolLength;
+            if(this.toolLengthCompensation) { toolLength = 0; }
 
             if (beforePoint == null) // There were no previous points
             {
@@ -184,14 +179,14 @@ namespace CAMel.Types.Machine
                 {
                     feed = tP[0].feed;
                     speed = tP[0].speed;
-                    if (feed < 0) { feed = tP.MatTool.feedCut; }
-                    if (speed < 0) { speed = tP.MatTool.speed; }
-                    AB = Kinematics.IK_FiveAxisABTable(tP[0], this.Pivot, toolLength, out machPt );
+                    if (feed < 0) { feed = tP.matTool.feedCut; }
+                    if (speed < 0) { speed = tP.matTool.speed; }
+                    AB = Kinematics.ikFiveAxisABTable(tP[0], this.pivot, toolLength, out machPt );
                     FChange = true;
                     SChange = false;
                     // making the first move. Orient the tool first
 
-                    PtCode = GCode.GcFiveAxisAB_orient(machPt, AB);
+                    PtCode = GCode.gcFiveAxisAB_orient(machPt, AB);
                     PtCode = "G00 " + PtCode;
                     PtCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode;
                     Co.Append(PtCode);
@@ -210,8 +205,8 @@ namespace CAMel.Types.Machine
                 AB = new Vector3d(Co.MachineState["A"], Co.MachineState["B"], 0);
             }
 
-            if (feed < 0) { feed = tP.MatTool.feedCut; }
-            if (speed < 0) { speed = tP.MatTool.speed; }
+            if (feed < 0) { feed = tP.matTool.feedCut; }
+            if (speed < 0) { speed = tP.matTool.speed; }
 
             int i, j;
             ToolPoint Pt;
@@ -237,10 +232,10 @@ namespace CAMel.Types.Machine
                         FChange = true;
                         feed = Pt.feed;
                     }
-                    else if (feed != tP.MatTool.feedCut) // Default to the cut feed rate.
+                    else if (feed != tP.matTool.feedCut) // Default to the cut feed rate.
                     {
                         FChange = true;
-                        feed = tP.MatTool.feedCut;
+                        feed = tP.matTool.feedCut;
                     }
                 }
 
@@ -257,7 +252,7 @@ namespace CAMel.Types.Machine
                 // Work on tool orientation
 
                 // get naive orientation and Machine XYZ position
-                newAB = Kinematics.IK_FiveAxisABTable(Pt, this.Pivot, toolLength, out machPt);
+                newAB = Kinematics.ikFiveAxisABTable(Pt, this.pivot, toolLength, out machPt);
 
                 // adjust B to correct period
                 newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((AB.Y - newAB.Y) / (2.0 * Math.PI));
@@ -282,7 +277,7 @@ namespace CAMel.Types.Machine
 
                         while (j < (tP.Count - 1) &&
                             Math.Abs(
-                                Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, toolLength, out machPt).X
+                                Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X
                                 - Math.PI / 2.0) < AngleAcc)
                         { j++; }
 
@@ -290,12 +285,12 @@ namespace CAMel.Types.Machine
                         // position for the whole run. 
                         if (Math.Abs(AB.X - Math.PI / 2.0) < AngleAcc)
                         {
-                            Bto = Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, toolLength, out machPt).Y;
+                            Bto = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
                             Bsteps = j - i;
                             newAB.Y = Bto;
                         }
                         // if we get to the end and it is still vertical we do not need to rotate.
-                        else if (Math.Abs(Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, toolLength, out machPt).X) < AngleAcc)
+                        else if (Math.Abs(Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X) < AngleAcc)
                         {
                             Bto = AB.X;
                             Bsteps = j - i;
@@ -303,7 +298,7 @@ namespace CAMel.Types.Machine
                         }
                         else
                         {
-                            Bto = Kinematics.IK_FiveAxisABTable(tP[j], this.Pivot, toolLength, out machPt).Y;
+                            Bto = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
                             Bsteps = j - i;
                             newAB.Y = AB.Y;
                         }
@@ -316,7 +311,7 @@ namespace CAMel.Types.Machine
                 // This will mean some cutable paths bcome impossible.
                 // This assumes only a double stance in positive position.
 
-                if (newAB.X > (Math.PI - this.Amax)) // check if double stance is possible
+                if (newAB.X > (Math.PI - this.aMax)) // check if double stance is possible
                 {
                     if ((newAB.Y - AB.Y) > Math.PI) // check for big rotation in B
                     {
@@ -333,11 +328,11 @@ namespace CAMel.Types.Machine
                 // (throw bounds error if B goes past +-Bmax degrees or A is not between Amin and Amax)
 
 
-                if (Math.Abs(newAB.Y) > Bmax)
+                if (Math.Abs(newAB.Y) > this.bMax)
                 {
                     Co.AddError("Out of bounds on B");
                 }
-                if (( newAB.X > Amax) || (newAB.X < Amin))
+                if (( newAB.X > this.aMax) || (newAB.X < this.aMin))
                 {
                     Co.AddError("Out of bounds on A");
                 }
@@ -348,7 +343,7 @@ namespace CAMel.Types.Machine
 
                 // Add the position information
 
-                 PtCode = GCode.GcFiveAxisAB(machPt,AB);
+                 PtCode = GCode.gcFiveAxisAB(machPt,AB);
 
                 // Act if feed has changed
                 if (FChange)
@@ -387,9 +382,11 @@ namespace CAMel.Types.Machine
 
             if (tP.Count > 0)
             {
-                PtOut = new ToolPoint(tP[tP.Count - 1]);
-                PtOut.feed = feed;
-                PtOut.speed = speed;
+                PtOut = new ToolPoint(tP[tP.Count - 1])
+                {
+                    feed = feed,
+                    speed = speed
+                };
 
                 // Pass machine state information
 
@@ -405,10 +402,10 @@ namespace CAMel.Types.Machine
             return PtOut;
         }
 
-        public void writeFileEnd(ref CodeInfo Co, MachineInstruction MI) => GCode.GcInstEnd(this, ref Co, MI);
-        public void writeFileStart(ref CodeInfo Co, MachineInstruction MI) => GCode.GcInstStart(this, ref Co, MI);
-        public void writeOpEnd(ref CodeInfo Co, MachineOperation MO) => GCode.GcOpEnd(this, ref Co, MO);
-        public void writeOpStart(ref CodeInfo Co, MachineOperation MO) => GCode.GcOpStart(this, ref Co, MO);
+        public void writeFileEnd(ref CodeInfo Co, MachineInstruction MI) => GCode.gcInstEnd(this, ref Co, MI);
+        public void writeFileStart(ref CodeInfo Co, MachineInstruction MI) => GCode.gcInstStart(this, ref Co, MI);
+        public void writeOpEnd(ref CodeInfo Co, MachineOperation MO) => GCode.gcOpEnd(this, ref Co, MO);
+        public void writeOpStart(ref CodeInfo Co, MachineOperation MO) => GCode.gcOpStart(this, ref Co, MO);
 
         // This should call a utility with standard options 
         // a good time to move it is when a second 5-axis is added
@@ -427,16 +424,16 @@ namespace CAMel.Types.Machine
                 // For each see if it is safe in one Material Form
                 // As we pull back to safe distance we allow a little wiggle.
                 if ((
-                    fP.MatForm.intersect(fP[fP.Count - 1], fP.MatForm.safeDistance).thrDist > 0.0001
-                    && tP.MatForm.intersect(fP[fP.Count - 1], tP.MatForm.safeDistance).thrDist > 0.0001
+                    fP.matForm.intersect(fP[fP.Count - 1], fP.matForm.safeDistance).thrDist > 0.0001
+                    && tP.matForm.intersect(fP[fP.Count - 1], tP.matForm.safeDistance).thrDist > 0.0001
                     ) || (
-                    fP.MatForm.intersect(tP[0], fP.MatForm.safeDistance).thrDist > 0.0001
-                    && tP.MatForm.intersect(tP[0], tP.MatForm.safeDistance).thrDist > 0.0001
+                    fP.matForm.intersect(tP[0], fP.matForm.safeDistance).thrDist > 0.0001
+                    && tP.matForm.intersect(tP[0], tP.matForm.safeDistance).thrDist > 0.0001
                     ))
                 {
                     // If in material we probably need to throw an error
                     // first path in an operation
-                    double Length = fP[fP.Count - 1].Pt.DistanceTo(tP[0].Pt);
+                    double Length = fP[fP.Count - 1].pt.DistanceTo(tP[0].pt);
                     if (first) { Co.AddError("Transition between operations might be in material."); }
                     else if (Length > this.pathJump) // changing between paths in material
                     {
@@ -456,16 +453,16 @@ namespace CAMel.Types.Machine
                     MFintersects inters;
                     MFintersects fromMid;
 
-                    route.Add(fP[fP.Count - 1].Pt);
-                    route.Add(tP[0].Pt);
+                    route.Add(fP[fP.Count - 1].pt);
+                    route.Add(tP[0].pt);
 
                     // loop through intersecting with safe bubble and adding points
                     for (i = 0; i < (route.Count - 1) && route.Count < 1000;)
                     {
 
-                        if (tP.MatForm.intersect(route[i], route[i + 1], tP.MatForm.safeDistance, out inters))
+                        if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out inters))
                         {
-                            fromMid = tP.MatForm.intersect(inters.mid, inters.midOut, tP.MatForm.safeDistance * 1.1);
+                            fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
                             route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
                         }
                         else
@@ -479,7 +476,7 @@ namespace CAMel.Types.Machine
                     Vector3d mixDir;
                     bool lng = false;
                     // work out how fare angle needs to move 
-                    double angSpread = this.angDiff(fP[fP.Count - 1], tP[0],fP.MatTool, lng);
+                    double angSpread = this.angDiff(fP[fP.Count - 1], tP[0],fP.matTool, lng);
 
                     int steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                     if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0
@@ -496,11 +493,11 @@ namespace CAMel.Types.Machine
                         for (j = 0; j < steps; j++)
                         {
                             shift = (double)(steps * i + j) / (double)(steps * (route.Count - 1));
-                            mixDir = this.Interpolate(fP[fP.Count-1], tP[0], fP.MatTool, shift,lng).Dir;
+                            mixDir = this.interpolate(fP[fP.Count-1], tP[0], fP.matTool, shift,lng).dir;
 
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
-                            if (fP.MatForm.intersect(newTP, 0).thrDist > 0
-                                || tP.MatForm.intersect(newTP, 0).thrDist > 0)
+                            if (fP.matForm.intersect(newTP, 0).thrDist > 0
+                                || tP.matForm.intersect(newTP, 0).thrDist > 0)
                             {
                                 if (lng)
                                 {   // something has gone horribly wrong and 
@@ -514,7 +511,7 @@ namespace CAMel.Types.Machine
                                     lng = true;
                                     i = 0;
                                     j = 0;
-                                    angSpread = this.angDiff(fP[fP.Count - 1], tP[0], fP.MatTool, lng);
+                                    angSpread = this.angDiff(fP[fP.Count - 1], tP[0], fP.matTool, lng);
                                     steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                                     Move = tP.copyWithNewPoints(new List<ToolPoint>());
                                 }
@@ -527,7 +524,7 @@ namespace CAMel.Types.Machine
                     }
                     // get rid of start point that was already in the paths
                     Move.RemoveAt(0);
-                    outPoint = Move.WriteCode(ref Co, this, beforePoint);
+                    outPoint = Move.writeCode(ref Co, this, beforePoint);
                 }
             }
             return outPoint;

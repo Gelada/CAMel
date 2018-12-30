@@ -60,11 +60,13 @@ namespace CAMel.Types
         // Return with new paths.
         public MachineOperation copyWithNewPaths(List<ToolPath> procPaths)
         {
-            MachineOperation outOp = new MachineOperation();
-            outOp.preCode = this.preCode;
-            outOp.postCode = this.postCode;
-            outOp.name = this.name;
-            outOp.TPs = procPaths;
+            MachineOperation outOp = new MachineOperation
+            {
+                preCode = this.preCode,
+                postCode = this.postCode,
+                name = this.name,
+                TPs = procPaths
+            };
 
             return outOp;
         }
@@ -92,11 +94,11 @@ namespace CAMel.Types
             }
         }
 
-        public int Count => ((IList<ToolPath>)TPs).Count;
+        public int Count => ((IList<ToolPath>)this.TPs).Count;
 
-        public bool IsReadOnly => ((IList<ToolPath>)TPs).IsReadOnly;
+        public bool IsReadOnly => ((IList<ToolPath>)this.TPs).IsReadOnly;
 
-        public ToolPath this[int index] { get => ((IList<ToolPath>)TPs)[index]; set => ((IList<ToolPath>)TPs)[index] = value; }
+        public ToolPath this[int index] { get => ((IList<ToolPath>)this.TPs)[index]; set => ((IList<ToolPath>)this.TPs)[index] = value; }
 
         public override string ToString()
         {
@@ -109,7 +111,7 @@ namespace CAMel.Types
         }
 
         // Process the toolpaths for additions
-        public MachineOperation ProcessAdditions(IMachine M)
+        public MachineOperation processAdditions(IMachine M)
         {
             // Wow a 3d block of ToolPaths
             // Each of the stepdown paths can have several pieces (1st level)
@@ -121,7 +123,7 @@ namespace CAMel.Types
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
 
             foreach (ToolPath TP in this)
-            { newPaths.Add(TP.ProcessAdditions(M)); }
+            { newPaths.Add(TP.processAdditions(M)); }
 
             // Create the list for the output
             List<ToolPath> procPaths = new List<ToolPath>();
@@ -155,7 +157,7 @@ namespace CAMel.Types
 
 
         // Write GCode for this operation
-        public void WriteCode(ref CodeInfo Co, IMachine M, out ToolPath eP, ToolPath sP = null)
+        public void writeCode(ref CodeInfo Co, IMachine M, out ToolPath eP, ToolPath sP = null)
         {
             M.writeOpStart(ref Co, this);
 
@@ -174,7 +176,7 @@ namespace CAMel.Types
                     lastPoint = M.writeTransition(ref Co, oldPath, TP, first,lastPoint);
                     
                     // Add Path to Code
-                    lastPoint = TP.WriteCode(ref Co, M, lastPoint);
+                    lastPoint = TP.writeCode(ref Co, M, lastPoint);
 
                     oldPath = TP;
                     first = false;
@@ -186,21 +188,21 @@ namespace CAMel.Types
         }
 
         // Get the list of tooltip locations
-        public List<List<Point3d>> GetPoints()
+        public List<List<Point3d>> getPoints()
         {
             List<List<Point3d>> Pts = new List<List<Point3d>>();
-            foreach (ToolPath TP in this) { Pts.Add(TP.GetPoints()); }
+            foreach (ToolPath TP in this) { Pts.Add(TP.getPoints()); }
             return Pts;
         }
         // Get the list of tool directions
-        public List<List<Vector3d>> GetDirs()
+        public List<List<Vector3d>> getDirs()
         {
             List<List<Vector3d>> Dirs = new List<List<Vector3d>>();
-            foreach (ToolPath TP in this) { Dirs.Add(TP.GetDirs()); }
+            foreach (ToolPath TP in this) { Dirs.Add(TP.getDirs()); }
             return Dirs;
         }
         // Create a path with the points 
-        public List<List<Point3d>> GetPointsandDirs(out List<List<Vector3d>> Dirs)
+        public List<List<Point3d>> getPointsandDirs(out List<List<Vector3d>> Dirs)
         {
             List<List<Point3d>> Ptsout = new List<List<Point3d>>();
             Dirs = new List<List<Vector3d>>();
@@ -208,23 +210,23 @@ namespace CAMel.Types
             foreach (ToolPath TP in this)
             {
                 TPDirs = new List<Vector3d>();
-                Ptsout.Add(TP.GetPointsandDirs(out TPDirs));
+                Ptsout.Add(TP.getPointsandDirs(out TPDirs));
                 Dirs.Add(TPDirs);
             }
             return Ptsout;
         }
         // Create a polyline
-        public List<PolylineCurve> GetLines()
+        public List<PolylineCurve> getLines()
         {
             List<PolylineCurve> lines = new List<PolylineCurve>();
-            foreach(ToolPath TP in this) { lines.Add(TP.GetLine()); }
+            foreach(ToolPath TP in this) { lines.Add(TP.getLine()); }
             return lines;
         }
         // Lines for each toolpoint
-        public List<Line> ToolLines()
+        public List<Line> toolLines()
         {
             List<Line> lines = new List<Line>();
-            foreach (ToolPath TP in this) { lines.AddRange(TP.ToolLines()); }
+            foreach (ToolPath TP in this) { lines.AddRange(TP.toolLines()); }
             return lines;
         }
 
@@ -235,55 +237,55 @@ namespace CAMel.Types
 
         public int IndexOf(ToolPath item)
         {
-            return ((IList<ToolPath>)TPs).IndexOf(item);
+            return ((IList<ToolPath>)this.TPs).IndexOf(item);
         }
 
         public void Insert(int index, ToolPath item)
         {
-            ((IList<ToolPath>)TPs).Insert(index, item);
+            ((IList<ToolPath>)this.TPs).Insert(index, item);
         }
 
         public void RemoveAt(int index)
         {
-            ((IList<ToolPath>)TPs).RemoveAt(index);
+            ((IList<ToolPath>)this.TPs).RemoveAt(index);
         }
 
         public void Add(ToolPath item)
         {
-            ((IList<ToolPath>)TPs).Add(item);
+            ((IList<ToolPath>)this.TPs).Add(item);
         }
 
         public void Clear()
         {
-            ((IList<ToolPath>)TPs).Clear();
+            ((IList<ToolPath>)this.TPs).Clear();
         }
 
         public bool Contains(ToolPath item)
         {
-            return ((IList<ToolPath>)TPs).Contains(item);
+            return ((IList<ToolPath>)this.TPs).Contains(item);
         }
 
         public void CopyTo(ToolPath[] array, int arrayIndex)
         {
-            ((IList<ToolPath>)TPs).CopyTo(array, arrayIndex);
+            ((IList<ToolPath>)this.TPs).CopyTo(array, arrayIndex);
         }
 
         public bool Remove(ToolPath item)
         {
-            return ((IList<ToolPath>)TPs).Remove(item);
+            return ((IList<ToolPath>)this.TPs).Remove(item);
         }
 
         public IEnumerator<ToolPath> GetEnumerator()
         {
-            return ((IList<ToolPath>)TPs).GetEnumerator();
+            return ((IList<ToolPath>)this.TPs).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IList<ToolPath>)TPs).GetEnumerator();
+            return ((IList<ToolPath>)this.TPs).GetEnumerator();
         }
 
-        internal Curve GetLine()
+        internal Curve getLine()
         {
             throw new NotImplementedException();
         }
@@ -355,11 +357,11 @@ namespace CAMel.Types
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            foreach (PolylineCurve L in Value.GetLines())
+            foreach (PolylineCurve L in this.Value.getLines())
             {
                 args.Pipeline.DrawCurve(L, args.Color);
             }
-            args.Pipeline.DrawArrows(Value.ToolLines(), args.Color);
+            args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
 
         public void DrawViewportMeshes(GH_PreviewMeshArgs args) {}

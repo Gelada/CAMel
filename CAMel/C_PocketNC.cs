@@ -102,13 +102,13 @@ namespace CAMel
                 switch (V)
                 {
                     case 0:
-                        M.Pivot = new Vector3d(0, 0, 0);
+                        M.pivot = new Vector3d(0, 0, 0);
                         break;
                     case 1:
-                        M.Pivot = new Vector3d(0, 0, 0);
+                        M.pivot = new Vector3d(0, 0, 0);
                         break;
                     case 2:
-                        M.Pivot = new Vector3d(0, 0, 0);
+                        M.pivot = new Vector3d(0, 0, 0);
                         break;
                     default:
                         break;
@@ -119,13 +119,13 @@ namespace CAMel
                 switch (V)
                 {
                     case 0:
-                        M.Pivot = new Vector3d(0, 0, 3.6);
+                        M.pivot = new Vector3d(0, 0, 3.6);
                         break;
                     case 1:
-                        M.Pivot = new Vector3d(0,0,3.0-Bt);
+                        M.pivot = new Vector3d(0,0,3.0-Bt);
                         break;
                     case 2:
-                        M.Pivot = new Vector3d(0, 0, 3.0 - Bt);
+                        M.pivot = new Vector3d(0, 0, 3.0 - Bt);
                         break;
                     default:
                         break;

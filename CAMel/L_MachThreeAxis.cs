@@ -13,7 +13,7 @@ namespace CAMel.Types.Machine
     {
         public string name { get; set; }
         public double pathJump { get; set; }
-        public bool TLC { get; set; } // Tool Length Compensation
+        public bool toolLengthCompensation { get; set; } // Tool Length Compensation
         public string sectionBreak { get; set; }
         public string speedChangeCommand { get; set; }
         public string toolChangeCommand { get; set; }
@@ -30,7 +30,7 @@ namespace CAMel.Types.Machine
         public ThreeAxis()
         {
             this.name = "Unamed 3-Axis Machine";
-            this.TLC = false;
+            this.toolLengthCompensation = false;
             this.header = String.Empty;
             this.footer = String.Empty;
             this.fileStart = String.Empty;
@@ -46,7 +46,7 @@ namespace CAMel.Types.Machine
         public ThreeAxis(string name, string header, string footer)
         {
             this.name = name;
-            this.TLC = false;
+            this.toolLengthCompensation = false;
             this.header = header;
             this.footer = footer;
             this.fileStart = String.Empty;
@@ -62,7 +62,7 @@ namespace CAMel.Types.Machine
         public ThreeAxis(ThreeAxis TA)
         {
             this.name = TA.name;
-            this.TLC = TA.TLC;
+            this.toolLengthCompensation = TA.toolLengthCompensation;
             this.header = TA.header;
             this.footer = TA.footer;
             this.fileStart = TA.fileStart;
@@ -78,12 +78,7 @@ namespace CAMel.Types.Machine
 
         private void setTerms()
         {
-            terms = new List<char>();
-            terms.Add('X');
-            terms.Add('Y');
-            terms.Add('Z');
-            terms.Add('S');
-            terms.Add('F');
+            this.terms = new List<char> { 'X','Y','Z','S','F'};
         }
 
         public string TypeDescription
@@ -98,14 +93,14 @@ namespace CAMel.Types.Machine
 
         public ICAMel_Base Duplicate() => new ThreeAxis(this);
 
-        public ToolPath insertRetract(ToolPath tP) => tP.MatForm.InsertRetract(tP);
+        public ToolPath insertRetract(ToolPath tP) => tP.matForm.InsertRetract(tP);
 
-        public ToolPoint Interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
-        => Kinematics.Interpolate_Linear(fP, tP, par);
+        public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
+        => Kinematics.interpolateLinear(fP, tP, par);
 
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng) => 0;
 
-        public ToolPath ReadCode(List<MaterialTool> MTs, string Code) => GCode.GcRead(this,MTs,Code,terms);
+        public ToolPath readCode(List<MaterialTool> MTs, string Code) => GCode.gcRead(this,MTs,Code, this.terms);
 
         public ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT) => new ToolPoint(new Point3d(vals['X'], vals['Y'], vals['Z']), new Vector3d(0, 0, 0), vals['S'], vals['F']);
 
@@ -113,7 +108,7 @@ namespace CAMel.Types.Machine
 
         public ToolPoint writeCode(ref CodeInfo Co, ToolPath tP, ToolPoint beforePoint)
         {
-            GCode.GcPathStart(this, ref Co, tP);
+            GCode.gcPathStart(this, ref Co, tP);
 
             bool FChange = false;
             bool SChange = false;
@@ -126,9 +121,9 @@ namespace CAMel.Types.Machine
                 if (tP.Count > 0)
                 {
                     if (tP[0].feed >= 0) { feed = tP[0].feed; }
-                    else { feed = tP.MatTool.feedCut; }
+                    else { feed = tP.matTool.feedCut; }
                     if (tP[0].speed >= 0) { speed = tP[0].speed; }
-                    else { speed = tP.MatTool.speed; }
+                    else { speed = tP.matTool.speed; }
 
                     // Only call Feed/speed if non-negative 
                     // so Material Tool can have -1 for speed/feed and ignore them
@@ -137,8 +132,8 @@ namespace CAMel.Types.Machine
                 }
                 else
                 {
-                    feed = tP.MatTool.feedCut;
-                    speed = tP.MatTool.speed;
+                    feed = tP.matTool.feedCut;
+                    speed = tP.matTool.speed;
                 }
             }
             else
@@ -176,10 +171,10 @@ namespace CAMel.Types.Machine
                         FChange = true;
                         feed = Pt.feed;
                     }
-                    else if (feed != tP.MatTool.feedCut) // Default to the cut feed rate.
+                    else if (feed != tP.matTool.feedCut) // Default to the cut feed rate.
                     {
                         FChange = true;
-                        feed = tP.MatTool.feedCut;
+                        feed = tP.matTool.feedCut;
                     }
                 }
 
@@ -194,7 +189,7 @@ namespace CAMel.Types.Machine
                 }
 
                 // Add the position information
-                PtCode = GCode.GcThreeAxis(Pt);
+                PtCode = GCode.gcThreeAxis(Pt);
                 
                 // Act if feed has changed
                 if (FChange)
@@ -221,30 +216,25 @@ namespace CAMel.Types.Machine
 
                 // Adjust ranges
 
-                Co.GrowRange("X", Pt.Pt.X);
-                Co.GrowRange("Y", Pt.Pt.Y);
-                Co.GrowRange("Z", Pt.Pt.Z);
+                Co.GrowRange("X", Pt.pt.X);
+                Co.GrowRange("Y", Pt.pt.Y);
+                Co.GrowRange("Z", Pt.pt.Z);
 
             }
 
             // return the last point or the beforePoint if the path had no elements
             ToolPoint PtOut;
 
-            if (tP.Count > 0)
-            {
-                PtOut = new ToolPoint(tP[tP.Count - 1]);
-                PtOut.feed = feed;
-                PtOut.speed = speed;
-            }
+            if (tP.Count > 0) { PtOut = new ToolPoint(tP[tP.Count - 1]) { feed = feed, speed = speed }; }
             else { PtOut = beforePoint; }
 
             return PtOut;
         }
 
-        public void writeFileEnd(ref CodeInfo Co, MachineInstruction MI) => GCode.GcInstEnd(this, ref Co, MI);
-        public void writeFileStart(ref CodeInfo Co, MachineInstruction MI) => GCode.GcInstStart(this, ref Co, MI);
-        public void writeOpEnd(ref CodeInfo Co, MachineOperation MO) => GCode.GcOpEnd(this, ref Co, MO);
-        public void writeOpStart(ref CodeInfo Co, MachineOperation MO) => GCode.GcOpStart(this, ref Co, MO);
+        public void writeFileEnd(ref CodeInfo Co, MachineInstruction MI) => GCode.gcInstEnd(this, ref Co, MI);
+        public void writeFileStart(ref CodeInfo Co, MachineInstruction MI) => GCode.gcInstStart(this, ref Co, MI);
+        public void writeOpEnd(ref CodeInfo Co, MachineOperation MO) => GCode.gcOpEnd(this, ref Co, MO);
+        public void writeOpStart(ref CodeInfo Co, MachineOperation MO) => GCode.gcOpStart(this, ref Co, MO);
 
         public ToolPoint writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first, ToolPoint beforePoint)
         {
@@ -257,16 +247,16 @@ namespace CAMel.Types.Machine
                 // For each see if it is safe in one Material Form
                 // As we pull back to safe distance we allow a little wiggle.
                 if ((
-                    fP.MatForm.intersect(fP[fP.Count - 1], fP.MatForm.safeDistance).thrDist > 0.0001
-                    && tP.MatForm.intersect(fP[fP.Count - 1], tP.MatForm.safeDistance).thrDist > 0.0001
+                    fP.matForm.intersect(fP[fP.Count - 1], fP.matForm.safeDistance).thrDist > 0.0001
+                    && tP.matForm.intersect(fP[fP.Count - 1], tP.matForm.safeDistance).thrDist > 0.0001
                     ) || (
-                    fP.MatForm.intersect(tP[0], fP.MatForm.safeDistance).thrDist > 0.0001
-                    && tP.MatForm.intersect(tP[0], tP.MatForm.safeDistance).thrDist > 0.0001
+                    fP.matForm.intersect(tP[0], fP.matForm.safeDistance).thrDist > 0.0001
+                    && tP.matForm.intersect(tP[0], tP.matForm.safeDistance).thrDist > 0.0001
                     ))
                 {
                     // If in material we probably need to throw an error
                     // first path in an operation
-                    double Length = fP[fP.Count - 1].Pt.DistanceTo(tP[0].Pt);
+                    double Length = fP[fP.Count - 1].pt.DistanceTo(tP[0].pt);
                     if (first) { Co.AddError("Transition between operations might be in material."); }
                     else if (Length > this.pathJump) // changing between paths in material
                     {
@@ -281,9 +271,7 @@ namespace CAMel.Types.Machine
                     // comes to danger. If its too close add a new
                     // point and try again.
 
-                    List<Point3d> route = new List<Point3d>();
-                    route.Add(fP[fP.Count - 1].Pt);
-                    route.Add(tP[0].Pt);
+                    List<Point3d> route = new List<Point3d> { fP[fP.Count - 1].pt, tP[0].pt };
 
                     int i;
                     MFintersects inters;
@@ -292,9 +280,9 @@ namespace CAMel.Types.Machine
                     // loop through intersecting with safe bubble and adding points
                     for (i = 0; i < (route.Count - 1) && i < 100;)
                     {
-                        if (tP.MatForm.intersect(route[i], route[i + 1], tP.MatForm.safeDistance, out inters))
+                        if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out inters))
                         {
-                            fromMid = tP.MatForm.intersect(inters.mid, inters.midOut, tP.MatForm.safeDistance * 1.1);
+                            fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
                             route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
                         }
                         else {  i++; }
@@ -315,7 +303,7 @@ namespace CAMel.Types.Machine
                         Move.Add(new ToolPoint(Pt, new Vector3d(), -1, 0));
                     }
 
-                    outPoint = Move.WriteCode(ref Co, this, beforePoint);
+                    outPoint = Move.writeCode(ref Co, this, beforePoint);
                 }
             }
             return outPoint;

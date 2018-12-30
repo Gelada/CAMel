@@ -37,7 +37,7 @@ namespace CAMel.Types
         Normal
     }
 
-    public enum surfaceType {
+    public enum SurfaceType {
         Brep,
         Mesh
     }
@@ -55,7 +55,7 @@ namespace CAMel.Types
 
         // private storage when processing a model
 
-        private surfaceType ST; // Type of surface being processed
+        private SurfaceType ST; // Type of surface being processed
         private Mesh M; // Mesh
         private Brep B; // Brep
 
@@ -101,7 +101,7 @@ namespace CAMel.Types
             this.surfToolDir = Os.surfToolDir;
         }
         // Duplicate
-        public SurfacePath Duplicate()
+        public SurfacePath duplicate()
         {
             return new SurfacePath(this);
         }
@@ -125,11 +125,11 @@ namespace CAMel.Types
             }
         }
 
-        public int Count => ((IList<Curve>)Paths).Count;
+        public int Count => ((IList<Curve>)this.Paths).Count;
 
-        public bool IsReadOnly => ((IList<Curve>)Paths).IsReadOnly;
+        public bool IsReadOnly => ((IList<Curve>)this.Paths).IsReadOnly;
 
-        public Curve this[int index] { get => ((IList<Curve>)Paths)[index]; set => ((IList<Curve>)Paths)[index] = value; }
+        public Curve this[int index] { get => ((IList<Curve>)this.Paths)[index]; set => ((IList<Curve>)this.Paths)[index] = value; }
 
         public override string ToString()
         {
@@ -152,36 +152,36 @@ namespace CAMel.Types
         }
 
         // Different calls to Generate a Machine Operation from different surfaces
-        public MachineOperation GenerateOperation(Surface S, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation generateOperation(Surface S, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
-            this.ST = surfaceType.Brep;
+            this.ST = SurfaceType.Brep;
             this.B = S.ToBrep();
 
-            return this.GenerateOperation_(offset, MT, MF, TPA);
+            return this.generateOperation_(offset, MT, MF, TPA);
         }
 
-        public MachineOperation GenerateOperation(Brep B, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation generateOperation(Brep B, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             // Mesh is so much faster
-            this.ST = surfaceType.Mesh;
+            this.ST = SurfaceType.Mesh;
             this.B = B;
             MeshingParameters mP = MeshingParameters.Smooth;
             this.M = Mesh.CreateFromBrep(B, mP)[0];
 
-            return this.GenerateOperation_(offset, MT, MF, TPA);
+            return this.generateOperation_(offset, MT, MF, TPA);
         }
 
-        public MachineOperation GenerateOperation(Mesh M, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
+        public MachineOperation generateOperation(Mesh M, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
-            this.ST = surfaceType.Mesh;
+            this.ST = SurfaceType.Mesh;
             this.M = M;
             this.M.FaceNormals.ComputeFaceNormals();
 
-            return this.GenerateOperation_(offset, MT, MF, TPA);
+            return this.generateOperation_(offset, MT, MF, TPA);
         }
 
         // actual code to generate the operation
-        private MachineOperation GenerateOperation_(double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
+        private MachineOperation generateOperation_(double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             // create unprojected toolpath (mainly to convert the curve into a list of points)
             List<ToolPath> TPs = new List<ToolPath>();
@@ -189,7 +189,7 @@ namespace CAMel.Types
             foreach(Curve P in this.Paths)
             {
                 TPs.Add(new ToolPath("", MT, MF, TPA));
-                TPs[TPs.Count - 1].ConvertCurve(P,new Vector3d(0,0,1));
+                TPs[TPs.Count - 1].convertCurve(P,new Vector3d(0,0,1));
             }
 
             // move points onto surface storing projection direction
@@ -203,10 +203,10 @@ namespace CAMel.Types
 
             foreach(ToolPath TP in TPs)
             {
-                var intersectInfo = new ConcurrentDictionary<ToolPoint, firstIntersectResponse>(Environment.ProcessorCount, TP.Count);
+                var intersectInfo = new ConcurrentDictionary<ToolPoint, FirstIntersectResponse>(Environment.ProcessorCount, TP.Count);
 
                 foreach (ToolPoint TPt in TP) //initialise dictionary
-                { intersectInfo[TPt] = new firstIntersectResponse(); }
+                { intersectInfo[TPt] = new FirstIntersectResponse(); }
 
                 Parallel.ForEach(TP, TPtP =>
                  {
@@ -216,7 +216,7 @@ namespace CAMel.Types
                 
                 tempTP = new ToolPath("", MT, MF, TPA);
                 tempN = new List<Vector3d>();
-                firstIntersectResponse fIR;
+                FirstIntersectResponse fIR;
 
                 foreach( ToolPoint TPt in TP)
                 {
@@ -224,8 +224,8 @@ namespace CAMel.Types
                     fIR = intersectInfo[TPt];
                     if (fIR.hit)
                     {
-                        tempTP.Add(fIR.TP);
-                        tempN.Add(fIR.Norm); 
+                        tempTP.Add(fIR.tP);
+                        tempN.Add(fIR.norm); 
                     }
                     else if(tempTP.Count > 0 )
                     {
@@ -271,7 +271,7 @@ namespace CAMel.Types
                         if(lookforward + i >= newTPs[j].Count) { lookforward = newTPs[j].Count - i - 1; }
                     }
 
-                    tangent = newTPs[j][i+lookforward].Pt - newTPs[j][i - lookback].Pt;
+                    tangent = newTPs[j][i+lookforward].pt - newTPs[j][i - lookback].pt;
                     switch (this.surfToolDir)
                     {
                         case SurfToolDir.Projection: // already set
@@ -279,30 +279,30 @@ namespace CAMel.Types
                         case SurfToolDir.PathNormal:
                             // get normal to tangent on surface
                             STNorm = Vector3d.CrossProduct(Norms[j][i], tangent);
-                            PNplaneN = Vector3d.CrossProduct(newTPs[j][i].Dir, STNorm);
+                            PNplaneN = Vector3d.CrossProduct(newTPs[j][i].dir, STNorm);
                             // find vector normal to the surface in the line orthogonal to the tangent
-                            newTPs[j][i].Dir = Vector3d.CrossProduct(STNorm,PNplaneN);
+                            newTPs[j][i].dir = Vector3d.CrossProduct(STNorm,PNplaneN);
                             break;
                         case SurfToolDir.PathTangent:
                             // get normal to proj and tangent
-                            PTplaneN = Vector3d.CrossProduct(tangent,newTPs[j][i].Dir);
-                            PNplaneN = newTPs[j][i].Dir;
+                            PTplaneN = Vector3d.CrossProduct(tangent,newTPs[j][i].dir);
+                            PNplaneN = newTPs[j][i].dir;
                             // find vector normal to tangent and in the plane of tangent and projection
-                            newTPs[j][i].Dir = Vector3d.CrossProduct(PTplaneN, tangent);
+                            newTPs[j][i].dir = Vector3d.CrossProduct(PTplaneN, tangent);
                            
                             break;
                         case SurfToolDir.Normal: // set to Norm
-                            newTPs[j][i].Dir = Norms[j][i]; 
+                            newTPs[j][i].dir = Norms[j][i]; 
                             break;
                     }
                     // Adjust the tool position based on the surface normal and the tool orientation
                     // so that the cutting surface not the tooltip is at the correct point
 
-                    newTPs[j][i].Pt = newTPs[j][i].Pt + MT.CutOffset(newTPs[j][i].Dir,Norms[j][i]);
+                    newTPs[j][i].pt = newTPs[j][i].pt + MT.cutOffset(newTPs[j][i].dir,Norms[j][i]);
 
                     // Move to offset using normal
 
-                    newTPs[j][i].Pt = newTPs[j][i].Pt + offset*Norms[j][i];
+                    newTPs[j][i].pt = newTPs[j][i].pt + offset*Norms[j][i];
                 }
             }
 
@@ -311,10 +311,10 @@ namespace CAMel.Types
             return MO;
         }
 
-        private struct firstIntersectResponse
+        private struct FirstIntersectResponse
         {
-            public ToolPoint TP { get; set; }
-            public Vector3d Norm { get; set; }
+            public ToolPoint tP { get; set; }
+            public Vector3d norm { get; set; }
             public bool hit { get; set; }
 
             public override string ToString()
@@ -323,53 +323,52 @@ namespace CAMel.Types
             }
         }
 
-        private firstIntersectResponse firstIntersect(ToolPoint TP)
+        private FirstIntersectResponse firstIntersect(ToolPoint TP)
         {
-            firstIntersectResponse fIR = new firstIntersectResponse();
+            FirstIntersectResponse fIR = new FirstIntersectResponse();
             Vector3d Norm = new Vector3d();
    
-            Vector3d proj = this.ProjDir(TP.Pt);
-            Ray3d RayL = new Ray3d(TP.Pt, proj);
+            Vector3d proj = this.projDir(TP.pt);
+            Ray3d RayL = new Ray3d(TP.pt, proj);
 
             fIR.hit = false;
             switch (this.ST)
             {
-                case surfaceType.Brep:
-                    List<Brep> LB = new List<Brep>();
-                    LB.Add(this.B);
+                case SurfaceType.Brep:
+                    List<Brep> LB = new List<Brep> { this.B };
                     Point3d[] interP = Intersection.RayShoot(RayL, LB,1);
                     List<Point3d> LinterP = new List<Point3d>();
                     if(interP != null) {LinterP.AddRange(interP);}
                     if( LinterP.Count > 0)
                     {
                         fIR.hit = true;
-                        fIR.TP = new ToolPoint(interP[0],proj);
+                        fIR.tP = new ToolPoint(interP[0],proj);
                         Point3d cp = new Point3d(); ComponentIndex ci; double s, t; // catching info we won't use;
                         // call closestpoint to find norm
-                        B.ClosestPoint(fIR.TP.Pt, out cp, out ci, out s, out t, 0.5, out Norm);
-                        fIR.Norm = Norm;
+                        this.B.ClosestPoint(fIR.tP.pt, out cp, out ci, out s, out t, 0.5, out Norm);
+                        fIR.norm = Norm;
                     }
                     break;
-                case surfaceType.Mesh:
+                case SurfaceType.Mesh:
                     
                     int[] faces;
                     double inter = Intersection.MeshRay(this.M, RayL, out faces);
                     if (inter>=0)
                     {
                         fIR.hit = true;
-                        fIR.TP= new ToolPoint(RayL.PointAt(inter),-proj);
+                        fIR.tP= new ToolPoint(RayL.PointAt(inter),-proj);
                         List<int> Lfaces = new List<int>();
                         Lfaces.AddRange(faces);
-                        fIR.Norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
+                        fIR.norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
 
-                        if (fIR.Norm * RayL.Direction > 0) { fIR.Norm = -fIR.Norm; }
+                        if (fIR.norm * RayL.Direction > 0) { fIR.norm = -fIR.norm; }
                     }
                     break;
             }
             return fIR;
         }
         // Give the direction of projection for a specific point based on the projection type.
-        private Vector3d ProjDir(Point3d Pt)
+        private Vector3d projDir(Point3d Pt)
         {
             Vector3d pd = new Vector3d();
             switch (this.surfProj)
@@ -424,52 +423,52 @@ namespace CAMel.Types
 
         public int IndexOf(Curve item)
         {
-            return ((IList<Curve>)Paths).IndexOf(item);
+            return ((IList<Curve>)this.Paths).IndexOf(item);
         }
 
         public void Insert(int index, Curve item)
         {
-            ((IList<Curve>)Paths).Insert(index, item);
+            ((IList<Curve>)this.Paths).Insert(index, item);
         }
 
         public void RemoveAt(int index)
         {
-            ((IList<Curve>)Paths).RemoveAt(index);
+            ((IList<Curve>)this.Paths).RemoveAt(index);
         }
 
         public void Add(Curve item)
         {
-            ((IList<Curve>)Paths).Add(item);
+            ((IList<Curve>)this.Paths).Add(item);
         }
 
         public void Clear()
         {
-            ((IList<Curve>)Paths).Clear();
+            ((IList<Curve>)this.Paths).Clear();
         }
 
         public bool Contains(Curve item)
         {
-            return ((IList<Curve>)Paths).Contains(item);
+            return ((IList<Curve>)this.Paths).Contains(item);
         }
 
         public void CopyTo(Curve[] array, int arrayIndex)
         {
-            ((IList<Curve>)Paths).CopyTo(array, arrayIndex);
+            ((IList<Curve>)this.Paths).CopyTo(array, arrayIndex);
         }
 
         public bool Remove(Curve item)
         {
-            return ((IList<Curve>)Paths).Remove(item);
+            return ((IList<Curve>)this.Paths).Remove(item);
         }
 
         public IEnumerator<Curve> GetEnumerator()
         {
-            return ((IList<Curve>)Paths).GetEnumerator();
+            return ((IList<Curve>)this.Paths).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IList<Curve>)Paths).GetEnumerator();
+            return ((IList<Curve>)this.Paths).GetEnumerator();
         }
     }
 
