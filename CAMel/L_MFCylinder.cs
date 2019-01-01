@@ -21,14 +21,14 @@ namespace CAMel.Types.MaterialForm
 
         public bool IsValid { get { return true; } }
 
-        public Line centre { get; private set; }
-        public double radius { get; private set; }
-        public Plane plane { get; private set; }
-        public double height { get; private set; }
+        public Line centre { get; }
+        public double radius { get; }
+        public Plane plane { get; }
+        public double height { get; }
 
-        public double materialTolerance { get; set; }
+        public double materialTolerance { get; }
 
-        public double safeDistance { get; set; }
+        public double safeDistance { get; }
 
         public string TypeDescription
         { get { return "This is a cylinder MaterialForm"; } }

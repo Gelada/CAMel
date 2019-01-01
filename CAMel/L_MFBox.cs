@@ -17,11 +17,11 @@ namespace CAMel.Types.MaterialForm
 
         public bool IsValid { get { return this.box.IsValid; } }
 
-        public Box box { get; private set; }
+        public Box box { get; }
 
-        public double materialTolerance { get; set; }
+        public double materialTolerance { get; }
 
-        public double safeDistance { get; set; }
+        public double safeDistance { get; }
 
         public string TypeDescription
         { get { return "This is a box MaterialForm"; } }
