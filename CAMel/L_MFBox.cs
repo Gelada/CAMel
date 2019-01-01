@@ -15,8 +15,6 @@ namespace CAMel.Types.MaterialForm
             this.safeDistance = safeD;
         }
 
-        public bool IsValid { get { return this.box.IsValid; } }
-
         public Box box { get; }
 
         public double materialTolerance { get; }
@@ -32,12 +30,7 @@ namespace CAMel.Types.MaterialForm
         {
             return "MFBox "+this.box.ToString();
         }
-
-        public ICAMel_Base Duplicate()
-        {
-            return (ICAMel_Base) this.MemberwiseClone();
-        }
-
+        
         public ToolPath insertRetract(ToolPath TP)
         {
             return MFDefault.insertRetract(this, TP);
