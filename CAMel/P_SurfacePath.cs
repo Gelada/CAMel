@@ -37,33 +37,20 @@ namespace CAMel.Types
         Normal
     }
 
-    public enum SurfaceType {
-        Brep,
-        Mesh
-    }
-
     // A path that will project to a surface for surfacing
     // TODO write a subclass for each projection
     public class SurfacePath : IList<Curve>, ICAMel_Base
     {
-        private List<Curve> Paths; // Curves to project
-        public SurfProj surfProj { get; set;} // Type of projection
-        public Curve cylOnto { get; set;}// centre line for Cylindrical projection
-        public Vector3d dir { get; set;}// direction for parallel projection, or line direction for cylindrical
-        public Point3d cen { get; set; } // centre for spherical projection
-        public SurfToolDir surfToolDir { get; set; } // method to calculate tool direction
+        private readonly List<Curve> Paths; // Curves to project
+        public SurfProj surfProj { get; } // Type of projection
+        public Curve cylOnto { get; }// centre line for Cylindrical projection
+        public Vector3d dir { get; }// direction for parallel projection, or line direction for cylindrical
+        public Point3d cen { get; } // centre for spherical projection
+        public SurfToolDir surfToolDir { get; } // method to calculate tool direction
 
         // private storage when processing a model
-
-        private SurfaceType ST; // Type of surface being processed
+        
         private Mesh M; // Mesh
-        private Brep B; // Brep
-
-        // Default Constructor
-        public SurfacePath()
-        {
-            this.Paths = new List<Curve>();
-        }
 
         // Parallel constructor
         public SurfacePath(List<Curve> Paths, Vector3d dir, SurfToolDir STD)
@@ -90,21 +77,6 @@ namespace CAMel.Types
             this.cen = Cen;
             this.surfToolDir = surfToolDir;
         }
-        // Copy Constructor
-        public SurfacePath(SurfacePath Os)
-        {
-            this.Paths = Os.Paths;
-            this.surfProj = Os.surfProj;
-            this.cylOnto = Os.cylOnto;
-            this.dir = Os.dir;
-            this.cen = Os.cen;
-            this.surfToolDir = Os.surfToolDir;
-        }
-        // Duplicate
-        public SurfacePath duplicate()
-        {
-            return new SurfacePath(this);
-        }
 
 
         public string TypeDescription
@@ -115,14 +87,6 @@ namespace CAMel.Types
         public string TypeName
         {
             get { return "SurfacePath"; }
-        }
-
-        public bool IsValid
-        {
-            get
-            {
-                throw new NotImplementedException("SurfacePath has not implemented IsValid");
-            }
         }
 
         public int Count => ((IList<Curve>)this.Paths).Count;
@@ -154,17 +118,12 @@ namespace CAMel.Types
         // Different calls to Generate a Machine Operation from different surfaces
         public MachineOperation generateOperation(Surface S, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
-            this.ST = SurfaceType.Brep;
-            this.B = S.ToBrep();
-
-            return this.generateOperation_(offset, MT, MF, TPA);
+            return this.generateOperation(S.ToBrep(),offset, MT, MF, TPA);
         }
 
         public MachineOperation generateOperation(Brep B, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
-            // Mesh is so much faster
-            this.ST = SurfaceType.Mesh;
-            this.B = B;
+            // Just convert to Mesh
             MeshingParameters mP = MeshingParameters.Smooth;
             this.M = Mesh.CreateFromBrep(B, mP)[0];
 
@@ -173,7 +132,6 @@ namespace CAMel.Types
 
         public MachineOperation generateOperation(Mesh M, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
-            this.ST = SurfaceType.Mesh;
             this.M = M;
             this.M.FaceNormals.ComputeFaceNormals();
 
@@ -326,45 +284,24 @@ namespace CAMel.Types
         private FirstIntersectResponse firstIntersect(ToolPoint TP)
         {
             FirstIntersectResponse fIR = new FirstIntersectResponse();
-            Vector3d Norm = new Vector3d();
-   
+
             Vector3d proj = this.projDir(TP.pt);
             Ray3d RayL = new Ray3d(TP.pt, proj);
-
             fIR.hit = false;
-            switch (this.ST)
-            {
-                case SurfaceType.Brep:
-                    List<Brep> LB = new List<Brep> { this.B };
-                    Point3d[] interP = Intersection.RayShoot(RayL, LB,1);
-                    List<Point3d> LinterP = new List<Point3d>();
-                    if(interP != null) {LinterP.AddRange(interP);}
-                    if( LinterP.Count > 0)
-                    {
-                        fIR.hit = true;
-                        fIR.tP = new ToolPoint(interP[0],proj);
-                        Point3d cp = new Point3d(); ComponentIndex ci; double s, t; // catching info we won't use;
-                        // call closestpoint to find norm
-                        this.B.ClosestPoint(fIR.tP.pt, out cp, out ci, out s, out t, 0.5, out Norm);
-                        fIR.norm = Norm;
-                    }
-                    break;
-                case SurfaceType.Mesh:
-                    
-                    int[] faces;
-                    double inter = Intersection.MeshRay(this.M, RayL, out faces);
-                    if (inter>=0)
-                    {
-                        fIR.hit = true;
-                        fIR.tP= new ToolPoint(RayL.PointAt(inter),-proj);
-                        List<int> Lfaces = new List<int>();
-                        Lfaces.AddRange(faces);
-                        fIR.norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
 
-                        if (fIR.norm * RayL.Direction > 0) { fIR.norm = -fIR.norm; }
-                    }
-                    break;
+            int[] faces;
+            double inter = Intersection.MeshRay(this.M, RayL, out faces);
+            if (inter >= 0)
+            {
+                fIR.hit = true;
+                fIR.tP = new ToolPoint(RayL.PointAt(inter), -proj);
+                List<int> Lfaces = new List<int>();
+                Lfaces.AddRange(faces);
+                fIR.norm = (Vector3d)this.M.FaceNormals[Lfaces[0]];
+
+                if (fIR.norm * RayL.Direction > 0) { fIR.norm = -fIR.norm; }
             }
+
             return fIR;
         }
         // Give the direction of projection for a specific point based on the projection type.
@@ -470,11 +407,6 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public class GH_SurfacePath : CAMel_Goo<SurfacePath>
     {
-        // Default Constructor
-        public GH_SurfacePath()
-        {
-            this.Value = new SurfacePath();
-        }
 
         // Default Constructor
         public GH_SurfacePath(SurfacePath SP)
@@ -485,7 +417,7 @@ namespace CAMel.Types
         // Copy Constructor.
         public GH_SurfacePath(GH_SurfacePath Op)
         {
-            this.Value = new SurfacePath(Op.Value);
+            this.Value = Op.Value;
         }
         // Duplicate
         public override IGH_Goo Duplicate()
@@ -512,7 +444,7 @@ namespace CAMel.Types
             }
             if (source is SurfacePath)
             {
-                this.Value = new SurfacePath((SurfacePath)source);
+                this.Value = (SurfacePath)source;
                 return true;
             }
             return false;
