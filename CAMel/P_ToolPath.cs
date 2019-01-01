@@ -132,7 +132,7 @@ namespace CAMel.Types
             this.Pts = new List<ToolPoint>();
             foreach (ToolPoint pt in TP)
             {
-                this.Add(new ToolPoint(pt));
+                this.Add(pt.DeepClone());
             }
             this.matTool = TP.matTool;
             this.matForm = TP.matForm;
@@ -277,7 +277,7 @@ namespace CAMel.Types
                             // if there was one, so we do not miss what was between them
                             if(start && j > 0)
                             {
-                                TPt = new ToolPoint(refPath[j - 1]);
+                                TPt = refPath[j - 1].DeepClone();
                                 height = useTP.matTool.finishDepth;
                                 if (height > MatDist[j - 1]) { height = 0; }
                                 TPt.pt = M.toolDir(TPt) * height + TPt.pt; // stay finishDepth above final path
@@ -286,7 +286,7 @@ namespace CAMel.Types
                             }
                             height = MatDist[j] - CutLevel[i];
                             if (height < useTP.matTool.finishDepth) { height = useTP.matTool.finishDepth; } // stay finishDepth above final path
-                            TPt = new ToolPoint(refPath[j]);
+                            TPt = refPath[j].DeepClone();
                             TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                             tempTP.Add(TPt);
                             start = false;
@@ -296,7 +296,7 @@ namespace CAMel.Types
                         {
                             if(!useTP.Additions.sdDropStart) // we are not dropping the start
                             {
-                                TPt = new ToolPoint(refPath[j]);
+                                TPt = refPath[j].DeepClone();
                                 height = useTP.matTool.finishDepth;
                                 if (height > MatDist[j]) { height = 0; }
                                 TPt.pt = M.toolDir(TPt) * height + TPt.pt;
@@ -313,7 +313,7 @@ namespace CAMel.Types
                                 {
                                     // Add point as the previous one was deep, 
                                     // then set end to true so we finish
-                                    TPt = new ToolPoint(refPath[j]);
+                                    TPt = refPath[j].DeepClone();
                                     height = useTP.matTool.finishDepth;
                                     if (height > MatDist[j]) { height = 0; }
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
@@ -322,7 +322,7 @@ namespace CAMel.Types
                                 }
                                 else // add point
                                 {
-                                    TPt = new ToolPoint(refPath[j]);
+                                    TPt = refPath[j].DeepClone();
                                     height = useTP.matTool.finishDepth;
                                     if (height > MatDist[j]) { height = 0; }
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
@@ -333,7 +333,7 @@ namespace CAMel.Types
                             {
                                 if (useTP.Additions.sdDropMiddle < 0 || (k - j) < 3) // we are not dropping middle or there are not enough points to justify it
                                 {
-                                    TPt = new ToolPoint(refPath[j]);
+                                    TPt = refPath[j].DeepClone();
                                     height = useTP.matTool.finishDepth;
                                     if (height > MatDist[j]) { height = 0; }
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
@@ -349,7 +349,7 @@ namespace CAMel.Types
                                     if (droplength > useTP.Additions.sdDropMiddle)
                                     {
                                         // add point, as previous point was in material
-                                        TPt = new ToolPoint(refPath[j]);
+                                        TPt = refPath[j].DeepClone();
                                         height = useTP.matTool.finishDepth;
                                         if (height > MatDist[j]) { height = 0; }
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
@@ -367,7 +367,7 @@ namespace CAMel.Types
 
                                         // add k-1 point as k is deep
                                         // this will not result in a double point as we checked (k-j) >=3
-                                        TPt = new ToolPoint(refPath[k - 1]);
+                                        TPt = refPath[k - 1].DeepClone();
                                         height = useTP.matTool.finishDepth;
                                         if (height > MatDist[k - 1]) { height = 0; }
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
@@ -377,7 +377,7 @@ namespace CAMel.Types
                                     }
                                     else // after all that we still need to add the point
                                     {
-                                        TPt = new ToolPoint(refPath[j]);
+                                        TPt = refPath[j].DeepClone();
                                         height = useTP.matTool.finishDepth;
                                         if (height > MatDist[j]) { height = 0; }
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
@@ -505,7 +505,7 @@ namespace CAMel.Types
 
                     // note that we keep the information from the toolpoint before the line we are going to be cutting
                     // this might be removed on later passes, if the line is removed.
-                    startCP = (ToolPoint)this[i].Duplicate();
+                    startCP = this[i].DeepClone();
                     startCP.pt = osLines[osLines.Count - 1].PointAt(nextinter);
                     offsetPath.Add(startCP);
 
@@ -515,9 +515,9 @@ namespace CAMel.Types
                     // Add the new intersection we like using the closest points on the two lines (the points on each line closest to the other line)
                     // note that we keep the information from the toolpoint before the line we are going to be cutting
                     // this might be removed on later passes, if the line is removed.
-                    endCP = (ToolPoint)this[i].Duplicate();
+                    endCP = this[i].DeepClone();
                     endCP.pt = osLines[osLines.Count - 2].PointAt(inter);
-                    startCP = (ToolPoint)this[i].Duplicate();
+                    startCP = this[i].DeepClone();
                     startCP.pt = osLines[osLines.Count - 1].PointAt(nextinter);
 
                     // take the midpoint of the two intersections

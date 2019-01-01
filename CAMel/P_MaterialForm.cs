@@ -114,16 +114,14 @@ namespace CAMel.Types.MaterialForm
                 {
                     // point on material surface
 
-                    tempTP = new ToolPoint(irTP.firstP)
-                    {
-                        pt = inter.point,
-                        feed = TP.matTool.feedPlunge
-                    };
+                    tempTP = irTP.firstP.DeepClone();
+                    tempTP.pt = inter.point;
+                    tempTP.feed = TP.matTool.feedPlunge;
                     irTP.Insert(0, tempTP);
 
                     // point out at safe distance
 
-                    tempTP = new ToolPoint(irTP.firstP);
+                    tempTP = irTP.firstP.DeepClone();
                     tempTP.pt = tempTP.pt + inter.Away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Insert(0, tempTP);
@@ -134,11 +132,9 @@ namespace CAMel.Types.MaterialForm
                     if(inter.isSet)
                     {
                         // point out at safe distance
-                        tempTP = new ToolPoint(irTP.firstP)
-                        {
-                            pt = inter.point,
-                            feed = 0 // we can use a rapid move
-                        };
+                        tempTP = irTP.firstP.DeepClone();
+                        tempTP.pt = inter.point;
+                        tempTP.feed = 0; // we can use a rapid move
                         irTP.Insert(0, tempTP);
                     } //  otherwise nothing needs to be added as we do not interact with material
                 }
@@ -149,7 +145,7 @@ namespace CAMel.Types.MaterialForm
                 inter = MF.intersect(irTP.lastP, 0).through;
                 if (inter.isSet)
                 {
-                    tempTP = new ToolPoint(irTP.lastP);
+                    tempTP = irTP.lastP.DeepClone();
 
                     // set speed to the plunge feed rate.
                     tempTP.feed = TP.matTool.feedPlunge;
@@ -162,7 +158,7 @@ namespace CAMel.Types.MaterialForm
 
                     // Pull away to safe distance
 
-                    tempTP = new ToolPoint(irTP.lastP);
+                    tempTP = irTP.lastP.DeepClone();
                     tempTP.pt = tempTP.pt + inter.Away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Add(tempTP);
@@ -173,7 +169,7 @@ namespace CAMel.Types.MaterialForm
                     if (inter.isSet)
                     {
                         // point out at safe distance
-                        tempTP = new ToolPoint(irTP.lastP);
+                        tempTP = irTP.lastP.DeepClone();
                         tempTP.pt = inter.point;
                         tempTP.feed = 0; // we can use a rapid move
                         irTP.Add(tempTP);
@@ -401,23 +397,11 @@ namespace CAMel.Types
                 return true;
             }
 
-            // Cast to Brep or if that is asked for.
-            if (typeof(Q).IsAssignableFrom(typeof(GH_Brep)))
-            {
-                Brep b = null;
-                if (this.Value.getBrep(ref b))
-                {
-                    object GHb = new GH_Brep(b);
-                    target = (Q)GHb;
-                    return true;
-                }
-            }
-
             // Cast to a Mesh if that is asked for.
             if (typeof(Q).IsAssignableFrom(typeof(GH_Mesh)))
             {
-                Mesh m = null;
-                if (this.Value.getMesh(ref m))
+                Mesh m = this.Value.getMesh();
+                if (m.IsValid)
                 {
                     object GHm = new GH_Mesh(m);
                     target = (Q)GHm;

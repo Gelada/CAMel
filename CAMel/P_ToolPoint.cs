@@ -8,7 +8,7 @@ using Rhino.Geometry;
 namespace CAMel.Types
 {
     // One position of the machine
-    public class ToolPoint : IToolPointContainer
+    public class ToolPoint : IToolPointContainer, ICloneable
     {
         public Point3d pt { get; set; }      // Tool Tip position
         private Vector3d _dir;
@@ -114,20 +114,22 @@ namespace CAMel.Types
             this.name = "";
         }
         // Copy Constructor
-        public ToolPoint(ToolPoint TP)
+        private ToolPoint(ToolPoint TP)
         {
             this.pt = TP.pt;
             this.dir = TP.dir;
-            this.preCode = TP.preCode;
-            this.postCode = TP.postCode;
+            this.preCode = string.Copy(TP.preCode);
+            this.postCode = string.Copy(TP.postCode);
             this.speed = TP.speed;
             this.feed = TP.feed;
-            this.name = TP.name;
-            this.error = TP.error;
-            this.warning = TP.warning;
+            this.name = string.Copy(TP.name);
+            this.error = new List<string>();
+            foreach( string S in TP.error) { this.error.Add(string.Copy(S)); }
+            this.warning = new List<string>();
+            foreach (string S in TP.warning) { this.warning.Add(string.Copy(S)); }
         }
 
-        public ICAMel_Base Duplicate() => new ToolPoint(this);
+        public ToolPoint DeepClone() => new ToolPoint(this);
 
         public void addError(string err)
         {
@@ -151,14 +153,6 @@ namespace CAMel.Types
             get { return "ToolPoint"; }
         }
 
-        public bool IsValid
-        {
-            get
-            {
-                throw new NotImplementedException("ToolPoint has not implemented IsValid");
-            }
-        }
-
         public override string ToString()
         {
             string outp = this.name;
@@ -177,6 +171,11 @@ namespace CAMel.Types
             return new Line(this.pt, this.pt + this.dir);
         }
         public ToolPath getSinglePath() => new ToolPath() { this };
+
+        public object Clone()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     // Grasshopper Type Wrapper
@@ -210,12 +209,12 @@ namespace CAMel.Types
         // Create from unwrapped version
         public GH_ToolPoint(ToolPoint TP)
         {
-            this.Value = new ToolPoint(TP);
+            this.Value = TP.DeepClone();
         }
         // Copy Constructor
         public GH_ToolPoint(GH_ToolPoint TP)
         {
-            this.Value = new ToolPoint(TP.Value);
+            this.Value = TP.Value.DeepClone();
         }
         // Duplicate
         public override IGH_Goo Duplicate()

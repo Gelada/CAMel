@@ -47,10 +47,8 @@ namespace CAMel.Types.Machine
 
         static public ToolPoint interpolateLinear(ToolPoint fP, ToolPoint tP, double p)
         {
-            ToolPoint TPo = new ToolPoint(fP)
-            {
-                pt = tP.pt * p + fP.pt * (1 - p)
-            };
+            ToolPoint TPo = fP.DeepClone();
+            TPo.pt = tP.pt * p + fP.pt * (1 - p);
             return TPo;
         }
 
@@ -108,7 +106,7 @@ namespace CAMel.Types.Machine
             Dir.Transform(Transform.Rotation(-AB.X, Vector3d.XAxis, Point3d.Origin));
             Dir.Transform(Transform.Rotation(-AB.Y, Vector3d.YAxis, Point3d.Origin));
 
-            ToolPoint outTP = (ToolPoint)TP.Duplicate();
+            ToolPoint outTP = (ToolPoint)TP.DeepClone();
             outTP.pt = OP;
             outTP.dir = Dir;
 
@@ -219,8 +217,9 @@ namespace CAMel.Types.Machine
             }
             else
             {
-                ToolPoint LeadTP = new ToolPoint(TP.firstP) { pt = LeadStart };
-                newTP.Add(new ToolPoint(LeadTP));
+                ToolPoint LeadTP = TP.firstP.DeepClone();
+                LeadTP.pt = LeadStart;
+                newTP.Add(LeadTP.DeepClone());
                 newTP.Insert(0, LeadTP);
             }
 

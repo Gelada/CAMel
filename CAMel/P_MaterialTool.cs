@@ -89,7 +89,7 @@ namespace CAMel.Types
             double testd = os * M.toolDir(tP);
             if (testd < 0) { os = -1 * os; }
 
-            ToolPoint osTp = new ToolPoint(tP);   
+            ToolPoint osTp = tP.DeepClone();   
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
             osTp.pt = osTp.pt + this.toolWidth*(os - M.toolDir(tP))/2;
