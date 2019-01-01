@@ -168,44 +168,6 @@ namespace CAMel.Types.MaterialForm
             return MFDefault.refine(this, TP, M);
         }
 
-        public bool getBrep(ref object brep)
-        {
-            if (this.box.IsValid)
-            {
-                brep = this.box.ToBrep();
-                return true;
-            } else { return false; }
-        }
-
-        public bool getBrep(ref Brep brep)
-        {
-            if (this.box.IsValid)
-            {
-                brep = this.box.ToBrep();
-                return true;
-            }
-            else { return false; }
-        }
-
-        public bool getMesh(ref object mesh)
-        {
-            if (this.box.IsValid)
-            {
-                mesh = Mesh.CreateFromBox(this.box, 1, 1, 1);
-                return true;
-            }
-            else { return false; }
-
-        }
-
-        public bool getMesh(ref Mesh mesh)
-        {
-            if (this.box.IsValid)
-            {
-                mesh = Mesh.CreateFromBox(this.box, 1, 1, 1);
-                return true;
-            }
-            else { return false; }
-        }
+        public Mesh getMesh() => Mesh.CreateFromBox(this.box, 1, 1, 1);
     }
 }

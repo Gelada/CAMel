@@ -253,11 +253,7 @@ namespace CAMel.Types.MaterialForm
         ToolPath refine(ToolPath TP,IMachine M);
         ToolPath insertRetract(ToolPath TP);
 
-        bool getBrep(ref Brep brep);
-        bool getBrep(ref object brep);
-
-        bool getMesh(ref Mesh mesh);
-        bool getMesh(ref object mesh);
+        Mesh getMesh();
     }
     
     public static class MaterialForm
