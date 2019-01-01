@@ -19,9 +19,35 @@ namespace CAMel.Types
     public class MachineOperation : IList<ToolPath>,IToolPointContainer
     {
         private List<ToolPath> TPs;
+        public ToolPoint firstP
+        {
+            get
+            {
+                ToolPoint oP = null;
+                // Cycle through to find a path of length greater than 1.
+                for(int i=0;i<this.Count;i++)
+                {
+                    if (this[i].Count>0) { oP = this[i].firstP; break; }
+                }
+                return oP;
+            }
+        }
+        public ToolPoint lastP
+        {
+            get
+            {
+                ToolPoint oP = null;
+                // Cycle through to find a path of length greater than 1.
+                for (int i = this.Count - 1; i >= 0; i--)
+                {
+                    if (this[i].Count > 0) { oP = this[i].lastP; break; }
+                }
+                return oP;
+            }
+        }
 
-        // Default Constructor
-        public MachineOperation()
+// Default Constructor
+public MachineOperation()
         {
             this.TPs = new List<ToolPath>();
             this.name = "";
@@ -56,6 +82,7 @@ namespace CAMel.Types
                 this.Add(new ToolPath(TP));
             }
         }
+        MachineOperation Duplicate() => new MachineOperation(this);
 
         // Return with new paths.
         public MachineOperation copyWithNewPaths(List<ToolPath> procPaths)
@@ -154,29 +181,23 @@ namespace CAMel.Types
             return this.copyWithNewPaths(procPaths);
         }
 
-
-
         // Write GCode for this operation
-        public void writeCode(ref CodeInfo Co, IMachine M, out ToolPath eP, ToolPath sP = null)
+        public void writeCode(ref CodeInfo Co, IMachine M, out ToolPath eP, ToolPath sP)
         {
             M.writeOpStart(ref Co, this);
 
             ToolPath oldPath = sP;
             bool first = true;
-            ToolPoint lastPoint; // let the next path know where it is coming from (details like speed and feed can be transferred).
-
-            if (sP == null || sP.Count == 0) { lastPoint = null; }
-            else { lastPoint = sP[sP.Count - 1]; }
 
             foreach (ToolPath TP in this)
             {
                 if (TP.Count > 0) // If path has length 0 just ignore
                 {
-                    // Move from one path to the next 
-                    lastPoint = M.writeTransition(ref Co, oldPath, TP, first,lastPoint);
+                    // If a move is needed transition from one path to the next 
+                    if (oldPath.lastP != TP.firstP) { M.writeTransition(ref Co, oldPath, TP, first); }
                     
                     // Add Path to Code
-                    lastPoint = TP.writeCode(ref Co, M, lastPoint);
+                    M.writeCode(ref Co, TP);
 
                     oldPath = TP;
                     first = false;
@@ -230,11 +251,12 @@ namespace CAMel.Types
             return lines;
         }
 
-        ICAMel_Base ICAMel_Base.Duplicate()
+        public ToolPath getSinglePath()
         {
-            return new MachineOperation(this);
+            ToolPath oP = this[0].getSinglePath();
+            for (int i = 1; i < this.Count; i++) { oP.AddRange(this[i].getSinglePath()); }
+            return oP;
         }
-
         public int IndexOf(ToolPath item)
         {
             return ((IList<ToolPath>)this.TPs).IndexOf(item);

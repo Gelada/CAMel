@@ -416,11 +416,6 @@ namespace CAMel.Types
             return pd;
         }
 
-        ICAMel_Base ICAMel_Base.Duplicate()
-        {
-            throw new NotImplementedException("Surface Path has not implemented Duplicate");
-        }
-
         public int IndexOf(Curve item)
         {
             return ((IList<Curve>)this.Paths).IndexOf(item);

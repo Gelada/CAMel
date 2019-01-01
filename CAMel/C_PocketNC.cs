@@ -57,7 +57,7 @@ namespace CAMel
             int V = 0;
 
             if (!DA.GetData(0, ref V)) { return; }
-            if(V!=0 && V!=1 && V!=2)
+            if (V != 0 && V != 1 && V != 2)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Only two version of the PocketNC known.");
                 return;
@@ -71,10 +71,10 @@ namespace CAMel
             if (!DA.GetData(5, ref foot)) { return; }
             if (!DA.GetData(6, ref PJ)) { return; }
 
-            double Amin = 0, Amax = Math.PI/2.0;
+            double Amin = 0, Amax = Math.PI / 2.0;
 
             string Version;
-            switch(V)
+            switch (V)
             {
                 case 0:
                     Version = "PocketNC V1 (old spindle)";
@@ -93,44 +93,36 @@ namespace CAMel
                     break;
                 default:
                     Version = "Unknown";
-                    break;            
+                    break;
             }
 
-            PocketNC M = new PocketNC(Version, head, foot, Amin, Amax, Bmax, TLC);
-            if(TLC)
+            Vector3d pivot = new Vector3d();
+            string uFoot = foot;
+
+            if (TLC)
             {
                 switch (V)
                 {
-                    case 0:
-                        M.pivot = new Vector3d(0, 0, 0);
-                        break;
-                    case 1:
-                        M.pivot = new Vector3d(0, 0, 0);
-                        break;
-                    case 2:
-                        M.pivot = new Vector3d(0, 0, 0);
-                        break;
-                    default:
-                        break;
+                    case 0: pivot = new Vector3d(0, 0, 0); break;
+                    case 1: pivot = new Vector3d(0, 0, 0); break;
+                    case 2: pivot = new Vector3d(0, 0, 0); break;
+                    default: break;
                 }
-                M.footer = "G40 (Clear tool length compensation)\n"+M.footer;
-            } else
+                uFoot = "G49 (Clear tool length compensation)\n" + foot;
+            }
+            else
             {
                 switch (V)
                 {
-                    case 0:
-                        M.pivot = new Vector3d(0, 0, 3.6);
-                        break;
-                    case 1:
-                        M.pivot = new Vector3d(0,0,3.0-Bt);
-                        break;
-                    case 2:
-                        M.pivot = new Vector3d(0, 0, 3.0 - Bt);
-                        break;
-                    default:
-                        break;
+                    case 0: pivot = new Vector3d(0, 0, 3.6); break;
+                    case 1: pivot = new Vector3d(0, 0, 3.0 - Bt); break;
+                    case 2: pivot = new Vector3d(0, 0, 3.0 - Bt); break;
+                    default: break;
                 }
             }
+
+            PocketNC M = new PocketNC(Version, head, uFoot, pivot, Amin, Amax, Bmax, TLC, PJ);
+ 
             DA.SetData(0, M);
         }
 

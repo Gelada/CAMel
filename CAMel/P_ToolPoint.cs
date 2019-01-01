@@ -15,12 +15,16 @@ namespace CAMel.Types
         public Vector3d dir     // Tool Direction (away from position)
         {
             get { return this._dir; }
-            set 
-            { 
+            set
+            {
                 this._dir = value;
                 this._dir.Unitize();
             }
         }
+
+        public ToolPoint firstP { get => this; }
+        public ToolPoint lastP { get => this; }
+
         public double speed { get; set; }    // Considered unset for negative values
         public double feed { get; set; }     // Considered unset for negative values
         public List<string> error { get; private set; }
@@ -42,7 +46,7 @@ namespace CAMel.Types
             this.preCode = "";
             this.postCode = "";
         }
-        // Just a point, set direction to 0 vector.
+        // Just a point, set direction to Z vector.
         public ToolPoint(Point3d Pt)
         {
             this.pt = Pt;
@@ -55,7 +59,7 @@ namespace CAMel.Types
             this.preCode = "";
             this.postCode = "";
         }
-        // Use point and direction, normalise direction if not 0 vector.
+        // Use point and direction
         public ToolPoint(Point3d Pt, Vector3d D)
         {
             this.pt = Pt;
@@ -68,7 +72,7 @@ namespace CAMel.Types
             this.preCode = "";
             this.postCode = "";
         }
-        // Use point direction and extra Code, normalise direction if not 0 vector.
+        // Use point direction and extra Code
         public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode)
         {
             this.pt = Pt;
@@ -83,7 +87,7 @@ namespace CAMel.Types
             this.preCode = "";
             this.postCode = "";
         }
-        // Use point direction and override speed and feed, normalise direction if not 0 vector.
+        // Use point direction and override speed and feed
         public ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
         {
             this.pt = Pt;
@@ -96,7 +100,7 @@ namespace CAMel.Types
             this.preCode = "";
             this.postCode = "";
         }
-        // Use point direction, override speed and feed and add extra Code, normalise direction if not 0 vector.
+        // Use point direction, override speed and feed and add extra Code
         public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode, double speed, double feed)
         {
             this.pt = Pt;
@@ -123,6 +127,8 @@ namespace CAMel.Types
             this.warning = TP.warning;
         }
 
+        public ICAMel_Base Duplicate() => new ToolPoint(this);
+
         public void addError(string err)
         {
             if(this.error == null) { this.error = new List<string>(); }
@@ -145,7 +151,6 @@ namespace CAMel.Types
             get { return "ToolPoint"; }
         }
 
-
         public bool IsValid
         {
             get
@@ -163,24 +168,15 @@ namespace CAMel.Types
                 ") Dir: (" +
                 this.dir.X.ToString("0.000") + ", " + this.dir.Y.ToString("0.000") + ", " + this.dir.Z.ToString("0.000") +
                 ")";
-            if (this.preCode != "") { outp = this.preCode + "\n" + outp; }
-            if (this.speed >= 0 || this.feed >= 0)
-            {
-                outp = outp + " Speed: " + this.speed.ToString("0.000") + " Feed: " + this.feed.ToString("0.000");
-            }
-            if (this.postCode != "") { outp = outp + "\n" + this.postCode; }
             return outp;
         }
 
-        public ICAMel_Base Duplicate()
-        {
-            return new ToolPoint(this);
-        }
 
         internal Line toolLine()
         {
             return new Line(this.pt, this.pt + this.dir);
         }
+        public ToolPath getSinglePath() => new ToolPath() { this };
     }
 
     // Grasshopper Type Wrapper

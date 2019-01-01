@@ -11,41 +11,22 @@ namespace CAMel.Types.Machine
 {
     public class TwoAxis : IGCodeMachine
     {
-        public string name { get; set; }
-        public double pathJump { get; set; }
-        public bool toolLengthCompensation { get; set; } // Tool Length Compensation
-        public string sectionBreak { get; set; }
-        public string speedChangeCommand { get; set; }
-        public string toolChangeCommand { get; set; }
-        public string fileStart { get; set; }
-        public string fileEnd { get; set; }
-        public string header { get; set; }
-        public string footer { get; set; }
-        public string commentStart { get; set; }
-        public string commentEnd { get; set; }
-        List<char> terms;
+        public string name { get; }
+        public double pathJump { get;}
+        public bool toolLengthCompensation { get; } // Tool Length Compensation
+        public string sectionBreak { get; }
+        public string speedChangeCommand { get; }
+        public string toolChangeCommand { get; }
+        public string fileStart { get; }
+        public string fileEnd { get; }
+        public string header { get; }
+        public string footer { get; }
+        public string commentStart { get; }
+        public string commentEnd { get; }
+        private readonly List<char> terms;
 
-        public double leads { get; set; }
+        public double leads { get; }
 
-        public bool IsValid => throw new NotImplementedException();
-
-        public TwoAxis()
-        {
-            this.name = "Unamed 2-Axis Machine";
-            this.toolLengthCompensation = false;
-            this.header = String.Empty;
-            this.footer = String.Empty;
-            this.fileStart = String.Empty;
-            this.fileEnd = String.Empty;
-            this.commentStart = "(";
-            this.commentEnd = ")";
-            this.sectionBreak = "------------------------------------------";
-            this.speedChangeCommand = "M03";
-            this.toolChangeCommand = "G43H";
-            this.pathJump = 1;
-            this.leads = 1;
-            setTerms();
-        }
         public TwoAxis(string name, string header, string footer)
         {
             this.name = name;
@@ -61,31 +42,7 @@ namespace CAMel.Types.Machine
             this.toolChangeCommand = "G43H";
             this.pathJump = 1;
             this.leads = 1;
-            setTerms();
-        }
-        public TwoAxis(TwoAxis TA)
-        {
-            this.name = TA.name;
-            this.toolLengthCompensation = TA.toolLengthCompensation;
-            this.header = TA.header;
-            this.footer = TA.footer;
-            this.fileStart = TA.fileStart;
-            this.fileEnd = TA.fileEnd;
-            this.commentStart = TA.commentStart;
-            this.commentEnd = TA.commentEnd;
-            this.sectionBreak = TA.sectionBreak;
-            this.speedChangeCommand = TA.speedChangeCommand;
-            this.toolChangeCommand = TA.toolChangeCommand;
-            this.pathJump = TA.pathJump;
-            this.leads = TA.leads;
-            this.terms = new List<char>();
-            this.terms.AddRange(TA.terms);
-
-        }
-
-        private void setTerms()
-        {
-            this.terms = new List<char>{'X','Y','S','F'};
+            this.terms = new List<char> { 'X', 'Y', 'S', 'F' };
         }
 
         public string TypeDescription => @"Instructions for a 2-Axis machine";
@@ -96,8 +53,8 @@ namespace CAMel.Types.Machine
             if (L == "" || L == " ") { return " "; }
             else { return this.commentStart + " " + L + " " + this.commentEnd; }
         }
-
-        public ICAMel_Base Duplicate() => new TwoAxis(this);
+        
+        public ToolPath toPath(List<object> scraps) => ToolPath.toPath(scraps);
 
         public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2d(tP, this.leads);
         
@@ -113,153 +70,132 @@ namespace CAMel.Types.Machine
 
         public Vector3d toolDir(ToolPoint TP) => Vector3d.ZAxis;
 
-        public ToolPoint writeCode(ref CodeInfo Co, ToolPath tP, ToolPoint beforePoint)
+        public void writeCode(ref CodeInfo Co, ToolPath tP)
         {
-            GCode.gcPathStart(this, ref Co, tP);
+            // Double check tP does not have additions.
+            if (tP.Additions.any) { throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.\n"); }
 
-            bool FChange = false;
-            bool SChange = false;
-
-            double feed;
-            double speed;
-
-            if (beforePoint == null) // There were no previous points
+            if (tP.Count > 0) // Just ignore 0 length paths
             {
-                if (tP.Count > 0)
-                {
-                    if (tP[0].feed >= 0) { feed = tP[0].feed; }
-                    else { feed = tP.matTool.feedCut; }
-                    if (tP[0].speed >= 0) { speed = tP[0].speed; }
-                    else { speed = tP.matTool.speed; }
+                GCode.gcPathStart(this, ref Co, tP);
 
-                    // Only call Feed/speed if non-negative 
-                    // so Material Tool can have -1 for speed/feed and ignore them
-                    if (feed >= 0) { FChange = true; }
-                    if (speed >= 0) { SChange = true; }
-                }
-                else
-                {
-                    feed = tP.matTool.feedCut;
-                    speed = tP.matTool.speed;
-                }
-            }
-            else
-            {
-                feed = beforePoint.feed;
-                speed = beforePoint.speed;
-            }
+                bool FChange = false;
+                bool SChange = false;
 
-            string PtCode;
+                double feed = Co.MachineState["F"];
+                double speed = Co.MachineState["S"];
+                if (feed < 0) { feed = tP.matTool.feedCut; FChange = true; }
+                if (speed < 0) { speed = tP.matTool.speed; SChange = true; }
 
-            foreach (ToolPoint Pt in tP)
-            {
-                if (Pt.error != null)
+                string PtCode;
+
+                foreach (ToolPoint Pt in tP)
                 {
-                    foreach (string err in Pt.error)
+                    if (Pt.error != null)
                     {
-                        Co.AddError(err);
-                        Co.AppendComment(err);
+                        foreach (string err in Pt.error)
+                        {
+                            Co.AddError(err);
+                            Co.AppendComment(err);
+                        }
                     }
-                }
-                if (Pt.warning != null)
-                {
-                    foreach (string warn in Pt.warning)
+                    if (Pt.warning != null)
                     {
-                        Co.AddWarning(warn);
-                        Co.AppendComment(warn);
+                        foreach (string warn in Pt.warning)
+                        {
+                            Co.AddWarning(warn);
+                            Co.AppendComment(warn);
+                        }
                     }
-                }
 
-                // Establish new feed value
-                if (Pt.feed != feed)
-                {
-                    if (Pt.feed >= 0)
+                    // Establish new feed value
+                    if (Pt.feed != feed)
                     {
-                        FChange = true;
-                        feed = Pt.feed;
+                        if (Pt.feed >= 0)
+                        {
+                            FChange = true;
+                            feed = Pt.feed;
+                        }
+                        else if (feed != tP.matTool.feedCut) // Default to the cut feed rate.
+                        {
+                            FChange = true;
+                            feed = tP.matTool.feedCut;
+                        }
                     }
-                    else if (feed != tP.matTool.feedCut) // Default to the cut feed rate.
+
+                    // Establish new speed value
+                    if (Pt.speed != speed)
                     {
-                        FChange = true;
-                        feed = tP.matTool.feedCut;
+                        if (Pt.speed > 0)
+                        {
+                            SChange = true;
+                            speed = Pt.speed;
+                        }
                     }
-                }
 
-                // Establish new speed value
-                if (Pt.speed != speed)
-                {
-                    if (Pt.speed > 0)
+                    // Add the position information
+                    PtCode = GCode.gcTwoAxis(Pt);
+
+                    // Act if feed has changed
+                    if (FChange)
                     {
-                        SChange = true;
-                        speed = Pt.speed;
+                        if (feed == 0) { PtCode = "G00 " + PtCode; }
+                        else { PtCode = "G01 " + PtCode + " F" + feed.ToString("0"); }
                     }
+                    FChange = false;
+
+                    // Act if speed has changed
+                    if (SChange)
+                    {
+                        PtCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode;
+                    }
+                    SChange = false;
+
+                    PtCode = Pt.preCode + PtCode + Pt.postCode;
+
+                    if (Pt.name != "")
+                    {
+                        PtCode = PtCode + " " + this.comment(Pt.name);
+                    }
+                    Co.Append(PtCode);
+
+                    // Adjust ranges
+
+                    Co.GrowRange("X", Pt.pt.X);
+                    Co.GrowRange("Y", Pt.pt.Y);
                 }
+                // Pass machine state information
 
-                // Add the position information
-                PtCode = GCode.gcTwoAxis(Pt);
-                
-                // Act if feed has changed
-                if (FChange)
-                {
-                    if (feed == 0) { PtCode = "G00 " + PtCode; }
-                    else { PtCode = "G01 " + PtCode + " F" + feed.ToString("0"); }
-                }
-                FChange = false;
-
-                // Act if speed has changed
-                if (SChange)
-                {
-                    PtCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode;
-                }
-                SChange = false;
-
-                PtCode = Pt.preCode + PtCode + Pt.postCode;
-
-                if (Pt.name != "")
-                {
-                    PtCode = PtCode + " " + this.comment(Pt.name);
-                }
-                Co.Append(PtCode);
-
-                // Adjust ranges
-
-                Co.GrowRange("X", Pt.pt.X);
-                Co.GrowRange("Y", Pt.pt.Y);
-                Co.GrowRange("Z", Pt.pt.Z);
-
-            }
-
-            // return the last point or the beforePoint if the path had no elements
-            ToolPoint PtOut;
-
-            if (tP.Count > 0) { PtOut = new ToolPoint(tP[tP.Count - 1]) { feed = feed, speed = speed }; }
-            else { PtOut = beforePoint; }
-
-            return PtOut;
+                Co.MachineState.Clear();
+                Co.MachineState.Add("X", tP.lastP.pt.X);
+                Co.MachineState.Add("Y", tP.lastP.pt.Y);
+                Co.MachineState.Add("F", feed);
+                Co.MachineState.Add("S", speed);
+            }       
         }
 
-        public void writeFileEnd(ref CodeInfo Co, MachineInstruction MI) => GCode.gcInstEnd(this, ref Co, MI);
-        public void writeFileStart(ref CodeInfo Co, MachineInstruction MI) => GCode.gcInstStart(this, ref Co, MI);
+        public void writeFileStart(ref CodeInfo Co, MachineInstruction MI, ToolPath startPath)
+        {
+            // Set up Machine State  
+
+            Co.MachineState.Clear();
+            Co.MachineState.Add("X", startPath.firstP.pt.X);
+            Co.MachineState.Add("Y", startPath.firstP.pt.Y);
+            Co.MachineState.Add("F", -1);
+            Co.MachineState.Add("S", -1);
+
+            GCode.gcInstStart(this, ref Co, MI, startPath);
+        }
+        public void writeFileEnd(ref CodeInfo Co, MachineInstruction MI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref Co, MI, finalPath, endPath);
         public void writeOpEnd(ref CodeInfo Co, MachineOperation MO) => GCode.gcOpEnd(this, ref Co, MO);
         public void writeOpStart(ref CodeInfo Co, MachineOperation MO) => GCode.gcOpStart(this, ref Co, MO);
 
-        public ToolPoint writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first, ToolPoint beforePoint)
+        public void writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first)
         {
-            ToolPoint outPoint = beforePoint;
             // check there is anything to transition from
-            if ((fP == null || fP.Count == 0) && tP!= null && tP.Count > 0)
+            if ((fP.Count > 0) && tP.Count > 0)
             {
-                ToolPath startPath = tP.copyWithNewPoints(new List<ToolPoint>());
-                startPath.Add(tP[0]);
-                startPath[0].feed = 0;
-                startPath.name = String.Empty;
-                startPath.preCode = String.Empty;
-                startPath.postCode = String.Empty;
-                outPoint = startPath.writeCode(ref Co, this, beforePoint);
-            }
-            else if (tP!=null && tP.Count > 0)
-            {
-                List<Point3d> route = new List<Point3d> { fP[fP.Count - 1].pt, tP[0].pt };
+                List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
 
                 ToolPath Move = tP.copyWithNewPoints(new List<ToolPoint>());
                 Move.name = String.Empty;
@@ -270,9 +206,8 @@ namespace CAMel.Types.Machine
                     // add new point at speed 0 to describe rapid move.
                     Move.Add(new ToolPoint(Pt, new Vector3d(), -1, 0));
                 }
-                outPoint = Move.writeCode(ref Co, this, beforePoint);
+                writeCode(ref Co, Move);
             }
-            return outPoint;
         }
     }
 }

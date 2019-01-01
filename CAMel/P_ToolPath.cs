@@ -54,9 +54,26 @@ namespace CAMel.Types
         public IMaterialForm matForm { get; set; }    // Shape of the material
         public ToolPathAdditions Additions;       // Features we might add to the path 
 
+        public ToolPoint firstP
+        {
+            get
+            {
+                if (this.Count > 0) { return this[0]; }
+                else { return null; }
+            }
+        }
+        public ToolPoint lastP
+        {
+            get
+            {
+                if (this.Count > 0) { return this[this.Count-1]; }
+                else { return null; }
+            }
+        }
         // Default Constructor, set everything to empty
         public ToolPath()
         {
+            this.name = "";
             this.Pts = new List<ToolPoint>();
             this.matTool = null;
             this.matForm = null;
@@ -82,7 +99,7 @@ namespace CAMel.Types
             this.Pts = new List<ToolPoint>();
             this.matTool = MT;
             this.matForm = null;
-            this.Additions = new ToolPathAdditions(TPA);
+            this.Additions = TPA;
             this.preCode = "";
             this.postCode = "";
         }
@@ -102,9 +119,9 @@ namespace CAMel.Types
         {
             this.name = name;
             this.Pts = new List<ToolPoint>();
-            this.matTool = MT;
+            this.matTool = MT; 
             this.matForm = MF;
-            this.Additions = new ToolPathAdditions(TPA);
+            this.Additions = TPA;
             this.preCode = "";
             this.postCode = "";
         }
@@ -117,12 +134,14 @@ namespace CAMel.Types
             {
                 this.Add(new ToolPoint(pt));
             }
-            this.matTool = new MaterialTool(TP.matTool);
-            this.matForm = (IMaterialForm) TP.matForm.Duplicate();
+            this.matTool = TP.matTool;
+            this.matForm = TP.matForm;
             this.preCode = TP.preCode;
             this.postCode = TP.postCode;
             this.Additions = new ToolPathAdditions(TP.Additions);
         }
+
+        public ToolPath Duplicate() => new ToolPath(this);
 
         public ToolPath copyWithNewPoints(List<ToolPoint> Pts)
         {
@@ -134,6 +153,8 @@ namespace CAMel.Types
             };
             return newTP;
         }
+
+        public ToolPath getSinglePath() => this.Duplicate();
 
         public string TypeDescription
         {
@@ -171,13 +192,6 @@ namespace CAMel.Types
 
         // Main functions
 
-        // Write the code describing this path
-        public ToolPoint writeCode(ref CodeInfo Co,IMachine M, ToolPoint beforePoint)
-        {
-            if (this.Additions.any) { throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.\n"); }
-
-            return M.writeCode(ref Co, this, beforePoint);
-        }
         // Process any additions to the path and return 
         // list of list of toolpaths (for stepdown)
         public List<List<ToolPath>> processAdditions(IMachine M)
@@ -517,15 +531,15 @@ namespace CAMel.Types
 
             // add the final point.
 
-            if (dir == M.toolDir(this[this.Count - 1]))
+            if (dir == M.toolDir(this.lastP))
             {
-                if (orthSet) { nextPoint = this.matTool.threeAxisHeightOffset(M, this[this.Count - 1], dir, orth); }
-                else { nextPoint = this[this.Count - 1]; }
+                if (orthSet) { nextPoint = this.matTool.threeAxisHeightOffset(M, this.lastP, dir, orth); }
+                else { nextPoint = this.lastP; }
             }
             else
             {
-                orth = Vector3d.CrossProduct(dir, M.toolDir(this[this.Count - 1]));
-                nextPoint = this.matTool.threeAxisHeightOffset(M,this[this.Count - 1], dir, orth);
+                orth = Vector3d.CrossProduct(dir, M.toolDir(this.lastP));
+                nextPoint = this.matTool.threeAxisHeightOffset(M,this.lastP, dir, orth);
             }
 
             offsetPath.Add(nextPoint);
@@ -534,9 +548,9 @@ namespace CAMel.Types
             retPath.Additions.threeAxisHeightOffset = false;
 
             if (!retPath.Additions.insert)
-            { retPath[0].warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
+            { retPath.firstP.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
             if (!retPath.Additions.retract)
-            { retPath[retPath.Count - 1].warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
+            { retPath.lastP.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
 
             return retPath;
         }
@@ -633,60 +647,37 @@ namespace CAMel.Types
 
             return PlC;
         }
-
-        ICAMel_Base ICAMel_Base.Duplicate()
+        
+        public int IndexOf(ToolPoint item) { return ((IList<ToolPoint>)this.Pts).IndexOf(item); }
+        public void Insert(int index, ToolPoint item) { ((IList<ToolPoint>)this.Pts).Insert(index, item); }
+        public void RemoveAt(int index) { ((IList<ToolPoint>)this.Pts).RemoveAt(index); }
+        public void Add(ToolPoint item) { ((IList<ToolPoint>)this.Pts).Add(item); }
+        public void Add(Point3d item) { ((IList<ToolPoint>)this.Pts).Add(new ToolPoint(item)); }
+        public void AddRange(IEnumerable<ToolPoint> items) { this.Pts.AddRange(items); }
+        public void AddRange(IEnumerable<Point3d> items)
         {
-            return new ToolPath(this);
+            foreach(Point3d Pt in items)
+            {
+                this.Add(Pt);
+            }
         }
+        public void Clear() { ((IList<ToolPoint>)this.Pts).Clear(); }
+        public bool Contains(ToolPoint item) { return ((IList<ToolPoint>)this.Pts).Contains(item); }
+        public void CopyTo(ToolPoint[] array, int arrayIndex) { ((IList<ToolPoint>)this.Pts).CopyTo(array, arrayIndex); }
+        public bool Remove(ToolPoint item) { return ((IList<ToolPoint>)this.Pts).Remove(item); }
+        public IEnumerator<ToolPoint> GetEnumerator() { return ((IList<ToolPoint>)this.Pts).GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return ((IList<ToolPoint>)this.Pts).GetEnumerator(); }
 
-        public int IndexOf(ToolPoint item)
+        internal static ToolPath toPath(List<object> scraps)
         {
-            return ((IList<ToolPoint>)this.Pts).IndexOf(item);
-        }
-
-        public void Insert(int index, ToolPoint item)
-        {
-            ((IList<ToolPoint>)this.Pts).Insert(index, item);
-        }
-
-        public void RemoveAt(int index)
-        {
-            ((IList<ToolPoint>)this.Pts).RemoveAt(index);
-        }
-
-        public void Add(ToolPoint item)
-        {
-            ((IList<ToolPoint>)this.Pts).Add(item);
-        }
-
-        public void Clear()
-        {
-            ((IList<ToolPoint>)this.Pts).Clear();
-        }
-
-        public bool Contains(ToolPoint item)
-        {
-            return ((IList<ToolPoint>)this.Pts).Contains(item);
-        }
-
-        public void CopyTo(ToolPoint[] array, int arrayIndex)
-        {
-            ((IList<ToolPoint>)this.Pts).CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(ToolPoint item)
-        {
-            return ((IList<ToolPoint>)this.Pts).Remove(item);
-        }
-
-        public IEnumerator<ToolPoint> GetEnumerator()
-        {
-            return ((IList<ToolPoint>)this.Pts).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IList<ToolPoint>)this.Pts).GetEnumerator();
+            ToolPath oP = new ToolPath();
+            foreach (object oB in scraps)
+            {
+                if (oB is IToolPointContainer) { oP.AddRange(((IToolPointContainer)oB).getSinglePath()); }
+                if (oB is Point3d) { oP.Add((Point3d)oB); }
+                if (oB is List<Point3d>) { oP.AddRange((List<Point3d>)oB); }
+            }
+            return oP;
         }
     }
 

@@ -14,20 +14,20 @@ namespace CAMel.Types.MaterialForm
     {
         public MFintersection(Point3d Pt, Vector3d Away,double lineP)
         {
-            this.Pt = Pt;
+            this.point = Pt;
             this.lineP = lineP;
             this.isSet = true;
-            _Away = Away;
-            _Away.Unitize();
+            this._Away = Away;
+            this._Away.Unitize();
         }
 
-        public Point3d Pt { get; private set; }    // Point of intersection
+        public Point3d point { get; private set; }    // Point of intersection
         private Vector3d _Away;
-        public Vector3d Away { get { return _Away; } // direction to get away from the material (eg normal)
+        public Vector3d Away { get { return this._Away; } // direction to get away from the material (eg normal)
             private set
             {
-                _Away = value;
-                _Away.Unitize();
+                this._Away = value;
+                this._Away.Unitize();
             }
         } 
         public double lineP { get; private set; }  // position along intersecting line
@@ -39,10 +39,10 @@ namespace CAMel.Types.MaterialForm
     {
         public MFintersects()
         {
-            inters = new List<MFintersection>();
-            through = new MFintersection(); // creates an unset value
-            first = new MFintersection(); // creates and unset value
-            midOut = new Vector3d();
+            this.inters = new List<MFintersection>();
+            this.through = new MFintersection(); // creates an unset value
+            this.first = new MFintersection(); // creates and unset value
+            this.midOut = new Vector3d();
         }
         public List<MFintersection> inters { get; private set; } // List of intersections 
 
@@ -54,16 +54,16 @@ namespace CAMel.Types.MaterialForm
 
         public Point3d mid // midpoint through material
         {
-            get { return (this.first.Pt + this.through.Pt) / 2; }
+            get { return (this.first.point + this.through.point) / 2; }
         }
         private Vector3d _midOut;
         public Vector3d midOut
         { // direction to head to surface from the middle of middle of the line
-            get { return _midOut; }
+            get { return this._midOut; }
             set
             {
                 value.Unitize();
-                _midOut = value;
+                this._midOut = value;
             }
         }
 
@@ -90,7 +90,7 @@ namespace CAMel.Types.MaterialForm
 
     internal static class MFDefault
     {
-        internal static ToolPath InsertRetract(IMaterialForm MF, ToolPath TP)
+        internal static ToolPath insertRetract(IMaterialForm MF, ToolPath TP)
         {
             ToolPath irTP = new ToolPath(TP);
             irTP.Additions.insert = false;
@@ -107,34 +107,38 @@ namespace CAMel.Types.MaterialForm
                 //note we do this backwards adding points to the start of the path.
 
                 // get distance to surface and insert direction
-                inter = MF.intersect(irTP[0], 0).through;
+                inter = MF.intersect(irTP.firstP, 0).through;
 
                 // check to see if there was an intersection
                 if (inter.isSet)
                 {
                     // point on material surface
 
-                    tempTP = new ToolPoint(irTP[0]);
-                    tempTP.pt = inter.Pt;
-                    tempTP.feed = TP.matTool.feedPlunge;
+                    tempTP = new ToolPoint(irTP.firstP)
+                    {
+                        pt = inter.point,
+                        feed = TP.matTool.feedPlunge
+                    };
                     irTP.Insert(0, tempTP);
 
                     // point out at safe distance
 
-                    tempTP = new ToolPoint(irTP[0]);
+                    tempTP = new ToolPoint(irTP.firstP);
                     tempTP.pt = tempTP.pt + inter.Away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Insert(0, tempTP);
                 } else
                 {
                     // check intersection with material extended to safe distance
-                    inter = MF.intersect(irTP[0],utol).through;
+                    inter = MF.intersect(irTP.firstP,utol).through;
                     if(inter.isSet)
                     {
                         // point out at safe distance
-                        tempTP = new ToolPoint(irTP[0]);
-                        tempTP.pt = inter.Pt;
-                        tempTP.feed = 0; // we can use a rapid move
+                        tempTP = new ToolPoint(irTP.firstP)
+                        {
+                            pt = inter.point,
+                            feed = 0 // we can use a rapid move
+                        };
                         irTP.Insert(0, tempTP);
                     } //  otherwise nothing needs to be added as we do not interact with material
                 }
@@ -142,35 +146,35 @@ namespace CAMel.Types.MaterialForm
             if (TP.Additions.retract && irTP.Count > 0) // add retract
             {
                 // get distance to surface and retract direction
-                inter = MF.intersect(irTP[irTP.Count - 1], 0).through;
+                inter = MF.intersect(irTP.lastP, 0).through;
                 if (inter.isSet)
                 {
-                    tempTP = new ToolPoint(irTP[irTP.Count - 1]);
+                    tempTP = new ToolPoint(irTP.lastP);
 
                     // set speed to the plunge feed rate.
                     tempTP.feed = TP.matTool.feedPlunge;
 
                     // Pull back to surface
-                    tempTP.pt = inter.Pt;
+                    tempTP.pt = inter.point;
                     tempTP.feed = 0; // we can use a rapid move
 
                     irTP.Add(tempTP);
 
                     // Pull away to safe distance
 
-                    tempTP = new ToolPoint(irTP[irTP.Count - 1]);
+                    tempTP = new ToolPoint(irTP.lastP);
                     tempTP.pt = tempTP.pt + inter.Away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Add(tempTP);
                 } else
                 {
                     // check intersection with material extended to safe distance
-                    inter = MF.intersect(irTP[irTP.Count - 1], utol).through;
+                    inter = MF.intersect(irTP.lastP, utol).through;
                     if (inter.isSet)
                     {
                         // point out at safe distance
-                        tempTP = new ToolPoint(irTP[irTP.Count - 1]);
-                        tempTP.pt = inter.Pt;
+                        tempTP = new ToolPoint(irTP.lastP);
+                        tempTP.pt = inter.point;
                         tempTP.feed = 0; // we can use a rapid move
                         irTP.Add(tempTP);
                     } //  otherwise nothing needs to be added as we do not interact with material
@@ -201,7 +205,7 @@ namespace CAMel.Types.MaterialForm
 
             // Add the first ToolPoint
 
-            if (TP.Count > 0) { refined.Add(TP[0]); }
+            if (TP.Count > 0) { refined.Add(TP.firstP); }
             
             double lineLen;
             MFintersects inters;
@@ -239,15 +243,15 @@ namespace CAMel.Types.MaterialForm
 
     public interface IMaterialForm : ICAMel_Base
     {
-        double safeDistance { get; set; }
-        double materialTolerance { get; set; }
+        double safeDistance { get; }
+        double materialTolerance { get; }
 
         MFintersects intersect(Point3d Pt, Vector3d direction, double tolerance);
         MFintersects intersect(ToolPoint TP, double tolerance);
         bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inters); 
 
         ToolPath refine(ToolPath TP,IMachine M);
-        ToolPath InsertRetract(ToolPath TP);
+        ToolPath insertRetract(ToolPath TP);
 
         bool getBrep(ref Brep brep);
         bool getBrep(ref object brep);
@@ -376,13 +380,13 @@ namespace CAMel.Types
         // Construct from unwrapped object
         public GH_MaterialForm(IMaterialForm MF)
         {
-            this.Value = (IMaterialForm)MF.Duplicate();
+            this.Value = MF;
         }
 
         // Copy Constructor.
         public GH_MaterialForm(GH_MaterialForm MF)
         {
-            this.Value = (IMaterialForm) MF.Value.Duplicate();
+            this.Value = MF.Value;
         }
 
         // Duplicate
@@ -435,7 +439,7 @@ namespace CAMel.Types
             }
             if (source is IMaterialForm)
             {
-                this.Value = (IMaterialForm)((IMaterialForm) source).Duplicate();
+                this.Value = (IMaterialForm) source;
                 return true;
             }
             return false;

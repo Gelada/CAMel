@@ -182,8 +182,8 @@ namespace CAMel
 
                 // complete loop by adding points going from
                 // the end point to the start point
-                Point3d startPt = CTP[0].pt;
-                Point3d endPt = CTP[CTP.Count - 1].pt;
+                Point3d startPt = CTP.firstP.pt;
+                Point3d endPt = CTP.lastP.pt;
                 if (endPt.Y > 0)
                 { startPt.Y = startPt.Y + turns + 2.0 * Math.PI; }
                 else
@@ -203,7 +203,7 @@ namespace CAMel
             }
 
             // Create spiral from the loop
-            double winding = (CTP[CTP.Count - 1].pt.Y - CTP[0].pt.Y)/(2.0*Math.PI);
+            double winding = (CTP.lastP.pt.Y - CTP.firstP.pt.Y)/(2.0*Math.PI);
             double raisePer =(stepOver * MT.toolWidth); // height dealt with by each loop
             double rot =
                 ((BB.Max.Z - BB.Min.Z) // eight of surface

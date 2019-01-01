@@ -127,7 +127,7 @@ namespace CAMel
                     MTs.AddRange(csv.GetRecords<MaterialTool>());
             }
             bool found =false;
-            MaterialTool MT = new MaterialTool();
+            MaterialTool MT = null;
             for(int i=0; i < MTs.Count; i++)
             {
                 if(MTs[i].toolName == toolName && MTs[i].matName == matName)

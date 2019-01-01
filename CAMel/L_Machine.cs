@@ -12,17 +12,17 @@ namespace CAMel.Types.Machine
     // Some standards to help develop GCode based machines
     public interface IGCodeMachine : IMachine
     {
-        string header { get; set; }
-        string footer { get; set; }
+        string header { get; }
+        string footer { get; }
 
-        string speedChangeCommand { get; set; }
-        string toolChangeCommand { get; set; }
+        string speedChangeCommand { get; }
+        string toolChangeCommand { get; }
 
-        string sectionBreak { get; set; }
-        string fileStart { get; set; }
-        string fileEnd { get; set; }
-        string commentStart { get; set; }
-        string commentEnd { get; set; }
+        string sectionBreak { get; }
+        string fileStart { get; }
+        string fileEnd { get; }
+        string commentStart { get; }
+        string commentEnd { get; }
 
         ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT);
     }
@@ -189,7 +189,7 @@ namespace CAMel.Types.Machine
             for (int i = 0; i < testNumber; i++)
             {
                 double ang = 2.0 * Math.PI * i / (double)testNumber;
-                testPt = TP[0].pt + leadLen * new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
+                testPt = TP.firstP.pt + leadLen * new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
 
                 // Check point is inside (or outside) the curve
                 correctSide = toolL.Contains(testPt) == PointContainment.Inside;
@@ -202,7 +202,7 @@ namespace CAMel.Types.Machine
                 {
                     toolL.ClosestPoint(testPt, out testdist);
                     testdist = testPt.DistanceTo(toolL.PointAt(testdist));
-                    noInter = Intersection.CurveCurve(toolL, new Line(TP[0].pt, testPt).ToNurbsCurve(), 0.00001, 0.00001).Count <= 1;
+                    noInter = Intersection.CurveCurve(toolL, new Line(TP.firstP.pt, testPt).ToNurbsCurve(), 0.00001, 0.00001).Count <= 1;
 
                     if (noInter && testdist > dist)
                     {
@@ -215,11 +215,11 @@ namespace CAMel.Types.Machine
             // start and end
             if (dist < 0)
             {
-                newTP[0].addError("No suitable point for lead in and out found.");
+                newTP.firstP.addError("No suitable point for lead in and out found.");
             }
             else
             {
-                ToolPoint LeadTP = new ToolPoint(TP[0]) { pt = LeadStart };
+                ToolPoint LeadTP = new ToolPoint(TP.firstP) { pt = LeadStart };
                 newTP.Add(new ToolPoint(LeadTP));
                 newTP.Insert(0, LeadTP);
             }
@@ -227,14 +227,28 @@ namespace CAMel.Types.Machine
             newTP.Additions.leadFactor = 0;
             return newTP;
         }
+
+
     }
 
     public static class GCode
-    { 
+    {
+        // Standard terms
+
+        internal static readonly string defaultCommentStart = "(";
+        internal static readonly string defaultCommentEnd = ")";
+        internal static readonly string defaultSectionBreak = "------------------------------------------";
+        internal static readonly string defaultSpeedChangeCommand = "M03";
+        internal static readonly string defaultToolChangeCommand = "G43H";
+
         // Formatting structure for GCode
 
-        static public void gcInstStart(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI)
+        static public void gcInstStart(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI, ToolPath startPath)
         {
+
+            Co.currentMT = MI[0][0].matTool;
+            Co.currentMF = MI[0][0].matForm;
+
             DateTime thisDay = DateTime.Now;
             Co.AppendLineNoNum(M.fileStart);
             Co.AppendComment(M.sectionBreak);
@@ -251,12 +265,19 @@ namespace CAMel.Types.Machine
             Co.AppendComment(M.sectionBreak);
             Co.Append(M.header);
             Co.Append(MI.preCode);
+
+            M.writeCode(ref Co, startPath);
         }
-        static public void gcInstEnd(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI)
+        static public void gcInstEnd(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI, ToolPath finalPath, ToolPath endPath)
         {
+            Co.AppendComment(M.sectionBreak);
+            M.writeTransition(ref Co, finalPath, endPath, true);
+            M.writeCode(ref Co, endPath);
+
             Co.AppendComment(M.sectionBreak);
             Co.AppendComment(" End of ToolPaths");
             Co.AppendComment(M.sectionBreak);
+
             Co.Append(MI.postCode);
             Co.Append(M.footer);
             Co.AppendLineNoNum(M.fileEnd);
@@ -351,7 +372,8 @@ namespace CAMel.Types.Machine
         }
 
         // GCode reading
-        static private Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);
+        private static readonly Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);
+        
         static private double getValue(string line, char split, double old, ref bool changed, ref bool unset)
         {
             double val = old;

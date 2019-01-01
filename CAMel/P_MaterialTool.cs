@@ -16,56 +16,23 @@ namespace CAMel.Types
     // Settings for a particular material and tool
     public class MaterialTool : ICAMel_Base 
     {
-        public string matName    { get; set; } // Name of the material
-        public string toolName   { get; set; } // Name of the tool 
-        public int toolNumber    { get; set; } // Number of the tool
-        public double speed       { get; set; } // speed of spindle (assumed unset for negative values)
-        public double feedCut     { get; set; } // feed rate for cutting (assumed unset for negative values)
-        public double feedPlunge  { get; set; } // feed rate for plunging (assumed unset for negative values)
-        public double cutDepth    { get; set; } // maximum material to cut away (assumed unset for negative values)
-        public double finishDepth { get; set; } // thickness to cut in a finish pass
-        public double toolWidth   { get; set; } // width of tool (assumed unset for negative values)
-        public double toolLength  { get; set; } // length from the tip of the tool to the spindle
-        public EndShape shape     { get; set; } // End shape of the tool
+        public readonly string matName;     // Name of the material
+        public readonly string toolName;    // Name of the tool 
+        public readonly int toolNumber;     // Number of the tool
+        public readonly double speed;       // speed of spindle (assumed unset for negative values)
+        public readonly double feedCut;     // feed rate for cutting (assumed unset for negative values)
+        public readonly double feedPlunge;  // feed rate for plunging (assumed unset for negative values)
+        public readonly double cutDepth;    // maximum material to cut away (assumed unset for negative values)
+        public readonly double finishDepth; // thickness to cut in a finish pass
+        public readonly double toolWidth;   // width of tool (assumed unset for negative values)
+        public readonly double toolLength;  // length from the tip of the tool to the spindle
+        public readonly EndShape shape;     // End shape of the tool
 
         // settings for curve approximation
 
-        public double tolerance { get; set; } // The maximum permitted distance of approximation from curve
-        public double minStep { get; set; } // shortest path permitted
+        public readonly double tolerance;   // The maximum permitted distance of approximation from curve
+        public readonly double minStep;     // shortest path permitted
 
-        // Default Constructor make everything blank.
-        public MaterialTool()
-        {
-            this.matName = "";
-            this.toolName = "";
-            this.toolNumber = 1;
-            this.speed = -1;
-            this.feedCut = -1;
-            this.feedPlunge = -1;
-            this.cutDepth = -1;
-            this.toolWidth = -1;
-            this.toolLength = 0;
-            this.tolerance = 0;
-            this.minStep = 0;
-            this.shape = EndShape.Ball;
-        }
-        // Just names.
-        public MaterialTool(string Mat, string Tool)
-        {
-            this.matName = Mat;
-            this.toolName = Tool;
-            this.toolNumber = 1;
-            this.speed = -1;
-            this.feedCut = -1;
-            this.feedPlunge = -1;
-            this.cutDepth = -1;
-            this.finishDepth = 0;
-            this.toolWidth = -1;
-            this.toolLength = 0;
-            this.tolerance = 0;
-            this.minStep = 0;
-            this.shape = EndShape.Ball;
-        }
         // Everything, with defaults
         public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0)
         {
@@ -83,27 +50,13 @@ namespace CAMel.Types
             this.minStep = mS;
             this.shape = ES;
         }
-        // Copy Constructor
-        public MaterialTool(MaterialTool MT)
+
+        public static MaterialTool changeFinishDepth(MaterialTool MT, double fd)
         {
-            this.matName = MT.matName;
-            this.toolName = MT.toolName;
-            this.toolNumber = MT.toolNumber;
-            this.speed = MT.speed;
-            this.feedCut = MT.feedCut;
-            this.feedPlunge = MT.feedPlunge;
-            this.cutDepth = MT.cutDepth;
-            this.finishDepth = MT.finishDepth;
-            this.toolWidth = MT.toolWidth;
-            this.toolLength = MT.toolLength;
-            this.tolerance = MT.tolerance;
-            this.minStep = MT.minStep;
-            this.shape = MT.shape;
-        }
-        // Duplicate
-        public ICAMel_Base Duplicate()
-        {
-            return new MaterialTool(this);
+            return new MaterialTool(
+                MT.matName, MT.toolName, MT.toolNumber, MT.speed, 
+                MT.feedCut, MT.feedPlunge, MT.cutDepth, fd, 
+                MT.toolWidth, MT.toolLength, MT.shape, MT.tolerance, MT.minStep);
         }
 
         public string TypeDescription
@@ -120,15 +73,6 @@ namespace CAMel.Types
         {
             string outp = "Tool " + this.toolNumber + " " + this.toolName + " into " + this.matName + " Plunge feed: " + this.feedPlunge.ToString() + " Cut Depth: " + this.cutDepth.ToString();
             return outp;
-        }
-
-        public bool IsValid
-        {
-            get
-            {
-                return (this.speed > 0 && this.feedCut > 0 && this.feedPlunge > 0 && this.cutDepth > 0
-                     && this.finishDepth > 0 && this.toolWidth > 0 && this.toolLength > 0);
-            }
         }
 
         /// <summary>
@@ -196,30 +140,15 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public class GH_MaterialTool : CAMel_Goo<MaterialTool>
     {
-        // Default constructor
-        public GH_MaterialTool()
-        {
-            this.Value = new MaterialTool();
-        }
-        // Just names.
-        public GH_MaterialTool(string Mat, string Tool)
-        {
-            this.Value = new MaterialTool(Mat, Tool);
-        }
-        // Name, speed, feed and cut
-        public GH_MaterialTool(string Mat, string Tool, int ToolNumber, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = 0, double length = 0, EndShape ES = EndShape.Ball,double tolerance = 0, double minStep = 0)
-        {
-            this.Value = new MaterialTool(Mat, Tool, ToolNumber, speed, feedCut, feedPlunge, cutDepth, finishDepth, width, length, ES, tolerance, minStep);
-        }
         // construct from unwrapped type
         public GH_MaterialTool(MaterialTool MT)
         {
-            this.Value = new MaterialTool(MT);
+            this.Value = MT;
         }
         // Copy Constructor
         public GH_MaterialTool(GH_MaterialTool MT)
         {
-            this.Value = new MaterialTool(MT.Value);
+            this.Value = MT.Value;
         }
         // Duplicate
         public override IGH_Goo Duplicate()
@@ -259,7 +188,7 @@ namespace CAMel.Types
         {
             if( source is MaterialTool)
             {
-                this.Value = new MaterialTool((MaterialTool)source);
+                this.Value = (MaterialTool)source;
                 return true;
             }
             return false;

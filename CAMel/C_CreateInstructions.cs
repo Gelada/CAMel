@@ -28,7 +28,12 @@ namespace CAMel
         {
             pManager.AddTextParameter("Name", "N", "name", GH_ParamAccess.item,"");
             pManager.AddGenericParameter("Operations", "MO", "Machine Operations to apply\n A list of toolpaths will be packaged into a single operation.", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Start Point", "SP", "Starting moves, can gather data from all sorts of scraps that imply a point. Will use (0,0,1) for direction when Points are used alone.", GH_ParamAccess.list);
+            pManager.AddGenericParameter("End Point", "EP", "Ending moves, can gather data from all sorts of scraps that imply a point. Will use (0,0,1) for direction when Points are used alone.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Machine", "M", "Machine", GH_ParamAccess.item);
+
+            pManager[2].Optional = true;
+            pManager[3].Optional = true;
         }
 
         /// <summary>
@@ -47,23 +52,29 @@ namespace CAMel
         {
             List<MachineOperation> MO = new List<MachineOperation>();
             List<IToolPointContainer> tempMO = new List<IToolPointContainer>();
+            List<Object> sP = new List<object>();
+            List<Object> eP = new List<object>();
 
             IMachine M = null;
             string name = "";
 
-            if (!DA.GetData(0, ref name)) return;
-            if (!DA.GetDataList(1, tempMO)) return;
-            if (!DA.GetData(2, ref M)) return;
+            if (!DA.GetData(0, ref name)) { return; }
+            if (!DA.GetDataList(1, tempMO)) { return; }
+            DA.GetDataList(2, sP);
+            DA.GetDataList(3, eP);
+            if (!DA.GetData(4, ref M)) { return; }
 
             // scan to find types
 
             Boolean hasTP = false, hasMO = false;
 
             foreach (IToolPointContainer tpc in tempMO)
+            {
                 if (tpc != null)
                 {
                     switch (tpc.TypeName)
                     {
+                        case "MachineInstruction":
                         case "MachineOperation":
                             hasMO = true;
                             break;
@@ -71,10 +82,10 @@ namespace CAMel
                             hasTP = true;
                             break;
                         default:
-                            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Objects other than Machine Operations and ToolPaths are ignored.");
                             break;
                     }
                 }
+            }
             MachineOperation op = new MachineOperation();
 
             int Invalids = 0;
@@ -83,22 +94,23 @@ namespace CAMel
             {
                 foreach (IToolPointContainer tpc in tempMO)
                 {
-                    if (tpc == null)
-                        Invalids++;
-                    else if (tpc.TypeName == "ToolPath") op.Add((ToolPath)tpc);
+                    if (tpc == null) { Invalids++; }
+                    else { if (tpc.TypeName == "ToolPath") { op.Add((ToolPath)tpc); } }
                 }
-                if (op.Count > 0) MO.Add(op);
+                if (op.Count > 0) { MO.Add(op); }
             }
-            else if (hasTP || hasMO) // Mix Machine operations and toolpaths each turned into their own operation. 
+            else if (hasMO) // Mix Machine operations and toolpaths each turned into their own operation. 
             {
                 foreach (IToolPointContainer tpc in tempMO)
                 {
-                    if (tpc == null)
-                        Invalids++;
+                    if (tpc == null) { Invalids++; }
                     else
                     {
                         switch (tpc.TypeName)
                         {
+                            case "MachineInstruction":
+                                MO.AddRange((MachineInstruction)tpc);
+                                break;
                             case "MachineOperation":
                                 MO.Add((MachineOperation)tpc);
                                 break;
@@ -107,8 +119,7 @@ namespace CAMel
                                 MO[MO.Count - 1].Add((ToolPath)tpc);
                                 break;
                             default:
-                                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Objects other than Machine Operations and ToolPaths are ignored.");
-                                break;
+                               break;
                         }
                     }
                 }
@@ -118,13 +129,18 @@ namespace CAMel
 
             if (MO.Count > 0)
             {
-                Inst = new MachineInstruction(name, M, MO);
-                if (Invalids > 1) 
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of "+Invalids.ToString()+" invalid elements (probably nulls) were ignored.");
+                // Process sP and eP 
+                ToolPath startPath = M.toPath(sP);
+                ToolPath endPath = M.toPath(eP);
+
+                Inst = new MachineInstruction(name, M, MO, startPath, endPath);
+                if (Invalids > 1)
+                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + Invalids.ToString() + " invalid elements (probably nulls) were ignored."); }
                 else if (Invalids > 0)
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored.");
+                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored."); }
             }
-            else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input paramter MO failed to collect usable data");
+            else
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable data"); }
             
             DA.SetData(0, Inst);
         }

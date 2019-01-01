@@ -103,7 +103,7 @@ namespace CAMel
                 sdDropEnd = true,
                 threeAxisHeightOffset = false
             };
-            MTR.finishDepth = MTR.cutDepth; // ignore finish depth for roughing
+            MTR = MaterialTool.changeFinishDepth(MTR, MTR.cutDepth); // ignore finish depth for roughing
 
             ToolPathAdditions AddFinish = new ToolPathAdditions
             {

@@ -30,13 +30,15 @@ namespace CAMel
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, "");
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, "");
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
-            pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list,"");
+            pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list);
             pManager.AddTextParameter("Features", "O", "Other features of the machine\n"+
                 "{2d, lead, Insert Code, Retract Code\n}" +
                 "2d is a Boolean (0 or 1), that specifies a 2d machine like a Plasma cutter. \n"+
                 "lead gives the distance for the lead in or out. \n"+
                 "Insert and Retract Codes are added before an insert and after a rectract move.", 
                 GH_ParamAccess.list, "");
+
+            pManager[4].Optional = true;
         }
 
         /// <summary>
@@ -62,19 +64,17 @@ namespace CAMel
 
             double PJ = 0;
 
-            if (!DA.GetData(0, ref name)) return;
-            if (!DA.GetData(1, ref head)) return;
-            if (!DA.GetData(2, ref foot)) return;
-            if (!DA.GetData(3, ref PJ)) return;
+            if (!DA.GetData(0, ref name)) { return; }
+            if (!DA.GetData(1, ref head)) { return; }
+            if (!DA.GetData(2, ref foot)) { return; }
+            if (!DA.GetData(3, ref PJ)) { return; }
+            DA.GetDataList(4, CC);
 
-            IGCodeMachine M = new ThreeAxis(name, head, foot);
+            string commentStart = (CC.Count > 0) ? CC[0] : GCode.defaultCommentStart;
+            string commentEnd = (CC.Count > 0) ? CC[0] : GCode.defaultCommentEnd;
+            string sectionBreak = (CC.Count > 0) ? CC[0] : GCode.defaultSectionBreak;
 
-            if (DA.GetDataList(4, CC) && CC[0] != "")
-            {
-                M.commentStart = CC[0];
-                if (CC.Count > 1) { M.commentEnd = CC[1]; }
-                if (CC.Count > 2) { M.sectionBreak = CC[2]; }
-            }
+            IGCodeMachine M = new ThreeAxis(name, head, foot, commentStart,commentEnd,sectionBreak);
 
             DA.SetData(0, M);
         }

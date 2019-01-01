@@ -13,6 +13,11 @@ namespace CAMel.Types
         string name { get; set; }
         string preCode { get; set; }
         string postCode { get; set; }
+
+        ToolPath getSinglePath();
+
+        ToolPoint firstP { get; }
+        ToolPoint lastP { get; }
     }
 
     public class GH_ToolPointContainer<T> : CAMel_Goo<T> where T : IToolPointContainer

@@ -22,18 +22,18 @@ namespace CAMel.Types.Machine
     // Main interface and public face of the machine
     public interface IMachine : ICAMel_Base
     {
-        string name { get; set; }
-        double pathJump { get; set; } // Maximum jump between toolpaths in material
-        bool toolLengthCompensation { get; set; } // Tool Length Compensation
-
-        void writeFileStart(ref CodeInfo Co, MachineInstruction MI);
-        void writeFileEnd(ref CodeInfo Co, MachineInstruction MI);
-        void writeOpStart(ref CodeInfo Co, MachineOperation MO);
-        void writeOpEnd(ref CodeInfo Co, MachineOperation MO);
+        string name { get; }
+        double pathJump { get; } // Maximum jump between toolpaths in material
+        bool toolLengthCompensation { get; } // Tool Length Compensation
         string comment(string L);
 
-        ToolPoint writeCode(ref CodeInfo Co, ToolPath tP, ToolPoint beforePoint);
-        ToolPoint writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first, ToolPoint beforePoint);
+        void writeFileStart(ref CodeInfo Co, MachineInstruction MI, ToolPath startPath);
+        void writeFileEnd(ref CodeInfo Co, MachineInstruction MI, ToolPath finalPath,ToolPath endPath);
+        void writeOpStart(ref CodeInfo Co, MachineOperation MO);
+        void writeOpEnd(ref CodeInfo Co, MachineOperation MO);
+        void writeCode(ref CodeInfo Co, ToolPath tP);
+        void writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first);
+
 
         ToolPath readCode(List<MaterialTool> MTs, string Code);
 
@@ -41,6 +41,7 @@ namespace CAMel.Types.Machine
         Vector3d toolDir(ToolPoint TP);
         ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng);
         double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng); // max change for orientation axes
+        ToolPath toPath(List<object> scraps); // make a toolpath from as many different scraps as possible.
     }
 
  
@@ -56,12 +57,12 @@ namespace CAMel.Types.Machine
         // Unwrapped type
         public GH_Machine(IMachine M)
         {
-            this.Value = (IMachine)M.Duplicate();
+            this.Value = M;
         }
         // Copy Constructor
         public GH_Machine(GH_Machine M)
         {
-            this.Value = (IMachine)M.Value.Duplicate();
+            this.Value = M.Value;
         }
         // Duplicate
         public override IGH_Goo Duplicate()
@@ -88,7 +89,7 @@ namespace CAMel.Types.Machine
             }
             if (source is IMachine)
             {
-                this.Value = (IMachine)((IMachine)source).Duplicate();
+                this.Value = (IMachine)source;
                 return true;
             }
             return false;

@@ -9,11 +9,9 @@ namespace CAMel.Types
 {
     public interface ICAMel_Base
     {
-        bool IsValid { get; }
         string TypeDescription { get; }
         string TypeName { get; }
-
-        ICAMel_Base Duplicate();
+        
         string ToString();
     }
 

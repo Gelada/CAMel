@@ -122,11 +122,7 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             MachineInstruction MI = new MachineInstruction();
-            if (!DA.GetData(0, ref MI))
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter MI failed to collect data.");
-                return;
-            }
+            if (!DA.GetData(0, ref MI)) { return; }
 
             List<String> ignore = new List<string>();
             DA.GetDataList(1, ignore);

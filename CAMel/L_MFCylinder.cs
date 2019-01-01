@@ -46,9 +46,9 @@ namespace CAMel.Types.MaterialForm
             return (ICAMel_Base) this.MemberwiseClone();
         }
 
-        public ToolPath InsertRetract(ToolPath TP)
+        public ToolPath insertRetract(ToolPath TP)
         {
-            return MFDefault.InsertRetract(this, TP);
+            return MFDefault.insertRetract(this, TP);
         }
 
         public MFintersects intersect(ToolPoint TP, double tolerance)

@@ -11,43 +11,68 @@ namespace CAMel.Types
 {
     // List of toolpaths forming a complete set of instructions 
     // for the machine
-    public class MachineInstruction : IList<MachineOperation>,IToolPointContainer
+    public class MachineInstruction : IList<MachineOperation>, IToolPointContainer
     {
         private List<MachineOperation> MOs;
+        public ToolPath startPath { get; set; }
+        public ToolPath endPath { get; set; }
+
+        public string name { get; set; }
+        public string preCode { get; set; }
+        public string postCode { get; set; }
 
         public IMachine mach { get; set; }
+
+        public ToolPoint firstP
+        {
+            get
+            {
+                ToolPoint oP = null;
+                // Cycle through to find a path of length greater than 1.
+                for (int i = 0; i < this.Count; i++)
+                {
+                    oP = this[i].firstP;
+                    if(oP != null) { break; }
+                }
+                return oP;
+            }
+        }
+        public ToolPoint lastP
+        {
+            get
+            {
+                ToolPoint oP = null;
+                // Cycle through to find a path of length greater than 1.
+                for (int i = this.Count - 1; i >= 0; i--)
+                {
+                    oP = this[i].lastP;
+                    if (oP != null) { break; }
+                }
+                return oP;
+            }
+        }
 
         // Default Constructor
         public MachineInstruction()
         {
             this.MOs = new List<MachineOperation>();
+            this.startPath = new ToolPath();
+            this.endPath = new ToolPath();
             this.name = "";
             this.preCode = "";
             this.postCode = "";
         }
-        // Just name
-        public MachineInstruction(string name)
-        {
-            this.name = name;
-            this.MOs = new List<MachineOperation>();
-            this.preCode = "";
-            this.postCode = "";
-        }
-        // Name and Machine
-        public MachineInstruction(string name, IMachine mach)
-        {
-            this.name = name;
-            this.mach = mach;
-            this.MOs = new List<MachineOperation>();
-            this.preCode = "";
-            this.postCode = "";
-        }
-        // Name, Machine and Operations
-        public MachineInstruction(string name, IMachine mach, List<MachineOperation> MOs)
+
+        // Everything but the pre and post codes
+        public MachineInstruction(string name, IMachine mach, List<MachineOperation> MOs, ToolPath startPath = null, ToolPath endPath = null)
         {
             this.name = name;
             this.mach = mach;
             this.MOs = MOs;
+            if (startPath == null) { this.startPath = new ToolPath(); }
+            else { this.startPath = startPath; }
+            if (endPath == null) { this.endPath = new ToolPath(); }
+            else { this.endPath = endPath; }
             this.preCode = "";
             this.postCode = "";
         }
@@ -58,6 +83,8 @@ namespace CAMel.Types
             this.preCode = Op.preCode;
             this.postCode = Op.postCode;
             this.mach = Op.mach;
+            this.startPath = new ToolPath(Op.startPath);
+            this.endPath = new ToolPath(Op.endPath);
             this.MOs = new List<MachineOperation>();
             foreach(MachineOperation MO in Op.MOs)
             {
@@ -65,7 +92,7 @@ namespace CAMel.Types
             }
         }
 
-
+        MachineInstruction Duplicate() => new MachineInstruction(this);
 
         // Copy basic information but add new paths
         public MachineInstruction copyWithNewPaths(List<MachineOperation> MOs)
@@ -76,11 +103,12 @@ namespace CAMel.Types
                 postCode = this.postCode,
                 name = this.name,
                 mach = this.mach,
+                startPath = this.startPath,
+                endPath = this.endPath
             };
             outInst.MOs = MOs;
 
             return outInst;
-
         }
 
         public string TypeDescription
@@ -93,10 +121,6 @@ namespace CAMel.Types
             get { return "MachineInstruction"; }
         }
 
-        public string name { get; set; }
-
-        public string preCode { get; set; }
-        public string postCode { get; set; }
 
         public bool IsValid
         {
@@ -117,10 +141,7 @@ namespace CAMel.Types
             int total_TP = 0;
             foreach(MachineOperation MO in this)
             {
-                foreach (ToolPath TP in MO)
-                {
-                    total_TP = total_TP + TP.Count;
-                }
+                foreach (ToolPath TP in MO) { total_TP = total_TP + TP.Count; }
             }
             return "Machine Instruction: " + this.name + ", " + this.Count + " operations, " + total_TP + " total Instructions.";
         }
@@ -131,40 +152,56 @@ namespace CAMel.Types
         {
             List<MachineOperation> procOps = new List<MachineOperation>();
 
-            foreach(MachineOperation MO in this)
-            {
-                procOps.Add(MO.processAdditions(this.mach));
-            }
+            foreach(MachineOperation MO in this) { procOps.Add(MO.processAdditions(this.mach)); }
 
             return this.copyWithNewPaths(procOps);
         }
 
         public void writeCode(ref CodeInfo Co)
         {
-            this.mach.writeFileStart(ref Co, this);
-
-            // Let the Code writer know the Material Tool and Form so can report changes
-            // for consistency this might also do speed and feed, 
-            // at the moment that is handled by passing a toolPoint around.
-
-            Co.currentMT = this[0][0].matTool;
-            Co.currentMF = this[0][0].matForm;
-
-            ToolPath startPath = null;
-            ToolPath endPath;
-
-            foreach(MachineOperation MO in this)
+            // Use startPath or first point to create a preliminary position, to transition from
+            ToolPath uStartPath;
+            if(this.startPath == null)
             {
-                MO.writeCode(ref Co, this.mach, out endPath, startPath);
-                startPath = endPath;
+                uStartPath = this[0][0].copyWithNewPoints(new List<ToolPoint> { this.firstP });
+                uStartPath.firstP.feed = 0;
+            }
+            else if (this.startPath.Count == 0)
+            {
+                uStartPath = this.startPath.copyWithNewPoints(new List<ToolPoint> { this.firstP });
+                uStartPath.firstP.feed = 0;
+            }
+            else { uStartPath = this.startPath; }
+
+            if (uStartPath.matForm == null) { uStartPath.matForm = this[0][0].matForm; }
+            if (uStartPath.matTool == null) { uStartPath.matTool = this[0][0].matTool; }
+
+            ToolPath endPath = new ToolPath();
+
+            this.mach.writeFileStart(ref Co, this, uStartPath);
+
+            foreach (MachineOperation MO in this)
+            {
+                MO.writeCode(ref Co, this.mach, out endPath, uStartPath);
+                uStartPath = endPath;
             }
 
-            this.mach.writeFileEnd(ref Co, this);
+            // Use endP or last point to create an end position, to transition to
+
+            if (this.endPath == null)
+            {
+                endPath = endPath.copyWithNewPoints(new List<ToolPoint> { this.lastP });
+            }
+            else { endPath = this.endPath; }
+
+            this.mach.writeFileEnd(ref Co, this, uStartPath, endPath);
         }
 
-        ICAMel_Base ICAMel_Base.Duplicate()
+        public ToolPath getSinglePath()
         {
-            return new MachineInstruction(this);
+            ToolPath oP = this[0].getSinglePath();
+            for (int i = 1; i < this.Count; i++) { oP.AddRange(this[i].getSinglePath()); }
+            return oP;
         }
 
         public int IndexOf(MachineOperation item)
@@ -216,27 +253,19 @@ namespace CAMel.Types
         {
             return ((IList<MachineOperation>)this.MOs).GetEnumerator();
         }
+
+
     }
 
     // Grasshopper Type Wrapper
     public class GH_MachineInstruction : CAMel_Goo<MachineInstruction>
     {
-        // Default Constructor with XY plane with safe distance 1;
+        // Default Constructor;
         public GH_MachineInstruction()
         {
             this.Value = new MachineInstruction();
         }
-       
-        // Just name
-        public GH_MachineInstruction(string name)
-        {
-            this.Value = new MachineInstruction(name);
-        }
-        // Name and Machine
-        public GH_MachineInstruction(string name, IMachine Ma)
-        {
-            this.Value = new MachineInstruction(name, Ma);
-        }
+
         // Copy Constructor.
         public GH_MachineInstruction(GH_MachineInstruction Op)
         {
