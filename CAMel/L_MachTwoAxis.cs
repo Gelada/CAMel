@@ -197,7 +197,7 @@ namespace CAMel.Types.Machine
             {
                 List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
 
-                ToolPath Move = tP.copyWithNewPoints(new List<ToolPoint>());
+                ToolPath Move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 Move.name = String.Empty;
                 Move.preCode = String.Empty;
                 Move.postCode = String.Empty;

@@ -47,7 +47,7 @@ namespace CAMel.Types.Machine
 
         static public ToolPoint interpolateLinear(ToolPoint fP, ToolPoint tP, double p)
         {
-            ToolPoint TPo = fP.DeepClone();
+            ToolPoint TPo = fP.deepClone();
             TPo.pt = tP.pt * p + fP.pt * (1 - p);
             return TPo;
         }
@@ -106,7 +106,7 @@ namespace CAMel.Types.Machine
             Dir.Transform(Transform.Rotation(-AB.X, Vector3d.XAxis, Point3d.Origin));
             Dir.Transform(Transform.Rotation(-AB.Y, Vector3d.YAxis, Point3d.Origin));
 
-            ToolPoint outTP = (ToolPoint)TP.DeepClone();
+            ToolPoint outTP = (ToolPoint)TP.deepClone();
             outTP.pt = OP;
             outTP.dir = Dir;
 
@@ -176,7 +176,7 @@ namespace CAMel.Types.Machine
         public static ToolPath leadInOut2d(ToolPath TP, double lead)
         {
             double leadLen = lead * TP.Additions.leadFactor;
-            ToolPath newTP = new ToolPath(TP);
+            ToolPath newTP = TP.deepClone();
             PolylineCurve toolL = TP.getLine();
 
             // Find the point on a circle furthest from the toolpath. 
@@ -217,9 +217,9 @@ namespace CAMel.Types.Machine
             }
             else
             {
-                ToolPoint LeadTP = TP.firstP.DeepClone();
+                ToolPoint LeadTP = TP.firstP.deepClone();
                 LeadTP.pt = LeadStart;
-                newTP.Add(LeadTP.DeepClone());
+                newTP.Add(LeadTP.deepClone());
                 newTP.Insert(0, LeadTP);
             }
 

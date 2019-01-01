@@ -71,21 +71,18 @@ public MachineOperation()
             this.postCode = "";
         }
         // Copy Constructor
-        public MachineOperation(MachineOperation Op)
+        private MachineOperation(MachineOperation Op)
         {
-            this.name = Op.name;
-            this.preCode = Op.preCode;
-            this.postCode = Op.postCode;
+            this.name = string.Copy(Op.name);
+            this.preCode = string.Copy(Op.preCode);
+            this.postCode = string.Copy(Op.postCode);
             this.TPs = new List<ToolPath>();
-            foreach (ToolPath TP in Op)
-            {
-                this.Add(new ToolPath(TP));
-            }
+            foreach (ToolPath TP in Op) { this.Add(TP.deepClone()); }
         }
-        MachineOperation Duplicate() => new MachineOperation(this);
+        public MachineOperation deepClone() => new MachineOperation(this);
 
         // Return with new paths.
-        public MachineOperation copyWithNewPaths(List<ToolPath> procPaths)
+        public MachineOperation deepCloneWithNewPaths(List<ToolPath> procPaths)
         {
             MachineOperation outOp = new MachineOperation
             {
@@ -112,14 +109,6 @@ public MachineOperation()
 
         public string preCode { get; set; }
         public string postCode { get; set; }
-
-        public bool IsValid
-        {
-            get
-            {
-                throw new NotImplementedException("Machine Operation has not implemented IsValid");
-            }
-        }
 
         public int Count => ((IList<ToolPath>)this.TPs).Count;
 
@@ -177,8 +166,7 @@ public MachineOperation()
             // sort here (remember to only move chunks that are outside the material!)
             procPaths.AddRange(levelPaths);
 
-
-            return this.copyWithNewPaths(procPaths);
+            return this.deepCloneWithNewPaths(procPaths);
         }
 
         // Write GCode for this operation
@@ -331,7 +319,7 @@ public MachineOperation()
         // Copy Constructor.
         public GH_MachineOperation(GH_MachineOperation Op)
         {
-            this.Value = new MachineOperation(Op.Value);
+            this.Value = Op.Value.deepClone();
         }
         // Duplicate
         public override IGH_Goo Duplicate()
@@ -359,7 +347,7 @@ public MachineOperation()
             }
             if (source is MachineOperation)
             {
-                this.Value = new MachineOperation((MachineOperation)source);
+                this.Value = ((MachineOperation)source).deepClone();
                 return true;
             }
             return false;

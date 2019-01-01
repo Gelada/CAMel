@@ -375,7 +375,7 @@ namespace CAMel.Types.Machine
                 }
                 else // Safely move from one safe point to another.
                 {
-                    ToolPath Move = tP.copyWithNewPoints(new List<ToolPoint>());
+                    ToolPath Move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                     Move.name = "";
 
                     List<Point3d> route = new List<Point3d>();
@@ -442,7 +442,7 @@ namespace CAMel.Types.Machine
                                     j = 0;
                                     angSpread = this.angDiff(fP.lastP, tP.firstP, fP.matTool, lng);
                                     steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
-                                    Move = tP.copyWithNewPoints(new List<ToolPoint>());
+                                    Move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                                 }
                             }
                             else

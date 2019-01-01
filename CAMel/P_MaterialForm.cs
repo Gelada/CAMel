@@ -92,7 +92,7 @@ namespace CAMel.Types.MaterialForm
     {
         internal static ToolPath insertRetract(IMaterialForm MF, ToolPath TP)
         {
-            ToolPath irTP = new ToolPath(TP);
+            ToolPath irTP = TP.deepClone();
             irTP.Additions.insert = false;
             irTP.Additions.retract = false;
 
@@ -114,14 +114,14 @@ namespace CAMel.Types.MaterialForm
                 {
                     // point on material surface
 
-                    tempTP = irTP.firstP.DeepClone();
+                    tempTP = irTP.firstP.deepClone();
                     tempTP.pt = inter.point;
                     tempTP.feed = TP.matTool.feedPlunge;
                     irTP.Insert(0, tempTP);
 
                     // point out at safe distance
 
-                    tempTP = irTP.firstP.DeepClone();
+                    tempTP = irTP.firstP.deepClone();
                     tempTP.pt = tempTP.pt + inter.Away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Insert(0, tempTP);
@@ -132,7 +132,7 @@ namespace CAMel.Types.MaterialForm
                     if(inter.isSet)
                     {
                         // point out at safe distance
-                        tempTP = irTP.firstP.DeepClone();
+                        tempTP = irTP.firstP.deepClone();
                         tempTP.pt = inter.point;
                         tempTP.feed = 0; // we can use a rapid move
                         irTP.Insert(0, tempTP);
@@ -145,7 +145,7 @@ namespace CAMel.Types.MaterialForm
                 inter = MF.intersect(irTP.lastP, 0).through;
                 if (inter.isSet)
                 {
-                    tempTP = irTP.lastP.DeepClone();
+                    tempTP = irTP.lastP.deepClone();
 
                     // set speed to the plunge feed rate.
                     tempTP.feed = TP.matTool.feedPlunge;
@@ -158,7 +158,7 @@ namespace CAMel.Types.MaterialForm
 
                     // Pull away to safe distance
 
-                    tempTP = irTP.lastP.DeepClone();
+                    tempTP = irTP.lastP.deepClone();
                     tempTP.pt = tempTP.pt + inter.Away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Add(tempTP);
@@ -169,7 +169,7 @@ namespace CAMel.Types.MaterialForm
                     if (inter.isSet)
                     {
                         // point out at safe distance
-                        tempTP = irTP.lastP.DeepClone();
+                        tempTP = irTP.lastP.deepClone();
                         tempTP.pt = inter.point;
                         tempTP.feed = 0; // we can use a rapid move
                         irTP.Add(tempTP);
@@ -197,7 +197,7 @@ namespace CAMel.Types.MaterialForm
             // also add the midpoint if going more than half way through
             // TODO problem of long lines getting deep 
 
-            ToolPath refined = TP.copyWithNewPoints(new List<ToolPoint>());
+            ToolPath refined = TP.deepCloneWithNewPoints(new List<ToolPoint>());
 
             // Add the first ToolPoint
 

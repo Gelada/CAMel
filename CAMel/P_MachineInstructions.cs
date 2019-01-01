@@ -77,37 +77,33 @@ namespace CAMel.Types
             this.postCode = "";
         }
         // Copy Constructor
-        public MachineInstruction(MachineInstruction Op)
+        private MachineInstruction(MachineInstruction Op)
         {
-            this.name = Op.name;
-            this.preCode = Op.preCode;
-            this.postCode = Op.postCode;
+            this.name = string.Copy(Op.name);
+            this.preCode = string.Copy(Op.preCode);
+            this.postCode = string.Copy(Op.postCode);
             this.mach = Op.mach;
-            this.startPath = new ToolPath(Op.startPath);
-            this.endPath = new ToolPath(Op.endPath);
+            this.startPath = Op.startPath.deepClone();
+            this.endPath = Op.endPath.deepClone();
             this.MOs = new List<MachineOperation>();
-            foreach(MachineOperation MO in Op.MOs)
-            {
-                this.MOs.Add(new MachineOperation(MO));
-            }
+            foreach(MachineOperation MO in Op.MOs) { this.MOs.Add(MO.deepClone()); }
         }
 
-        MachineInstruction Duplicate() => new MachineInstruction(this);
+        public MachineInstruction deepClone() => new MachineInstruction(this);
 
         // Copy basic information but add new paths
-        public MachineInstruction copyWithNewPaths(List<MachineOperation> MOs)
+        public MachineInstruction deepCloneWithNewPaths(List<MachineOperation> MOs)
         {
             MachineInstruction outInst = new MachineInstruction
             {
-                preCode = this.preCode,
-                postCode = this.postCode,
-                name = this.name,
+                name = string.Copy(this.name),
+                preCode = string.Copy(this.preCode),
+                postCode = string.Copy(this.postCode),
                 mach = this.mach,
-                startPath = this.startPath,
-                endPath = this.endPath
+                startPath = this.startPath.deepClone(),
+                endPath = this.endPath.deepClone()
             };
             outInst.MOs = MOs;
-
             return outInst;
         }
 
@@ -120,7 +116,6 @@ namespace CAMel.Types
         {
             get { return "MachineInstruction"; }
         }
-
 
         public bool IsValid
         {
@@ -154,7 +149,7 @@ namespace CAMel.Types
 
             foreach(MachineOperation MO in this) { procOps.Add(MO.processAdditions(this.mach)); }
 
-            return this.copyWithNewPaths(procOps);
+            return this.deepCloneWithNewPaths(procOps);
         }
 
         public void writeCode(ref CodeInfo Co)
@@ -163,12 +158,12 @@ namespace CAMel.Types
             ToolPath uStartPath;
             if(this.startPath == null)
             {
-                uStartPath = this[0][0].copyWithNewPoints(new List<ToolPoint> { this.firstP });
+                uStartPath = this[0][0].deepCloneWithNewPoints(new List<ToolPoint> { this.firstP });
                 uStartPath.firstP.feed = 0;
             }
             else if (this.startPath.Count == 0)
             {
-                uStartPath = this.startPath.copyWithNewPoints(new List<ToolPoint> { this.firstP });
+                uStartPath = this.startPath.deepCloneWithNewPoints(new List<ToolPoint> { this.firstP });
                 uStartPath.firstP.feed = 0;
             }
             else { uStartPath = this.startPath; }
@@ -190,7 +185,7 @@ namespace CAMel.Types
 
             if (this.endPath == null)
             {
-                endPath = endPath.copyWithNewPoints(new List<ToolPoint> { this.lastP });
+                endPath = endPath.deepCloneWithNewPoints(new List<ToolPoint> { this.lastP });
             }
             else { endPath = this.endPath; }
 
@@ -269,7 +264,7 @@ namespace CAMel.Types
         // Copy Constructor.
         public GH_MachineInstruction(GH_MachineInstruction Op)
         {
-            this.Value = new MachineInstruction(Op.Value);
+            this.Value = Op.Value.deepClone();
         }
         // Duplicate
         public override IGH_Goo Duplicate()
@@ -297,7 +292,7 @@ namespace CAMel.Types
             }
             if (source is MachineInstruction)
             {
-                this.Value = new MachineInstruction((MachineInstruction)source);
+                this.Value = ((MachineInstruction)source).deepClone();
                 return true;
             }
             return false;

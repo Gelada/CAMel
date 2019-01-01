@@ -244,7 +244,7 @@ namespace CAMel.Types.Machine
                     route.RemoveAt(0);
                     route.RemoveAt(route.Count - 1);
 
-                    ToolPath Move = tP.copyWithNewPoints(new List<ToolPoint>());
+                    ToolPath Move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                     Move.name = String.Empty;
                     Move.preCode = String.Empty;
                     Move.postCode = String.Empty;

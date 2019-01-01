@@ -129,7 +129,7 @@ namespace CAMel.Types
             foreach (string S in TP.warning) { this.warning.Add(string.Copy(S)); }
         }
 
-        public ToolPoint DeepClone() => new ToolPoint(this);
+        public ToolPoint deepClone() => new ToolPoint(this);
 
         public void addError(string err)
         {
@@ -209,12 +209,12 @@ namespace CAMel.Types
         // Create from unwrapped version
         public GH_ToolPoint(ToolPoint TP)
         {
-            this.Value = TP.DeepClone();
+            this.Value = TP.deepClone();
         }
         // Copy Constructor
         public GH_ToolPoint(GH_ToolPoint TP)
         {
-            this.Value = TP.Value.DeepClone();
+            this.Value = TP.Value.deepClone();
         }
         // Duplicate
         public override IGH_Goo Duplicate()
