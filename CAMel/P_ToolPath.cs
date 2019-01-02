@@ -304,7 +304,6 @@ namespace CAMel.Types
                                     // then set end to true so we finish
                                     TPt = refPath[j].deepClone();
                                     height = useTP.matTool.finishDepth;
-                                    if (height > MatDist[j]) { height = 0; }
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                     tempTP.Add(TPt);
                                     end = true;
@@ -313,7 +312,6 @@ namespace CAMel.Types
                                 {
                                     TPt = refPath[j].deepClone();
                                     height = useTP.matTool.finishDepth;
-                                    if (height > MatDist[j]) { height = 0; }
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                     tempTP.Add(TPt);
                                 }
@@ -324,7 +322,6 @@ namespace CAMel.Types
                                 {
                                     TPt = refPath[j].deepClone();
                                     height = useTP.matTool.finishDepth;
-                                    if (height > MatDist[j]) { height = 0; }
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                     tempTP.Add(TPt);
                                 }
@@ -340,7 +337,6 @@ namespace CAMel.Types
                                         // add point, as previous point was in material
                                         TPt = refPath[j].deepClone();
                                         height = useTP.matTool.finishDepth;
-                                        if (height > MatDist[j]) { height = 0; }
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                         tempTP.Add(TPt);
                                         // leap forward cut path and start a new one
@@ -358,7 +354,6 @@ namespace CAMel.Types
                                         // this will not result in a double point as we checked (k-j) >=3
                                         TPt = refPath[k - 1].deepClone();
                                         height = useTP.matTool.finishDepth;
-                                        if (height > MatDist[k - 1]) { height = 0; }
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                         tempTP.Add(TPt);
                                         j = k - 1; //set j to k-1 so it deals with the k point next
@@ -368,7 +363,6 @@ namespace CAMel.Types
                                     {
                                         TPt = refPath[j].deepClone();
                                         height = useTP.matTool.finishDepth;
-                                        if (height > MatDist[j]) { height = 0; }
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                         tempTP.Add(TPt);
                                     }

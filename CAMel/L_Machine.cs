@@ -106,7 +106,7 @@ namespace CAMel.Types.Machine
             Dir.Transform(Transform.Rotation(-AB.X, Vector3d.XAxis, Point3d.Origin));
             Dir.Transform(Transform.Rotation(-AB.Y, Vector3d.YAxis, Point3d.Origin));
 
-            ToolPoint outTP = (ToolPoint)TP.deepClone();
+            ToolPoint outTP = TP.deepClone();
             outTP.pt = OP;
             outTP.dir = Dir;
 
@@ -119,13 +119,14 @@ namespace CAMel.Types.Machine
 
         public static ToolPoint interpolateFiveAxisABTable(Vector3d Pivot, double toolLength, ToolPoint from, ToolPoint to, double p, bool lng)
         {
-            Point3d MachPt = new Point3d();
-            Vector3d fromAB = Kinematics.ikFiveAxisABTable(from, Pivot, toolLength, out MachPt);
-            Vector3d toAB = Kinematics.ikFiveAxisABTable(to, Pivot, toolLength, out MachPt);
+            Point3d fromMachPt = new Point3d();
+            Point3d toMachPt = new Point3d();
+            Vector3d fromAB = ikFiveAxisABTable(from, Pivot, toolLength, out fromMachPt);
+            Vector3d toAB = ikFiveAxisABTable(to, Pivot, toolLength, out toMachPt);
             Vector3d outAB;
             Point3d outPt;
 
-            outPt = (1 - p) * from.pt + p * to.pt;
+            outPt = (1 - p) * fromMachPt + p * toMachPt;
             outAB = (1 - p) * fromAB + p * toAB;
             // switch to long way round or short way round depending on gap between angles
             if ((lng && Math.Abs(fromAB.Y - toAB.Y) <= Math.PI) ||

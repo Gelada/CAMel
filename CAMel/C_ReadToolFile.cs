@@ -50,7 +50,7 @@ namespace CAMel
     }
 
    
-    public class MaterialToolMap : CsvClassMap<MaterialTool>
+    public class MaterialToolMap : CsvClassMap<MaterialToolBuilder>
     {
         public MaterialToolMap()
         {
@@ -117,16 +117,20 @@ namespace CAMel
 
             this.Message = Path.GetFileNameWithoutExtension(file);
 
-            List<MaterialTool> MTs = new List<MaterialTool>();
+            List<MaterialToolBuilder> MTBs = new List<MaterialToolBuilder>();
 
             using (StreamReader fileReader = new StreamReader(file))
             using (CsvReader csv = new CsvReader(fileReader))
             {
-                    MTs = new List<MaterialTool>();
+                    MTBs = new List<MaterialToolBuilder>();
                     csv.Configuration.RegisterClassMap<MaterialToolMap>();
-                    MTs.AddRange(csv.GetRecords<MaterialTool>());
+                    MTBs.AddRange(csv.GetRecords<MaterialToolBuilder>());
             }
-            bool found =false;
+
+            List<MaterialTool> MTs = new List<MaterialTool>();
+            foreach(MaterialToolBuilder MTB in MTBs) { MTs.Add(new MaterialTool(MTB)); }
+
+            bool found = false;
             MaterialTool MT = null;
             for(int i=0; i < MTs.Count; i++)
             {
@@ -145,7 +149,7 @@ namespace CAMel
                 }
             }
             if (!found) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "No material tool combination found."); }
-            else { DA.SetData(0, MT); }
+            else { DA.SetData(0, new GH_MaterialTool(MT)); }
         }
      
         /// <summary>

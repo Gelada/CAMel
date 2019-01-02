@@ -152,7 +152,6 @@ namespace CAMel.Types.MaterialForm
 
                     // Pull back to surface
                     tempTP.pt = inter.point;
-                    tempTP.feed = 0; // we can use a rapid move
 
                     irTP.Add(tempTP);
 

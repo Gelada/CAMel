@@ -68,14 +68,12 @@ namespace CAMel.Types.Machine
 
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
         {
-            double toolLength = MT.toolLength;
-            if (this.toolLengthCompensation) { toolLength = 0; }
+            double toolLength = this.toolLengthCompensation ? 0 : MT.toolLength;
             return Kinematics.interpolateFiveAxisABTable(this.pivot, toolLength, fP, tP, par, lng);
         }
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng)
         {
-            double toolLength = MT.toolLength;
-            if (this.toolLengthCompensation) { toolLength = 0; }
+            double toolLength = this.toolLengthCompensation ? 0 : MT.toolLength;
             return Kinematics.angDiffFiveAxisABTable(this.pivot, toolLength, tP1, tP2, lng);
         }
 
@@ -91,8 +89,8 @@ namespace CAMel.Types.Machine
                 speed = vals['S'],
                 feed = vals['F']
             };
-            double toolLength = MT.toolLength;
-            if(this.toolLengthCompensation) { toolLength = 0; }
+            
+            double toolLength = this.toolLengthCompensation ? 0 : MT.toolLength;
 
             return Kinematics.kFiveAxisABTable(TP, this.pivot, toolLength, MachPt, AB);        
         }
@@ -132,12 +130,10 @@ namespace CAMel.Types.Machine
                 string PtCode;
                 Point3d machPt = new Point3d();
 
-                double toolLength = tP.matTool.toolLength;
-                if (this.toolLengthCompensation) { toolLength = 0; }
+                double toolLength = this.toolLengthCompensation ? 0 : tP.matTool.toolLength;
 
                 int i, j;
                 ToolPoint Pt;
-                Point3d MachPos = new Point3d(0, 0, 0);
                 for (i = 0; i < tP.Count; i++)
                 {
                     Pt = tP[i];
@@ -297,9 +293,9 @@ namespace CAMel.Types.Machine
                     Co.Append(PtCode);
                     // Adjust ranges
 
-                    Co.GrowRange("X", MachPos.X);
-                    Co.GrowRange("Y", MachPos.Y);
-                    Co.GrowRange("Z", MachPos.Z);
+                    Co.GrowRange("X", machPt.X);
+                    Co.GrowRange("Y", machPt.Y);
+                    Co.GrowRange("Z", machPt.Z);
                     Co.GrowRange("A", AB.X);
                     Co.GrowRange("B", AB.Y);
                 }
@@ -307,9 +303,9 @@ namespace CAMel.Types.Machine
                 // Pass machine state information
 
                 Co.MachineState.Clear();
-                Co.MachineState.Add("X", MachPos.X);
-                Co.MachineState.Add("Y", MachPos.Y);
-                Co.MachineState.Add("Z", MachPos.Z);
+                Co.MachineState.Add("X", machPt.X);
+                Co.MachineState.Add("Y", machPt.Y);
+                Co.MachineState.Add("Z", machPt.Z);
                 Co.MachineState.Add("A", AB.X);
                 Co.MachineState.Add("B", AB.Y);
                 Co.MachineState.Add("F", feed);
@@ -322,7 +318,8 @@ namespace CAMel.Types.Machine
             // Set up Machine State  
 
             Point3d MachPt = new Point3d();
-            Vector3d AB = Kinematics.ikFiveAxisABTable(startPath.firstP, this.pivot, startPath.matTool.toolLength, out MachPt);
+            double toolLength = MI.mach.toolLengthCompensation ? 0 : startPath.matTool.toolLength;
+            Vector3d AB = Kinematics.ikFiveAxisABTable(startPath.firstP, this.pivot, toolLength, out MachPt);
 
             Co.MachineState.Clear();
             Co.MachineState.Add("X", MachPt.X);
@@ -425,8 +422,8 @@ namespace CAMel.Types.Machine
                             mixDir = this.interpolate(fP.lastP, tP.firstP, fP.matTool, shift,lng).dir;
 
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
-                            if (fP.matForm.intersect(newTP, 0).thrDist > 0
-                                || tP.matForm.intersect(newTP, 0).thrDist > 0)
+                            if ((fP.matForm.intersect(newTP, 0).thrDist > 0
+                                || tP.matForm.intersect(newTP, 0).thrDist > 0) && !lng)
                             {
                                 if (lng)
                                 {   // something has gone horribly wrong and 

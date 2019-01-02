@@ -13,25 +13,48 @@ namespace CAMel.Types
     {
         Ball, Square, V, Other, Error
     }
+
+    public class MaterialToolBuilder
+    {
+        public string matName { get; set; }     // Name of the material
+        public string toolName { get; set; }    // Name of the tool 
+        public int toolNumber { get; set; }     // Number of the tool
+        public double speed { get; set; }       // speed of spindle (assumed unset for negative values)
+        public double feedCut { get; set; }     // feed rate for cutting (assumed unset for negative values)
+        public double feedPlunge { get; set; }  // feed rate for plunging (assumed unset for negative values)
+        public double cutDepth { get; set; }    // maximum material to cut away (assumed unset for negative values)
+        public double finishDepth { get; set; } // thickness to cut in a finish pass
+        public double toolWidth { get; set; }   // width of tool (assumed unset for negative values)
+        public double toolLength { get; set; }  // length from the tip of the tool to the spindle
+        public EndShape shape { get; set; }     // End shape of the tool
+        public double tolerance { get; set; }   // The maximum permitted distance of approximation from curve
+        public double minStep { get; set; }     // shortest path permitted
+
+        public MaterialToolBuilder()
+        {
+            matName = string.Empty;
+        }
+    }
+
     // Settings for a particular material and tool
     public class MaterialTool : ICAMel_Base 
     {
-        public readonly string matName;     // Name of the material
-        public readonly string toolName;    // Name of the tool 
-        public readonly int toolNumber;     // Number of the tool
-        public readonly double speed;       // speed of spindle (assumed unset for negative values)
-        public readonly double feedCut;     // feed rate for cutting (assumed unset for negative values)
-        public readonly double feedPlunge;  // feed rate for plunging (assumed unset for negative values)
-        public readonly double cutDepth;    // maximum material to cut away (assumed unset for negative values)
-        public readonly double finishDepth; // thickness to cut in a finish pass
-        public readonly double toolWidth;   // width of tool (assumed unset for negative values)
-        public readonly double toolLength;  // length from the tip of the tool to the spindle
-        public readonly EndShape shape;     // End shape of the tool
+        public string matName { get; }     // Name of the material
+        public string toolName { get; }    // Name of the tool 
+        public int toolNumber { get; }     // Number of the tool
+        public double speed { get; }       // speed of spindle (assumed unset for negative values)
+        public double feedCut { get; }     // feed rate for cutting (assumed unset for negative values)
+        public double feedPlunge { get; }  // feed rate for plunging (assumed unset for negative values)
+        public double cutDepth { get; }    // maximum material to cut away (assumed unset for negative values)
+        public double finishDepth { get; } // thickness to cut in a finish pass
+        public double toolWidth { get; }   // width of tool (assumed unset for negative values)
+        public double toolLength { get; }  // length from the tip of the tool to the spindle
+        public EndShape shape { get; }     // End shape of the tool
 
         // settings for curve approximation
 
-        public readonly double tolerance;   // The maximum permitted distance of approximation from curve
-        public readonly double minStep;     // shortest path permitted
+        public double tolerance { get; }   // The maximum permitted distance of approximation from curve
+        public double minStep { get; }     // shortest path permitted
 
         // Everything, with defaults
         public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0)
@@ -49,6 +72,23 @@ namespace CAMel.Types
             this.tolerance = tol;
             this.minStep = mS;
             this.shape = ES;
+        }
+
+        public MaterialTool(MaterialToolBuilder MT)
+        {
+            this.matName = MT.matName;
+            this.toolName = MT.toolName;
+            this.toolNumber = MT.toolNumber;
+            this.speed = MT.speed;
+            this.feedCut = MT.feedCut;
+            this.feedPlunge = MT.feedPlunge;
+            this.finishDepth = MT.finishDepth;
+            this.cutDepth = MT.cutDepth;
+            this.toolWidth = MT.toolWidth;
+            this.toolLength = MT.toolLength;
+            this.tolerance = MT.tolerance;
+            this.minStep = MT.minStep;
+            this.shape = MT.shape;
         }
 
         public static MaterialTool changeFinishDepth(MaterialTool MT, double fd)
@@ -140,6 +180,10 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public class GH_MaterialTool : CAMel_Goo<MaterialTool>
     {
+        public GH_MaterialTool()
+        {
+            this.Value = null;
+        }
         // construct from unwrapped type
         public GH_MaterialTool(MaterialTool MT)
         {
@@ -160,16 +204,8 @@ namespace CAMel.Types
         public override bool IsValid
         {
             get 
-            { 
-                if(this.Value.speed >=0 && this.Value.feedCut >=0 && this.Value.feedPlunge >= 0 && this.Value.cutDepth >= 0)
-                {
-                    return true;
-                } 
-                else 
-                {
-                    return false;
-                }
-            
+            {
+                return true;
             }
         }
 
@@ -186,7 +222,11 @@ namespace CAMel.Types
 
         public override bool CastFrom( object source )
         {
-            if( source is MaterialTool)
+            if (source == null)
+            {
+                return false;
+            }
+            if ( source is MaterialTool)
             {
                 this.Value = (MaterialTool)source;
                 return true;

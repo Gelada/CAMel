@@ -40,8 +40,8 @@ namespace CAMel.Types
             this.dir = new Vector3d(0, 0, 1);
             this.speed = -1;
             this.feed = -1;
-            this.error = null;
-            this.warning = null;
+            this.error = new List<string>();
+            this.warning = new List<string>();
             this.name = "";
             this.preCode = "";
             this.postCode = "";
@@ -53,8 +53,8 @@ namespace CAMel.Types
             this.dir = new Vector3d(0, 0, 1);
             this.speed = -1;
             this.feed = -1;
-            this.error = null;
-            this.warning = null;
+            this.error = new List<string>();
+            this.warning = new List<string>();
             this.name = "";
             this.preCode = "";
             this.postCode = "";
@@ -66,8 +66,8 @@ namespace CAMel.Types
             this.dir = D;
             this.speed = -1;
             this.feed = -1;
-            this.error = null;
-            this.warning = null;
+            this.error = new List<string>();
+            this.warning = new List<string>();
             this.name = "";
             this.preCode = "";
             this.postCode = "";
@@ -81,8 +81,8 @@ namespace CAMel.Types
             this.postCode = postCode;
             this.speed = -1;
             this.feed = -1;
-            this.error = null;
-            this.warning = null;
+            this.error = new List<string>();
+            this.warning = new List<string>();
             this.name = "";
             this.preCode = "";
             this.postCode = "";
@@ -94,8 +94,8 @@ namespace CAMel.Types
             this.dir = D;
             this.speed = speed;
             this.feed = feed;
-            this.error = null;
-            this.warning = null;
+            this.error = new List<string>();
+            this.warning = new List<string>();
             this.name = "";
             this.preCode = "";
             this.postCode = "";
@@ -109,8 +109,8 @@ namespace CAMel.Types
             this.postCode = postCode;
             this.speed = speed;
             this.feed = feed;
-            this.error = null;
-            this.warning = null;
+            this.error = new List<string>();
+            this.warning = new List<string>();
             this.name = "";
         }
         // Copy Constructor

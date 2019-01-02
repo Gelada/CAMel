@@ -78,7 +78,6 @@ namespace CAMel.Types
             this.surfToolDir = surfToolDir;
         }
 
-
         public string TypeDescription
         {
             get { return "Path and projection information to generate a surfacing path"; }
