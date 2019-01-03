@@ -32,7 +32,7 @@ namespace CAMel.Types
 
         public MaterialToolBuilder()
         {
-            matName = string.Empty;
+            this.matName = string.Empty;
         }
     }
 

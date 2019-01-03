@@ -251,86 +251,86 @@ namespace CAMel.Types.Machine
             Co.currentMF = MI[0][0].matForm;
 
             DateTime thisDay = DateTime.Now;
-            Co.AppendLineNoNum(M.fileStart);
-            Co.AppendComment(M.sectionBreak);
-            if (MI.name != string.Empty) { Co.AppendComment(MI.name); }
-            Co.AppendComment("");
-            Co.AppendComment(" Machine Instructions Created " + thisDay.ToString("f"));
-            Co.AppendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
+            Co.appendLineNoNum(M.fileStart);
+            Co.appendComment(M.sectionBreak);
+            if (MI.name != string.Empty) { Co.appendComment(MI.name); }
+            Co.appendComment("");
+            Co.appendComment(" Machine Instructions Created " + thisDay.ToString("f"));
+            Co.appendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
                 + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
-            if (M.name != string.Empty) { Co.AppendComment("  for " + M.name); }
-            Co.AppendComment(" Starting with: ");
-            Co.AppendComment("  Tool: " + MI[0][0].matTool.toolName);
-            Co.AppendComment("  in " + MI[0][0].matTool.matName + " with shape " + MI[0][0].matForm.ToString());
-            Co.AppendComment("");
-            Co.AppendComment(M.sectionBreak);
-            Co.Append(M.header);
-            Co.Append(MI.preCode);
+            if (M.name != string.Empty) { Co.appendComment("  for " + M.name); }
+            Co.appendComment(" Starting with: ");
+            Co.appendComment("  Tool: " + MI[0][0].matTool.toolName);
+            Co.appendComment("  in " + MI[0][0].matTool.matName + " with shape " + MI[0][0].matForm.ToString());
+            Co.appendComment("");
+            Co.appendComment(M.sectionBreak);
+            Co.append(M.header);
+            Co.append(MI.preCode);
 
             M.writeCode(ref Co, startPath);
         }
         static public void gcInstEnd(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI, ToolPath finalPath, ToolPath endPath)
         {
-            Co.AppendComment(M.sectionBreak);
+            Co.appendComment(M.sectionBreak);
             M.writeTransition(ref Co, finalPath, endPath, true);
             M.writeCode(ref Co, endPath);
 
-            Co.AppendComment(M.sectionBreak);
-            Co.AppendComment(" End of ToolPaths");
-            Co.AppendComment(M.sectionBreak);
+            Co.appendComment(M.sectionBreak);
+            Co.appendComment(" End of ToolPaths");
+            Co.appendComment(M.sectionBreak);
 
-            Co.Append(MI.postCode);
-            Co.Append(M.footer);
-            Co.AppendLineNoNum(M.fileEnd);
+            Co.append(MI.postCode);
+            Co.append(M.footer);
+            Co.appendLineNoNum(M.fileEnd);
         }
 
         static public void gcOpStart(IGCodeMachine M, ref CodeInfo Co, MachineOperation MO)
         {
-            Co.AppendComment(M.sectionBreak);
-            Co.AppendComment("");
-            Co.AppendComment(" Operation: " + MO.name);
-            Co.AppendComment("");
-            Co.Append(MO.preCode);
+            Co.appendComment(M.sectionBreak);
+            Co.appendComment("");
+            Co.appendComment(" Operation: " + MO.name);
+            Co.appendComment("");
+            Co.append(MO.preCode);
         }
         static public void gcOpEnd(IGCodeMachine M, ref CodeInfo Co, MachineOperation MO)
         {
-            Co.AppendComment(MO.postCode);
+            Co.appendComment(MO.postCode);
         }
 
         static public TPchanges gcPathStart(IGCodeMachine M, ref CodeInfo Co, ToolPath TP)
         {
             TPchanges ch = new TPchanges(false, false);
-            Co.AppendComment(M.sectionBreak);
+            Co.appendComment(M.sectionBreak);
             bool preamble = false;
             if (TP.name != string.Empty)
             {
-                Co.AppendComment(" ToolPath: " + TP.name);
+                Co.appendComment(" ToolPath: " + TP.name);
                 preamble = true;
             }
             if (Co.currentMT == null || TP.matTool.toolName != Co.currentMT.toolName)
             {
-                Co.AppendComment(" using: " + TP.matTool.toolName + " into " + TP.matTool.matName);
+                Co.appendComment(" using: " + TP.matTool.toolName + " into " + TP.matTool.matName);
                 Co.currentMT = TP.matTool;
-                if (M.toolLengthCompensation) { Co.Append(M.toolChangeCommand + TP.matTool.toolNumber); }
+                if (M.toolLengthCompensation) { Co.append(M.toolChangeCommand + TP.matTool.toolNumber); }
                 ch.mT = true;
                 preamble = true;
             }
             if (Co.currentMF == null || TP.matForm.ToString() != Co.currentMF.ToString())
             {
-                Co.AppendComment(" material: " + TP.matForm.ToString());
+                Co.appendComment(" material: " + TP.matForm.ToString());
                 Co.currentMF = TP.matForm;
                 ch.mF = true;
                 preamble = true;
             }
 
-            if (preamble) { Co.AppendComment(M.sectionBreak); }
+            if (preamble) { Co.appendComment(M.sectionBreak); }
 
-            Co.Append(TP.preCode);
+            Co.append(TP.preCode);
             return ch;
         }
         static public void gcPathEnd(IGCodeMachine M, ref CodeInfo Co, ToolPath TP)
         {
-            Co.Append(TP.postCode);
+            Co.append(TP.postCode);
         }
 
         // Toolpoint writers

@@ -224,7 +224,7 @@ namespace CAMel.Types
                     inter = useTP.matForm.intersect(TP, 0).through;
                     MatDist.Add(inter.lineP); // distance to material surface
                     if (MatDist[MatDist.Count - 1] < 0) { MatDist[MatDist.Count - 1] = 0; }// avoid negative distances (outside material)
-                    MatNorm.Add(new Vector3d(inter.Away));
+                    MatNorm.Add(new Vector3d(inter.away));
                     // calculate maximum number of cutDepth height steps down to finishDepth above material
                     NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1]-useTP.matTool.finishDepth)/useTP.matTool.cutDepth));
                     if (NumSteps[NumSteps.Count - 1] > MaxSteps) { MaxSteps = NumSteps[NumSteps.Count - 1]; }

@@ -18,23 +18,23 @@ namespace CAMel.Types
     public class CodeInfo
     {
         private StringBuilder Code;
-        public Dictionary<string, double> MachineState; // Data version of last written instruction to use between write calls
-        private Dictionary<string, Interval> Ranges; // Highest and lowest value for each coordinate
-        private Dictionary<string, int> Warnings; // Warning text and number of occurences
-        private Dictionary<string, int> Errors; // Error text and number of occurences
-        private IMachine Mach; // Machine for language handling.
+        public Dictionary<string, double> machineState { get; set; } // Data version of last written instruction to use between write calls
+        private Dictionary<string, Interval> ranges; // Highest and lowest value for each coordinate
+        private Dictionary<string, int> warnings; // Warning text and number of occurences
+        private Dictionary<string, int> errors; // Error text and number of occurences
+        private readonly IMachine Mach; // Machine for language handling.
 
-        public MaterialTool currentMT;
-        public IMaterialForm currentMF;
+        public MaterialTool currentMT { get; set; }
+        public IMaterialForm currentMF { get; set; }
         private int lines;
 
         public CodeInfo()
         {
             this.Code = new StringBuilder();
-            this.Ranges = new Dictionary<string,Interval>();
-            this.Errors = new Dictionary<string,int>();
-            this.Warnings = new Dictionary<string, int>();
-            this.MachineState = new Dictionary<string, double>();
+            this.ranges = new Dictionary<string,Interval>();
+            this.errors = new Dictionary<string,int>();
+            this.warnings = new Dictionary<string, int>();
+            this.machineState = new Dictionary<string, double>();
             this.lines = 0;
         }
 
@@ -42,108 +42,109 @@ namespace CAMel.Types
         {
             this.Code = new StringBuilder();
             this.Mach = M;
-            this.Ranges = new Dictionary<string, Interval>();
-            this.Errors = new Dictionary<string, int>();
-            this.Warnings = new Dictionary<string, int>();
-            this.MachineState = new Dictionary<string, double>();
+            this.ranges = new Dictionary<string, Interval>();
+            this.errors = new Dictionary<string, int>();
+            this.warnings = new Dictionary<string, int>();
+            this.machineState = new Dictionary<string, double>();
             this.lines = 0;
         }
 
-        public void GrowRange(string key, double V)
+        public void growRange(string key, double V)
         {
             Interval temp;
-            if (!this.Ranges.ContainsKey(key))
+            if (!this.ranges.ContainsKey(key))
             {
-                this.Ranges.Add(key, new Interval(V, V));
+                this.ranges.Add(key, new Interval(V, V));
             }
             else
             {
-                temp = this.Ranges[key];
+                temp = this.ranges[key];
                 temp.Grow(V);
-                this.Ranges[key] = temp;
+                this.ranges[key] = temp;
             }
         }
 
-        public Dictionary<string,Interval> GetRanges()
+        public Dictionary<string,Interval> getRanges()
         {
-            return this.Ranges;
+            return this.ranges;
         }
 
         // TODO Print Ranges 
 
-        public bool AddWarning(string warn)
+        public bool addWarning(string warn)
         {
             bool newWarning = false;
-            if(this.Warnings.ContainsKey(warn))
+            if(this.warnings.ContainsKey(warn))
             {
-                this.Warnings[warn]++;
+                this.warnings[warn]++;
             }
             else
             {
-                this.Warnings.Add(warn, 1);
+                this.warnings.Add(warn, 1);
                 newWarning = true;
             }
-            this.AppendComment(warn);
+            this.appendComment(warn);
             return newWarning;
         }
-        public bool AddError(string err)
+        public bool addError(string err)
         {
             bool newError = false;
-            if (this.Errors.ContainsKey(err))
+            if (this.errors.ContainsKey(err))
             {
-                this.Errors[err]++;
+                this.errors[err]++;
             }
             else
             {
-                this.Errors.Add(err, 1);
+                this.errors.Add(err, 1);
                 newError = true;
             }
-            this.AppendComment(err);
+            this.appendComment(err);
             return newError;
         }
 
         // Checks to see if warnings were reported
-        public bool HasWarnings()
+        public bool hasWarnings()
         {
-            return this.Warnings.Count > 0;
+            return this.warnings.Count > 0;
         }
 
         // Checks to see if warnings were reported, or errors on the ignore list
-        public bool HasWarnings(List<string> ignore)
+        public bool hasWarnings(List<string> ignore)
         {
-            foreach (string k in this.Errors.Keys)
-                if (ignore.Contains(k)) return true;
+            foreach (string k in this.errors.Keys)
+            { if (ignore.Contains(k)) { return true; } }
 
-            return this.Warnings.Count > 0;
+            return this.warnings.Count > 0;
         }
 
         // Return string with all warnings
-        public string GetWarnings()
+        public string getWarnings()
         {
             StringBuilder outP = new StringBuilder();
-            if (Warnings.Count > 0)
+            if (this.warnings.Count > 0)
             {
                 outP.AppendLine("Warnings: ");
-                foreach (string k in Warnings.Keys)
-                    outP.AppendLine(k + ": " + Warnings[k]);
+                foreach (string k in this.warnings.Keys)
+                { outP.AppendLine(k + ": " + this.warnings[k]); }
             }
             return outP.ToString();
         }
 
         // Return string with warnings and ignored errors
-        public string GetWarnings(List<string> ignore)
+        public string getWarnings(List<string> ignore)
         {
             StringBuilder outP = new StringBuilder();
-            if (Warnings.Count > 0)
+            if (this.warnings.Count > 0)
             {
                 outP.AppendLine("Warnings: ");
-                foreach (string k in Warnings.Keys)
-                    outP.AppendLine(k + ": " + Warnings[k]);
+                foreach (string k in this.warnings.Keys)
+                { outP.AppendLine(k + ": " + this.warnings[k]); }
             }
 
             // Add ignored errors
             bool first = true;
-            foreach (string k in this.Errors.Keys)
+            foreach (string k in this.errors.Keys)
+            {
                 if (ignore.Contains(k))
                 {
                     if (first)
@@ -151,47 +152,49 @@ namespace CAMel.Types
                         first = false;
                         outP.AppendLine("Ignored Errors: ");
                     }
-                    outP.AppendLine(k + ": " + Errors[k]);
+                    outP.AppendLine(k + ": " + this.errors[k]);
                 }
+            }
             return outP.ToString();
         }
 
         // Checks to see if errors were reported
-        public bool HasErrors()
+        public bool hasErrors()
         {
-            return this.Errors.Count > 0;
+            return this.errors.Count > 0;
         }
 
         // Checks to see if there are errors, other than those in the ignore list were reported
-        public bool HasErrors(List<string> ignore)
+        public bool hasErrors(List<string> ignore)
         {
-            foreach(string k in this.Errors.Keys)
-                if (!ignore.Contains(k)) return true;
+            foreach (string k in this.errors.Keys)
+            { if (!ignore.Contains(k)) { return true; } }
 
             return false;
         }
 
 
         // return string with all errors
-        public string GetErrors()
+        public string getErrors()
         {
             StringBuilder outP = new StringBuilder();
-            if (Errors.Count > 0)
+            if (this.errors.Count > 0)
             {
                 outP.AppendLine("Errors: ");
-                foreach (string k in this.Errors.Keys)
-                    outP.AppendLine(k + ": " + Errors[k] + " times");
+                foreach (string k in this.errors.Keys)
+                { outP.AppendLine(k + ": " + this.errors[k] + " times"); }
             }
             return outP.ToString();
         }
 
         // return string listing errors that are not ignored
-        public string GetErrors(List<string> ignore)
+        public string getErrors(List<string> ignore)
         {
             StringBuilder outP = new StringBuilder();
             bool first = true;
 
-            foreach (string k in this.Errors.Keys)
+            foreach (string k in this.errors.Keys)
+            {
                 if (!ignore.Contains(k))
                 {
                     if (first)
@@ -199,8 +202,9 @@ namespace CAMel.Types
                         first = false;
                         outP.AppendLine("Errors: ");
                     }
-                    outP.AppendLine(k + ": " + Errors[k] + " times");
+                    outP.AppendLine(k + ": " + this.errors[k] + " times");
                 }
+            }
 
             return outP.ToString();
         }
@@ -235,13 +239,13 @@ namespace CAMel.Types
             get { return this.Code.Length; }
         }
         
-        public void AppendLineNoNum(string L)
+        public void appendLineNoNum(string L)
         {
             // Add \r\n manually to ensure consistency of 
             // files between OSX and Windows. 
             if (L.Length > 0) { this.Code.Append(L+ "\r\n"); }  
         }
-        public void AppendLine(string L)
+        public void appendLine(string L)
         {
             string line = L;
 
@@ -249,15 +253,15 @@ namespace CAMel.Types
             {
                     line = "N" + this.lines.ToString("0000") + "0 " + L;
                     this.lines++;
-                this.AppendLineNoNum(line);
+                this.appendLineNoNum(line);
             }
         }
-        public void AppendComment(string L)
+        public void appendComment(string L)
         {
-            this.AppendLineNoNum(this.Mach.comment(L));
+            this.appendLineNoNum(this.Mach.comment(L));
         }
 
-        public void Append(string L)
+        public void append(string L)
         {
             if (L != string.Empty)
             {
@@ -266,7 +270,7 @@ namespace CAMel.Types
 
                 foreach (String line in Lines)
                 {
-                    this.AppendLine(line);
+                    this.appendLine(line);
                 }
             }
         }

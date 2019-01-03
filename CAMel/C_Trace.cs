@@ -52,12 +52,12 @@ namespace CAMel
         private bool m_debug = false;
         public bool debug
         {
-            get { return m_debug; }
+            get { return this.m_debug; }
             set
             {
-                m_debug = value;
-                if ((m_debug)) { Message = "Showing work..."; }
-                else { Message = string.Empty; }
+                this.m_debug = value;
+                if ((this.m_debug)) { this.Message = "Showing work..."; }
+                else { this.Message = string.Empty; }
             }
         }
         List<string> times;
@@ -71,7 +71,7 @@ namespace CAMel
             Stopwatch watch = Stopwatch.StartNew();
             string filename = string.Empty;
 
-            if (!DA.GetData(0, ref filename)) return;
+            if (!DA.GetData(0, ref filename)) { return; }
            
             string filepath= System.IO.Path.GetDirectoryName(filename);
 
@@ -84,18 +84,18 @@ namespace CAMel
             EP.CacheSymbols(exp);
 
             List<Curve> curves = new List<Curve>();
-            times = new List<string>();
+            this.times = new List<string>();
 
             Mat imgMat = new Mat(filename);
 
             CvInvoke.CvtColor(imgMat, imgMat,ColorConversion.Bgr2Gray);
 
-            CvInvoke.GaussianBlur(imgMat, imgMat, new Size(2*Blur+1,2*Blur+1), 0, 0);
+            CvInvoke.GaussianBlur(imgMat, imgMat, new Size(2* this.Blur +1,2* this.Blur +1), 0, 0);
 
-            if (debug)
+            if (this.debug)
             {
                 watch.Stop();
-                times.Add("Open File: " + watch.ElapsedMilliseconds + " ms");
+                this.times.Add("Open File: " + watch.ElapsedMilliseconds + " ms");
                 watch = Stopwatch.StartNew();
             }
 
@@ -105,10 +105,10 @@ namespace CAMel
             
             CvInvoke.BitwiseNot(Thresh,Thresh);
 
-            if (debug)
+            if (this.debug)
             {
                 watch.Stop();
-                times.Add("Threshold: " + watch.ElapsedMilliseconds + " ms");
+                this.times.Add("Threshold: " + watch.ElapsedMilliseconds + " ms");
                 Thresh.Save(System.IO.Path.Combine(filepath,"CAMelTrace_Thresholded.png"));
                 watch = Stopwatch.StartNew();
             }
@@ -133,10 +133,10 @@ namespace CAMel
 
             CvInvoke.DrawContours(ContourBM, usecontours, -1, new MCvScalar(255), -1);
 
-            if (debug)
+            if (this.debug)
             {
                 watch.Stop();
-                times.Add("Redraw Main paths: " + watch.ElapsedMilliseconds + " ms");
+                this.times.Add("Redraw Main paths: " + watch.ElapsedMilliseconds + " ms");
                 ContourBM.Save(System.IO.Path.Combine(filepath,"CAMelTrace_Redrawn.png"));
                 watch = Stopwatch.StartNew();
             }
@@ -147,10 +147,10 @@ namespace CAMel
             XImgprocInvoke.Thinning(ContourBM, thin, ThinningTypes.GuoHall);
             ContourBM.Dispose();
 
-            if (debug)
+            if (this.debug)
             {
                 watch.Stop();
-                times.Add("Thin: " + watch.ElapsedMilliseconds + " ms");
+                this.times.Add("Thin: " + watch.ElapsedMilliseconds + " ms");
                 thin.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Thinned.png"));
                 watch = Stopwatch.StartNew();
             }
@@ -165,7 +165,7 @@ namespace CAMel
             Mat thrpts = new Mat(thin.Size,DepthType.Cv8U,1);
             Mat thinf = new Mat();
 
-            for (int i = 0; i < Prune; i++)
+            for (int i = 0; i < this.Prune; i++)
             {
                 CvInvoke.Threshold(thin, thinf, 128, 64, ThresholdType.Binary);
                 CvInvoke.Filter2D(thinf, thrpts, element, an);
@@ -173,10 +173,10 @@ namespace CAMel
                 CvInvoke.BitwiseAnd(thin, thrpts, thin);
             }
 
-            if (debug)
+            if (this.debug)
             {
                 watch.Stop();
-                times.Add("Prune: " + watch.ElapsedMilliseconds + " ms");
+                this.times.Add("Prune: " + watch.ElapsedMilliseconds + " ms");
                 thin.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Pruned.png"));
                 watch = Stopwatch.StartNew();
             }
@@ -190,10 +190,10 @@ namespace CAMel
             CvInvoke.BitwiseNot(thrpts, thrpts);
             CvInvoke.BitwiseAnd(thin, thrpts, thin);
 
-            if (debug)
+            if (this.debug)
             {
                 watch.Stop();
-                times.Add("Remove 3 points: " + watch.ElapsedMilliseconds + " ms");
+                this.times.Add("Remove 3 points: " + watch.ElapsedMilliseconds + " ms");
                 thin.Save(System.IO.Path.Combine(filepath,"CAMelTrace_JustLines.png"));
                 watch = Stopwatch.StartNew();
             }
@@ -228,15 +228,15 @@ namespace CAMel
                     CvInvoke.ApproxPolyDP(cont, sco, 1, false);
                     //sco = cont;
                     List<Point3d> c = new List<Point3d>();
-                    for (j = 0; j < sco.Size; j++) { c.Add(Pt2R(sco[j])); }
+                    for (j = 0; j < sco.Size; j++) { c.Add(pt2R(sco[j])); }
                     curves.Add(new PolylineCurve(c));
                 }
             }
 
-            if (debug)
+            if (this.debug)
             {
                 watch.Stop();
-                times.Add("Find contours 2: " + watch.ElapsedMilliseconds + " ms");
+                this.times.Add("Find contours 2: " + watch.ElapsedMilliseconds + " ms");
                 watch = Stopwatch.StartNew();
             }
 
@@ -271,7 +271,7 @@ namespace CAMel
             BoundingBox BB = new BoundingBox();
             for (int i=0;i<Tcurves.Count;i++)
             {
-                if(Tcurves[i].GetLength()>Jump*4)
+                if(Tcurves[i].GetLength()> this.Jump *4)
                 {
                     Jcurves.Add(Tcurves[i]);
                     BB.Union(Tcurves[i].GetBoundingBox(false));
@@ -279,7 +279,7 @@ namespace CAMel
             }
             Tcurves = Jcurves;
             Jcurves = new List<Curve>();
-            Jcurves.AddRange(Curve.JoinCurves(Tcurves, Jump + 2*Prune, false));
+            Jcurves.AddRange(Curve.JoinCurves(Tcurves, this.Jump + 2* this.Prune, false));
 
             // Give height and move to centre.
             for (int i = 0; i < Jcurves.Count; i++)
@@ -322,10 +322,10 @@ namespace CAMel
                 Tcurves.Add(Curve.CreateControlPointCurve(op));
             }
             
-            if (debug)
+            if (this.debug)
             {
                 watch.Stop();
-                times.Add("Join Curves: " + watch.ElapsedMilliseconds + " ms");
+                this.times.Add("Join Curves: " + watch.ElapsedMilliseconds + " ms");
             }
             watch.Stop();
 
@@ -333,7 +333,7 @@ namespace CAMel
             DA.SetDataList(1, Jcurves);
         }
 
-        Point3d Pt2R(System.Drawing.Point p)
+        Point3d pt2R(System.Drawing.Point p)
         {
             return new Point3d(p.X, -p.Y, 0);
         }
@@ -351,78 +351,85 @@ namespace CAMel
             //Menu_AppendNumber(menu, "Prune", this.Prune,"Pixels to prune of ends of every branch");
 
             Menu_AppendSeparator(menu);
-            Menu_AppendItem(menu, "Debug", Debug_Clicked, true, debug);
-            if (debug)
+            Menu_AppendItem(menu, "Debug", debugClicked, true, this.debug);
+            if (this.debug)
             {
-                for (int i = 0; i < times.Count; i++)
+                for (int i = 0; i < this.times.Count; i++)
                 {
-                    Menu_AppendItem(menu, times[i]);
+                    Menu_AppendItem(menu, this.times[i]);
                 }
-                Menu_AppendItem(menu, "Copy Data", CopyData_Clicked);
+                Menu_AppendItem(menu, "Copy Data", copyDataClicked);
             }
         }
 
-        private NumericUpDown Menu_AppendNumber(ToolStripDropDown menu, string name, int val, string desc)
+        private NumericUpDown menuAppendNumber(ToolStripDropDown menu, string name, int val, string desc)
         {
-            Panel MI = new FlowLayoutPanel();
-            MI.Text = name;
-            MI.AutoSize = true;
-            MI.BackColor = Color.White;
+            Panel MI = new FlowLayoutPanel
+            {
+                Text = name,
+                AutoSize = true,
+                BackColor = Color.White
+            };
 
-            NumericUpDown uD = new NumericUpDown();
-
-            uD.Value = val;
-            uD.Name = name;
-            uD.ValueChanged += Trace_Settings;
+            NumericUpDown uD = new NumericUpDown
+            {
+                Value = val,
+                Name = name
+            };
+            uD.ValueChanged += traceSettings;
             uD.Width = 50;
 
-            Label L = new Label();
-            L.Text = name;
+            Label L = new Label
+            {
+                Text = name
+            };
 
             MI.Controls.Add(L);
             MI.Controls.Add(uD);
 
             MI.Height = uD.Height+6;
 
-            ToolStripItem tSI = new ToolStripControlHost(MI);
-            tSI.ToolTipText = desc;
-            
+            ToolStripItem tSI = new ToolStripControlHost(MI)
+            {
+                ToolTipText = desc
+            };
+
             menu.Items.Add(tSI);
 
             return uD;
         }
-        private void CopyData_Clicked(object sender, EventArgs e)
+        private void copyDataClicked(object sender, EventArgs e)
         {
             System.Text.StringBuilder TraceData = new System.Text.StringBuilder();
 
-            for(int i=0;i<times.Count;i++) { TraceData.AppendLine(times[i]); }
+            for(int i=0;i< this.times.Count;i++) { TraceData.AppendLine(this.times[i]); }
             
             Clipboard.SetText(TraceData.ToString());
             
         }
-        private void Debug_Clicked(object sender, EventArgs e)
+        private void debugClicked(object sender, EventArgs e)
         {
             RecordUndoEvent("Trace_Debug");
-            debug = !debug;
+            this.debug = !this.debug;
             ExpireSolution(true);
         }
-        private void Trace_Settings(object sender, EventArgs e)
+        private void traceSettings(object sender, EventArgs e)
         {
             NumericUpDown UD = (NumericUpDown)sender;
             RecordUndoEvent(UD.Name);
             switch (UD.Name)
             {
                 case "Blur":
-                    Blur = (int)UD.Value;
+                    this.Blur = (int)UD.Value;
                     break;
                 case "Jump":
-                    Jump = (int)UD.Value;
+                    this.Jump = (int)UD.Value;
                     break;
                 case "Prune":
-                    Prune = (int)UD.Value;
+                    this.Prune = (int)UD.Value;
                     break;
                 case "Mega Pixels":
-                    MaxFile = (int)UD.Value;
+                    this.MaxFile = (int)UD.Value;
                     break;
                 default:
                     break;

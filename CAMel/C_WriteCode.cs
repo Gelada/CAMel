@@ -139,14 +139,14 @@ namespace CAMel
 
             // TODO report errors and warnings in an output parameter
 
-            if (this.SaveCode.HasErrors(ignore))
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.GetErrors(ignore)); }
-            if (this.SaveCode.HasWarnings(ignore))
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, this.SaveCode.GetWarnings(ignore)); }
+            if (this.SaveCode.hasErrors(ignore))
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.getErrors(ignore)); }
+            if (this.SaveCode.hasWarnings(ignore))
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, this.SaveCode.getWarnings(ignore)); }
 
             // Extract Ranges
 
-            Dictionary<String, Interval> Ranges = this.SaveCode.GetRanges();
+            Dictionary<String, Interval> Ranges = this.SaveCode.getRanges();
             string rOut = string.Empty;
 
             foreach (string k in Ranges.Keys)
@@ -157,27 +157,26 @@ namespace CAMel
             DA.SetData(0, this.SaveCode.ToString());
             DA.SetData(1, rOut);
 
-            lock(this.filePath)
+
+            if (DA.GetData(2, ref this.filePath) && this.filePath != string.Empty)
             {
-                if(DA.GetData(2, ref this.filePath) && this.filePath != string.Empty)
+                this.filePath = Path.GetDirectoryName(this.filePath);
+                this.filePath = Path.Combine(this.filePath, MI.name + "." + this.extension);
+                // queue up file write
+                if (!this.writeFileThread.IsBusy)
                 {
-                    this.filePath = Path.GetDirectoryName(this.filePath);
-                    this.filePath = Path.Combine(this.filePath, MI.name+"."+this.extension);
-                    // queue up file write
-                    if (!this.writeFileThread.IsBusy)
-                    {
-                        this.writeFileThread.RunWorkerAsync();
-                    }
-                    else {
-                        this.setOffWriting = true;
-                    }
-                } 
+                    this.writeFileThread.RunWorkerAsync();
+                }
                 else
                 {
-                    this.WS = WriteState.No_path;
-                    this.writeProgress = 0;
-                    this.OnDisplayExpired(true);
+                    this.setOffWriting = true;
                 }
+            }
+            else
+            {
+                this.WS = WriteState.No_path;
+                this.writeProgress = 0;
+                this.OnDisplayExpired(true);
             }
         }
 
@@ -204,27 +203,27 @@ namespace CAMel
             BackgroundWorker BW = (BackgroundWorker)sender;
             
             const int saveBlockSize = 40000;
-            lock (this.filePath) lock (this.SaveCode)
-                {
-                    this.WS = WriteState.Writing;
-                    try { File.Delete(this.filePath); }
-                    catch (Exception) { }
-                    BW.ReportProgress(0);
+            lock (this.SaveCode)
+            {
+                this.WS = WriteState.Writing;
+                try { File.Delete(this.filePath); }
+                catch (Exception) { }
+                BW.ReportProgress(0);
 
-                    using (StreamWriter SW = new StreamWriter(this.filePath))
+                using (StreamWriter SW = new StreamWriter(this.filePath))
+                {
+                    for (int i = 0; i < this.SaveCode.Length; i += saveBlockSize)
                     {
-                        for (int i = 0; i < this.SaveCode.Length; i += saveBlockSize)
+                        if (BW.CancellationPending)
                         {
-                            if (BW.CancellationPending)
-                            {
-                                e.Cancel = true;
-                                break;
-                            }
-                            SW.Write(this.SaveCode.ToString(i, saveBlockSize));
-                            BW.ReportProgress((int)Math.Floor(100.0 * i / (double)this.SaveCode.Length));
+                            e.Cancel = true;
+                            break;
                         }
+                        SW.Write(this.SaveCode.ToString(i, saveBlockSize));
+                        BW.ReportProgress((int)Math.Floor(100.0 * i / (double)this.SaveCode.Length));
                     }
                 }
+            }
         }
 
         private void bwCompletedFileWrite(object sender, RunWorkerCompletedEventArgs e)

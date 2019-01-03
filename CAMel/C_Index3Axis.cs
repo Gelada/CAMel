@@ -52,15 +52,16 @@ namespace CAMel
             IMaterialForm MF = null;
 
 
-            if (!DA.GetDataList(0, C)) return;
-            if (!DA.GetData(1, ref Dir)) return;
-            if (!DA.GetData(2, ref MT)) return;
-            if (!DA.GetData(3, ref MF)) return;
+            if (!DA.GetDataList(0, C)) { return;}
+            if (!DA.GetData(1, ref Dir)) { return;}
+            if (!DA.GetData(2, ref MT)) { return;}
+            if (!DA.GetData(3, ref MF)) { return;}
 
-            MachineOperation Op = new MachineOperation();
-
-            Op.name = "Index 3-Axis Cutting with " + C.Count.ToString() + " path";
-            if (C.Count > 1) Op.name = Op.name + "s";
+            MachineOperation Op = new MachineOperation
+            {
+                name = "Index 3-Axis Cutting with " + C.Count.ToString() + " path"
+            };
+            if (C.Count > 1) { Op.name = Op.name + "s"; }
 
             ToolPath TP;
             int i = 1;
@@ -84,17 +85,15 @@ namespace CAMel
 
                 // Turn Curve into path
 
-                if (TP.convertCurve(c, Dir))
-                    Op.Add(TP);
-                else
-                    InvalidCurves++;
+                if (TP.convertCurve(c, Dir)) { Op.Add(TP); }
+                else { InvalidCurves++; }
                 i++;
             }
 
-            if (InvalidCurves > 1) 
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of "+InvalidCurves.ToString()+" invalid curves (probably nulls) were ignored.");
+            if (InvalidCurves > 1)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + InvalidCurves.ToString() + " invalid curves (probably nulls) were ignored."); }
             else if (InvalidCurves > 0)
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored.");
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored."); }
 
 
             if (Op.Count > 0) { DA.SetData(0, Op); }

@@ -17,17 +17,17 @@ namespace CAMel.Types.MaterialForm
             this.point = Pt;
             this.lineP = lineP;
             this.isSet = true;
-            this._Away = Away;
-            this._Away.Unitize();
+            this._away = Away;
+            this._away.Unitize();
         }
 
         public Point3d point { get; private set; }    // Point of intersection
-        private Vector3d _Away;
-        public Vector3d Away { get { return this._Away; } // direction to get away from the material (eg normal)
+        private Vector3d _away;
+        public Vector3d away { get { return this._away; } // direction to get away from the material (eg normal)
             private set
             {
-                this._Away = value;
-                this._Away.Unitize();
+                this._away = value;
+                this._away.Unitize();
             }
         } 
         public double lineP { get; private set; }  // position along intersecting line
@@ -122,7 +122,7 @@ namespace CAMel.Types.MaterialForm
                     // point out at safe distance
 
                     tempTP = irTP.firstP.deepClone();
-                    tempTP.pt = tempTP.pt + inter.Away * utol;
+                    tempTP.pt = tempTP.pt + inter.away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Insert(0, tempTP);
                 } else
@@ -158,7 +158,7 @@ namespace CAMel.Types.MaterialForm
                     // Pull away to safe distance
 
                     tempTP = irTP.lastP.deepClone();
-                    tempTP.pt = tempTP.pt + inter.Away * utol;
+                    tempTP.pt = tempTP.pt + inter.away * utol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Add(tempTP);
                 } else

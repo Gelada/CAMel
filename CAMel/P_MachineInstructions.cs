@@ -117,14 +117,6 @@ namespace CAMel.Types
             get { return "MachineInstruction"; }
         }
 
-        public bool IsValid
-        {
-            get
-            {
-                throw new NotImplementedException("IsValid not implemented for Machine Instructions.");
-            }
-        }
-
         public int Count => ((IList<MachineOperation>)this.MOs).Count;
 
         public bool IsReadOnly => ((IList<MachineOperation>)this.MOs).IsReadOnly;

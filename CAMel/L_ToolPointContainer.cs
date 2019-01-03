@@ -23,7 +23,7 @@ namespace CAMel.Types
     public class GH_ToolPointContainer<T> : CAMel_Goo<T> where T : IToolPointContainer
     {
         // Strip off our hierarchy and plonk it into a tree 
-        public GH_Structure<GH_ToolPoint> TreeOfPoints()
+        public GH_Structure<GH_ToolPoint> treeOfPoints()
         {
             throw new NotImplementedException("ToolPoint Container has not yet implemented conversion to a tree of points.");
         }

@@ -79,8 +79,8 @@ namespace CAMel.Types.Machine
                 bool FChange = false;
                 bool SChange = false;
 
-                double feed = Co.MachineState["F"];
-                double speed = Co.MachineState["S"];
+                double feed = Co.machineState["F"];
+                double speed = Co.machineState["S"];
                 if (feed < 0) { feed = tP.matTool.feedCut; FChange = true; }
                 if (speed < 0) { speed = tP.matTool.speed; SChange = true; }
 
@@ -92,16 +92,16 @@ namespace CAMel.Types.Machine
                     {
                         foreach (string err in Pt.error)
                         {
-                            Co.AddError(err);
-                            Co.AppendComment(err);
+                            Co.addError(err);
+                            Co.appendComment(err);
                         }
                     }
                     if (Pt.warning != null)
                     {
                         foreach (string warn in Pt.warning)
                         {
-                            Co.AddWarning(warn);
-                            Co.AppendComment(warn);
+                            Co.addWarning(warn);
+                            Co.appendComment(warn);
                         }
                     }
 
@@ -154,34 +154,34 @@ namespace CAMel.Types.Machine
                     {
                         PtCode = PtCode + " " + this.comment(Pt.name);
                     }
-                    Co.Append(PtCode);
+                    Co.append(PtCode);
 
                     // Adjust ranges
 
-                    Co.GrowRange("X", Pt.pt.X);
-                    Co.GrowRange("Y", Pt.pt.Y);
-                    Co.GrowRange("Z", Pt.pt.Z);
+                    Co.growRange("X", Pt.pt.X);
+                    Co.growRange("Y", Pt.pt.Y);
+                    Co.growRange("Z", Pt.pt.Z);
                 }
                 // Pass machine state information
 
-                Co.MachineState.Clear();
-                Co.MachineState.Add("X", tP.lastP.pt.X);
-                Co.MachineState.Add("Y", tP.lastP.pt.Y);
-                Co.MachineState.Add("Z", tP.lastP.pt.Z);
-                Co.MachineState.Add("F", feed);
-                Co.MachineState.Add("S", speed);
+                Co.machineState.Clear();
+                Co.machineState.Add("X", tP.lastP.pt.X);
+                Co.machineState.Add("Y", tP.lastP.pt.Y);
+                Co.machineState.Add("Z", tP.lastP.pt.Z);
+                Co.machineState.Add("F", feed);
+                Co.machineState.Add("S", speed);
             }
         }
         public void writeFileStart(ref CodeInfo Co, MachineInstruction MI, ToolPath startPath)
         {
             // Set up Machine State  
 
-            Co.MachineState.Clear();
-            Co.MachineState.Add("X", startPath.firstP.pt.X);
-            Co.MachineState.Add("Y", startPath.firstP.pt.Y);
-            Co.MachineState.Add("Z", startPath.firstP.pt.Z);
-            Co.MachineState.Add("F", -1);
-            Co.MachineState.Add("S", -1);
+            Co.machineState.Clear();
+            Co.machineState.Add("X", startPath.firstP.pt.X);
+            Co.machineState.Add("Y", startPath.firstP.pt.Y);
+            Co.machineState.Add("Z", startPath.firstP.pt.Z);
+            Co.machineState.Add("F", -1);
+            Co.machineState.Add("S", -1);
 
             GCode.gcInstStart(this, ref Co, MI, startPath);
         }
@@ -209,10 +209,10 @@ namespace CAMel.Types.Machine
                     // If in material we probably need to throw an error
                     // first path in an operation
                     double Length = fP.lastP.pt.DistanceTo(tP.firstP.pt);
-                    if (first) { Co.AddError("Transition between operations might be in material."); }
+                    if (first) { Co.addError("Transition between operations might be in material."); }
                     else if (Length > this.pathJump) // changing between paths in material
                     {
-                        Co.AddError("Long Transition between paths in material. \n"
+                        Co.addError("Long Transition between paths in material. \n"
                             + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
                             + this.pathJump.ToString() + " to at least: " + Length.ToString());
                     }

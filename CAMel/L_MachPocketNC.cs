@@ -117,12 +117,12 @@ namespace CAMel.Types.Machine
                 bool FChange = false;
                 bool SChange = false;
 
-                double feed = Co.MachineState["F"];
-                double speed = Co.MachineState["S"];
+                double feed = Co.machineState["F"];
+                double speed = Co.machineState["S"];
                 if (feed < 0) { feed = tP.matTool.feedCut; FChange = true; }
                 if (speed < 0) { speed = tP.matTool.speed; SChange = true; }
 
-                Vector3d AB = new Vector3d(Co.MachineState["A"], Co.MachineState["B"], 0), newAB;
+                Vector3d AB = new Vector3d(Co.machineState["A"], Co.machineState["B"], 0), newAB;
 
                 double Bto = 0;  // Allow for smooth adjustment through the cusp with A at 90.
                 int Bsteps = 0;  //
@@ -140,11 +140,11 @@ namespace CAMel.Types.Machine
 
                     if (Pt.error != null)
                     {
-                        foreach (string err in Pt.error) { Co.AddError(err); }
+                        foreach (string err in Pt.error) { Co.addError(err); }
                     }
                     if (Pt.warning != null)
                     {
-                        foreach (string warn in Pt.warning) { Co.AddWarning(warn); }
+                        foreach (string warn in Pt.warning) { Co.addWarning(warn); }
                     }
 
                     // Establish new feed value
@@ -253,11 +253,11 @@ namespace CAMel.Types.Machine
 
                     if (Math.Abs(newAB.Y) > this.bMax)
                     {
-                        Co.AddError("Out of bounds on B");
+                        Co.addError("Out of bounds on B");
                     }
                     if ((newAB.X > this.aMax) || (newAB.X < this.aMin))
                     {
-                        Co.AddError("Out of bounds on A");
+                        Co.addError("Out of bounds on A");
                     }
 
                     // update AB value
@@ -290,26 +290,26 @@ namespace CAMel.Types.Machine
                         PtCode = PtCode + " " + this.commentStart + Pt.name + this.commentEnd;
                     }
 
-                    Co.Append(PtCode);
+                    Co.append(PtCode);
                     // Adjust ranges
 
-                    Co.GrowRange("X", machPt.X);
-                    Co.GrowRange("Y", machPt.Y);
-                    Co.GrowRange("Z", machPt.Z);
-                    Co.GrowRange("A", AB.X);
-                    Co.GrowRange("B", AB.Y);
+                    Co.growRange("X", machPt.X);
+                    Co.growRange("Y", machPt.Y);
+                    Co.growRange("Z", machPt.Z);
+                    Co.growRange("A", AB.X);
+                    Co.growRange("B", AB.Y);
                 }
 
                 // Pass machine state information
 
-                Co.MachineState.Clear();
-                Co.MachineState.Add("X", machPt.X);
-                Co.MachineState.Add("Y", machPt.Y);
-                Co.MachineState.Add("Z", machPt.Z);
-                Co.MachineState.Add("A", AB.X);
-                Co.MachineState.Add("B", AB.Y);
-                Co.MachineState.Add("F", feed);
-                Co.MachineState.Add("S", speed);
+                Co.machineState.Clear();
+                Co.machineState.Add("X", machPt.X);
+                Co.machineState.Add("Y", machPt.Y);
+                Co.machineState.Add("Z", machPt.Z);
+                Co.machineState.Add("A", AB.X);
+                Co.machineState.Add("B", AB.Y);
+                Co.machineState.Add("F", feed);
+                Co.machineState.Add("S", speed);
             }    
         }
 
@@ -321,14 +321,14 @@ namespace CAMel.Types.Machine
             double toolLength = MI.mach.toolLengthCompensation ? 0 : startPath.matTool.toolLength;
             Vector3d AB = Kinematics.ikFiveAxisABTable(startPath.firstP, this.pivot, toolLength, out MachPt);
 
-            Co.MachineState.Clear();
-            Co.MachineState.Add("X", MachPt.X);
-            Co.MachineState.Add("Y", MachPt.Y);
-            Co.MachineState.Add("Z", MachPt.Z);
-            Co.MachineState.Add("A", AB.X);
-            Co.MachineState.Add("B", AB.Y);
-            Co.MachineState.Add("F", -1);
-            Co.MachineState.Add("S", -1);
+            Co.machineState.Clear();
+            Co.machineState.Add("X", MachPt.X);
+            Co.machineState.Add("Y", MachPt.Y);
+            Co.machineState.Add("Z", MachPt.Z);
+            Co.machineState.Add("A", AB.X);
+            Co.machineState.Add("B", AB.Y);
+            Co.machineState.Add("F", -1);
+            Co.machineState.Add("S", -1);
 
             GCode.gcInstStart(this, ref Co, MI, startPath);
         }
@@ -362,10 +362,10 @@ namespace CAMel.Types.Machine
                     // If in material we probably need to throw an error
                     // first path in an operation
                     double Length = fP.lastP.pt.DistanceTo(tP.firstP.pt);
-                    if (first) { Co.AddError("Transition between operations might be in material."); }
+                    if (first) { Co.addError("Transition between operations might be in material."); }
                     else if (Length > this.pathJump) // changing between paths in material
                     {
-                        Co.AddError("Long Transition between paths in material. \n"
+                        Co.addError("Long Transition between paths in material. \n"
                             + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
                             + this.pathJump.ToString() + " to at least: " + Length.ToString());
                     }

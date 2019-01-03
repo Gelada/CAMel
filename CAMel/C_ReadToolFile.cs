@@ -109,7 +109,7 @@ namespace CAMel
         {
             string matName = string.Empty;
             string toolName = string.Empty;
-            string file = string.Empty;
+            string file = "";
 
             if (!DA.GetData(0, ref file)) { return; }
             if (!DA.GetData(1, ref matName)) { return; }
@@ -120,11 +120,11 @@ namespace CAMel
             List<MaterialToolBuilder> MTBs = new List<MaterialToolBuilder>();
 
             using (StreamReader fileReader = new StreamReader(file))
-            using (CsvReader csv = new CsvReader(fileReader))
             {
-                    MTBs = new List<MaterialToolBuilder>();
-                    csv.Configuration.RegisterClassMap<MaterialToolMap>();
-                    MTBs.AddRange(csv.GetRecords<MaterialToolBuilder>());
+                CsvReader csv = new CsvReader(fileReader);
+                MTBs = new List<MaterialToolBuilder>();
+                csv.Configuration.RegisterClassMap<MaterialToolMap>();
+                MTBs.AddRange(csv.GetRecords<MaterialToolBuilder>());
             }
 
             List<MaterialTool> MTs = new List<MaterialTool>();

@@ -60,13 +60,13 @@ namespace CAMel
             MaterialTool MT = null;
             IMaterialForm MF = null;
 
-            if (!DA.GetData(0, ref C)) return;
-            if (!DA.GetData(1, ref D)) return;
-            if (!DA.GetData(2, ref Os)) return;
-            if (!DA.GetData(3, ref leadInOut)) return;
-            if (!DA.GetData(4, ref tabs)) return;
-            if (!DA.GetData(5, ref MT)) return;
-            if (!DA.GetData(6, ref MF)) return;
+            if (!DA.GetData(0, ref C)) { return; }
+            if (!DA.GetData(1, ref D)) { return;}
+            if (!DA.GetData(2, ref Os)) { return;}
+            if (!DA.GetData(3, ref leadInOut)) { return;}
+            if (!DA.GetData(4, ref tabs)) { return;}
+            if (!DA.GetData(5, ref MT)) { return;}
+            if (!DA.GetData(6, ref MF)) { return;}
 
             if(!C.IsClosed && Os != 0)
             {
@@ -106,8 +106,8 @@ namespace CAMel
 
             // create Operation
 
-            MachineOperation Op = new MachineOperation();
-            Op.name = "2d Cut Path";
+            MachineOperation Op = new MachineOperation
+            { name = "2d Cut Path" };
             ToolPath TP;
             List<PolylineCurve> Cs = new List<PolylineCurve>();
             int i = 1;

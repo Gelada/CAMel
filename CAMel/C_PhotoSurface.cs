@@ -59,12 +59,12 @@ namespace CAMel
             double H = 1;
             Boolean reNorm = false;
 
-            if (!DA.GetData(0, ref filename)) return;
+            if (!DA.GetData(0, ref filename)) { return; }
             string filepath = System.IO.Path.GetDirectoryName(filename);
 
-            if (!DA.GetData(1, ref H)) return;
-            if (!DA.GetData(2, ref Blur)) return;
-            if (!DA.GetData(3, ref reNorm)) return;
+            if (!DA.GetData(1, ref H)) { return; }
+            if (!DA.GetData(2, ref Blur)) { return; }
+            if (!DA.GetData(3, ref reNorm)) { return; }
 
             Bitmap BM = (Bitmap)Image.FromFile(filename);
             Image<Gray, Byte> img = new Image<Gray, Byte>(BM);
@@ -74,7 +74,7 @@ namespace CAMel
                 CvInvoke.GaussianBlur(img, img, new Size(2 * (int)Math.Floor(Blur) + 1, (int)Math.Floor(Blur)), 0, 0);
             } else if ( Blur < 0)
             {
-                USM(img, img, -(int)Math.Ceiling(Blur), 1.5);
+                uSM(img, img, -(int)Math.Ceiling(Blur), 1.5);
             }
 
             img=img.Resize(.2, Inter.Area);
@@ -104,7 +104,7 @@ namespace CAMel
             DA.SetData(0, M);
         }
 
-        void USM(Image<Gray, Byte> img, Image<Gray, Byte> op, int r, double w)
+        void uSM(Image<Gray, Byte> img, Image<Gray, Byte> op, int r, double w)
         {
             Image<Gray, Byte> blur = new Image<Gray, byte>(img.Size);
             // create weighted mask
@@ -115,7 +115,7 @@ namespace CAMel
             op = img + blur; 
         }
 
-        Point3d Pt2R(System.Drawing.Point p)
+        Point3d pt2R(System.Drawing.Point p)
         {
             return new Point3d(p.X, -p.Y, 0);
         }

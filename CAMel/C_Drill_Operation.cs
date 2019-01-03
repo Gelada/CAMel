@@ -52,14 +52,15 @@ namespace CAMel
             IMaterialForm MF = null;
 
 
-            if (!DA.GetData(0, ref D)) return;
-            if (!DA.GetData(1, ref peck)) return;
-            if (!DA.GetData(2, ref MT)) return;
-            if (!DA.GetData(3, ref MF)) return;
+            if (!DA.GetData(0, ref D)) { return; }
+            if (!DA.GetData(1, ref peck)) { return; }
+            if (!DA.GetData(2, ref MT)) { return; }
+            if (!DA.GetData(3, ref MF)) { return; }
 
-            MachineOperation Op = new MachineOperation();
-
-            Op.name = "Drilling depth " + D.Radius.ToString("0.000") + " at (" + D.Center.X.ToString("0.000") + "," + D.Center.Y.ToString("0.000") + "," + D.Center.Z.ToString("0.000") + ").";
+            MachineOperation Op = new MachineOperation
+            {
+                name = "Drilling depth " + D.Radius.ToString("0.000") + " at (" + D.Center.X.ToString("0.000") + "," + D.Center.Y.ToString("0.000") + "," + D.Center.Z.ToString("0.000") + ")."
+            };
 
             ToolPath TP = new ToolPath(string.Empty,MT,MF);
 
@@ -72,15 +73,16 @@ namespace CAMel
             TP.Additions.sdDropEnd = false;
             TP.Additions.threeAxisHeightOffset = false;
 
-            if (D.Normal.Length == 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Cannot process a circle who's normal is given as the zero vector. Check for null inputs.");
+            if (D.Normal.Length == 0)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Cannot process a circle who's normal is given as the zero vector. Check for null inputs."); }
 
             TP.Add(new ToolPoint(D.Center, D.Normal,-1,MT.feedPlunge));
 
             // calculate the number of pecks we need to do
 
             int steps;
-            if (peck > 0) steps = (int)Math.Ceiling(D.Radius / peck);
-            else steps = 1;
+            if (peck > 0) { steps = (int)Math.Ceiling(D.Radius / peck); }
+            else { steps = 1; }
 
             for (int j = 1; j <= steps; j++)
             {

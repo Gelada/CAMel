@@ -192,7 +192,7 @@ public MachineOperation()
                 }
             }
 
-            Co.Append(this.postCode);
+            Co.append(this.postCode);
             eP = oldPath;
         }
 
