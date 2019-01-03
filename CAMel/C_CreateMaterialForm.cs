@@ -53,9 +53,9 @@ namespace CAMel
             IGH_Goo G = null;
             double SD = 0, T=0;
 
-            if (!DA.GetData(0, ref G)) return;
-            if (!DA.GetData(1, ref SD)) return;
-            if (!DA.GetData(2, ref T)) return;
+            if (!DA.GetData(0, ref G)) { return; }
+            if (!DA.GetData(1, ref SD)) { return; }
+            if (!DA.GetData(2, ref T)) { return; }
             IMaterialForm MF = null;
 
             if (MaterialForm.create(G, T, SD, out MF))
