@@ -145,7 +145,7 @@ namespace CAMel.Types
 
             foreach(Curve P in this.Paths)
             {
-                TPs.Add(new ToolPath("", MT, MF, TPA));
+                TPs.Add(new ToolPath(string.Empty, MT, MF, TPA));
                 TPs[TPs.Count - 1].convertCurve(P,new Vector3d(0,0,1));
             }
 
@@ -171,7 +171,7 @@ namespace CAMel.Types
                  }
                 );
                 
-                tempTP = new ToolPath("", MT, MF, TPA);
+                tempTP = new ToolPath(string.Empty, MT, MF, TPA);
                 tempN = new List<Vector3d>();
                 FirstIntersectResponse fIR;
 
@@ -191,7 +191,7 @@ namespace CAMel.Types
                             newTPs.Add(tempTP);
                             Norms.Add(tempN);
                         }
-                        tempTP = new ToolPath("", MT, MF, TPA);
+                        tempTP = new ToolPath(string.Empty, MT, MF, TPA);
                         tempN = new List<Vector3d>();
                     }
                 }

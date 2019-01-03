@@ -54,7 +54,7 @@ namespace CAMel
             {
                 m_debug = value;
                 if ((m_debug)) { Message = "Showing work..."; }
-                else { Message = ""; }
+                else { Message = string.Empty; }
             }
         }
         List<string> times;
@@ -65,7 +65,7 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            string filename = "";
+            string filename = string.Empty;
 
             if (!DA.GetData(0, ref filename)) return;
             string filepath = System.IO.Path.GetDirectoryName(filename);

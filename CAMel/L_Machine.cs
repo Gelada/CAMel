@@ -253,12 +253,12 @@ namespace CAMel.Types.Machine
             DateTime thisDay = DateTime.Now;
             Co.AppendLineNoNum(M.fileStart);
             Co.AppendComment(M.sectionBreak);
-            if (MI.name != "") { Co.AppendComment(MI.name); }
+            if (MI.name != string.Empty) { Co.AppendComment(MI.name); }
             Co.AppendComment("");
             Co.AppendComment(" Machine Instructions Created " + thisDay.ToString("f"));
             Co.AppendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
                 + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
-            if (M.name != "") { Co.AppendComment("  for " + M.name); }
+            if (M.name != string.Empty) { Co.AppendComment("  for " + M.name); }
             Co.AppendComment(" Starting with: ");
             Co.AppendComment("  Tool: " + MI[0][0].matTool.toolName);
             Co.AppendComment("  in " + MI[0][0].matTool.matName + " with shape " + MI[0][0].matForm.ToString());
@@ -302,7 +302,7 @@ namespace CAMel.Types.Machine
             TPchanges ch = new TPchanges(false, false);
             Co.AppendComment(M.sectionBreak);
             bool preamble = false;
-            if (TP.name != "")
+            if (TP.name != string.Empty)
             {
                 Co.AppendComment(" ToolPath: " + TP.name);
                 preamble = true;
@@ -339,7 +339,7 @@ namespace CAMel.Types.Machine
         static public string gcTwoAxis(ToolPoint TP)
         {
             Point3d OP = TP.pt;
-            string GPoint = "";
+            string GPoint = string.Empty;
             GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000");
 
             return GPoint;
@@ -347,7 +347,7 @@ namespace CAMel.Types.Machine
         static public string gcThreeAxis(ToolPoint TP)
         {
             Point3d OP = TP.pt;
-            string GPoint = "";
+            string GPoint = string.Empty;
             GPoint += "X" + OP.X.ToString("0.000") + " Y" + OP.Y.ToString("0.000") + " Z" + OP.Z.ToString("0.000");
 
             return GPoint;
@@ -363,17 +363,9 @@ namespace CAMel.Types.Machine
 
             return GPtBd.ToString();
         }
-        // Give only orientation move
-        static public string gcFiveAxisAB_orient(Point3d machPt, Vector3d AB)
-        {
-            String GPoint = "";
-            GPoint += "A" + (180.0 * AB.X / Math.PI).ToString("0.000") + " B" + (180.0 * AB.Y / Math.PI).ToString("0.000");
-
-            return GPoint;
-        }
 
         // GCode reading
-        private static Regex numbPattern = new Regex(@"^([0-9\-.]+)", RegexOptions.Compiled);
+        private static readonly Regex numbPattern = new Regex(@"^([0-9\-.]+)", RegexOptions.Compiled);
 
         static private double getValue(string line, char split, double old, ref bool changed, ref bool unset)
         {

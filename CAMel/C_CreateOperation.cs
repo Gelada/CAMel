@@ -27,7 +27,7 @@ namespace CAMel
             List<double> TPAdef = new List<double>();
             for (int i = 0; i < 7; i++) TPAdef.Add(0);
 
-            pManager.AddTextParameter("Name", "N", "Name of operation", GH_ParamAccess.item,"");
+            pManager.AddTextParameter("Name", "N", "Name of operation", GH_ParamAccess.item,string.Empty);
             pManager.AddGenericParameter("Toolpaths", "TP", "The list of toolpaths to use for the operation.", GH_ParamAccess.list); 
 
         }
@@ -47,7 +47,7 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<ToolPath> TPs = new List<ToolPath>();
-            string name = "";
+            string name = string.Empty;
 
             if (!DA.GetData(0, ref name)) return;
             if (!DA.GetDataList(1, TPs)) return;

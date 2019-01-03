@@ -12,8 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{EBCBD4
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{179949DF-70F7-46B9-84CB-2D02CC95C83D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetValueTester", "GetValueTester\GetValueTester.csproj", "{07406040-2B4B-4EB2-BE95-ABAA3E78FF3A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{8A5F215E-6A6B-4FC7-A26E-7D6141FC7C9F} = {8A5F215E-6A6B-4FC7-A26E-7D6141FC7C9F}

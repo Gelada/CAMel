@@ -57,7 +57,7 @@ namespace CAMel
             {
                 m_debug = value;
                 if ((m_debug)) { Message = "Showing work..."; }
-                else { Message = ""; }
+                else { Message = string.Empty; }
             }
         }
         List<string> times;
@@ -69,13 +69,13 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             Stopwatch watch = Stopwatch.StartNew();
-            string filename = "";
+            string filename = string.Empty;
 
             if (!DA.GetData(0, ref filename)) return;
            
             string filepath= System.IO.Path.GetDirectoryName(filename);
 
-            string exp = "";
+            string exp = string.Empty;
             
             if (!DA.GetData(1, ref exp)) { return; }
             GH_ExpressionParser EP = new GH_ExpressionParser(true);

@@ -150,7 +150,7 @@ namespace CAMel.Types.Machine
 
                     PtCode = Pt.preCode + PtCode + Pt.postCode;
 
-                    if (Pt.name != "")
+                    if (Pt.name != string.Empty)
                     {
                         PtCode = PtCode + " " + this.comment(Pt.name);
                     }

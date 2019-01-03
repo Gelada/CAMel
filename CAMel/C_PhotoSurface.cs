@@ -54,7 +54,7 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            string filename = "";
+            string filename = string.Empty;
             double Blur = 0;
             double H = 1;
             Boolean reNorm = false;

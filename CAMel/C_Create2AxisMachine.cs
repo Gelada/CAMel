@@ -25,17 +25,17 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item,"");
-            pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, "");
-            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, "");
+            pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item,string.Empty);
+            pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
+            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
-            pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list,"");
+            pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list,string.Empty);
             pManager.AddTextParameter("Features", "O", "Other features of the machine\n"+
                 "{2d, lead, Insert Code, Retract Code\n}" +
                 "2d is a Boolean (0 or 1), that specifies a 2d machine like a Plasma cutter. \n"+
                 "lead gives the distance for the lead in or out. \n"+
                 "Insert and Retract Codes are added before an insert and after a rectract move.", 
-                GH_ParamAccess.list, "");
+                GH_ParamAccess.list, string.Empty);
         }
 
         /// <summary>
@@ -53,9 +53,9 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
 
-            string name = "";
-            string head = "";
-            string foot = "";
+            string name = string.Empty;
+            string head = string.Empty;
+            string foot = string.Empty;
             List<string> CC = new List<string>();
             List<string> Fe = new List<string>();
 
@@ -66,15 +66,15 @@ namespace CAMel
             if (!DA.GetData(2, ref foot)) return;
             if (!DA.GetData(3, ref PJ)) return;
 
-            Machine M = new Machine(name, MachineTypes.ThreeAxis, head, foot,"","");
+            Machine M = new Machine(name, MachineTypes.ThreeAxis, head, foot,string.Empty,string.Empty);
 
-            if (DA.GetDataList(4, CC) && CC[0] != "")
+            if (DA.GetDataList(4, CC) && CC[0] != string.Empty)
             {
                 M.CommentChar = CC[0];
                 if (CC.Count > 1) { M.endCommentChar = CC[1]; }
                 if (CC.Count > 2) { M.SectionBreak = CC[2]; }
             }
-            if (DA.GetDataList(5, Fe) && (Fe.Count > 1 || Fe[0] != ""))
+            if (DA.GetDataList(5, Fe) && (Fe.Count > 1 || Fe[0] != string.Empty))
             {
                 int dim = 0;
                 if(int.TryParse(Fe[0], out dim)){ if(dim!=0) { M.type = MachineTypes.TwoAxisXY; } }

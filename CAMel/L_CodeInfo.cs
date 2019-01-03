@@ -226,7 +226,7 @@ namespace CAMel.Types
               return this.Code.ToString(start, ulength);
             }
             else{
-                return "";
+                return string.Empty;
             }
         }
 
@@ -259,7 +259,7 @@ namespace CAMel.Types
 
         public void Append(string L)
         {
-            if (L != "")
+            if (L != string.Empty)
             {
                 char[] seps = { '\n', '\r' };
                 String[] Lines = L.Split(seps, StringSplitOptions.RemoveEmptyEntries);

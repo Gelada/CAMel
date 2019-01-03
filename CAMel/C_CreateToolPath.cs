@@ -36,15 +36,15 @@ namespace CAMel
             pManager.AddPointParameter("Path", "P", "List of toolpoint locations", GH_ParamAccess.list);
             pManager.AddVectorParameter("Directions", "D", "List of vectors giving tool direction", GH_ParamAccess.list,new Vector3d(0,0,1));
             pManager.AddVectorParameter("Speed and Feed", "SF", "List of vectors giving speed (X) and feed (Y) at each toolpoint.", GH_ParamAccess.list, new Vector3d(-1, -1, 0));
-            pManager.AddTextParameter("pre Code", "prC", "List of additional CNC codes to run before the points. The code will run on the same line. Use a newline to run on the next line, but this will mess with line numbering.", GH_ParamAccess.list,"");
-            pManager.AddTextParameter("post Code", "poC", "List of additional CNC codes to run after the points. The code will run on the same line. Use a newline to run on the next line, but this will mess with line numbering.", GH_ParamAccess.list, "");
-            pManager.AddTextParameter("Name", "N", "Name of path", GH_ParamAccess.item,"");
+            pManager.AddTextParameter("pre Code", "prC", "List of additional CNC codes to run before the points. The code will run on the same line. Use a newline to run on the next line, but this will mess with line numbering.", GH_ParamAccess.list,string.Empty);
+            pManager.AddTextParameter("post Code", "poC", "List of additional CNC codes to run after the points. The code will run on the same line. Use a newline to run on the next line, but this will mess with line numbering.", GH_ParamAccess.list, string.Empty);
+            pManager.AddTextParameter("Name", "N", "Name of path", GH_ParamAccess.item,string.Empty);
             pManager.AddGenericParameter("Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             pManager.AddGenericParameter("Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
             pManager.AddNumberParameter("Additions", "TPA", "Additional operations to apply to the path, given by a list of numbers:\n"+
                 "{Insert, Retract, Stepdown, Drop Start, Drop Middle, Drop End, 3Axis Height Offset}\n" +
                 "all but drop middle are boolean with 0 being false.", GH_ParamAccess.list, TPAdef);
-            pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item,"");
+            pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item,string.Empty);
 
         }
 
@@ -67,10 +67,10 @@ namespace CAMel
             List<Vector3d> SF = new List<Vector3d>();
             List<String> preCode = new List<String>();
             List<String> postCode = new List<String>();
-            string name = "";
+            string name = string.Empty;
             MaterialTool MT = null;
             IMaterialForm MF = null;
-            string Co = "";
+            string Co = string.Empty;
             List<double> TPAd = new List<double>();
 
             if (!DA.GetDataList(0, pts)) { return; }

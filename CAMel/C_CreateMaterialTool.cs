@@ -25,8 +25,8 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Material Name", "MN", "Name of the material", GH_ParamAccess.item, "");
-            pManager.AddTextParameter("Tool Name", "TN", "Name of the tool", GH_ParamAccess.item, "");
+            pManager.AddTextParameter("Material Name", "MN", "Name of the material", GH_ParamAccess.item, string.Empty);
+            pManager.AddTextParameter("Tool Name", "TN", "Name of the tool", GH_ParamAccess.item, string.Empty);
             pManager.AddIntegerParameter("Tool Number", "T", "Number of the tool", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("Speed", "S", "Speed of Spindle", GH_ParamAccess.item);
             pManager.AddNumberParameter("Cut Feed", "CF", "Feed rate when cutting", GH_ParamAccess.item);
@@ -54,13 +54,13 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            string matName = "";
-            string toolName = "";
+            string matName = string.Empty;
+            string toolName = string.Empty;
 
             int T = 1;
             double S = 0, CF = 0, PF = 0, CD = 0, FD = 0, To = 0, mS = 0, TW = 0, TL = 0;
 
-            string toolShape = "";
+            string toolShape = string.Empty;
             EndShape ES;
 
             if (!DA.GetData(0, ref matName)) { return; }

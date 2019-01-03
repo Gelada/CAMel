@@ -42,9 +42,9 @@ namespace CAMel.Types
             this.feed = -1;
             this.error = new List<string>();
             this.warning = new List<string>();
-            this.name = "";
-            this.preCode = "";
-            this.postCode = "";
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Just a point, set direction to Z vector.
         public ToolPoint(Point3d Pt)
@@ -55,9 +55,9 @@ namespace CAMel.Types
             this.feed = -1;
             this.error = new List<string>();
             this.warning = new List<string>();
-            this.name = "";
-            this.preCode = "";
-            this.postCode = "";
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Use point and direction
         public ToolPoint(Point3d Pt, Vector3d D)
@@ -68,9 +68,9 @@ namespace CAMel.Types
             this.feed = -1;
             this.error = new List<string>();
             this.warning = new List<string>();
-            this.name = "";
-            this.preCode = "";
-            this.postCode = "";
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Use point direction and extra Code
         public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode)
@@ -83,9 +83,9 @@ namespace CAMel.Types
             this.feed = -1;
             this.error = new List<string>();
             this.warning = new List<string>();
-            this.name = "";
-            this.preCode = "";
-            this.postCode = "";
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Use point direction and override speed and feed
         public ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
@@ -96,9 +96,9 @@ namespace CAMel.Types
             this.feed = feed;
             this.error = new List<string>();
             this.warning = new List<string>();
-            this.name = "";
-            this.preCode = "";
-            this.postCode = "";
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Use point direction, override speed and feed and add extra Code
         public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode, double speed, double feed)
@@ -111,7 +111,7 @@ namespace CAMel.Types
             this.feed = feed;
             this.error = new List<string>();
             this.warning = new List<string>();
-            this.name = "";
+            this.name = string.Empty;
         }
         // Copy Constructor
         private ToolPoint(ToolPoint TP)
@@ -156,7 +156,7 @@ namespace CAMel.Types
         public override string ToString()
         {
             string outp = this.name;
-            if(outp != "") { outp = outp + " "; }
+            if(outp != string.Empty) { outp = outp + " "; }
             outp = outp + "Pt: (" +
                 this.pt.X.ToString("0.000") + ", " + this.pt.Y.ToString("0.000") + ", " + this.pt.Z.ToString("0.000") +
                 ") Dir: (" +

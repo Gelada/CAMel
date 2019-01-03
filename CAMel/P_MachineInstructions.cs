@@ -58,9 +58,9 @@ namespace CAMel.Types
             this.MOs = new List<MachineOperation>();
             this.startPath = new ToolPath();
             this.endPath = new ToolPath();
-            this.name = "";
-            this.preCode = "";
-            this.postCode = "";
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
 
         // Everything but the pre and post codes
@@ -73,8 +73,8 @@ namespace CAMel.Types
             else { this.startPath = startPath; }
             if (endPath == null) { this.endPath = new ToolPath(); }
             else { this.endPath = endPath; }
-            this.preCode = "";
-            this.postCode = "";
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Copy Constructor
         private MachineInstruction(MachineInstruction Op)

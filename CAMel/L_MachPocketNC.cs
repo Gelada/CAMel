@@ -285,7 +285,7 @@ namespace CAMel.Types.Machine
 
                     PtCode = Pt.preCode + PtCode + Pt.postCode;
 
-                    if (Pt.name != "")
+                    if (Pt.name != string.Empty)
                     {
                         PtCode = PtCode + " " + this.commentStart + Pt.name + this.commentEnd;
                     }
@@ -373,7 +373,7 @@ namespace CAMel.Types.Machine
                 else // Safely move from one safe point to another.
                 {
                     ToolPath Move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                    Move.name = "";
+                    Move.name = string.Empty;
 
                     List<Point3d> route = new List<Point3d>();
                     int i;
@@ -423,7 +423,7 @@ namespace CAMel.Types.Machine
 
                             ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
                             if ((fP.matForm.intersect(newTP, 0).thrDist > 0
-                                || tP.matForm.intersect(newTP, 0).thrDist > 0) && !lng)
+                                || tP.matForm.intersect(newTP, 0).thrDist > 0))
                             {
                                 if (lng)
                                 {   // something has gone horribly wrong and 

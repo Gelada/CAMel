@@ -61,7 +61,7 @@ namespace CAMel
 
             Op.name = "Drilling depth " + D.Radius.ToString("0.000") + " at (" + D.Center.X.ToString("0.000") + "," + D.Center.Y.ToString("0.000") + "," + D.Center.Z.ToString("0.000") + ").";
 
-            ToolPath TP = new ToolPath("",MT,MF);
+            ToolPath TP = new ToolPath(string.Empty,MT,MF);
 
             // Additions for toolpath
             TP.Additions.insert = true;

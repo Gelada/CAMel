@@ -26,7 +26,7 @@ namespace CAMel
                 "Write CNC Code",
                 "CAMel", "CNC Code")
         {
-            this.filePath = "";
+            this.filePath = string.Empty;
             this.SaveCode = new CodeInfo();
             this.extension = "ngc";
             this.WS = WriteState.No_path;
@@ -55,7 +55,7 @@ namespace CAMel
             List<String> Ig = new List<string> { "Nothing to Ignore." };
             pManager.AddGenericParameter("Machine Instructions", "MI", "Complete set of machine instructions to convert to Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list,Ig);
-            pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, "");
+            pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, string.Empty);
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace CAMel
             // Extract Ranges
 
             Dictionary<String, Interval> Ranges = this.SaveCode.GetRanges();
-            string rOut = "";
+            string rOut = string.Empty;
 
             foreach (string k in Ranges.Keys)
             {
@@ -159,7 +159,7 @@ namespace CAMel
 
             lock(this.filePath)
             {
-                if(DA.GetData(2, ref this.filePath) && this.filePath != "")
+                if(DA.GetData(2, ref this.filePath) && this.filePath != string.Empty)
                 {
                     this.filePath = Path.GetDirectoryName(this.filePath);
                     this.filePath = Path.Combine(this.filePath, MI.name+"."+this.extension);

@@ -29,8 +29,8 @@ namespace CAMel
             pManager.AddNumberParameter("B-table offset", "Bt", "Distance from B-table to centre of A axis rotation.", GH_ParamAccess.item, 0.836);
             pManager.AddNumberParameter("B maximum", "Bmax", "Maximum value (+ or -) that the B axis can take. This can be adjusted in the machine settings.", GH_ParamAccess.item, 9999);
             pManager.AddBooleanParameter("Tool Compensation", "TC", "Use the machine's tool length compensation?", GH_ParamAccess.item, true);
-            pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, "");
-            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, "");
+            pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
+            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
         }
 
@@ -48,8 +48,8 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            string head = "";
-            string foot = "";
+            string head = string.Empty;
+            string foot = string.Empty;
             double PJ = 0;
             double Bt = 0;
             double Bmax = 0;

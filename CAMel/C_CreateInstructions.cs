@@ -26,7 +26,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "name", GH_ParamAccess.item,"");
+            pManager.AddTextParameter("Name", "N", "name", GH_ParamAccess.item,string.Empty);
             pManager.AddGenericParameter("Operations", "MO", "Machine Operations to apply\n A list of toolpaths will be packaged into a single operation.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Start Point", "SP", "Starting moves, can gather data from all sorts of scraps that imply a point. Will use (0,0,1) for direction when Points are used alone.", GH_ParamAccess.list);
             pManager.AddGenericParameter("End Point", "EP", "Ending moves, can gather data from all sorts of scraps that imply a point. Will use (0,0,1) for direction when Points are used alone.", GH_ParamAccess.list);
@@ -56,7 +56,7 @@ namespace CAMel
             List<Object> eP = new List<object>();
 
             IMachine M = null;
-            string name = "";
+            string name = string.Empty;
 
             if (!DA.GetData(0, ref name)) { return; }
             if (!DA.GetDataList(1, tempMO)) { return; }

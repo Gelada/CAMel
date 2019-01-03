@@ -50,25 +50,25 @@ namespace CAMel.Types
 public MachineOperation()
         {
             this.TPs = new List<ToolPath>();
-            this.name = "";
-            this.preCode = "";
-            this.postCode = "";
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Just name
         public MachineOperation(string name)
         {
             this.name = name;
             this.TPs = new List<ToolPath>();
-            this.preCode = "";
-            this.postCode = "";
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Name and ToolPaths
         public MachineOperation(string name, List<ToolPath> TPs)
         {
             this.name = name;
             this.TPs = TPs;
-            this.preCode = "";
-            this.postCode = "";
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Copy Constructor
         private MachineOperation(MachineOperation Op)

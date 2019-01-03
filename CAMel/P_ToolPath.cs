@@ -73,13 +73,13 @@ namespace CAMel.Types
         // Default Constructor, set everything to empty
         public ToolPath()
         {
-            this.name = "";
+            this.name = string.Empty;
             this.Pts = new List<ToolPoint>();
             this.matTool = null;
             this.matForm = null;
             this.Additions = new ToolPathAdditions();
-            this.preCode = "";
-            this.postCode = "";
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Just a MaterialTool
         public ToolPath(string name, MaterialTool MT)
@@ -89,8 +89,8 @@ namespace CAMel.Types
             this.matTool = MT;
             this.matForm = null;
             this.Additions = new ToolPathAdditions();
-            this.preCode = "";
-            this.postCode = "";
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // MaterialTool and features
         public ToolPath(string name, MaterialTool MT, ToolPathAdditions TPA)
@@ -100,8 +100,8 @@ namespace CAMel.Types
             this.matTool = MT;
             this.matForm = null;
             this.Additions = TPA;
-            this.preCode = "";
-            this.postCode = "";
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // MaterialTool and Form
         public ToolPath(string name, MaterialTool MT, IMaterialForm MF)
@@ -111,8 +111,8 @@ namespace CAMel.Types
             this.matTool = MT;
             this.matForm = MF;
             this.Additions = new ToolPathAdditions();
-            this.preCode = "";
-            this.postCode = "";
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // MaterialTool, Form and features
         public ToolPath(string name, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
@@ -122,8 +122,8 @@ namespace CAMel.Types
             this.matTool = MT; 
             this.matForm = MF;
             this.Additions = TPA;
-            this.preCode = "";
-            this.postCode = "";
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
         }
         // Copy Constructor
         private ToolPath(ToolPath TP)
