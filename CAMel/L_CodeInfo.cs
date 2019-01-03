@@ -69,8 +69,6 @@ namespace CAMel.Types
             return this.ranges;
         }
 
-        // TODO Print Ranges 
-
         public bool addWarning(string warn)
         {
             bool newWarning = false;
