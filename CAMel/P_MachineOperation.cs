@@ -46,10 +46,26 @@ namespace CAMel.Types
             }
         }
 
-// Default Constructor
-public MachineOperation()
+        // Default Constructor
+        public MachineOperation()
         {
             this.TPs = new List<ToolPath>();
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
+        }
+        // From list of toolpaths
+        public MachineOperation(List<ToolPath> TPs)
+        {
+            this.TPs =TPs;
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
+        }
+        // From toolpath
+        public MachineOperation(ToolPath TP)
+        {
+            this.TPs = new List<ToolPath>() { TP };
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
@@ -135,7 +151,7 @@ public MachineOperation()
             // We started with a list of toolpaths (1st level)
             // We create this block and then order it so we do 
             // all preparation a level at a time and then do a final pass of all paths
-            // TODO reorder cutting to increase efficency
+
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
 
             foreach (ToolPath TP in this)
@@ -298,6 +314,56 @@ public MachineOperation()
         internal Curve getLine()
         {
             throw new NotImplementedException();
+        }
+
+        // Process a collage of bits and pieces into a list of Operations
+        internal static List<MachineOperation> toOperations(object scraps, out int ignores)
+        {
+            List<MachineOperation> oMOs = new List<MachineOperation>();
+            ignores = 0;
+
+            if (scraps is null) { return oMOs; }
+
+            if (scraps is MachineOperation) { oMOs.Add((MachineOperation)scraps); }
+            if (scraps is List<ToolPath>) { oMOs.Add(new MachineOperation((List<ToolPath>)scraps)); }
+
+            // Otherwise process mixed up any other sort of list by term.
+            else if (scraps is IEnumerable)
+            {
+                bool tpPath = false;
+                ToolPath tempTP = new ToolPath();
+                foreach (object oB in (IEnumerable)scraps)
+                {
+                    if (oB is Point3d)
+                    {
+                        tpPath = true;
+                        tempTP.Add(new ToolPoint((Point3d)oB));
+                    }
+                    else if (oB is ToolPoint)
+                    {
+                        tpPath = true;
+                        tempTP.Add((ToolPoint)oB);
+                    }
+                    else
+                    {
+                        if (tpPath)
+                        {
+                            oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP }));
+                            tpPath = false;
+                            tempTP = new ToolPath();
+                        }
+                        if (oB is ToolPath) { oMOs.Add(new MachineOperation(new List<ToolPath> { (ToolPath)oB })); }
+                        else if (oB is MachineOperation) { oMOs.Add((MachineOperation)oB); }
+                        else if (oB is MachineInstruction) { oMOs.AddRange((MachineInstruction)oB); }
+                        else { ignores++; }
+                    }
+                }
+                if (tpPath)
+                {
+                    oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP }));
+                }
+            }
+            return oMOs;
         }
     }
 

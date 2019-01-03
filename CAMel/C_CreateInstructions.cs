@@ -51,9 +51,9 @@ namespace CAMel
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<MachineOperation> MO = new List<MachineOperation>();
-            List<IToolPointContainer> tempMO = new List<IToolPointContainer>();
-            List<Object> sP = new List<object>();
-            List<Object> eP = new List<object>();
+            List<Object> tempMO = new List<Object>();
+            List<Object> sP = new List<Object>();
+            List<Object> eP = new List<Object>();
 
             IMachine M = null;
             string name = string.Empty;
@@ -64,83 +64,21 @@ namespace CAMel
             DA.GetDataList(3, eP);
             if (!DA.GetData(4, ref M)) { return; }
 
-            // scan to find types
-
-            Boolean hasTP = false, hasMO = false;
-
-            foreach (IToolPointContainer tpc in tempMO)
-            {
-                if (tpc != null)
-                {
-                    switch (tpc.TypeName)
-                    {
-                        case "MachineInstruction":
-                        case "MachineOperation":
-                            hasMO = true;
-                            break;
-                        case "ToolPath":
-                            hasTP = true;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-            MachineOperation op = new MachineOperation();
-
-            int Invalids = 0;
-
-            if (!hasMO && hasTP) // Process a list of ToolPaths into a Machine Operation
-            {
-                foreach (IToolPointContainer tpc in tempMO)
-                {
-                    if (tpc == null) { Invalids++; }
-                    else { if (tpc.TypeName == "ToolPath") { op.Add((ToolPath)tpc); } }
-                }
-                if (op.Count > 0) { MO.Add(op); }
-            }
-            else if (hasMO) // Mix Machine operations and toolpaths each turned into their own operation. 
-            {
-                foreach (IToolPointContainer tpc in tempMO)
-                {
-                    if (tpc == null) { Invalids++; }
-                    else
-                    {
-                        switch (tpc.TypeName)
-                        {
-                            case "MachineInstruction":
-                                MO.AddRange((MachineInstruction)tpc);
-                                break;
-                            case "MachineOperation":
-                                MO.Add((MachineOperation)tpc);
-                                break;
-                            case "ToolPath":
-                                MO.Add(new MachineOperation());
-                                MO[MO.Count - 1].Add((ToolPath)tpc);
-                                break;
-                            default:
-                               break;
-                        }
-                    }
-                }
-            }
+            int ignores = 0;
+            MO = MachineOperation.toOperations(CAMel_Goo.cleanGooList(tempMO), out ignores);
 
             MachineInstruction Inst = null;
 
             if (MO.Count > 0)
             {
-                // Process sP and eP 
-                ToolPath startPath = M.toPath(sP);
-                ToolPath endPath = M.toPath(eP);
-
-                Inst = new MachineInstruction(name, M, MO, startPath, endPath);
-                if (Invalids > 1)
-                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + Invalids.ToString() + " invalid elements (probably nulls) were ignored."); }
-                else if (Invalids > 0)
+                Inst = new MachineInstruction(name, M, MO, M.toPath(sP), M.toPath(eP));
+                if (ignores > 1)
+                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores.ToString() + " invalid elements (probably nulls) were ignored."); }
+                else if (ignores == 1)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored."); }
             }
             else
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable data"); }
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable Machine Operations"); }
             
             DA.SetData(0, Inst);
         }

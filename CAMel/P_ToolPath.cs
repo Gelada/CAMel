@@ -651,14 +651,13 @@ namespace CAMel.Types
         public IEnumerator<ToolPoint> GetEnumerator() { return ((IList<ToolPoint>)this.Pts).GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return ((IList<ToolPoint>)this.Pts).GetEnumerator(); }
 
-        internal static ToolPath toPath(List<object> scraps)
+        internal static ToolPath toPath(IEnumerable scraps)
         {
             ToolPath oP = new ToolPath();
             foreach (object oB in scraps)
             {
                 if (oB is IToolPointContainer) { oP.AddRange(((IToolPointContainer)oB).getSinglePath()); }
                 if (oB is Point3d) { oP.Add((Point3d)oB); }
-                if (oB is List<Point3d>) { oP.AddRange((List<Point3d>)oB); }
             }
             return oP;
         }
