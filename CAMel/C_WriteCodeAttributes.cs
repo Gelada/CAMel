@@ -21,10 +21,8 @@ namespace CAMel
                 { WriteState.Waiting, @"Waiting" }
             };
         }
-
-#pragma warning disable IDE0044 // Add readonly modifier
+        
         private Dictionary<WriteState, String> WriteMessages;
-#pragma warning restore IDE0044 // Add readonly modifier
 
         protected override void Layout()
         {
