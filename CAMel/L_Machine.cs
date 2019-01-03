@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
 
@@ -372,16 +373,17 @@ namespace CAMel.Types.Machine
         }
 
         // GCode reading
-        private static readonly Regex numbPattern = new Regex(@"^([0-9\-.]+).*", RegexOptions.Compiled);
-        
+        private static Regex numbPattern = new Regex(@"^([0-9\-.]+)", RegexOptions.Compiled);
+
         static private double getValue(string line, char split, double old, ref bool changed, ref bool unset)
         {
             double val = old;
             string[] splitLine = line.Split(split);
-            if (splitLine.Length > 1 && numbPattern.IsMatch(splitLine[1]))
+            if (splitLine.Length > 1)
             {
-                string monkey = numbPattern.Replace(splitLine[1], "$1");
-                val = Convert.ToDouble(monkey);
+                Match monkey = numbPattern.Match(splitLine[1]);
+                if (monkey.Success)
+                { val = double.Parse(monkey.Value); }
                 if (val != old) { changed = true; }
             }
             if (double.IsNaN(val)) { unset = true; }
@@ -390,30 +392,33 @@ namespace CAMel.Types.Machine
         // TODO detect tool changes and new paths
         static public ToolPath gcRead(IGCodeMachine M, List<MaterialTool> MTs, string Code, List<char> terms)
         {
-            ToolPath TP = new ToolPath();
-            Dictionary<char, double> vals = new Dictionary<char, double>();
-            foreach(char c in terms) { vals.Add(c, double.NaN); }
+            ToolPath TP = new ToolPath(); Dictionary<char, double> vals = new Dictionary<char, double>();
 
-            char[] seps = { '\n', '\r' };
-            String[] Lines = Code.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+            foreach (char c in terms) { vals.Add(c, double.NaN); }
+
             bool changed, unset;
 
-            foreach (String line in Lines)
+            using (StringReader reader = new StringReader(Code))
             {
-                changed = false;
-                unset = false;
-                foreach (char t in terms)
-                { vals[t] = getValue(line, t, vals[t], ref changed, ref unset); }
-                //interpret a G0 command.
-                if (line.Contains(@"G00") || line.ToString().Contains(@"G0 "))
+                // Loop over the lines in the string.
+                string line;
+                while ((line = reader.ReadLine()) != null)
                 {
-                    if (vals.ContainsKey('F') && vals['F'] != 0)
+                    changed = false;
+                    unset = false;
+                    foreach (char t in terms)
+                    { vals[t] = getValue(line, t, vals[t], ref changed, ref unset); }
+                    //interpret a G0 command.
+                    if (line.Contains(@"G00") || line.Contains(@"G0 "))
                     {
-                        changed = true;
-                        vals['F'] = 0;
+                        if (vals.ContainsKey('F') && vals['F'] != 0)
+                        {
+                            changed = true;
+                            vals['F'] = 0;
+                        }
                     }
+                    if (changed && !unset) { TP.Add(M.readTP(vals, MTs[0])); }
                 }
-                if (changed && !unset){TP.Add(M.readTP(vals, MTs[0]));}
             }
             return TP;
         }
