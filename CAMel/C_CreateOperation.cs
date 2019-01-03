@@ -46,15 +46,24 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<ToolPath> TPs = new List<ToolPath>();
+            List<object> TPs = new List<object>();
             string name = string.Empty;
 
             if (!DA.GetData(0, ref name)) { return; }
             if (!DA.GetDataList(1, TPs)) { return; }
+            int ignores = 0;
+            List<MachineOperation> MOs = MachineOperation.toOperations(TPs, out ignores);
+            if (MOs.Count > 0)
+            {
+                if (ignores > 1)
+                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores.ToString() + " invalid elements (probably nulls) were ignored."); }
+                else if (ignores == 1)
+                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored."); }
+            }
+            else
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable Machine Operations"); }
 
-            MachineOperation MO = new MachineOperation(name, TPs);
-
-            DA.SetData(0, MO);
+            DA.SetData(0, MOs);
         }
 
         /// <summary>
