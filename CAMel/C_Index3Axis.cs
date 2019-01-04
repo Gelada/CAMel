@@ -57,44 +57,14 @@ namespace CAMel
             if (!DA.GetData(2, ref MT)) { return;}
             if (!DA.GetData(3, ref MF)) { return;}
 
-            MachineOperation Op = new MachineOperation
-            {
-                name = "Index 3-Axis Cutting with " + C.Count.ToString() + " path"
-            };
-            if (C.Count > 1) { Op.name = Op.name + "s"; }
+            int invalidCurves = 0;
 
-            ToolPath TP;
-            int i = 1;
+            MachineOperation Op = Operations.opIndex3Axis(C, Dir, MT, MF, out invalidCurves);
 
-            int InvalidCurves = 0; // Keep track of any invalid curves.
-
-            foreach(Curve c in C)
-            {
-                // Create and add name, material/tool and material form
-                TP = new ToolPath("Index 3-Axis Path", MT, MF);
-                if(C.Count > 1) { TP.name = TP.name + " " + i.ToString(); }
-
-                // Additions for toolpath
-                TP.Additions.insert = true;
-                TP.Additions.retract = true;
-                TP.Additions.stepDown = true;
-                TP.Additions.sdDropStart = true;
-                TP.Additions.sdDropMiddle = 8*MF.safeDistance;
-                TP.Additions.sdDropEnd = true;
-                TP.Additions.threeAxisHeightOffset = true;
-
-                // Turn Curve into path
-
-                if (TP.convertCurve(c, Dir)) { Op.Add(TP); }
-                else { InvalidCurves++; }
-                i++;
-            }
-
-            if (InvalidCurves > 1)
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + InvalidCurves.ToString() + " invalid curves (probably nulls) were ignored."); }
-            else if (InvalidCurves > 0)
+            if( invalidCurves > 1)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + invalidCurves.ToString() + " invalid curves (probably nulls) were ignored."); }
+            else if (invalidCurves > 0)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored."); }
-
 
             if (Op.Count > 0) { DA.SetData(0, new GH_MachineOperation(Op)); }
             else { DA.SetData(0, null); }

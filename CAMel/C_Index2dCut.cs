@@ -42,7 +42,6 @@ namespace CAMel
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachineOperationPar(), "Operation", "O", "2d cut Operation", GH_ParamAccess.item);
-            pManager.AddCurveParameter("Path", "P", "Offset Path", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -73,75 +72,15 @@ namespace CAMel
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Curves that are not closed will not be offset.");
                 Os = 0;
             }
-            // Note multiplication will give negative only if one if positive and the other negative.
+            // Note multiplication will give negative only if one is positive and the other negative.
             if(Os*leadInOut < 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Offsetting and Lead in/out on different sides of the curve.");
             }
 
-            // Shift curve to XY plane
-
-            Plane P = new Plane(Point3d.Origin, D);
-            C.Transform(Transform.PlaneToPlane(P, Plane.WorldXY));
-
-            // ensure the curve is anticlockwise
-            if (Os != 0) {
-                if (C.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
-                {
-                    C.Reverse();
-                }
-            }
-
-            // record the average Z location of the curve
-            BoundingBox BB = C.GetBoundingBox(true);
-            double useZ = (BB.Max.Z + BB.Min.Z) / 2.0;
-
-            // turn the curve into a Polyline
-            PolylineCurve PL = ToolPath.convertAccurate(C);
-
-            // offSet
-            List<PolylineCurve> osC = new List<PolylineCurve>();
-            if (Os == 0) { osC.Add(PL); }
-            else { osC = Offsetting.offset(PL, Os*MT.toolWidth / 2.0); }
-
-            // create Operation
-
-            MachineOperation Op = new MachineOperation
-            { name = "2d Cut Path" };
-            ToolPath TP;
-            List<PolylineCurve> Cs = new List<PolylineCurve>();
-            int i = 1;
-            foreach (PolylineCurve c in osC)
-            {
-                // Create and add name, material/tool and material form
-                TP = new ToolPath("Cut", MT, MF);
-                if (osC.Count > 1) { TP.name = TP.name + " " + i.ToString(); }
-                i++;
-
-                // Additions for toolpath
-                TP.Additions.insert = true;
-                TP.Additions.retract = true;
-                TP.Additions.stepDown = true;
-                TP.Additions.sdDropStart = true;
-                TP.Additions.sdDropMiddle = 8 * MF.safeDistance;
-                TP.Additions.sdDropEnd = true;
-                TP.Additions.threeAxisHeightOffset = true;
-                TP.Additions.tabbing = tabs;
-                TP.Additions.leadFactor = leadInOut;
-
-                // return to original orientation
-
-                c.Translate(new Vector3d(0, 0, -useZ));
-                c.Transform(Transform.PlaneToPlane(Plane.WorldXY, P));
-
-                // Add to Operation
-                TP.convertCurve(c, D);
-                Op.Add(TP);
-                Cs.Add(TP.getLine());
-            }
+            MachineOperation Op = Operations.opIndex2dCut(C, D, Os, leadInOut, tabs, MT, MF);
 
             DA.SetData(0, new GH_MachineOperation(Op));
-            DA.SetDataList(1, Cs);
         }
 
         /// <summary>

@@ -112,6 +112,7 @@
     <Compile Include="L_MFCylinder.cs" />
     <Compile Include="L_CodeInfo.cs" />
     <Compile Include="L_CAMel_Base.cs" />
+    <Compile Include="L_Operations.cs" />
     <Compile Include="L_Offsetting.cs" />
     <Compile Include="L_ToolPointContainer.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
