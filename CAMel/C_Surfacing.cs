@@ -33,11 +33,11 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGeometryParameter("Surface", "S","The surface, brep or mesh to carve", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Rough Path", "R", "Information to create roughing path", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Material/Tool", "MTR", "The material to cut and the tool to do it for roughing", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Finish Path", "F", "Information to create finishing path", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Material/Tool", "MTF", "The material to cut and the tool to do it for finishing", GH_ParamAccess.item);
-            pManager.AddGenericParameter("MaterialForm", "MF", "The shape of the material to cut", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_SurfacePathPar(),"Rough Path", "R", "Information to create roughing path", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool Rough", "MTR", "The material to cut and the tool to do it for roughing", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_SurfacePathPar(), "Finish Path", "F", "Information to create finishing path", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool Finish", "MTF", "The material to cut and the tool to do it for finishing", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -45,12 +45,8 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Rough", "R", "Roughing Operation", GH_ParamAccess.item);
-            //pManager.AddGenericParameter("Rough Path", "RP", "Path for Roughing Operation", GH_ParamAccess.tree);
-            //pManager.AddGenericParameter("Rough Directions", "RD", "Tool directions for Roughing Operation", GH_ParamAccess.tree);
-            pManager.AddGenericParameter("Finish", "F", "Finishing Operation", GH_ParamAccess.item);
-            //pManager.AddGenericParameter("Finish Path", "FP", "Path for Finishing Operation", GH_ParamAccess.tree);
-            //pManager.AddGenericParameter("Finish Directions", "FD", "Tool directions for Finishing Operation", GH_ParamAccess.tree);
+            pManager.AddParameter(new GH_MachineOperationPar(), "Rough", "R", "Roughing Operation", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MachineOperationPar(), "Finish", "F", "Finishing Operation", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -131,37 +127,8 @@ namespace CAMel
             Rough.name = "Rough " + Rough.name;
             Finish.name = "Finish " + Finish.name;
 
-            /*List<List<Point3d>> Pts;
-            List<List<Vector3d>> Dirs = new List<List<Vector3d>>();
-            DataTree<Point3d> RPTree = new DataTree<Point3d>();
-            DataTree<Vector3d> RDTree = new DataTree<Vector3d>();
-            GH_Path path;
-
-            Pts = Rough.GetPointsandDirs(out Dirs);
-            for(int i = 0; i<Pts.Count; i++)
-            {
-                path = new GH_Path(i);
-                RPTree.AddRange(Pts[i],path);
-                RDTree.AddRange(Dirs[i], path);
-            }*/
-
             DA.SetData(0, new GH_MachineOperation(Rough));
-            //DA.SetDataTree(1, RPTree);
-            //DA.SetDataTree(2, RDTree);
-
-            /*DataTree<Point3d> FPTree = new DataTree<Point3d>();
-            DataTree<Vector3d> FDTree = new DataTree<Vector3d>();
-            Pts = Finish.RawPaths(out Dirs);
-            for (int i = 0; i < Pts.Count; i++)
-            {
-                path = new GH_Path(i);
-                FPTree.AddRange(Pts[i], path);
-                FDTree.AddRange(Dirs[i], path);
-            }*/
-
             DA.SetData(1, new GH_MachineOperation(Finish));
-            //DA.SetDataTree(4, FPTree);
-            //DA.SetDataTree(5, FDTree);
         }
 
         /// <summary>

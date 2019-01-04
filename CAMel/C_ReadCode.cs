@@ -27,8 +27,8 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Code", "C", "CNC code file", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Machine", "M", "Machine to read code", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Material Tool", "MT", "List of Material/Tools used (currently only first will be used)", GH_ParamAccess.list);
+            pManager.AddParameter(new GH_MachinePar(),"Machine", "M", "Machine to read code", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("ToolPath", "TP", "Full toolpath described by the file", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_ToolPathPar(), "ToolPath", "TP", "Full toolpath described by the file", GH_ParamAccess.item);
             pManager.AddPointParameter("Points", "Pts", "Position of the machine", GH_ParamAccess.list);
             pManager.AddVectorParameter("Directions", "Dirs", "Direction of the tool", GH_ParamAccess.list);
             pManager.AddVectorParameter("Speeds and Feeds", "SF", "Vectors with speeds (X) and feeds (Y).", GH_ParamAccess.list);

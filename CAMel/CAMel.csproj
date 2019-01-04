@@ -90,7 +90,6 @@
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_ReadToolFile.cs" />
     <Compile Include="C_Trace.cs" />
-    <Compile Include="C_CreatePocketingPath.cs" />
     <Compile Include="C_HelixSurface.cs" />
     <Compile Include="C_CreateSurfacePath.cs" />
     <Compile Include="C_ParallelSurface.cs" />

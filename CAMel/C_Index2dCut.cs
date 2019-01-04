@@ -32,8 +32,8 @@ namespace CAMel
             pManager.AddNumberParameter("Offset", "O", "Offset Curve, 0 for none, -1 for interior, 1 for exterior. Actually uses half tool thickness scaled by this value, so variation by toolpath is possible.", GH_ParamAccess.item,0);
             pManager.AddNumberParameter("Lead in/out", "L", "Lead in and out factor, 0 for none, -1 for interior, 1 for exterior. Actually uses machines' standard lead in and out scaled by this value, so variation by toolpath is possible.", GH_ParamAccess.item, 0);
             pManager.AddBooleanParameter("Tabbing","T", "Add tabs if the machine requires. (Not yet implemented)",GH_ParamAccess.item, false);
-            pManager.AddGenericParameter("Material/Tool", "MT", "The material to cut and the tool to do it", GH_ParamAccess.item);
-            pManager.AddGenericParameter("MaterialForm", "MF","The shape of the material to cut", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Operation", "O", "2d cut Operation", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MachineOperationPar(), "Operation", "O", "2d cut Operation", GH_ParamAccess.item);
             pManager.AddCurveParameter("Path", "P", "Offset Path", GH_ParamAccess.list);
         }
 

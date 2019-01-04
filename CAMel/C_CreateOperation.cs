@@ -28,7 +28,7 @@ namespace CAMel
             for (int i = 0; i < 7; i++) { TPAdef.Add(0); }
 
             pManager.AddTextParameter("Name", "N", "Name of operation", GH_ParamAccess.item,string.Empty);
-            pManager.AddGenericParameter("Toolpaths", "TP", "The list of toolpaths to use for the operation.", GH_ParamAccess.list); 
+            pManager.AddGenericParameter("Toolpaths", "TP", "The list of toolpaths to use for the operation.\nWill attempt to process various reasonable collections.", GH_ParamAccess.list); 
 
         }
 
@@ -37,7 +37,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Machine Operation", "MO", "A machine operation.", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MachineOperationPar(),"Machine Operation", "MO", "A machine operation.", GH_ParamAccess.item);
         }
 
         /// <summary>

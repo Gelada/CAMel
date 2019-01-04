@@ -27,10 +27,10 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "name", GH_ParamAccess.item,string.Empty);
-            pManager.AddGenericParameter("Operations", "MO", "Machine Operations to apply\n A list of toolpaths will be packaged into a single operation.", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Operations", "MO", "Machine Operations to apply\n Will attempt to process any reasonable collection.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Start Point", "SP", "Starting moves, can gather data from all sorts of scraps that imply a point. Will use (0,0,1) for direction when Points are used alone.", GH_ParamAccess.list);
             pManager.AddGenericParameter("End Point", "EP", "Ending moves, can gather data from all sorts of scraps that imply a point. Will use (0,0,1) for direction when Points are used alone.", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Machine", "M", "Machine", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MachinePar(), "Machine", "M", "Machine", GH_ParamAccess.item);
 
             pManager[2].Optional = true;
             pManager[3].Optional = true;
@@ -41,7 +41,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Instructions", "I", "Machine Instructions", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MachineInstructionPar(),"Instructions", "I", "Machine Instructions", GH_ParamAccess.item);
         }
 
         /// <summary>

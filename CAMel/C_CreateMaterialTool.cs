@@ -45,7 +45,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("MaterialTool", "MT", "Details of material and the tool cutting it", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTool", "MT", "Details of material and the tool cutting it", GH_ParamAccess.item);
         }
 
         /// <summary>

@@ -31,7 +31,7 @@ namespace CAMel
             pManager.AddGeometryParameter("Surface", "S", "Brep or Mesh to Mill", GH_ParamAccess.item);
             pManager.AddCurveParameter("Curve", "C", "Curve to run parallel to", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Direction", "Dir", "Plane to use, -Z is projection direction, curve moves parallel to Y.", GH_ParamAccess.item, Plane.WorldXY);
-            pManager.AddGenericParameter("Material Tool", "MT", "Information about the material and tool", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item,0);
             pManager.AddNumberParameter("Step over", "SO", "Stepover as a mutliple of tool width. Default .5.", GH_ParamAccess.item, 0.5);
             pManager.AddBooleanParameter("Zig and Zag", "Z", "Go forward and back, or just forward along path", GH_ParamAccess.item, true);
@@ -43,8 +43,8 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("SurfacePath", "SP", "Surfacing Path", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Paths", "P", "Paths", GH_ParamAccess.list);
+            pManager.AddParameter(new GH_SurfacePathPar(), "SurfacePath", "SP", "Surfacing Path", GH_ParamAccess.item);
+            pManager.AddCurveParameter("Paths", "P", "Paths", GH_ParamAccess.list);
         }
 
         /// <summary>

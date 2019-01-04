@@ -40,7 +40,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("MaterialForm", "MF", "Details of material position", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialFormPar(),"MaterialForm", "MF", "Details of material position", GH_ParamAccess.item);
         }
 
         /// <summary>

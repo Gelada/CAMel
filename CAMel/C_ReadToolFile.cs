@@ -98,7 +98,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("MaterialTools", "MT", "List of Material Tool information read from the .csv file", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTools", "MT", "Correct from the .csv file", GH_ParamAccess.item);
         }
 
         /// <summary>
