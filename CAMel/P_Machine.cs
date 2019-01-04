@@ -34,7 +34,6 @@ namespace CAMel.Types.Machine
         void writeCode(ref CodeInfo Co, ToolPath tP);
         void writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first);
 
-
         ToolPath readCode(List<MaterialTool> MTs, string Code);
 
         ToolPath insertRetract(ToolPath tP);
@@ -50,25 +49,13 @@ namespace CAMel.Types.Machine
     public class GH_Machine : CAMel_Goo<IMachine>
     {
         // Default constructor
-        public GH_Machine()
-        {
-            this.Value = null;
-        }
+        public GH_Machine() { this.Value = null; }
         // Unwrapped type
-        public GH_Machine(IMachine M)
-        {
-            this.Value = M;
-        }
-        // Copy Constructor
-        public GH_Machine(GH_Machine M)
-        {
-            this.Value = M.Value;
-        }
+        public GH_Machine(IMachine M) { this.Value = M; }
+        // Copy Constructor (just reference as Machine is Immutable)
+        public GH_Machine(GH_Machine M) { this.Value = M.Value;  }
         // Duplicate
-        public override IGH_Goo Duplicate()
-        {
-            return new GH_Machine(this);
-        }
+        public override IGH_Goo Duplicate() { return new GH_Machine(this); }
 
         public override bool CastTo<Q>(ref Q target)
         {
@@ -83,11 +70,8 @@ namespace CAMel.Types.Machine
 
         public override bool CastFrom(object source)
         {
-            if (source == null)
-            {
-                return false;
-            }
-            if (source is IMachine)
+            if (source == null) { return false; }
+            if (typeof(IMachine).IsAssignableFrom(source.GetType()))
             {
                 this.Value = (IMachine)source;
                 return true;

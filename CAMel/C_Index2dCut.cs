@@ -140,7 +140,7 @@ namespace CAMel
                 Cs.Add(TP.getLine());
             }
 
-            DA.SetData(0, Op);
+            DA.SetData(0, new GH_MachineOperation(Op));
             DA.SetDataList(1, Cs);
         }
 

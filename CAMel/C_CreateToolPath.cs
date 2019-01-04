@@ -160,16 +160,14 @@ namespace CAMel
                     else { usePostCo = postCode[i]; }
 
                     TP.Add(new ToolPoint(pts[i], usedir, usePreCo,usePostCo, useSF.X, useSF.Y));
-
                 }
-
             }
             else
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists of directions and speeds/feeds must be a single item or the same length as the list of points.");
             }
 
-            DA.SetData(0, TP);
+            DA.SetData(0, new GH_ToolPath(TP));
         }
 
         /// <summary>

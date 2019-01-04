@@ -86,11 +86,9 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="ClassDiagram1.cd" />
-    <None Include="C_PhotoContours.cs" />
     <None Include="C_Create2AxisMachine.cs" />
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_ReadToolFile.cs" />
-    <Compile Include="C_PhotoSurface.cs" />
     <Compile Include="C_Trace.cs" />
     <Compile Include="C_CreatePocketingPath.cs" />
     <Compile Include="C_HelixSurface.cs" />
@@ -125,7 +123,6 @@
     <Compile Include="clipper.cs" />
     <Compile Include="L_Machine.cs" />
     <Compile Include="P_MachineInstructions.cs" />
-    <None Include="P_PocketPath.cs" />
     <Compile Include="P_SurfacePath.cs" />
     <Compile Include="P_MachineOperation.cs" />
     <Compile Include="P_MaterialForm.cs" />

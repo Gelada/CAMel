@@ -19,19 +19,36 @@ namespace CAMel.Types
     // Add a little more standard stuff to GH_Goo
     public class CAMel_Goo<T> : GH_Goo<T> where T : ICAMel_Base
     {
-        // Always valid
-        public override bool IsValid { get { return true; } }
+        // Valid if not null
+        public override bool IsValid
+        {
+            get {
+                if (this.Value == null) { return false; }
+                return true;
+            }
+        }
 
         public override IGH_Goo Duplicate()
         {
             throw new NotImplementedException("Camel_Base object has not implemented its duplicate command.");
         }
 
-        public override string TypeDescription => this.Value.TypeDescription; 
+        public override string TypeDescription
+        {
+            get
+            {
+                if (this.Value == null) { return "CAMel type currently set to null."; }
+                return this.Value.TypeDescription;
+            }
+        }
 
-        public override string TypeName { get { return "GH_" + this.Value.TypeName; } }
+        public override string TypeName { get { return typeof(T).Name; } }
 
-        public override string ToString() => this.Value.ToString();
+        public override string ToString()
+        {
+            if (this.Value == null) { return "CAMel type currently set to null."; }
+            return this.Value.ToString();
+        }
 
         public override object ScriptVariable() => this.Value;
     }

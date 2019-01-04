@@ -406,23 +406,14 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public class GH_SurfacePath : CAMel_Goo<SurfacePath>
     {
-
         // Default Constructor
-        public GH_SurfacePath(SurfacePath SP)
-        {
-            this.Value = SP;
-        }
-
-        // Copy Constructor.
-        public GH_SurfacePath(GH_SurfacePath Op)
-        {
-            this.Value = Op.Value;
-        }
+        public GH_SurfacePath() { this.Value = null; }
+        // Frome Unwrapped
+        public GH_SurfacePath(SurfacePath SP) { this.Value = SP; }
+        // Copy Constructor (just reference as SurfacePath is Immutable)
+        public GH_SurfacePath(GH_SurfacePath Op) { this.Value = Op.Value; }
         // Duplicate
-        public override IGH_Goo Duplicate()
-        {
-            return new GH_SurfacePath(this);
-        }
+        public override IGH_Goo Duplicate() { return new GH_SurfacePath(this); }
 
         public override bool CastTo<Q>(ref Q target)
         {
@@ -437,11 +428,9 @@ namespace CAMel.Types
 
         public override bool CastFrom(object source)
         {
-            if (source == null)
-            {
-                return false;
-            }
-            if (source is SurfacePath)
+            if (source == null) { return false; }
+            // From unwrapped
+            if (typeof(SurfacePath).IsAssignableFrom(source.GetType()))
             {
                 this.Value = (SurfacePath)source;
                 return true;

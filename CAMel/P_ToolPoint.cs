@@ -8,7 +8,7 @@ using Rhino.Geometry;
 namespace CAMel.Types
 {
     // One position of the machine
-    public class ToolPoint : IToolPointContainer, ICloneable
+    public class ToolPoint : IToolPointContainer
     {
         public Point3d pt { get; set; }      // Tool Tip position
         private Vector3d _dir;
@@ -179,59 +179,47 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_ToolPoint : GH_ToolPointContainer<ToolPoint>, IGH_PreviewData
+    sealed public class GH_ToolPoint : CAMel_Goo<ToolPoint>, IGH_PreviewData
     {
         // Default Constructor, set up at the origin with direction set to 0 vector.
-        public GH_ToolPoint()
-        {
-            this.Value = new ToolPoint();
-        }
-        // Just a point, set direction to 0 vector.
-        public GH_ToolPoint(Point3d Pt)
-        {
-            this.Value = new ToolPoint(Pt);
-        }
-        // Use point and direction, normalise direction if not 0 vector.
-        public GH_ToolPoint(Point3d Pt, Vector3d D)
-        {
-            this.Value = new ToolPoint(Pt, D);
-        }
-        // Use point direction and extra Code, normalise direction if not 0 vector.
-        public GH_ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode)
-        {
-            this.Value = new ToolPoint(Pt,D,preCode, postCode);
-        }
-        // Use point direction and override speed and feed, normalise direction if not 0 vector.
-        public GH_ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
-        {
-            this.Value = new ToolPoint(Pt,D,speed,feed);
-        }       
+        public GH_ToolPoint() { this.Value = new ToolPoint(); }
         // Create from unwrapped version
-        public GH_ToolPoint(ToolPoint TP)
-        {
-            this.Value = TP.deepClone();
-        }
+        public GH_ToolPoint(ToolPoint TP) { this.Value = TP.deepClone(); }
         // Copy Constructor
-        public GH_ToolPoint(GH_ToolPoint TP)
-        {
-            this.Value = TP.Value.deepClone();
-        }
+        public GH_ToolPoint(GH_ToolPoint TP) { this.Value = TP.Value.deepClone(); }
         // Duplicate
-        public override IGH_Goo Duplicate()
-        {
-            return new GH_ToolPoint(this);
-        }
+        public override IGH_Goo Duplicate() {return new GH_ToolPoint(this); }
   
         public override bool CastTo<Q>(ref Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(ToolPoint)))
+            {
+                object ptr = this.Value;
+                target = (Q)ptr;
+                return true;
+            }
             if (typeof(Q).IsAssignableFrom(typeof(Point3d)))
             {
-                target = (Q)(object)this.Value.pt;
+                object ptr = this.Value.pt;
+                target = (Q)ptr;
                 return true;
             }
             if (typeof(Q).IsAssignableFrom(typeof(GH_Point)))
             {
-                target = (Q)(object)new GH_Point(this.Value.pt);
+                object ptr = new GH_Point(this.Value.pt);
+                target = (Q)ptr;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(Vector3d)))
+            {
+                object ptr = this.Value.dir;
+                target = (Q)ptr;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Vector)))
+            {
+                object ptr =new GH_Vector(this.Value.dir);
+                target = (Q)ptr;
                 return true;
             }
             return false;

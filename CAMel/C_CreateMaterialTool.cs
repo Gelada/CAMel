@@ -104,7 +104,7 @@ namespace CAMel
 
             MaterialTool MT = new MaterialTool(matName, toolName, T, S, CF, PF, CD, FD, TW, TL, ES, To, mS);
 
-            DA.SetData(0, MT);
+            DA.SetData(0, new GH_MaterialTool(MT));
         }
      
         /// <summary>

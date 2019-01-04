@@ -248,21 +248,13 @@ namespace CAMel.Types
     public class GH_MachineInstruction : CAMel_Goo<MachineInstruction>
     {
         // Default Constructor;
-        public GH_MachineInstruction()
-        {
-            this.Value = new MachineInstruction();
-        }
-
+        public GH_MachineInstruction() { this.Value = new MachineInstruction(); }
+        // Construct from value alone
+        public GH_MachineInstruction(MachineInstruction MI) { this.Value = MI; }
         // Copy Constructor.
-        public GH_MachineInstruction(GH_MachineInstruction Op)
-        {
-            this.Value = Op.Value.deepClone();
-        }
+        public GH_MachineInstruction(GH_MachineInstruction Op) { this.Value = Op.Value.deepClone(); }
         // Duplicate
-        public override IGH_Goo Duplicate()
-        {
-            return new GH_MachineInstruction(this);
-        }
+        public override IGH_Goo Duplicate() { return new GH_MachineInstruction(this); }
  
         public override bool CastTo<Q>(ref Q target)
         {
@@ -272,19 +264,41 @@ namespace CAMel.Types
                 target = (Q)ptr;
                 return true;
             }
+            if (typeof(Q).IsAssignableFrom(typeof(ToolPath)))
+            {
+                object ptr = this.Value.getSinglePath();
+                target = (Q)ptr;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ToolPath)))
+            {
+                object ptr = new GH_ToolPath(this.Value.getSinglePath());
+                target = (Q)ptr;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(IMachine)))
+            {
+                object ptr = this.Value.mach;
+                target = (Q)ptr;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Machine)))
+            {
+                object ptr = new GH_Machine(this.Value.mach);
+                target = (Q)ptr;
+                return true;
+            }
 
             return false;
         }
 
         public override bool CastFrom(object source)
         {
-            if (source == null)
+            if (source == null) { return false; }
+            // Cast from unwrapped MachineInstruction
+            if (typeof(MachineInstruction).IsAssignableFrom(source.GetType()))
             {
-                return false;
-            }
-            if (source is MachineInstruction)
-            {
-                this.Value = ((MachineInstruction)source).deepClone();
+                this.Value = (MachineInstruction)source;
                 return true;
             }
             return false;

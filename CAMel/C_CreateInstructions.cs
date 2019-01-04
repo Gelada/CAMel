@@ -80,7 +80,7 @@ namespace CAMel
             else
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable Machine Operations"); }
             
-            DA.SetData(0, Inst);
+            DA.SetData(0, new GH_MachineInstruction(Inst));
         }
 
         /// <summary>

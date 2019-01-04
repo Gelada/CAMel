@@ -253,8 +253,7 @@ namespace CAMel.Types.MaterialForm
     
     public static class MaterialForm
     {
-        // FIXME: These functions need to do some inspection of the input geometry and determine what MaterialForm
-        // is best suited for use. Currently these are defaulted to a basic unit box.
+        // Currently links to grasshopper to use "CastTo" behaviours. 
         public static bool create(IGH_Goo inputGeometry, double tolerance, double safeD, out IMaterialForm MF)
         {
             if(inputGeometry.CastTo<Box>(out Box BoxT))
@@ -364,27 +363,13 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public class GH_MaterialForm : CAMel_Goo<IMaterialForm>
     {
-        public GH_MaterialForm()
-        {
-            this.Value = null;
-        }
+        public GH_MaterialForm() { this.Value = null; }
         // Construct from unwrapped object
-        public GH_MaterialForm(IMaterialForm MF)
-        {
-            this.Value = MF;
-        }
-
-        // Copy Constructor.
-        public GH_MaterialForm(GH_MaterialForm MF)
-        {
-            this.Value = MF.Value;
-        }
-
+        public GH_MaterialForm(IMaterialForm MF) { this.Value = MF; }
+        // Copy Constructor (just reference as MaterialForm is Immutable)
+        public GH_MaterialForm(GH_MaterialForm MF) { this.Value = MF.Value; }
         // Duplicate
-        public override IGH_Goo Duplicate()
-        {
-            return new GH_MaterialForm(this);
-        }
+        public override IGH_Goo Duplicate() { return new GH_MaterialForm(this); }
 
         public override bool CastTo<Q>(ref Q target)
         {
@@ -412,13 +397,11 @@ namespace CAMel.Types
 
         public override bool CastFrom(object source)
         {
-            if (source == null)
+            if (source == null) { return false; }
+            //Cast from unwrapped MO
+            if (typeof(IMaterialForm).IsAssignableFrom(source.GetType()))
             {
-                return false;
-            }
-            if (source is IMaterialForm)
-            {
-                this.Value = (IMaterialForm) source;
+                Value = (IMaterialForm)source;
                 return true;
             }
             return false;

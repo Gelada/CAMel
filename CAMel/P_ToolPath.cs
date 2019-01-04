@@ -250,7 +250,7 @@ namespace CAMel.Types
                 for(i = 0; i < CutLevel.Count; i++)
                 {
                     NewPaths.Add(new List<ToolPath>());
-                    tempTP = (ToolPath)useTP.deepCloneWithNewPoints(new List<ToolPoint>());
+                    tempTP = useTP.deepCloneWithNewPoints(new List<ToolPoint>());
                     tempTP.name = useTP.name + " Pass " + (i + 1).ToString();
                     tempTP.Additions.stepDown = false;
 
@@ -664,7 +664,7 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_ToolPath : GH_ToolPointContainer<ToolPath>, IGH_PreviewData, IGH_BakeAwareData
+    public class GH_ToolPath : CAMel_Goo<ToolPath>, IGH_PreviewData, IGH_BakeAwareData
     {
         public BoundingBox ClippingBox
         {
@@ -676,31 +676,30 @@ namespace CAMel.Types
             }
         }
         // Default Constructor
-        public GH_ToolPath()
-        {
-            this.Value = new ToolPath();
-        }
+        public GH_ToolPath() { this.Value = new ToolPath(); }
         // Create from unwrapped version
-        public GH_ToolPath(ToolPath TP)
-        {
-            this.Value = TP.deepClone();
-        }
+        public GH_ToolPath(ToolPath TP) { this.Value = TP; }
         // Copy Constructor
-        public GH_ToolPath(GH_ToolPath TP)
-        {
-            this.Value = TP.Value.deepClone();
-        }
+        public GH_ToolPath(GH_ToolPath TP) { this.Value = TP.Value.deepClone(); }
         // Duplicate
-        public override IGH_Goo Duplicate()
-        {
-            return new GH_ToolPath(this);
-        }
+        public override IGH_Goo Duplicate() { return new GH_ToolPath(this); }
 
         public override bool CastTo<Q>(ref Q target)
         {
-            if (typeof(Q).IsAssignableFrom(typeof(Polyline)))
+            // Cast from unwrapped ToolPath
+            if (typeof(Q).IsAssignableFrom(typeof(ToolPath)))
             {
-                target = (Q)(object) new Polyline(this.Value.getPoints());
+                target = (Q)(object)this.Value;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(MachineOperation)))
+            {
+                target = (Q)(object)new MachineOperation(this.Value);
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_MachineOperation)))
+            {
+                target = (Q)(object)new GH_MachineOperation(new MachineOperation(this.Value));
                 return true;
             }
             if (typeof(Q).IsAssignableFrom(typeof(Curve)))
@@ -713,10 +712,24 @@ namespace CAMel.Types
                 target = (Q)(object)new GH_Curve(this.Value.getLine());
                 return true;
             }
-
-            if (typeof(Q).IsAssignableFrom(typeof(ToolPath)))
+            if (typeof(Q).IsAssignableFrom(typeof(IMaterialForm)))
             {
-                target = (Q)(object)this.Value;
+                target = (Q)(object)this.Value.matForm;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_MaterialForm)))
+            {
+                target = (Q)(object)new GH_MaterialForm(this.Value.matForm);
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(MaterialTool)))
+            {
+                target = (Q)(object)this.Value.matTool;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_MaterialTool)))
+            {
+                target = (Q)(object)new GH_MaterialTool(this.Value.matTool);
                 return true;
             }
             return false;
@@ -724,11 +737,38 @@ namespace CAMel.Types
 
         public override bool CastFrom(object source)
         {
-            if( source is ToolPath)
+            if (source == null) { return false; }
+            //Cast from unwrapped ToolPath
+            if (typeof(ToolPath).IsAssignableFrom(source.GetType()))
             {
-                this.Value = ((ToolPath)source).deepClone();
+                Value = (ToolPath)source;
                 return true;
             }
+            if (typeof(Curve).IsAssignableFrom(source.GetType()))
+            {
+                ToolPath TP = new ToolPath();
+                Polyline PL = null;
+                if (((Curve)source).TryGetPolyline(out PL))
+                {
+                    TP.AddRange(PL);
+                    Value = TP;
+                    return true;
+                }
+                return false;
+            }
+            if (typeof(GH_Curve).IsAssignableFrom(source.GetType()))
+            {
+                ToolPath TP = new ToolPath();
+                Polyline PL = null;
+                if (((GH_Curve)source).Value.TryGetPolyline(out PL))
+                {
+                    TP.AddRange(PL);
+                    Value = TP;
+                    return true;
+                }
+                return false;
+            }
+
             return false;
         }
 

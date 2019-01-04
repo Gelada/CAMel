@@ -145,7 +145,7 @@ namespace CAMel
                 RDTree.AddRange(Dirs[i], path);
             }*/
 
-            DA.SetData(0, Rough);
+            DA.SetData(0, new GH_MachineOperation(Rough));
             //DA.SetDataTree(1, RPTree);
             //DA.SetDataTree(2, RDTree);
 
@@ -159,7 +159,7 @@ namespace CAMel
                 FDTree.AddRange(Dirs[i], path);
             }*/
 
-            DA.SetData(1, Finish);
+            DA.SetData(1, new GH_MachineOperation(Finish));
             //DA.SetDataTree(4, FPTree);
             //DA.SetDataTree(5, FDTree);
         }

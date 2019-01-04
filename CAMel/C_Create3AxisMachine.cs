@@ -76,7 +76,7 @@ namespace CAMel
 
             IGCodeMachine M = new ThreeAxis(name, head, foot, commentStart,commentEnd,sectionBreak);
 
-            DA.SetData(0, M);
+            DA.SetData(0, new GH_Machine(M));
         }
 
         /// <summary>

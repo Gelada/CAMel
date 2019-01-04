@@ -71,7 +71,7 @@ namespace CAMel
                 }
             }
 
-            DA.SetData(0,TP);
+            DA.SetData(0,new GH_ToolPath(TP));
             DA.SetDataList(1, selPt);
             DA.SetDataList(2, selDir);
             DA.SetDataList(3, TP.getSpeedFeed());

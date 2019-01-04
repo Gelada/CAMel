@@ -61,9 +61,14 @@ namespace CAMel
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored."); }
             }
             else
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable Machine Operations"); }
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable Machine Operations");
+                return;
+            }
+            List<GH_MachineOperation> GH_MOs = new List<GH_MachineOperation>();
+            foreach(MachineOperation MO in MOs) { GH_MOs.Add(new GH_MachineOperation(MO)); }
 
-            DA.SetData(0, MOs);
+            DA.SetDataList(0, GH_MOs);
         }
 
         /// <summary>

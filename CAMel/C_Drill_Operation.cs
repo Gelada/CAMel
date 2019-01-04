@@ -92,9 +92,7 @@ namespace CAMel
 
             Op.Add(TP);
 
-            DA.SetData(0, Op);
-
-
+            DA.SetData(0, new GH_MachineOperation(Op));
         }
 
         /// <summary>

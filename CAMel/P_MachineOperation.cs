@@ -368,30 +368,18 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MachineOperation : CAMel_Goo<MachineOperation>, IGH_BakeAwareData, IGH_PreviewData
+    public class GH_MachineOperation : CAMel_Goo<MachineOperation>
     {
         public BoundingBox ClippingBox => throw new NotImplementedException();
 
         // Default Constructor
-        public GH_MachineOperation()
-        {
-            this.Value = new MachineOperation();
-        }
-        // Just name
-        public GH_MachineOperation(string name)
-        {
-            this.Value = new MachineOperation(name);
-        }
+        public GH_MachineOperation() { this.Value = new MachineOperation(); }
+        // Construct from value alone
+        public GH_MachineOperation(MachineOperation MO) { this.Value = MO; }
         // Copy Constructor.
-        public GH_MachineOperation(GH_MachineOperation Op)
-        {
-            this.Value = Op.Value.deepClone();
-        }
+        public GH_MachineOperation(GH_MachineOperation Op) { this.Value = Op.Value.deepClone(); }
         // Duplicate
-        public override IGH_Goo Duplicate()
-        {
-            return new GH_MachineOperation(this);
-        }
+        public override IGH_Goo Duplicate() { return new GH_MachineOperation(this); }
 
         public override bool CastTo<Q>(ref Q target)
         {
@@ -401,25 +389,46 @@ namespace CAMel.Types
                 target = (Q)ptr;
                 return true;
             }
+            if (typeof(Q).IsAssignableFrom(typeof(ToolPath)))
+            {
+                object ptr = this.Value.getSinglePath();
+                target = (Q)ptr;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ToolPath)))
+            {
+                object ptr = new GH_ToolPath(this.Value.getSinglePath());
+                target = (Q)ptr;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(Curve)))
+            {
+                target = (Q)(object)this.Value.getLine();
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
+            {
+                target = (Q)(object)new GH_Curve(this.Value.getLine());
+                return true;
+            }
 
             return false;
         }
 
         public override bool CastFrom(object source)
         {
-            if (source == null)
+            if (source == null) { return false; }
+            //Cast from unwrapped MO
+            if (typeof(MachineOperation).IsAssignableFrom(source.GetType()))
             {
-                return false;
-            }
-            if (source is MachineOperation)
-            {
-                this.Value = ((MachineOperation)source).deepClone();
+                Value = (MachineOperation)source;
                 return true;
             }
+
             return false;
         }
 
-        public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
+            public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
         {/*
             obj_guid = Guid;
             if (att == null) { att = doc.CreateDefaultAttributes(); }

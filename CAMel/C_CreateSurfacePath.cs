@@ -107,7 +107,7 @@ namespace CAMel
                 return;
             }
 
-            DA.SetData(0, SP);
+            DA.SetData(0, new GH_SurfacePath(SP));
         }
 
         /// <summary>

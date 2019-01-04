@@ -123,7 +123,7 @@ namespace CAMel
 
             PocketNC M = new PocketNC(Version, head, uFoot, pivot, Amin, Amax, Bmax, TLC, PJ);
  
-            DA.SetData(0, M);
+            DA.SetData(0, new GH_Machine(M));
         }
 
         /// <summary>

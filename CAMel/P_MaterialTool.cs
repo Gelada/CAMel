@@ -56,6 +56,9 @@ namespace CAMel.Types
         public double tolerance { get; }   // The maximum permitted distance of approximation from curve
         public double minStep { get; }     // shortest path permitted
 
+        // Empty default constructor (so grasshopper can get type name when nothing is present. 
+        public MaterialTool() { }
+
         // Everything, with defaults
         public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0)
         {
@@ -180,34 +183,13 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public class GH_MaterialTool : CAMel_Goo<MaterialTool>
     {
-        public GH_MaterialTool()
-        {
-            this.Value = null;
-        }
+        public GH_MaterialTool() { this.Value = new MaterialTool();}
         // construct from unwrapped type
-        public GH_MaterialTool(MaterialTool MT)
-        {
-            this.Value = MT;
-        }
-        // Copy Constructor
-        public GH_MaterialTool(GH_MaterialTool MT)
-        {
-            this.Value = MT.Value;
-        }
+        public GH_MaterialTool(MaterialTool MT) { this.Value = MT; }
+        // Copy Constructor (just reference as MaterialTool is Immutable)
+        public GH_MaterialTool(GH_MaterialTool MT) { this.Value = MT.Value; }
         // Duplicate
-        public override IGH_Goo Duplicate()
-        {
-            return new GH_MaterialTool(this);
-        }
-
-        // Valid if speed, feeds, and cut depth are set
-        public override bool IsValid
-        {
-            get 
-            {
-                return true;
-            }
-        }
+        public override IGH_Goo Duplicate() { return new GH_MaterialTool(this); }
 
         public override bool CastTo<Q>( ref Q target)
         {
@@ -222,11 +204,9 @@ namespace CAMel.Types
 
         public override bool CastFrom( object source )
         {
-            if (source == null)
-            {
-                return false;
-            }
-            if ( source is MaterialTool)
+            if (source == null) { return false; }
+            // Cast From Unwrapped MT
+            if (typeof(MaterialTool).IsAssignableFrom(source.GetType()))
             {
                 this.Value = (MaterialTool)source;
                 return true;
