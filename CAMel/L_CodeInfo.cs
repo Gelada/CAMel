@@ -20,8 +20,8 @@ namespace CAMel.Types
         private StringBuilder Code;
         public Dictionary<string, double> machineState { get; set; } // Data version of last written instruction to use between write calls
         private Dictionary<string, Interval> ranges; // Highest and lowest value for each coordinate
-        private Dictionary<string, int> warnings; // Warning text and number of occurences
-        private Dictionary<string, int> errors; // Error text and number of occurences
+        private Dictionary<string, List<int>> warnings; // Warning text and number of occurences
+        private Dictionary<string, List<int>> errors; // Error text and number of occurences
         private readonly IMachine Mach; // Machine for language handling.
 
         public MaterialTool currentMT { get; set; }
@@ -32,8 +32,8 @@ namespace CAMel.Types
         {
             this.Code = new StringBuilder();
             this.ranges = new Dictionary<string,Interval>();
-            this.errors = new Dictionary<string,int>();
-            this.warnings = new Dictionary<string, int>();
+            this.errors = new Dictionary<string,List<int>>();
+            this.warnings = new Dictionary<string, List<int>>();
             this.machineState = new Dictionary<string, double>();
             this.lines = 0;
         }
@@ -43,8 +43,8 @@ namespace CAMel.Types
             this.Code = new StringBuilder();
             this.Mach = M;
             this.ranges = new Dictionary<string, Interval>();
-            this.errors = new Dictionary<string, int>();
-            this.warnings = new Dictionary<string, int>();
+            this.errors = new Dictionary<string, List<int>>();
+            this.warnings = new Dictionary<string, List<int>>();
             this.machineState = new Dictionary<string, double>();
             this.lines = 0;
         }
@@ -53,9 +53,7 @@ namespace CAMel.Types
         {
             Interval temp;
             if (!this.ranges.ContainsKey(key))
-            {
-                this.ranges.Add(key, new Interval(V, V));
-            }
+            { this.ranges.Add(key, new Interval(V, V)); }
             else
             {
                 temp = this.ranges[key];
@@ -64,21 +62,16 @@ namespace CAMel.Types
             }
         }
 
-        public Dictionary<string,Interval> getRanges()
-        {
-            return this.ranges;
-        }
+        public Dictionary<string,Interval> getRanges() => this.ranges;
 
         public bool addWarning(string warn)
         {
             bool newWarning = false;
             if(this.warnings.ContainsKey(warn))
-            {
-                this.warnings[warn]++;
-            }
+            { this.warnings[warn].Add(this.lines); }
             else
             {
-                this.warnings.Add(warn, 1);
+                this.warnings.Add(warn, new List<int>() { this.lines });
                 newWarning = true;
             }
             this.appendComment(warn);
@@ -88,12 +81,10 @@ namespace CAMel.Types
         {
             bool newError = false;
             if (this.errors.ContainsKey(err))
-            {
-                this.errors[err]++;
-            }
+            { this.errors[err].Add(this.lines); }
             else
             {
-                this.errors.Add(err, 1);
+                this.errors.Add(err, new List<int>() { this.lines});
                 newError = true;
             }
             this.appendComment(err);
@@ -101,10 +92,7 @@ namespace CAMel.Types
         }
 
         // Checks to see if warnings were reported
-        public bool hasWarnings()
-        {
-            return this.warnings.Count > 0;
-        }
+        public bool hasWarnings() => this.warnings.Count > 0;
 
         // Checks to see if warnings were reported, or errors on the ignore list
         public bool hasWarnings(List<string> ignore)
@@ -116,16 +104,19 @@ namespace CAMel.Types
         }
 
         // Return string with all warnings
-        public string getWarnings()
+        public string getWarnings() => getWarnings(new List<string>());
+
+        private string lineNumbers(List<int> data)
         {
-            StringBuilder outP = new StringBuilder();
-            if (this.warnings.Count > 0)
+            string lN = string.Empty;
+            bool first = true;
+            foreach(int i in data)
             {
-                outP.AppendLine("Warnings: ");
-                foreach (string k in this.warnings.Keys)
-                { outP.AppendLine(k + ": " + this.warnings[k]); }
+                if (!first) { lN = lN + ", "; }
+                first = false;
+                lN = lN + i.ToString();
             }
-            return outP.ToString();
+            return lN;
         }
 
         // Return string with warnings and ignored errors
@@ -134,9 +125,9 @@ namespace CAMel.Types
             StringBuilder outP = new StringBuilder();
             if (this.warnings.Count > 0)
             {
-                outP.AppendLine("Warnings: ");
+                outP.AppendLine("Warnings: (on lines)");
                 foreach (string k in this.warnings.Keys)
-                { outP.AppendLine(k + ": " + this.warnings[k]); }
+                { outP.AppendLine(k + ": " + this.warnings[k].Count + " (" + lineNumbers(this.warnings[k])+")"); }
             }
 
             // Add ignored errors
@@ -148,9 +139,9 @@ namespace CAMel.Types
                     if (first)
                     {
                         first = false;
-                        outP.AppendLine("Ignored Errors: ");
+                        outP.AppendLine("Ignored Errors: (on lines)");
                     }
-                    outP.AppendLine(k + ": " + this.errors[k]);
+                    outP.AppendLine(k + ": " + this.errors[k].Count + " (" + lineNumbers(this.errors[k])+")");
                 }
             }
             return outP.ToString();
@@ -173,17 +164,7 @@ namespace CAMel.Types
 
 
         // return string with all errors
-        public string getErrors()
-        {
-            StringBuilder outP = new StringBuilder();
-            if (this.errors.Count > 0)
-            {
-                outP.AppendLine("Errors: ");
-                foreach (string k in this.errors.Keys)
-                { outP.AppendLine(k + ": " + this.errors[k] + " times"); }
-            }
-            return outP.ToString();
-        }
+        public string getErrors() => getErrors(new List<string>());
 
         // return string listing errors that are not ignored
         public string getErrors(List<string> ignore)
@@ -198,9 +179,9 @@ namespace CAMel.Types
                     if (first)
                     {
                         first = false;
-                        outP.AppendLine("Errors: ");
+                        outP.AppendLine("Errors: (on lines)");
                     }
-                    outP.AppendLine(k + ": " + this.errors[k] + " times");
+                    outP.AppendLine(k + ": " + this.errors[k].Count + " (" + lineNumbers(this.errors[k]) + ")");
                 }
             }
 
