@@ -40,8 +40,7 @@ namespace CAMel.Types.Machine
         Vector3d toolDir(ToolPoint TP);
         ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng);
         double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng); // max change for orientation axes
-        ToolPath toPath(List<object> scraps); // make a toolpath from as many different scraps as possible.
-    }
+}
 
  
 

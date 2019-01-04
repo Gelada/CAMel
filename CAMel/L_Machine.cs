@@ -2,11 +2,12 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using Rhino.Geometry;
 using Rhino.Geometry.Intersect;
-using CAMel.Types.MaterialForm;
-using System.Text.RegularExpressions;
+
+using static CAMel.Exceptions;
 
 namespace CAMel.Types.Machine
 {
@@ -246,7 +247,8 @@ namespace CAMel.Types.Machine
 
         static public void gcInstStart(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI, ToolPath startPath)
         {
-
+            if (MI[0][0].matTool == null) { matToolException(); }
+            if (MI[0][0].matForm == null) { matFormException(); }
             Co.currentMT = MI[0][0].matTool;
             Co.currentMF = MI[0][0].matForm;
 
@@ -307,7 +309,7 @@ namespace CAMel.Types.Machine
                 Co.appendComment(" ToolPath: " + TP.name);
                 preamble = true;
             }
-            if (Co.currentMT == null || TP.matTool.toolName != Co.currentMT.toolName)
+            if (TP.matTool != null && TP.matTool.toolName != Co.currentMT.toolName)
             {
                 Co.appendComment(" using: " + TP.matTool.toolName + " into " + TP.matTool.matName);
                 Co.currentMT = TP.matTool;
@@ -315,7 +317,7 @@ namespace CAMel.Types.Machine
                 ch.mT = true;
                 preamble = true;
             }
-            if (Co.currentMF == null || TP.matForm.ToString() != Co.currentMF.ToString())
+            if (TP.matForm != null && TP.matForm.ToString() != Co.currentMF.ToString())
             {
                 Co.appendComment(" material: " + TP.matForm.ToString());
                 Co.currentMF = TP.matForm;

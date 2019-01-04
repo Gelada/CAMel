@@ -5,6 +5,7 @@ using System.Text;
 using Rhino.Geometry;
 using Rhino.Geometry.Intersect;
 using CAMel.Types.MaterialForm;
+using static CAMel.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace CAMel.Types.Machine
@@ -62,9 +63,12 @@ namespace CAMel.Types.Machine
             else { return this.commentStart + " " + L + " " + this.commentEnd; }
         }
 
-        public ToolPath toPath(List<object> scraps) => ToolPath.toPath(scraps);
 
-        public ToolPath insertRetract(ToolPath tP) => tP.matForm.insertRetract(tP);
+        public ToolPath insertRetract(ToolPath tP)
+        {
+            if(tP.matForm == null) { matFormException(); }
+            return tP.matForm.insertRetract(tP);
+        }
 
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
         {
@@ -102,10 +106,11 @@ namespace CAMel.Types.Machine
         public void writeCode(ref CodeInfo Co, ToolPath tP)
         {
             // Double check tP does not have additions.
-            if (tP.Additions.any) { throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.\n"); }
+            if (tP.Additions.any) { additionsException(); }
 
             if (tP.Count > 0) // Just ignore 0 length paths
             {
+                if (tP.matTool == null) { matToolException(); }
                 GCode.gcPathStart(this, ref Co, tP);
 
                 // We will watch for speed and feed changes.
@@ -317,9 +322,10 @@ namespace CAMel.Types.Machine
         {
             // Set up Machine State  
 
+            if (startPath.matTool == null) { matToolException(); }
             Point3d MachPt = new Point3d();
             double toolLength = MI.mach.toolLengthCompensation ? 0 : startPath.matTool.toolLength;
-            Vector3d AB = Kinematics.ikFiveAxisABTable(startPath.firstP, this.pivot, toolLength, out MachPt);
+            Vector3d AB = Kinematics.ikFiveAxisABTable(MI.startPath.firstP, this.pivot, toolLength, out MachPt);
 
             Co.machineState.Clear();
             Co.machineState.Add("X", MachPt.X);
@@ -344,6 +350,8 @@ namespace CAMel.Types.Machine
 
         public void writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first)
         {
+            if (fP.matForm == null) { matFormException(); }
+            if (tP.matForm == null) { matFormException(); }
             // check there is anything to transition from or to
             if (fP.Count > 0 && tP.Count > 0)
             {

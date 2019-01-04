@@ -71,7 +71,9 @@ namespace CAMel
 
             if (MO.Count > 0)
             {
-                Inst = new MachineInstruction(name, M, MO, M.toPath(sP), M.toPath(eP));
+                object cleanSP = CAMel_Goo.cleanGooList((object)sP);
+                object cleanEP = CAMel_Goo.cleanGooList((object)eP);
+                Inst = new MachineInstruction(name, M, MO, ToolPath.toPath(cleanSP), ToolPath.toPath(cleanEP));
                 if (ignores > 1)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores.ToString() + " invalid elements (probably nulls) were ignored."); }
                 else if (ignores == 1)

@@ -4,8 +4,9 @@ using System.Collections.Generic;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
+
 using CAMel.Types.Machine;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {
@@ -135,34 +136,44 @@ namespace CAMel.Types
 
         // Main functions
 
+        // Take the collection of paths and hints and validate it into 
+        // a workable system, including adding MaterialTool and MaterialForm information
+        // throughout
         public MachineInstruction processAdditions()
         {
-            List<MachineOperation> procOps = new List<MachineOperation>();
+            MachineInstruction valid = this.deepCloneWithNewPaths(new List<MachineOperation>());
 
-            foreach(MachineOperation MO in this) { procOps.Add(MO.processAdditions(this.mach)); }
+            // Mix this.startPath and this.validStart as required to 
+            // give a valid non-zero length startPath.
+            ToolPath validTP = this.validStart();
+            valid.startPath = this.startPath ?? validTP;
+            valid.startPath.validate(validTP);
+            if(valid.startPath.Count == 0)
+            {
+                valid.startPath.Add(this.firstP.deepClone());
+                valid.startPath.firstP.feed = 0;
+            }
+            validTP = startPath;
 
-            return this.deepCloneWithNewPaths(procOps);
+            // process and validate all Operations
+            foreach(MachineOperation MO in this)
+            { valid.Add(MO.processAdditions(this.mach, ref validTP)); }
+
+            // validate endPath, validTP will have the most recent information
+            valid.endPath = this.endPath ?? validTP;
+            valid.endPath.validate(validTP);
+            if (valid.endPath.Count == 0)
+            {
+                valid.endPath.Add(this.lastP.deepClone());
+                valid.endPath.firstP.feed = 0;
+            }
+
+            return valid;
         }
 
         public void writeCode(ref CodeInfo Co)
         {
-            // Use startPath or first point to create a preliminary position, to transition from
-            ToolPath uStartPath;
-            if(this.startPath == null)
-            {
-                uStartPath = this[0][0].deepCloneWithNewPoints(new List<ToolPoint> { this.firstP });
-                uStartPath.firstP.feed = 0;
-            }
-            else if (this.startPath.Count == 0)
-            {
-                uStartPath = this.startPath.deepCloneWithNewPoints(new List<ToolPoint> { this.firstP });
-                uStartPath.firstP.feed = 0;
-            }
-            else { uStartPath = this.startPath; }
-
-            if (uStartPath.matForm == null) { uStartPath.matForm = this[0][0].matForm; }
-            if (uStartPath.matTool == null) { uStartPath.matTool = this[0][0].matTool; }
-
+            ToolPath uStartPath = this.startPath;
             ToolPath endPath = new ToolPath();
 
             this.mach.writeFileStart(ref Co, this, uStartPath);
@@ -173,15 +184,31 @@ namespace CAMel.Types
                 uStartPath = endPath;
             }
 
-            // Use endP or last point to create an end position, to transition to
+            this.mach.writeFileEnd(ref Co, this, uStartPath, this.endPath);
+        }
 
-            if (this.endPath == null)
+        // Hunt through the ToolPaths until we find all we need
+        private ToolPath validStart()
+        {
+            // we need a point, a MaterialTool and a MaterialForm
+            bool ptFound = false;
+            bool mTFound = false;
+            bool mFFound = false;
+
+            ToolPath valid = new ToolPath();
+
+            foreach (MachineOperation mO in this)
             {
-                endPath = endPath.deepCloneWithNewPoints(new List<ToolPoint> { this.lastP });
+                foreach (ToolPath tP in mO)
+                {
+                    if (!ptFound && tP.Count > 0) { ptFound = true; valid.Add(tP.firstP); }
+                    if (!mTFound && tP.matTool != null) { mTFound = true; valid.matTool = tP.matTool; }
+                    if (!mFFound && tP.matForm != null) { mFFound = true; valid.matForm = tP.matForm; }
+                    if (ptFound && mTFound && mFFound) { return valid; }
+                }
             }
-            else { endPath = this.endPath; }
-
-            this.mach.writeFileEnd(ref Co, this, uStartPath, endPath);
+            // if we go through the whole thing without finding all the valid pieces
+            throw new InvalidOperationException("Cannot validate Machine Instructions, there are either no points, no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
         }
 
         public ToolPath getSinglePath()

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using Rhino.Geometry;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
+
 using CAMel.Types.MaterialForm;
 using CAMel.Types.Machine;
+using static CAMel.Exceptions;
 
 namespace CAMel.Types.MaterialForm
 {
@@ -90,9 +92,11 @@ namespace CAMel.Types.MaterialForm
 
     internal static class MFDefault
     {
-        internal static ToolPath insertRetract(IMaterialForm MF, ToolPath TP)
+        internal static ToolPath insertRetract(IMaterialForm MF, ToolPath tP)
         {
-            ToolPath irTP = TP.deepClone();
+            if (tP.matTool == null) { matToolException(); }
+            if (MF == null) { matFormException(); }
+            ToolPath irTP = tP.deepClone();
             irTP.Additions.insert = false;
             irTP.Additions.retract = false;
 
@@ -102,7 +106,7 @@ namespace CAMel.Types.MaterialForm
             ToolPoint tempTP;
 
             // check if we have something to do
-            if (TP.Additions.insert && irTP.Count > 0) // add insert
+            if (tP.Additions.insert && irTP.Count > 0) // add insert
             {
                 //note we do this backwards adding points to the start of the path.
 
@@ -116,7 +120,7 @@ namespace CAMel.Types.MaterialForm
 
                     tempTP = irTP.firstP.deepClone();
                     tempTP.pt = inter.point;
-                    tempTP.feed = TP.matTool.feedPlunge;
+                    tempTP.feed = tP.matTool.feedPlunge;
                     irTP.Insert(0, tempTP);
 
                     // point out at safe distance
@@ -139,7 +143,7 @@ namespace CAMel.Types.MaterialForm
                     } //  otherwise nothing needs to be added as we do not interact with material
                 }
             }
-            if (TP.Additions.retract && irTP.Count > 0) // add retract
+            if (tP.Additions.retract && irTP.Count > 0) // add retract
             {
                 // get distance to surface and retract direction
                 inter = MF.intersect(irTP.lastP, 0).through;
@@ -148,7 +152,7 @@ namespace CAMel.Types.MaterialForm
                     tempTP = irTP.lastP.deepClone();
 
                     // set speed to the plunge feed rate.
-                    tempTP.feed = TP.matTool.feedPlunge;
+                    tempTP.feed = tP.matTool.feedPlunge;
 
                     // Pull back to surface
                     tempTP.pt = inter.point;

@@ -136,13 +136,12 @@ namespace CAMel
                 procMI.writeCode(ref this.SaveCode);
             }
             // Detect Errors and warnings
-
             // TODO report errors and warnings in an output parameter
 
-            if (this.SaveCode.hasErrors(ignore))
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.getErrors(ignore)); }
             if (this.SaveCode.hasWarnings(ignore))
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, this.SaveCode.getWarnings(ignore)); }
+            if (this.SaveCode.hasErrors(ignore))
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.getErrors(ignore)); return; }
 
             // Extract Ranges
 

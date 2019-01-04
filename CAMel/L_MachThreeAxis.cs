@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 using Rhino.Geometry;
-using Rhino.Geometry.Intersect;
+
 using CAMel.Types.MaterialForm;
-using System.Text.RegularExpressions;
+using static CAMel.Exceptions;
 
 namespace CAMel.Types.Machine
 {
@@ -52,8 +51,6 @@ namespace CAMel.Types.Machine
             else { return this.commentStart + " " + L + " " + this.commentEnd; }
         }
 
-        public ToolPath toPath(List<object> scraps) => ToolPath.toPath(scraps);
-
         public ToolPath insertRetract(ToolPath tP) => tP.matForm.insertRetract(tP);
 
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
@@ -69,8 +66,9 @@ namespace CAMel.Types.Machine
 
         public void writeCode(ref CodeInfo Co, ToolPath tP)
         {
+            if (tP.matTool == null) { matToolException(); }
             // Double check tP does not have additions.
-            if (tP.Additions.any) { throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.\n"); }
+            if (tP.Additions.any) { additionsException(); }
 
             if (tP.Count > 0) // Just ignore 0 length paths
             {

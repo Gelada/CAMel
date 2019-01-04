@@ -10,6 +10,7 @@ using Rhino.DocObjects;
 
 using CAMel.Types.MaterialForm;
 using CAMel.Types.Machine;
+using static CAMel.Exceptions;
 
 namespace CAMel.Types
 {
@@ -150,6 +151,12 @@ namespace CAMel.Types
             };
             return newTP;
         }
+        // Copy in features from the valid ToolPath if this does not yet have its own. 
+        public void validate(ToolPath valid)
+        {
+            this.matTool = this.matTool ?? valid.matTool;
+            this.matForm = this.matForm ?? valid.matForm;
+        }
 
         public ToolPath getSinglePath() => this.deepClone();
 
@@ -185,6 +192,7 @@ namespace CAMel.Types
         // list of list of toolpaths (for stepdown)
         public List<List<ToolPath>> processAdditions(IMachine M)
         {
+            if (this.matTool == null) { matToolException(); }
             int i, j, k, l;
             List<List<ToolPath>> NewPaths = new List<List<ToolPath>>();
             // need a list for each step down as it might split into more than one path
@@ -205,7 +213,7 @@ namespace CAMel.Types
             }
 
             // add steps into material
-            if(this.Additions.stepDown)
+            if (this.Additions.stepDown)
             {
                 // Use the material form to work out the distance to cut in the
                 // material, the direction to enter the material and the number of passes.
@@ -396,6 +404,7 @@ namespace CAMel.Types
         // with paths that are steep down, followed by some bottom moves followed by steep out. 
         public ToolPath threeAxisHeightOffset(IMachine M)
         {
+            if (this.matTool == null) { matToolException(); }
             List<ToolPoint> offsetPath = new List<ToolPoint>();
 
             Vector3d dir = (Vector3d)(this[1].pt - this[0].pt);
@@ -593,6 +602,7 @@ namespace CAMel.Types
         // Use a curve and direction vector to create a path of toolpoints
         public bool convertCurve(Curve c, Vector3d d)
         {
+            if (this.matTool == null) { matToolException(); }
             // Create polyline approximation
             Polyline PL;
             ToolPoint TPt;
@@ -651,13 +661,18 @@ namespace CAMel.Types
         public IEnumerator<ToolPoint> GetEnumerator() { return ((IList<ToolPoint>)this.Pts).GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return ((IList<ToolPoint>)this.Pts).GetEnumerator(); }
 
-        internal static ToolPath toPath(IEnumerable scraps)
+        internal static ToolPath toPath(object scraps)
         {
             ToolPath oP = new ToolPath();
-            foreach (object oB in scraps)
+            if (scraps is IToolPointContainer) { oP.AddRange(((IToolPointContainer)scraps).getSinglePath()); }
+            else if (scraps is Point3d) { oP.Add((Point3d)scraps); }
+            else if (scraps is IEnumerable)
             {
-                if (oB is IToolPointContainer) { oP.AddRange(((IToolPointContainer)oB).getSinglePath()); }
-                if (oB is Point3d) { oP.Add((Point3d)oB); }
+                foreach (object oB in scraps as IEnumerable)
+                {
+                    if (oB is IToolPointContainer) { oP.AddRange(((IToolPointContainer)oB).getSinglePath()); }
+                    if (oB is Point3d) { oP.Add((Point3d)oB); }
+                }
             }
             return oP;
         }

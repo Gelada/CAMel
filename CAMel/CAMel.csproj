@@ -105,6 +105,7 @@
     <Compile Include="C_Index2dCut.cs" />
     <Compile Include="C_Index3Axis.cs" />
     <Compile Include="C_ReadCode.cs" />
+    <Compile Include="L_Exceptions.cs" />
     <Compile Include="L_MachPocketNC.cs" />
     <Compile Include="L_MachTwoAxis.cs" />
     <Compile Include="L_MachThreeAxis.cs" />

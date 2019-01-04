@@ -2,11 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
 using Rhino;
 using Rhino.DocObjects;
 using Rhino.Geometry;
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
+
 using CAMel.Types.Machine;
 
 namespace CAMel.Types
@@ -142,8 +143,8 @@ namespace CAMel.Types
             return "Machine Operation: " + this.name + ", " + this.Count + " toolpaths, " + total_TP + " total tool points.";
         }
 
-        // Process the toolpaths for additions
-        public MachineOperation processAdditions(IMachine M)
+        // Process the toolpaths for additions and ensure ToolPaths are valid for writing. 
+        public MachineOperation processAdditions(IMachine M, ref ToolPath validTP)
         {
             // Wow a 3d block of ToolPaths
             // Each of the stepdown paths can have several pieces (1st level)
@@ -155,7 +156,11 @@ namespace CAMel.Types
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
 
             foreach (ToolPath TP in this)
-            { newPaths.Add(TP.processAdditions(M)); }
+            {
+                TP.validate(validTP);
+                validTP = TP;
+                newPaths.Add(TP.processAdditions(M));
+            }
 
             // Create the list for the output
             List<ToolPath> procPaths = new List<ToolPath>();
