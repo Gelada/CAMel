@@ -139,7 +139,7 @@ namespace CAMel.Types
         // Take the collection of paths and hints and validate it into 
         // a workable system, including adding MaterialTool and MaterialForm information
         // throughout
-        public MachineInstruction processAdditions()
+        public MachineInstruction processAdditions(IMachine M)
         {
             MachineInstruction valid = this.deepCloneWithNewPaths(new List<MachineOperation>());
 
@@ -147,7 +147,7 @@ namespace CAMel.Types
             // give a valid non-zero length startPath.
             ToolPath validTP = this.validStart();
             valid.startPath = this.startPath ?? validTP;
-            valid.startPath.validate(validTP);
+            valid.startPath.validate(validTP, M);
             if(valid.startPath.Count == 0)
             {
                 valid.startPath.Add(this.firstP.deepClone());
@@ -161,7 +161,7 @@ namespace CAMel.Types
 
             // validate endPath, validTP will have the most recent information
             valid.endPath = this.endPath ?? validTP;
-            valid.endPath.validate(validTP);
+            valid.endPath.validate(validTP, M);
             if (valid.endPath.Count == 0)
             {
                 valid.endPath.Add(this.lastP.deepClone());

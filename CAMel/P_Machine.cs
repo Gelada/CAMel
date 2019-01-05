@@ -25,6 +25,8 @@ namespace CAMel.Types.Machine
         string name { get; }
         double pathJump { get; } // Maximum jump between toolpaths in material
         bool toolLengthCompensation { get; } // Tool Length Compensation
+        ToolPathAdditions defaultTPA { get; }
+
         string comment(string L);
 
         void writeFileStart(ref CodeInfo Co, MachineInstruction MI, ToolPath startPath);

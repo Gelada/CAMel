@@ -11,7 +11,7 @@ using Grasshopper.Kernel.Utility;
 namespace CAMel.Types
 {
     // Features we might add to the path
-    public struct ToolPathAdditions : ICAMel_Base
+    public class ToolPathAdditions : ICAMel_Base
     {
         public bool insert { get; set; }
         public bool retract { get; set; }
@@ -27,8 +27,23 @@ namespace CAMel.Types
         //  Add checker to .any
         //  Add serialization and deserialization
         //  Add to the proxy editor
+        //  Add to Constructors
+        //  Add to default.
 
-        public ToolPathAdditions(ToolPathAdditions TPA)
+        public ToolPathAdditions() // create the empty addition
+        {
+            this.insert = false;
+            this.retract = false;
+            this.stepDown = false;
+            this.sdDropStart = false;
+            this.sdDropMiddle = 0;
+            this.sdDropEnd = false;
+            this.threeAxisHeightOffset = false;
+            this.tabbing = false;
+            this.leadFactor = 1;
+        }
+
+        private ToolPathAdditions(ToolPathAdditions TPA)
         {
             this.insert = TPA.insert;
             this.retract = TPA.retract;
@@ -40,6 +55,21 @@ namespace CAMel.Types
             this.tabbing = TPA.tabbing;
             this.leadFactor = TPA.leadFactor;
         }
+
+        public ToolPathAdditions deepClone() => new ToolPathAdditions(this);
+
+        public static ToolPathAdditions BasicDefault => new ToolPathAdditions()
+        {
+            insert = true,
+            retract = true,
+            stepDown = true,
+            sdDropStart = true,
+            sdDropMiddle = 1,
+            sdDropEnd = true,
+            threeAxisHeightOffset = false,
+            tabbing = false,
+            leadFactor = 1
+        };
 
         public bool any
         {

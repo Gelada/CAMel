@@ -132,7 +132,7 @@ namespace CAMel
             {
                 this.SaveCode = new CodeInfo(MI.mach);
                 MachineInstruction procMI;
-                try { procMI = MI.processAdditions(); }
+                try { procMI = MI.processAdditions(MI.mach); }
                 catch (InvalidOperationException e)
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);

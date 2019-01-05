@@ -57,18 +57,7 @@ namespace CAMel.Types
             this.Pts = new List<ToolPoint>();
             this.matTool = MT;
             this.matForm = null;
-            this.Additions = new ToolPathAdditions();
-            this.preCode = string.Empty;
-            this.postCode = string.Empty;
-        }
-        // MaterialTool and features
-        public ToolPath(string name, MaterialTool MT, ToolPathAdditions TPA)
-        {
-            this.name = name;
-            this.Pts = new List<ToolPoint>();
-            this.matTool = MT;
-            this.matForm = null;
-            this.Additions = TPA;
+            this.Additions = null;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
@@ -104,26 +93,31 @@ namespace CAMel.Types
             this.matForm = TP.matForm;
             this.preCode = string.Copy(TP.preCode);
             this.postCode = string.Copy(TP.postCode);
-            this.Additions = new ToolPathAdditions(TP.Additions);
+            this.Additions = TP.Additions.deepClone();
         }
 
         public ToolPath deepClone() => new ToolPath(this);
 
         public ToolPath deepCloneWithNewPoints(List<ToolPoint> Pts)
         {
-            ToolPath newTP = new ToolPath(this.name, this.matTool, this.matForm, this.Additions)
+            ToolPath newTP = new ToolPath()
             {
-                preCode = this.preCode,
-                postCode = this.postCode,
+                name = string.Copy(this.name),
+                matTool = this.matTool,
+                matForm = this.matForm,
+                preCode = string.Copy(this.preCode),
+                postCode = string.Copy(this.postCode),
+                Additions = this.Additions.deepClone(),
                 Pts = Pts
             };
             return newTP;
         }
         // Copy in features from the valid ToolPath if this does not yet have its own. 
-        public void validate(ToolPath valid)
+        public void validate(ToolPath valid, IMachine M)
         {
             this.matTool = this.matTool ?? valid.matTool;
             this.matForm = this.matForm ?? valid.matForm;
+            this.Additions = this.Additions ?? M.defaultTPA;
         }
 
         public ToolPath getSinglePath() => this.deepClone();

@@ -32,6 +32,9 @@ namespace CAMel.Types.Machine
 
         public Vector3d pivot { get; } // Position of machine origin in design space.
 
+        public ToolPathAdditions defaultTPA 
+        { get => ToolPathAdditions.BasicDefault; }
+
         public PocketNC(string name, string header, string footer, Vector3d pivot, double Amin, double Amax, double Bmax, bool TLC, double pathJump)
         {
             this.name = name;

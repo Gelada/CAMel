@@ -24,6 +24,9 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         private readonly List<char> terms;
 
+        public ToolPathAdditions defaultTPA
+        { get => ToolPathAdditions.BasicDefault; }
+
         public ThreeAxis(string name, string header, string footer, string commentStart, string commentEnd, string sectionBreak)
         {
             this.name = name;

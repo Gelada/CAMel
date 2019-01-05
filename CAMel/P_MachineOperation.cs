@@ -157,7 +157,7 @@ namespace CAMel.Types
 
             foreach (ToolPath TP in this)
             {
-                TP.validate(validTP);
+                TP.validate(validTP, M);
                 validTP = TP;
                 newPaths.Add(TP.processAdditions(M));
             }

@@ -26,6 +26,9 @@ namespace CAMel.Types.Machine
 
         public double leads { get; }
 
+        public ToolPathAdditions defaultTPA
+        { get => ToolPathAdditions.BasicDefault; }
+
         public TwoAxis(string name, string header, string footer)
         {
             this.name = name;
