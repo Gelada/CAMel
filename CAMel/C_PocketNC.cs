@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types.Machine;
+using CAMel.Types;
 
 namespace CAMel
 {
@@ -32,6 +33,9 @@ namespace CAMel
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
+
+            pManager[7].Optional = true;
         }
 
         /// <summary>
@@ -55,6 +59,7 @@ namespace CAMel
             double Bmax = 0;
             bool TLC = true;
             int V = 0;
+            List<MaterialTool> MTs = new List<MaterialTool>();
 
             if (!DA.GetData(0, ref V)) { return; }
             if (V != 0 && V != 1 && V != 2)
@@ -70,6 +75,7 @@ namespace CAMel
             if (!DA.GetData(4, ref head)) { return; }
             if (!DA.GetData(5, ref foot)) { return; }
             if (!DA.GetData(6, ref PJ)) { return; }
+            DA.GetDataList(7, MTs);
 
             double Amin = 0, Amax = Math.PI / 2.0;
 
@@ -121,7 +127,7 @@ namespace CAMel
                 }
             }
 
-            PocketNC M = new PocketNC(Version, head, uFoot, pivot, Amin, Amax, Bmax, TLC, PJ);
+            PocketNC M = new PocketNC(Version, head, uFoot, pivot, Amin, Amax, Bmax, TLC, PJ, MTs);
  
             DA.SetData(0, new GH_Machine(M));
         }

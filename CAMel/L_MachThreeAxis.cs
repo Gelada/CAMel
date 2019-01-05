@@ -23,6 +23,7 @@ namespace CAMel.Types.Machine
         public string commentStart { get; }
         public string commentEnd { get; }
         private readonly List<char> terms;
+        public List<MaterialTool> MTs { get; }
 
         public ToolPathAdditions defaultTPA
         { get => ToolPathAdditions.BasicDefault; }
@@ -61,8 +62,7 @@ namespace CAMel.Types.Machine
 
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng) => 0;
 
-        public ToolPath readCode(List<MaterialTool> MTs, string Code) => GCode.gcRead(this,MTs,Code, this.terms);
-
+        public ToolPath readCode(string Code) => GCode.gcRead(this, this.MTs, Code, this.terms);
         public ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT) => new ToolPoint(new Point3d(vals['X'], vals['Y'], vals['Z']), new Vector3d(0, 0, 0), vals['S'], vals['F']);
 
         public Vector3d toolDir(ToolPoint TP) => Vector3d.ZAxis;

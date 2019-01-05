@@ -26,6 +26,7 @@ namespace CAMel.Types.Machine
         double pathJump { get; } // Maximum jump between toolpaths in material
         bool toolLengthCompensation { get; } // Tool Length Compensation
         ToolPathAdditions defaultTPA { get; }
+        List<MaterialTool> MTs { get; } // list of Material Tools used by machine
 
         string comment(string L);
 
@@ -36,7 +37,7 @@ namespace CAMel.Types.Machine
         void writeCode(ref CodeInfo Co, ToolPath tP);
         void writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first);
 
-        ToolPath readCode(List<MaterialTool> MTs, string Code);
+        ToolPath readCode(string Code);
 
         ToolPath insertRetract(ToolPath tP);
         Vector3d toolDir(ToolPoint TP);

@@ -24,6 +24,7 @@ namespace CAMel.Types.Machine
         public string commentStart { get; }
         public string commentEnd { get; }
         private readonly List<char> terms;
+        public List<MaterialTool> MTs { get; }
 
         private double aMin { get; }
         private double aMax { get; }
@@ -35,7 +36,7 @@ namespace CAMel.Types.Machine
         public ToolPathAdditions defaultTPA 
         { get => ToolPathAdditions.BasicDefault; }
 
-        public PocketNC(string name, string header, string footer, Vector3d pivot, double Amin, double Amax, double Bmax, bool TLC, double pathJump)
+        public PocketNC(string name, string header, string footer, Vector3d pivot, double Amin, double Amax, double Bmax, bool TLC, double pathJump, List<MaterialTool> MTs)
         {
             this.name = name;
             this.toolLengthCompensation = TLC;
@@ -49,6 +50,7 @@ namespace CAMel.Types.Machine
             this.speedChangeCommand = "M03";
             this.toolChangeCommand = "G43H";
             this.pathJump = pathJump;
+            this.MTs = MTs;
             this.pivot = pivot;
             this.aMin = Amin;
             this.aMax = Amax;
@@ -84,8 +86,7 @@ namespace CAMel.Types.Machine
             return Kinematics.angDiffFiveAxisABTable(this.pivot, toolLength, tP1, tP2, lng);
         }
 
-        public ToolPath readCode(List<MaterialTool> MTs, string Code) => GCode.gcRead(this,MTs,Code, this.terms);
-
+        public ToolPath readCode(string Code) => GCode.gcRead(this, this.MTs, Code, this.terms);
         public ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT)
         {
             Point3d MachPt = new Point3d(vals['X'], vals['Y'], vals['Z']);

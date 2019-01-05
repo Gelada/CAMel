@@ -196,7 +196,7 @@ namespace CAMel.Types
             bool mFFound = false;
 
             ToolPath valid = new ToolPath();
-
+            // scan through the paths looking for info
             foreach (MachineOperation mO in this)
             {
                 foreach (ToolPath tP in mO)
@@ -207,6 +207,8 @@ namespace CAMel.Types
                     if (ptFound && mTFound && mFFound) { return valid; }
                 }
             }
+            // if the machine has one tool use that.
+            if(this.mach.MTs.Count == 1 && ptFound && mFFound) { valid.matTool = this.mach.MTs[0]; return valid; } 
             // if we go through the whole thing without finding all the valid pieces
             throw new InvalidOperationException("Cannot validate Machine Instructions, there are either no points, no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
         }

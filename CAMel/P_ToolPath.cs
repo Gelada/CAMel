@@ -348,7 +348,7 @@ namespace CAMel.Types
             // if passes were added, rename with "Final Pass"
 
             NewPaths.Add(new List<ToolPath>());
-            NewPaths[NewPaths.Count - 1].Add(new ToolPath(useTP));
+            NewPaths[NewPaths.Count - 1].Add(useTP.deepClone());
             NewPaths[NewPaths.Count - 1][0].Additions.stepDown = false;
             if (NewPaths.Count > 1) { NewPaths[NewPaths.Count - 1][0].name = useTP.name + " Final Pass"; }
 
