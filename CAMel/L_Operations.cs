@@ -111,5 +111,42 @@ namespace CAMel.Types
             }
             return Op;
         }
+
+        public static MachineOperation drillOperation(Circle D, double peck, MaterialTool MT, IMaterialForm MF)
+        {
+            MachineOperation Op = new MachineOperation
+            {
+                name = "Drilling depth " + D.Radius.ToString("0.000") + " at (" + D.Center.X.ToString("0.000") + "," + D.Center.Y.ToString("0.000") + "," + D.Center.Z.ToString("0.000") + ")."
+            };
+
+            ToolPath TP = new ToolPath(string.Empty, MT, MF);
+
+            // Additions for toolpath
+            TP.Additions.insert = true;
+            TP.Additions.retract = true;
+            TP.Additions.stepDown = false; // we will handle this with peck
+            TP.Additions.sdDropStart = false;
+            TP.Additions.sdDropMiddle = 0;
+            TP.Additions.sdDropEnd = false;
+            TP.Additions.threeAxisHeightOffset = false;
+
+            TP.Add(new ToolPoint(D.Center, D.Normal, -1, MT.feedPlunge));
+
+            // calculate the number of pecks we need to do
+
+            int steps;
+            if (peck > 0) { steps = (int)Math.Ceiling(D.Radius / peck); }
+            else { steps = 1; }
+
+            for (int j = 1; j <= steps; j++)
+            {
+                TP.Add(new ToolPoint(D.Center - ((double)j / (double)steps) * D.Radius * D.Normal, D.Normal, -1, MT.feedPlunge));
+                TP.Add(new ToolPoint(D.Center, D.Normal, -1, MT.feedPlunge));
+            }
+
+            Op.Add(TP);
+
+            return Op;
+        }
     }
 }

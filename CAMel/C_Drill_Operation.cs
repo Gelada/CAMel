@@ -6,6 +6,7 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
 using CAMel.Types.MaterialForm;
+using static CAMel.Types.Operations;
 
 namespace CAMel
 {
@@ -51,46 +52,15 @@ namespace CAMel
             MaterialTool MT = null;
             IMaterialForm MF = null;
 
-
             if (!DA.GetData(0, ref D)) { return; }
             if (!DA.GetData(1, ref peck)) { return; }
             if (!DA.GetData(2, ref MT)) { return; }
             if (!DA.GetData(3, ref MF)) { return; }
 
-            MachineOperation Op = new MachineOperation
-            {
-                name = "Drilling depth " + D.Radius.ToString("0.000") + " at (" + D.Center.X.ToString("0.000") + "," + D.Center.Y.ToString("0.000") + "," + D.Center.Z.ToString("0.000") + ")."
-            };
-
-            ToolPath TP = new ToolPath(string.Empty,MT,MF);
-
-            // Additions for toolpath
-            TP.Additions.insert = true;
-            TP.Additions.retract = true;
-            TP.Additions.stepDown = false; // we will handle this with peck
-            TP.Additions.sdDropStart = false;
-            TP.Additions.sdDropMiddle = 0;
-            TP.Additions.sdDropEnd = false;
-            TP.Additions.threeAxisHeightOffset = false;
-
             if (D.Normal.Length == 0)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Cannot process a circle who's normal is given as the zero vector. Check for null inputs."); }
 
-            TP.Add(new ToolPoint(D.Center, D.Normal,-1,MT.feedPlunge));
-
-            // calculate the number of pecks we need to do
-
-            int steps;
-            if (peck > 0) { steps = (int)Math.Ceiling(D.Radius / peck); }
-            else { steps = 1; }
-
-            for (int j = 1; j <= steps; j++)
-            {
-                TP.Add(new ToolPoint(D.Center - ((double)j / (double)steps) * D.Radius * D.Normal, D.Normal,-1,MT.feedPlunge));
-                TP.Add(new ToolPoint(D.Center, D.Normal,-1,MT.feedPlunge));
-            }
-
-            Op.Add(TP);
+            MachineOperation Op = drillOperation(D, peck, MT, MF);
 
             DA.SetData(0, new GH_MachineOperation(Op));
         }
