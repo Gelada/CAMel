@@ -65,6 +65,7 @@ namespace CAMel
         {
             pManager.AddTextParameter("Code", "Code", "Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ranges", "R", "Ranges of movement", GH_ParamAccess.item);
+            pManager.AddTextParameter("Warnings and Errors", "E", "Warnings and Errors reported by the code", GH_ParamAccess.item);
         }
 
         // Need to save and recover the extension
@@ -130,33 +131,47 @@ namespace CAMel
             lock (this.SaveCode)
             {
                 this.SaveCode = new CodeInfo(MI.mach);
-
-                MachineInstruction procMI = MI.processAdditions();
-
+                MachineInstruction procMI;
+                try { procMI = MI.processAdditions(); }
+                catch (InvalidOperationException e)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
+                    DA.SetData(2, e.Message);
+                    return;
+                }
                 procMI.writeCode(ref this.SaveCode);
             }
-            // Detect Errors and warnings
-            // TODO report errors and warnings in an output parameter
 
+            // Detect Errors and warnings
+            DA.SetData(2, "");
+            string warn = "", error = "";
             if (this.SaveCode.hasWarnings(ignore))
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, this.SaveCode.getWarnings(ignore)); }
+            {
+                warn = this.SaveCode.getWarnings(ignore);
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warn);
+                DA.SetData(2, warn);
+            }
             if (this.SaveCode.hasErrors(ignore))
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, this.SaveCode.getErrors(ignore)); return; }
+            {
+                error = this.SaveCode.getErrors(ignore);
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error);
+                DA.SetData(2, error + warn);
+                return;
+            }
 
             // Extract Ranges
-
             Dictionary<String, Interval> Ranges = this.SaveCode.getRanges();
             string rOut = string.Empty;
-
             foreach (string k in Ranges.Keys)
             {
-                rOut = rOut + "\n" + k + ": " + Ranges[k].T0.ToString("0.00") + " to " + Ranges[k].T1.ToString("0.00");
+                rOut = rOut + "\n" + k + ": " + Ranges[k].T0.ToString("0.00") + 
+                    " to " + Ranges[k].T1.ToString("0.00");
             }
 
             DA.SetData(0, this.SaveCode.ToString());
             DA.SetData(1, rOut);
 
-
+            // Write Code to file
             if (DA.GetData(2, ref this.filePath) && this.filePath != string.Empty)
             {
                 this.filePath = Path.GetDirectoryName(this.filePath);
