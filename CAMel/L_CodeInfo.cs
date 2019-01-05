@@ -188,6 +188,17 @@ namespace CAMel.Types
             return outP.ToString();
         }
 
+        internal object getRangesString()
+        {
+            string rOut = string.Empty;
+            foreach (string k in this.ranges.Keys)
+            {
+                rOut = rOut + "\n" + k + ": " + ranges[k].T0.ToString("0.00") +
+                    " to " + ranges[k].T1.ToString("0.00");
+            }
+            return rOut;
+        }
+
         public override string ToString()
         {
             return this.Code.ToString();

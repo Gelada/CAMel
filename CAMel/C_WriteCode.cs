@@ -159,17 +159,8 @@ namespace CAMel
                 return;
             }
 
-            // Extract Ranges
-            Dictionary<String, Interval> Ranges = this.SaveCode.getRanges();
-            string rOut = string.Empty;
-            foreach (string k in Ranges.Keys)
-            {
-                rOut = rOut + "\n" + k + ": " + Ranges[k].T0.ToString("0.00") + 
-                    " to " + Ranges[k].T1.ToString("0.00");
-            }
-
             DA.SetData(0, this.SaveCode.ToString());
-            DA.SetData(1, rOut);
+            DA.SetData(1, this.SaveCode.getRangesString());
 
             // Write Code to file
             if (DA.GetData(2, ref this.filePath) && this.filePath != string.Empty)
