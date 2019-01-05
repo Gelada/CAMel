@@ -130,6 +130,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="P_Machine.cs" />
     <Compile Include="P_MaterialTool.cs" />
+    <Compile Include="P_ToolPathAdditions.cs" />
     <Compile Include="P_ToolPoint.cs" />
     <Compile Include="P_ToolPath.cs" />
     <Compile Include="C_WriteCode.cs" />

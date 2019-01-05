@@ -41,9 +41,8 @@ namespace CAMel
             pManager.AddTextParameter("Name", "N", "Name of path", GH_ParamAccess.item,string.Empty);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Additions", "TPA", "Additional operations to apply to the path, given by a list of numbers:\n"+
-                "{Insert, Retract, Stepdown, Drop Start, Drop Middle, Drop End, 3Axis Height Offset}\n" +
-                "all but drop middle are boolean with 0 being false.", GH_ParamAccess.list, TPAdef);
+            pManager.AddParameter(new GH_ToolPathAdditionsPar(), "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" +
+                "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
             pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item,string.Empty);
 
         }
@@ -71,7 +70,7 @@ namespace CAMel
             MaterialTool MT = null;
             IMaterialForm MF = null;
             string Co = string.Empty;
-            List<double> TPAd = new List<double>();
+            ToolPathAdditions TPA = new ToolPathAdditions();
 
             if (!DA.GetDataList(0, pts)) { return; }
             if (!DA.GetDataList(1, dirs)) { return; }
@@ -81,58 +80,8 @@ namespace CAMel
             if (!DA.GetData(5, ref name)) { return; }
             if (!DA.GetData(6, ref MT)) { return; }
             if (!DA.GetData(7, ref MF)) { return; }
-            if (!DA.GetDataList(8, TPAd)) { return; } 
+            if (!DA.GetData(8, ref TPA)) { return; } 
             if (!DA.GetData(9, ref Co)) { return; }
-
-            // Process the TPA vector
-
-            ToolPathAdditions TPA = new ToolPathAdditions();
-
-            // Warn if too short or too long.
-
-            if(TPAd.Count > 7)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Tool Path Additions too long, ignoring extra values.");
-                TPAd.RemoveRange(7, TPAd.Count - 7);
-            }
-            if(TPAd.Count < 7)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Tool Path Additions too short, missing values assumed to be false.");
-            }
-
-            // extract data for the length available.
-            // TODO move this into the toolpath additions class.
-
-            switch (TPAd.Count)
-            {
-                case 7:
-                    if (TPAd[6] > 0) { TPA.threeAxisHeightOffset = true; }
-                    else { TPA.threeAxisHeightOffset = false; }
-                    goto case 6;
-                case 6:
-                    if (TPAd[5] > 0) { TPA.sdDropEnd = true; }
-                    else { TPA.sdDropEnd = false; }
-                    goto case 5;
-                case 5:
-                    TPA.sdDropMiddle = TPAd[4];
-                    goto case 4;
-                case 4:
-                    if (TPAd[3] > 0) { TPA.sdDropStart = true; }
-                    else { TPA.sdDropStart = false; }
-                    goto case 3;
-                case 3:
-                    if (TPAd[2] > 0) { TPA.stepDown = true; }
-                    else { TPA.stepDown = false; }
-                    goto case 2;
-                case 2:
-                    if (TPAd[1] > 0) { TPA.retract = true; }
-                    else { TPA.retract = false; }
-                    goto case 1;
-                case 1:
-                    if (TPAd[0] > 0) { TPA.insert = true; }
-                    else { TPA.insert = false; }
-                    break;
-            }
 
             ToolPath TP = new ToolPath(name, MT, MF, TPA);
 

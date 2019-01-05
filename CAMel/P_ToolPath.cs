@@ -14,38 +14,6 @@ using static CAMel.Exceptions;
 
 namespace CAMel.Types
 {
-    // Features we might add to the path
-    public struct ToolPathAdditions
-    {
-        public bool insert { get; set; }
-        public bool retract { get; set; }
-        public bool stepDown { get; set; }
-        public bool threeAxisHeightOffset { get; set; }
-        public bool sdDropStart { get; set; }    // How stepdown will deal with 
-        public double sdDropMiddle { get; set; } // points that have reached  
-        public bool sdDropEnd { get; set; }      // the required depth (Middle is dropped if length greater than value);
-        public bool tabbing { get; set; }        // add tabs if machine wants to.
-        public double leadFactor { get; set; }   // if leading in or out what factor of standard value to use
-
-        public ToolPathAdditions(ToolPathAdditions TPA)
-        {
-            this.insert = TPA.insert;
-            this.retract = TPA.retract;
-            this.stepDown = TPA.stepDown;
-            this.sdDropStart = TPA.sdDropStart;
-            this.sdDropMiddle = TPA.sdDropMiddle;
-            this.sdDropEnd = TPA.sdDropEnd;
-            this.threeAxisHeightOffset = TPA.threeAxisHeightOffset;
-            this.tabbing = TPA.tabbing;
-            this.leadFactor = TPA.leadFactor;
-        }
-
-        public bool any
-        {
-            get { return this.insert || this.retract || this.stepDown || this.threeAxisHeightOffset || this.tabbing || this.leadFactor !=0; }
-        }
-
-    }
 
     // One action of the machine, such as cutting a line
     public class ToolPath : IList<ToolPoint> ,IToolPointContainer
@@ -745,6 +713,16 @@ namespace CAMel.Types
             if (typeof(Q).IsAssignableFrom(typeof(GH_MaterialTool)))
             {
                 target = (Q)(object)new GH_MaterialTool(this.Value.matTool);
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(ToolPathAdditions)))
+            {
+                target = (Q)(object)this.Value.Additions;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ToolPathAdditions)))
+            {
+                target = (Q)(object)new GH_ToolPathAdditions(this.Value.Additions);
                 return true;
             }
             return false;
