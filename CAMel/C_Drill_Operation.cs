@@ -31,6 +31,7 @@ namespace CAMel
             pManager.AddNumberParameter("Peck Depth", "P", "Depth of Peck", GH_ParamAccess.item, 0);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
+            pManager[3].Optional = true; // MatForm
         }
 
         /// <summary>
@@ -55,7 +56,7 @@ namespace CAMel
             if (!DA.GetData(0, ref D)) { return; }
             if (!DA.GetData(1, ref peck)) { return; }
             if (!DA.GetData(2, ref MT)) { return; }
-            if (!DA.GetData(3, ref MF)) { return; }
+            DA.GetData(3, ref MF);
 
             if (D.Normal.Length == 0)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Cannot process a circle who's normal is given as the zero vector. Check for null inputs."); }

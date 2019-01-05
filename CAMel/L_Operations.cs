@@ -13,6 +13,8 @@ namespace CAMel.Types
     {
         public static MachineOperation opIndex2dCut(Curve C, Vector3d D, double oS, double leadInOut, bool tabs, MaterialTool MT, IMaterialForm MF)
         {
+            if (MF == null) { Exceptions.matFormException(); }
+            if (MT == null) { Exceptions.matToolException(); }
             // Shift curve to XY plane
 
             Plane P = new Plane(Point3d.Origin, D);
@@ -79,6 +81,7 @@ namespace CAMel.Types
 
         public static MachineOperation opIndex3Axis(List<Curve> C, Vector3d dir, MaterialTool MT, IMaterialForm MF, out int InvalidCurves)
         {
+            if(MF == null) { Exceptions.matFormException(); }
             MachineOperation Op = new MachineOperation
             { name = "Index 3-Axis Cutting with " + C.Count.ToString() + " path" };
             if (C.Count > 1) { Op.name = Op.name + "s"; }
@@ -114,6 +117,7 @@ namespace CAMel.Types
 
         public static MachineOperation drillOperation(Circle D, double peck, MaterialTool MT, IMaterialForm MF)
         {
+            if (MT == null) { Exceptions.matToolException(); }
             MachineOperation Op = new MachineOperation
             {
                 name = "Drilling depth " + D.Radius.ToString("0.000") + " at (" + D.Center.X.ToString("0.000") + "," + D.Center.Y.ToString("0.000") + "," + D.Center.Z.ToString("0.000") + ")."

@@ -30,6 +30,7 @@ namespace CAMel
             pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0,0,1));
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
+            pManager[2].Optional = true; // MaterialTool
         }
 
         /// <summary>
@@ -55,7 +56,7 @@ namespace CAMel
             if (!DA.GetDataList(0, C)) { return;}
             if (!DA.GetData(1, ref Dir)) { return;}
             if (!DA.GetData(2, ref MT)) { return;}
-            if (!DA.GetData(3, ref MF)) { return;}
+            DA.GetData(3, ref MF);
 
             int invalidCurves = 0;
 

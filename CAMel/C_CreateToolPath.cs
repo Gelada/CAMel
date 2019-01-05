@@ -25,14 +25,6 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            List<double> TPAdef = new List<double>();
-            for (int i = 0; i < 7; i++) { TPAdef.Add(0); }
-            TPAdef[0] = 1; // Insert
-            TPAdef[1] = 1; // Retract
-            TPAdef[2] = 1; // Stepdown
-            TPAdef[3] = 1; // Drop Start
-            TPAdef[4] = 1; // Drop Middle
-            TPAdef[5] = 1; // Drop End
             pManager.AddPointParameter("Path", "P", "List of toolpoint locations", GH_ParamAccess.list);
             pManager.AddVectorParameter("Directions", "D", "List of vectors giving tool direction", GH_ParamAccess.list,new Vector3d(0,0,1));
             pManager.AddVectorParameter("Speed and Feed", "SF", "List of vectors giving speed (X) and feed (Y) at each toolpoint.", GH_ParamAccess.list, new Vector3d(-1, -1, 0));
@@ -44,7 +36,9 @@ namespace CAMel
             pManager.AddParameter(new GH_ToolPathAdditionsPar(), "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" +
                 "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
             pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item,string.Empty);
-
+            pManager[6].Optional = true; // MatTool
+            pManager[7].Optional = true; // MatForm
+            pManager[8].Optional = true; // ToolPathAdditions
         }
 
         /// <summary>
@@ -78,9 +72,9 @@ namespace CAMel
             if (!DA.GetDataList(3, preCode)) { return; }
             if (!DA.GetDataList(4, postCode)) { return; }
             if (!DA.GetData(5, ref name)) { return; }
-            if (!DA.GetData(6, ref MT)) { return; }
-            if (!DA.GetData(7, ref MF)) { return; }
-            if (!DA.GetData(8, ref TPA)) { return; } 
+            DA.GetData(6, ref MT);
+            DA.GetData(7, ref MF);
+            DA.GetData(8, ref TPA);
             if (!DA.GetData(9, ref Co)) { return; }
 
             ToolPath TP = new ToolPath(name, MT, MF, TPA);
