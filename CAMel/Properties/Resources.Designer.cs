@@ -103,6 +103,16 @@ namespace CAMel.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap create2axis {
+            get {
+                object obj = ResourceManager.GetObject("create2axis", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap create3axis {
             get {
                 object obj = ResourceManager.GetObject("create3axis", resourceCulture);
@@ -186,6 +196,16 @@ namespace CAMel.Properties {
         internal static System.Drawing.Bitmap drilloperations {
             get {
                 object obj = ResourceManager.GetObject("drilloperations", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap index2dcutting {
+            get {
+                object obj = ResourceManager.GetObject("index2dcutting", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -313,6 +333,16 @@ namespace CAMel.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap readmaterialtool {
+            get {
+                object obj = ResourceManager.GetObject("readmaterialtool", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap surfacepath {
             get {
                 object obj = ResourceManager.GetObject("surfacepath", resourceCulture);
@@ -376,6 +406,16 @@ namespace CAMel.Properties {
         internal static System.Drawing.Bitmap toolpath {
             get {
                 object obj = ResourceManager.GetObject("toolpath", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap toolpathadditions {
+            get {
+                object obj = ResourceManager.GetObject("toolpathadditions", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

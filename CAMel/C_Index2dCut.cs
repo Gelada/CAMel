@@ -16,7 +16,7 @@ namespace CAMel
         /// Initializes a new instance of the WriteCode class.
         /// </summary>
         public C_Index2dCut()
-            : base("Two D Operation", "Two D",
+            : base("2D Cut", "2D",
                 "Create a Machine Operations cutting out 2D shapes.",
                 "CAMel", " Operations")
         {
@@ -92,7 +92,7 @@ namespace CAMel
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.drilloperations;
+                return Properties.Resources.index2dcutting;
             }
         }
 

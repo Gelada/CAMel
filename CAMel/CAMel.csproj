@@ -207,6 +207,9 @@
     <None Include="Resources\toolpoint.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\readmaterialtool.png" />
+    <None Include="Resources\index2dcutting.png" />
+    <None Include="Resources\toolpathadditions.png" />
     <None Include="Resources\phototrace.png" />
     <None Include="Resources\photocontour.png" />
     <None Include="Resources\photosurface.png" />
@@ -214,6 +217,7 @@
     <None Include="Resources\CAMel.png" />
     <None Include="Resources\BW_CAMel.png" />
     <Content Include="License-LGPL.txt" />
+    <None Include="Resources\create2axis.png" />
     <Content Include="Resources\Image1.png" />
     <None Include="Resources\pocketing.png" />
     <None Include="Resources\surfacinghelix.png" />

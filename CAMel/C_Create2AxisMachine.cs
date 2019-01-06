@@ -95,7 +95,7 @@ namespace CAMel
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.create3axis;
+                return Properties.Resources.create2axis;
             }
         }
 

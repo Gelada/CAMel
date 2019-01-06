@@ -130,6 +130,9 @@
   <data name="cncwriter" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\cncwriter.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="create2axis" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\create2axis.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="create3axis" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\create3axis.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -156,6 +159,9 @@
   </data>
   <data name="drilloperations" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\drilloperations.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="index2dcutting" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\index2dcutting.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="index3axis" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\index3axis.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -193,6 +199,9 @@
   <data name="pocketing" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\pocketing.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="readmaterialtool" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\readmaterialtool.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="surfacepath" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\surfacepath.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -213,6 +222,9 @@
   </data>
   <data name="toolpath" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\toolpath.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="toolpathadditions" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\toolpathadditions.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="toolpoint" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\toolpoint.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
