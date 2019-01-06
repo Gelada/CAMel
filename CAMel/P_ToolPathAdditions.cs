@@ -40,7 +40,7 @@ namespace CAMel.Types
             this.sdDropEnd = false;
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
-            this.leadFactor = 1;
+            this.leadFactor = 0;
         }
 
         private ToolPathAdditions(ToolPathAdditions TPA)
@@ -207,15 +207,7 @@ namespace CAMel.Types
         protected override GH_GetterResult Prompt_Singular(ref GH_ToolPathAdditions value)
         {
             // Give a reasonable generic
-            ToolPathAdditions TPA = new ToolPathAdditions();
-            TPA.insert = true;
-            TPA.retract = true;
-            TPA.stepDown = true;
-            TPA.sdDropStart = true;
-            TPA.sdDropMiddle = 1;
-            TPA.sdDropEnd = true;
-
-            value = new GH_ToolPathAdditions(TPA);
+            value = new GH_ToolPathAdditions(ToolPathAdditions.BasicDefault);
             return GH_GetterResult.success;
         }
     }
@@ -247,7 +239,7 @@ namespace CAMel.Types
                 this.Owner.Value = TPA;
             }
         }
-        [Category(" Step Down"), Description("Create a sequence of paths stepping down through the material."), DisplayName("Step down"), RefreshProperties(RefreshProperties.All)]
+        [Category(" Step Down"), Description("Create a sequence of paths stepping down through the material."), DisplayName(" Step down"), RefreshProperties(RefreshProperties.All)]
         public bool stepdown
         {
             get { return Owner.Value.stepDown; }

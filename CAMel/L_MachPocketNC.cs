@@ -86,7 +86,11 @@ namespace CAMel.Types.Machine
             return Kinematics.angDiffFiveAxisABTable(this.pivot, toolLength, tP1, tP2, lng);
         }
 
-        public ToolPath readCode(string Code) => GCode.gcRead(this, this.MTs, Code, this.terms);
+        public ToolPath readCode(string Code)
+        {
+            if(this.MTs.Count == 0) { noToolException(); }
+            return GCode.gcRead(this, this.MTs, Code, this.terms);
+        }
         public ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT)
         {
             Point3d MachPt = new Point3d(vals['X'], vals['Y'], vals['Z']);
