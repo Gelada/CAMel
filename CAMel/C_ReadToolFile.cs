@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 
 using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
+using Grasshopper.Kernel.Parameters;
+
 using CAMel.Types;
 
 using CsvHelper.Configuration;
@@ -66,7 +66,7 @@ namespace CAMel
             Map(m => m.finishDepth).Name("Finish Depth");
             Map(m => m.tolerance).Name("Tolerance");
             Map(m => m.minStep).Name("Min Step");
-            Map(m => m.shape).TypeConverter<ShapeConverter>();
+            Map(m => m.shape).Name("Shape");
         }
     }
 
@@ -78,7 +78,7 @@ namespace CAMel
         public C_ReadToolFile()
             : base("Read Tool File", "FindMT",
                 "Read in a .csv file with tool details",
-                "CAMel", " Utilities")
+                "CAMel", " Hardware")
         {
         }
 
@@ -87,9 +87,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("File", "F", "File containing Material Tool Details", GH_ParamAccess.item);
-            pManager.AddTextParameter("Material", "M", "Material to cut", GH_ParamAccess.item);
-            pManager.AddTextParameter("Tool", "T", "Tool to use", GH_ParamAccess.item);
+            pManager.AddParameter(new Param_FilePath(),"File", "F", "File containing Material Tool Details", GH_ParamAccess.item);
         }
                 
 
@@ -98,7 +96,13 @@ namespace CAMel
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTools", "MT", "Correct from the .csv file", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "MaterialTools", "MTs", "All Material Tools from the .csv file", GH_ParamAccess.list);
+        }
+
+        protected override void BeforeSolveInstance()
+        {
+            base.BeforeSolveInstance();  
+            
         }
 
         /// <summary>
@@ -107,51 +111,27 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            string matName = string.Empty;
-            string toolName = string.Empty;
-            string file = "";
+            string file = string.Empty;
 
             if (!DA.GetData(0, ref file)) { return; }
-            if (!DA.GetData(1, ref matName)) { return; }
-            if (!DA.GetData(2, ref toolName)) { return; }
 
             this.Message = Path.GetFileNameWithoutExtension(file);
 
-            List<MaterialToolBuilder> MTBs = new List<MaterialToolBuilder>();
+            var MTBs = new HashSet<MaterialToolBuilder>();
 
             using (StreamReader fileReader = new StreamReader(file))
             {
                 CsvReader csv = new CsvReader(fileReader);
-                MTBs = new List<MaterialToolBuilder>();
                 csv.Configuration.RegisterClassMap<MaterialToolMap>();
-                MTBs.AddRange(csv.GetRecords<MaterialToolBuilder>());
+                MTBs.UnionWith(csv.GetRecords<MaterialToolBuilder>());
             }
 
             List<MaterialTool> MTs = new List<MaterialTool>();
             foreach(MaterialToolBuilder MTB in MTBs) { MTs.Add(new MaterialTool(MTB)); }
 
-            bool found = false;
-            MaterialTool MT = null;
-            for(int i=0; i < MTs.Count; i++)
-            {
-                if(MTs[i].toolName == toolName && MTs[i].matName == matName)
-                {
-                    if(found)
-                    {
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "More than one material tool combination found, using first.");
-                        break;
-                    }
-                    else
-                    {
-                        found = true;
-                        MT = MTs[i];
-                    }
-                }
-            }
-            if (!found) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "No material tool combination found."); }
-            else { DA.SetData(0, new GH_MaterialTool(MT)); }
+            DA.SetDataList(0, MTs);
         }
-     
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>

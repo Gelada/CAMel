@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
+
 using CAMel.Types.Machine;
 
 namespace CAMel.Types
@@ -26,7 +27,7 @@ namespace CAMel.Types
         public double finishDepth { get; set; } // thickness to cut in a finish pass
         public double toolWidth { get; set; }   // width of tool (assumed unset for negative values)
         public double toolLength { get; set; }  // length from the tip of the tool to the spindle
-        public EndShape shape { get; set; }     // End shape of the tool
+        public string shape { get; set; }       // End shape of the tool
         public double tolerance { get; set; }   // The maximum permitted distance of approximation from curve
         public double minStep { get; set; }     // shortest path permitted
 
@@ -91,7 +92,16 @@ namespace CAMel.Types
             this.toolLength = MT.toolLength;
             this.tolerance = MT.tolerance;
             this.minStep = MT.minStep;
-            this.shape = MT.shape;
+            EndShape ES;
+            switch (MT.shape)
+            {
+                case "Ball": ES = EndShape.Ball; break;
+                case "Square": ES = EndShape.Square; break;
+                case "V": ES = EndShape.V; break;
+                case "Other": ES = EndShape.Other; break;
+                default: ES = EndShape.Error; break;
+            }
+            this.shape = ES;
         }
 
         public static MaterialTool changeFinishDepth(MaterialTool MT, double fd)

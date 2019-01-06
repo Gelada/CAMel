@@ -88,6 +88,7 @@
     <None Include="ClassDiagram1.cd" />
     <None Include="C_Create2AxisMachine.cs" />
     <Compile Include="C_Drill_Operation.cs" />
+    <Compile Include="C_SelectTool.cs" />
     <Compile Include="C_ReadToolFile.cs" />
     <Compile Include="C_Trace.cs" />
     <Compile Include="C_HelixSurface.cs" />
