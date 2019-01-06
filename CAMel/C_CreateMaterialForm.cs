@@ -17,7 +17,7 @@ namespace CAMel
         public C_CreateMaterialForm()
             : base("Create Material Form", "MaterialForm",
                 "Give details of the position of material to cut",
-                "CAMel", " Utilities")
+                "CAMel", " Hardware")
         {
         }
 

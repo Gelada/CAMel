@@ -16,7 +16,7 @@ namespace CAMel
         public C_CreateMaterialTool()
             : base("Create Material Tool", "MaterialTool",
                 "Give details of the material to cut and the tool cutting it",
-                "CAMel", " Utilities")
+                "CAMel", " Hardware")
         {
         }
 

@@ -16,7 +16,7 @@ namespace CAMel
         public C_Create3AxisMachine()
             : base("Create 3 Axis Machine", "3 Axis",
                 "Create 3 Axis Machine",
-                "CAMel", " Utilities")
+                "CAMel", " Hardware")
         {
         }
 
