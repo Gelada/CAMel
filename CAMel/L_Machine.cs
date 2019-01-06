@@ -268,7 +268,7 @@ namespace CAMel.Types.Machine
             Co.appendComment(M.sectionBreak);
             Co.append(M.header);
             Co.append(MI.preCode);
-
+            Co.currentMT = new MaterialTool(); // Clear the tool information so we call a tool change. 
             M.writeCode(ref Co, startPath);
         }
         static public void gcInstEnd(IGCodeMachine M, ref CodeInfo Co, MachineInstruction MI, ToolPath finalPath, ToolPath endPath)
@@ -312,8 +312,10 @@ namespace CAMel.Types.Machine
             if (TP.matTool != null && TP.matTool.toolName != Co.currentMT.toolName)
             {
                 Co.appendComment(" using: " + TP.matTool.toolName + " into " + TP.matTool.matName);
+                if (M.toolLengthCompensation && TP.matTool.toolNumber != Co.currentMT.toolNumber) {
+                    Co.append(M.toolChangeCommand + TP.matTool.toolNumber);
+                }
                 Co.currentMT = TP.matTool;
-                if (M.toolLengthCompensation) { Co.append(M.toolChangeCommand + TP.matTool.toolNumber); }
                 ch.mT = true;
                 preamble = true;
             }
