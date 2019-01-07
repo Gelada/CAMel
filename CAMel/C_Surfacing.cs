@@ -35,9 +35,12 @@ namespace CAMel
             pManager.AddGeometryParameter("Surface", "S","The surface, brep or mesh to carve", GH_ParamAccess.item);
             pManager.AddParameter(new GH_SurfacePathPar(),"Rough Path", "R", "Information to create roughing path", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool Rough", "MTR", "The material to cut and the tool to do it for roughing", GH_ParamAccess.item);
+            pManager[2].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddParameter(new GH_SurfacePathPar(), "Finish Path", "F", "Information to create finishing path", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool Finish", "MTF", "The material to cut and the tool to do it for finishing", GH_ParamAccess.item);
+            pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
+            pManager[5].WireDisplay = GH_ParamWireDisplay.faint;
         }
 
         /// <summary>

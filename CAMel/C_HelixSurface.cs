@@ -33,6 +33,7 @@ namespace CAMel
             pManager[1].Optional = true; // Curve
             pManager.AddPlaneParameter("Direction", "Dir", "Plane to use, Helix around Z.", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
+            pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item,0);
             pManager.AddNumberParameter("Step over", "SO", "Stepover as a mutliple of tool width. Default .5.", GH_ParamAccess.item, 0.5);
             pManager.AddBooleanParameter("Clockwise", "CW", "Run clockwise as you rise around the piece. For a clockwise bit this gives conventional cutting. ", GH_ParamAccess.item, true);

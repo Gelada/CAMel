@@ -33,7 +33,9 @@ namespace CAMel
             pManager.AddNumberParameter("Lead in/out", "L", "Lead in and out factor, 0 for none, -1 for interior, 1 for exterior. Actually uses machines' standard lead in and out scaled by this value, so variation by toolpath is possible.", GH_ParamAccess.item, 0);
             pManager.AddBooleanParameter("Tabbing","T", "Add tabs if the machine requires. (Not yet implemented)",GH_ParamAccess.item, false);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
+            pManager[5].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
+            pManager[6].WireDisplay = GH_ParamWireDisplay.faint;
         }
 
         /// <summary>

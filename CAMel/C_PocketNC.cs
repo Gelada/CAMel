@@ -34,7 +34,7 @@ namespace CAMel
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
-
+            pManager[7].WireDisplay = GH_ParamWireDisplay.faint;
             pManager[7].Optional = true;
         }
 

@@ -32,15 +32,17 @@ namespace CAMel
             pManager.AddTextParameter("post Code", "poC", "List of additional CNC codes to run after the points. The code will run on the same line. Use a newline at start to run on the next line.", GH_ParamAccess.list, string.Empty);
             pManager.AddTextParameter("Name", "N", "Name of path", GH_ParamAccess.item,string.Empty);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
+            pManager[6].Optional = true; // MatTool
+            pManager[6].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
+            pManager[7].Optional = true; // MatForm
+            pManager[7].WireDisplay = GH_ParamWireDisplay.faint;
             var tPApar = new GH_ToolPathAdditionsPar();
             tPApar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.BasicDefault));
             pManager.AddParameter(tPApar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" +
                 "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
-            pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item,string.Empty);
-            pManager[6].Optional = true; // MatTool
-            pManager[7].Optional = true; // MatForm
             pManager[8].Optional = true; // ToolPathAdditions
+            pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item,string.Empty);
         }
 
         /// <summary>
