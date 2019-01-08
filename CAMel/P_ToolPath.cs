@@ -635,15 +635,8 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public class GH_ToolPath : CAMel_Goo<ToolPath>, IGH_PreviewData
     {
-        public BoundingBox ClippingBox
-        {
-            get
-            {
-                BoundingBox BB = new Polyline(this.Value.getPoints()).BoundingBox;
-                BB.Inflate(1);
-                return BB; 
-            }
-        }
+        public BoundingBox ClippingBox => this.Value.getBoundingBox();
+
         // Default Constructor
         public GH_ToolPath() { this.Value = new ToolPath(); }
         // Create from unwrapped version
