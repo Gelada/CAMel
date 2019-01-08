@@ -13,6 +13,7 @@ namespace CAMel.Types.MaterialForm
             this.box = box;
             this.materialTolerance = matTol;
             this.safeDistance = safeD;
+            this.myMesh = null;
         }
 
         public Box box { get; }
@@ -161,6 +162,20 @@ namespace CAMel.Types.MaterialForm
             return MFDefault.refine(this, TP, M);
         }
 
-        public Mesh getMesh() => Mesh.CreateFromBox(this.box, 1, 1, 1);
+        private Mesh myMesh;
+        private void setMesh()
+        {
+            myMesh = Mesh.CreateFromBox(this.box, 1, 1, 1);
+        }
+
+        public Mesh getMesh()
+        {
+            if (myMesh == null) { setMesh(); }
+            return myMesh;
+        }
+        public BoundingBox getBoundingBox()
+        {
+            return this.box.BoundingBox;
+        }
     }
 }

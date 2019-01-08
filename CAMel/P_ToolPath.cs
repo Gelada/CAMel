@@ -120,33 +120,15 @@ namespace CAMel.Types
             this.Additions = this.Additions ?? M.defaultTPA;
         }
 
-        public ToolPath getSinglePath() => this.deepClone();
-
-        public string TypeDescription
-        {
-            get { return "An action of the machine, for example cutting a single line"; }
-        }
-
-        public string TypeName
-        {
-            get { return "ToolPath"; }
-        }
+        public string TypeDescription => "An action of the machine, for example cutting a single line";
+        public string TypeName => "ToolPath"; 
 
         public string name { get; set; }
 
         public string preCode { get; set; }
         public string postCode { get; set; }
 
-        public int Count => ((IList<ToolPoint>)this.Pts).Count;
-
-        public bool IsReadOnly => ((IList<ToolPoint>)this.Pts).IsReadOnly;
-
-        public ToolPoint this[int index] { get => ((IList<ToolPoint>)this.Pts)[index]; set => ((IList<ToolPoint>)this.Pts)[index] = value; }
-
-        public override string ToString()
-        {
-            return "Toolpath with " + this.Count + " points.";
-        }
+        public override string ToString() => "Toolpath with " + this.Count + " points.";
 
         // Main functions
 
@@ -361,6 +343,64 @@ namespace CAMel.Types
             return NewPaths;
         }
 
+        // Use a curve and direction vector to create a path of toolpoints
+        public bool convertCurve(Curve c, Vector3d d)
+        {
+            if (this.matTool == null) { matToolException(); }
+            // Create polyline approximation
+            Polyline PL;
+            ToolPoint TPt;
+
+            // Check we are dealing with a valid curve.
+
+            if (c != null && c.IsValid)
+            {
+                Curve c2 = c.ToPolyline(0, 0, Math.PI, 0, 0, this.matTool.tolerance, this.matTool.minStep, 20.0 * this.matTool.toolWidth, true);
+                c2.TryGetPolyline(out PL);
+            }
+            else { return false; }
+
+
+            this.Pts = new List<ToolPoint>();
+
+            // Add the points to the Path
+
+            foreach (Point3d Pt in PL)
+            {
+                TPt = new ToolPoint(Pt, d);
+                this.Add(TPt);
+            }
+            return true;
+        }
+
+        public static PolylineCurve convertAccurate(Curve C)
+        {
+            double accTol = 0.000000001;
+            Polyline P;
+            PolylineCurve PlC;
+            // Check if already a polyline, otherwise make one
+            if (C.TryGetPolyline(out P)) { PlC = new PolylineCurve(P); }
+            else { PlC = C.ToPolyline(0, 0, Math.PI, 0, 0, accTol, 0, 0, true); }
+
+            return PlC;
+        }
+
+        internal static ToolPath toPath(object scraps)
+        {
+            ToolPath oP = new ToolPath();
+            if (scraps is IToolPointContainer) { oP.AddRange(((IToolPointContainer)scraps).getSinglePath()); }
+            else if (scraps is Point3d) { oP.Add((Point3d)scraps); }
+            else if (scraps is IEnumerable)
+            {
+                foreach (object oB in scraps as IEnumerable)
+                {
+                    if (oB is IToolPointContainer) { oP.AddRange(((IToolPointContainer)oB).getSinglePath()); }
+                    if (oB is Point3d) { oP.Add((Point3d)oB); }
+                }
+            }
+            return oP;
+        }
+
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
         // TODO make this guarantee that it does not gouge locally. There is a problem 
         // with paths that are steep down, followed by some bottom moves followed by steep out. 
@@ -509,6 +549,8 @@ namespace CAMel.Types
             return retPath;
         }
 
+        #region Point extraction and previews
+        public ToolPath getSinglePath() => this.deepClone();
         // Get the list of tooltip locations
         public List<Point3d> getPoints()
         {
@@ -518,7 +560,6 @@ namespace CAMel.Types
 
             return Points;
         }
-
         // Get the list of tool directions
         public List<Vector3d> getDirs()
         {
@@ -539,6 +580,23 @@ namespace CAMel.Types
             }
             return Ptsout;
         }
+        // Get the list of speeds and feeds (a vector with speed in X and feed in Y)
+        public List<Vector3d> getSpeedFeed()
+        {
+            List<Vector3d> SF = new List<Vector3d>();
+
+            foreach (ToolPoint tP in this) { SF.Add(new Vector3d(tP.speed, tP.feed, 0)); }
+            return SF;
+        }
+
+        // Bounding Box for previews
+        public BoundingBox getBoundingBox()
+        {
+            BoundingBox BB = BoundingBox.Unset;
+            for (int i = 0; i < this.Count; i++)
+            { BB.Union(this[i].getBoundingBox()); }
+            return BB;
+        }
         // Create a polyline
         public PolylineCurve getLine()
         {
@@ -551,58 +609,12 @@ namespace CAMel.Types
             foreach (ToolPoint TP in this) { lines.Add(TP.toolLine()); }
             return lines;
         }
+       #endregion
 
-        // Get the list of speeds and feeds (a vector with speed in X and feed in Y)
-        public List<Vector3d> getSpeedFeed()
-        {
-            List<Vector3d> SF = new List<Vector3d>();
-
-            foreach (ToolPoint tP in this) { SF.Add(new Vector3d(tP.speed, tP.feed, 0)); }
-            return SF;
-        }
-
-        // Use a curve and direction vector to create a path of toolpoints
-        public bool convertCurve(Curve c, Vector3d d)
-        {
-            if (this.matTool == null) { matToolException(); }
-            // Create polyline approximation
-            Polyline PL;
-            ToolPoint TPt;
-
-            // Check we are dealing with a valid curve.
-
-            if (c != null && c.IsValid)
-            {
-                    Curve c2 = c.ToPolyline(0, 0, Math.PI, 0, 0, this.matTool.tolerance, this.matTool.minStep, 20.0*this.matTool.toolWidth, true);
-                    c2.TryGetPolyline(out PL);
-            }
-            else { return false; }
-
-
-            this.Pts = new List<ToolPoint>();
-
-            // Add the points to the Path
-
-            foreach (Point3d Pt in PL)
-            {
-                TPt = new ToolPoint(Pt, d);
-                this.Add(TPt);
-            }
-            return true;
-        }
-
-        public static PolylineCurve convertAccurate(Curve C)
-        {
-            double accTol = 0.000000001;
-            Polyline P;
-            PolylineCurve PlC;
-            // Check if already a polyline, otherwise make one
-            if(C.TryGetPolyline(out P)) { PlC = new PolylineCurve(P); }
-            else { PlC = C.ToPolyline(0,0,Math.PI,0,0,accTol,0,0,true); }
-
-            return PlC;
-        }
-        
+        #region List Functions
+        public int Count => ((IList<ToolPoint>)this.Pts).Count;
+        public bool IsReadOnly => ((IList<ToolPoint>)this.Pts).IsReadOnly;
+        public ToolPoint this[int index] { get => ((IList<ToolPoint>)this.Pts)[index]; set => ((IList<ToolPoint>)this.Pts)[index] = value; }
         public int IndexOf(ToolPoint item) { return ((IList<ToolPoint>)this.Pts).IndexOf(item); }
         public void Insert(int index, ToolPoint item) { ((IList<ToolPoint>)this.Pts).Insert(index, item); }
         public void RemoveAt(int index) { ((IList<ToolPoint>)this.Pts).RemoveAt(index); }
@@ -610,38 +622,18 @@ namespace CAMel.Types
         public void Add(Point3d item) { ((IList<ToolPoint>)this.Pts).Add(new ToolPoint(item)); }
         public void AddRange(IEnumerable<ToolPoint> items) { this.Pts.AddRange(items); }
         public void AddRange(IEnumerable<Point3d> items)
-        {
-            foreach(Point3d Pt in items)
-            {
-                this.Add(Pt);
-            }
-        }
+        { foreach(Point3d Pt in items) { this.Add(Pt); } }
         public void Clear() { ((IList<ToolPoint>)this.Pts).Clear(); }
         public bool Contains(ToolPoint item) { return ((IList<ToolPoint>)this.Pts).Contains(item); }
         public void CopyTo(ToolPoint[] array, int arrayIndex) { ((IList<ToolPoint>)this.Pts).CopyTo(array, arrayIndex); }
         public bool Remove(ToolPoint item) { return ((IList<ToolPoint>)this.Pts).Remove(item); }
         public IEnumerator<ToolPoint> GetEnumerator() { return ((IList<ToolPoint>)this.Pts).GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return ((IList<ToolPoint>)this.Pts).GetEnumerator(); }
-
-        internal static ToolPath toPath(object scraps)
-        {
-            ToolPath oP = new ToolPath();
-            if (scraps is IToolPointContainer) { oP.AddRange(((IToolPointContainer)scraps).getSinglePath()); }
-            else if (scraps is Point3d) { oP.Add((Point3d)scraps); }
-            else if (scraps is IEnumerable)
-            {
-                foreach (object oB in scraps as IEnumerable)
-                {
-                    if (oB is IToolPointContainer) { oP.AddRange(((IToolPointContainer)oB).getSinglePath()); }
-                    if (oB is Point3d) { oP.Add((Point3d)oB); }
-                }
-            }
-            return oP;
-        }
+        #endregion
     }
 
     // Grasshopper Type Wrapper
-    public class GH_ToolPath : CAMel_Goo<ToolPath>, IGH_PreviewData, IGH_BakeAwareData
+    public class GH_ToolPath : CAMel_Goo<ToolPath>, IGH_PreviewData
     {
         public BoundingBox ClippingBox
         {
@@ -765,18 +757,10 @@ namespace CAMel.Types
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
         public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
-
-        public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
-        {
-            obj_guid = Guid.Empty;
-            if (att == null) { att = doc.CreateDefaultAttributes(); }
-            obj_guid = doc.Objects.AddCurve(this.Value.getLine(),att);
-            return true;
-        }
     }
 
     // Grasshopper Parameter Wrapper
-    public class GH_ToolPathPar : GH_Param<GH_ToolPath>
+    public class GH_ToolPathPar : GH_Param<GH_ToolPath>, IGH_PreviewObject
     {
         public GH_ToolPathPar() :
             base("ToolPath", "ToolPath", "Contains a collection of Tool Paths", "CAMel", "  Params", GH_ParamAccess.item) { }
@@ -784,6 +768,13 @@ namespace CAMel.Types
         {
             get { return new Guid("4ea6da38-c19f-43e7-85d4-ada4716c06ac"); }
         }
+
+        public bool Hidden { get; set; }
+        public bool IsPreviewCapable => true;
+        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawWires(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
@@ -796,5 +787,6 @@ namespace CAMel.Types
                 return Properties.Resources.toolpath;
             }
         }
+        
     }
 }

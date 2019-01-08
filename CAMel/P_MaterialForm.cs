@@ -253,6 +253,7 @@ namespace CAMel.Types.MaterialForm
         ToolPath insertRetract(ToolPath TP);
 
         Mesh getMesh();
+        BoundingBox getBoundingBox();
     }
     
     public static class MaterialForm
@@ -365,8 +366,10 @@ namespace CAMel.Types.MaterialForm
 namespace CAMel.Types
 {
     // Grasshopper Type Wrapper
-    public class GH_MaterialForm : CAMel_Goo<IMaterialForm>
+    public class GH_MaterialForm : CAMel_Goo<IMaterialForm>, IGH_PreviewData
     {
+        public BoundingBox ClippingBox => this.Value.getBoundingBox();
+
         public GH_MaterialForm() { this.Value = null; }
         // Construct from unwrapped object
         public GH_MaterialForm(IMaterialForm MF) { this.Value = MF; }
@@ -411,10 +414,18 @@ namespace CAMel.Types
             return false;
         }
 
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        {
+        }
+
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args)
+        {
+            args.Pipeline.DrawMeshShaded(this.Value.getMesh(), args.Material);
+        }
     }
 
     // Grasshopper Parameter Wrapper
-    public class GH_MaterialFormPar : GH_Param<GH_MaterialForm>
+    public class GH_MaterialFormPar : GH_Param<GH_MaterialForm>, IGH_PreviewObject
     {
         public GH_MaterialFormPar() :
             base("Material Form", "MatForm", "Contains a collection of Material Forms", "CAMel", "  Params", GH_ParamAccess.item) { }
@@ -423,6 +434,13 @@ namespace CAMel.Types
         {
             get { return new Guid("01d791bb-d6b8-42e3-a1ba-6aec037cacc3"); }
         }
+
+        public bool Hidden { get; set; }
+        public bool IsPreviewCapable => true;
+        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>

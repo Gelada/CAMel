@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
+using Rhino.Geometry;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 
@@ -118,12 +119,6 @@ namespace CAMel.Types
             get { return "MachineInstruction"; }
         }
 
-        public int Count => ((IList<MachineOperation>)this.MOs).Count;
-
-        public bool IsReadOnly => ((IList<MachineOperation>)this.MOs).IsReadOnly;
-
-        public MachineOperation this[int index] { get => ((IList<MachineOperation>)this.MOs)[index]; set => ((IList<MachineOperation>)this.MOs)[index] = value; }
-
         public override string ToString()
         {
             int total_TP = 0;
@@ -187,6 +182,7 @@ namespace CAMel.Types
             this.mach.writeFileEnd(ref Co, this, uStartPath, this.endPath);
         }
 
+
         // Hunt through the ToolPaths until we find all we need
         private ToolPath validStart()
         {
@@ -208,74 +204,88 @@ namespace CAMel.Types
                 }
             }
             // if the machine has one tool use that.
-            if(this.mach.MTs.Count == 1 && ptFound && mFFound) { valid.matTool = this.mach.MTs[0]; return valid; } 
+            if (this.mach.MTs.Count == 1 && ptFound && mFFound) { valid.matTool = this.mach.MTs[0]; return valid; }
             // if we go through the whole thing without finding all the valid pieces
             throw new InvalidOperationException("Cannot validate Machine Instructions, there are either no points, no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
         }
 
+        #region Point extraction and previews
         public ToolPath getSinglePath()
         {
             ToolPath oP = this[0].getSinglePath();
             for (int i = 1; i < this.Count; i++) { oP.AddRange(this[i].getSinglePath()); }
             return oP;
         }
-
-        public int IndexOf(MachineOperation item)
+        // Get the list of tooltip locations
+        public List<List<List<Point3d>>> getPoints()
         {
-            return ((IList<MachineOperation>)this.MOs).IndexOf(item);
+            List<List<List<Point3d>>> Pts = new List<List<List<Point3d>>>();
+            foreach (MachineOperation MO in this) { Pts.Add(MO.getPoints()); }
+            return Pts;
+        }
+        // Get the list of tool directions
+        public List<List<List<Vector3d>>> getDirs()
+        {
+            List<List<List<Vector3d>>> Dirs = new List<List<List<Vector3d>>>();
+            foreach (MachineOperation MO in this) { Dirs.Add(MO.getDirs()); }
+            return Dirs;
+        }
+        // Create a path with the points 
+        public List<List<List<Point3d>>> getPointsandDirs(out List<List<List<Vector3d>>> Dirs)
+        {
+            Dirs = getDirs();
+            return getPoints();
         }
 
-        public void Insert(int index, MachineOperation item)
+        // Bounding Box for previews
+        public BoundingBox getBoundingBox()
         {
-            ((IList<MachineOperation>)this.MOs).Insert(index, item);
+            BoundingBox BB = BoundingBox.Unset;
+            for (int i = 0; i < this.Count; i++)
+            { BB.Union(this[i].getBoundingBox()); }
+            return BB;
         }
-
-        public void RemoveAt(int index)
+        // Create single polyline
+        public PolylineCurve getLine() => this.getSinglePath().getLine();
+        // Create polylines
+        public List<PolylineCurve> getLines()
         {
-            ((IList<MachineOperation>)this.MOs).RemoveAt(index);
+            List<PolylineCurve> lines = new List<PolylineCurve>();
+            foreach (MachineOperation MO in this) { lines.AddRange(MO.getLines()); }
+            return lines;
         }
-
-        public void Add(MachineOperation item)
+        // Lines for each toolpoint
+        public List<Line> toolLines()
         {
-            ((IList<MachineOperation>)this.MOs).Add(item);
+            List<Line> lines = new List<Line>();
+            foreach (MachineOperation MO in this) { lines.AddRange(MO.toolLines()); }
+            return lines;
         }
+        #endregion
 
-        public void Clear()
-        {
-            ((IList<MachineOperation>)this.MOs).Clear();
-        }
-
-        public bool Contains(MachineOperation item)
-        {
-            return ((IList<MachineOperation>)this.MOs).Contains(item);
-        }
-
-        public void CopyTo(MachineOperation[] array, int arrayIndex)
-        {
-            ((IList<MachineOperation>)this.MOs).CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(MachineOperation item)
-        {
-            return ((IList<MachineOperation>)this.MOs).Remove(item);
-        }
-
-        public IEnumerator<MachineOperation> GetEnumerator()
-        {
-            return ((IList<MachineOperation>)this.MOs).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IList<MachineOperation>)this.MOs).GetEnumerator();
-        }
-
-
+        #region List Functions 
+        public int Count => ((IList<MachineOperation>)this.MOs).Count;
+        public bool IsReadOnly => ((IList<MachineOperation>)this.MOs).IsReadOnly;
+        public MachineOperation this[int index] { get => ((IList<MachineOperation>)this.MOs)[index]; set => ((IList<MachineOperation>)this.MOs)[index] = value; }
+        public int IndexOf(MachineOperation item) { return ((IList<MachineOperation>)this.MOs).IndexOf(item); }
+        public void Insert(int index, MachineOperation item) { ((IList<MachineOperation>)this.MOs).Insert(index, item); }
+        public void RemoveAt(int index) { ((IList<MachineOperation>)this.MOs).RemoveAt(index); }
+        public void Add(MachineOperation item) { ((IList<MachineOperation>)this.MOs).Add(item); }
+        public void AddRange(IEnumerable<MachineOperation> items) { this.MOs.AddRange(items); }
+        public void Clear() { ((IList<MachineOperation>)this.MOs).Clear(); }
+        public bool Contains(MachineOperation item) { return ((IList<MachineOperation>)this.MOs).Contains(item); }
+        public void CopyTo(MachineOperation[] array, int arrayIndex) { ((IList<MachineOperation>)this.MOs).CopyTo(array, arrayIndex); }
+        public bool Remove(MachineOperation item) { return ((IList<MachineOperation>)this.MOs).Remove(item); }
+        public IEnumerator<MachineOperation> GetEnumerator() { return ((IList<MachineOperation>)this.MOs).GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return ((IList<MachineOperation>)this.MOs).GetEnumerator(); }
+        #endregion
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MachineInstruction : CAMel_Goo<MachineInstruction>
+    public class GH_MachineInstruction : CAMel_Goo<MachineInstruction>, IGH_PreviewData
     {
+        public BoundingBox ClippingBox => this.Value.getBoundingBox();
+
         // Default Constructor;
         public GH_MachineInstruction() { this.Value = new MachineInstruction(); }
         // Construct from value alone
@@ -305,6 +315,16 @@ namespace CAMel.Types
                 target = (Q)ptr;
                 return true;
             }
+            if (typeof(Q).IsAssignableFrom(typeof(Curve)))
+            {
+                target = (Q)(object)this.Value.getLine();
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
+            {
+                target = (Q)(object)new GH_Curve(this.Value.getLine());
+                return true;
+            }
             if (typeof(Q).IsAssignableFrom(typeof(IMachine)))
             {
                 object ptr = this.Value.mach;
@@ -320,7 +340,6 @@ namespace CAMel.Types
 
             return false;
         }
-
         public override bool CastFrom(object source)
         {
             if (source == null) { return false; }
@@ -332,10 +351,21 @@ namespace CAMel.Types
             }
             return false;
         }
+
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        {
+            foreach (PolylineCurve L in this.Value.getLines())
+            {
+                args.Pipeline.DrawCurve(L, args.Color);
+            }
+            args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
+        }
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+
     }
 
     // Grasshopper Parameter Wrapper
-    public class GH_MachineInstructionPar : GH_Param<GH_MachineInstruction>
+    public class GH_MachineInstructionPar : GH_Param<GH_MachineInstruction>, IGH_PreviewObject
     {
         public GH_MachineInstructionPar() :
             base("Instructions", "MachInst", "Contains a collection of Machine Instructions", "CAMel", "  Params", GH_ParamAccess.item) { }
@@ -343,6 +373,13 @@ namespace CAMel.Types
         {
             get { return new Guid("7ded80e7-6a29-4534-a848-f9d1b897098f"); }
         }
+
+        public bool Hidden { get; set; }
+        public bool IsPreviewCapable => true;
+        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawWires(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>

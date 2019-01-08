@@ -25,7 +25,6 @@ namespace CAMel.Types.MaterialForm
         public double height { get; }
 
         public double materialTolerance { get; }
-
         public double safeDistance { get; }
 
         public string TypeDescription
@@ -212,10 +211,26 @@ namespace CAMel.Types.MaterialForm
             return MFDefault.refine(this, TP, M);
         }
 
-        public Mesh getMesh() => Mesh.CreateFromCylinder(
-            new Cylinder(new Circle(this.plane, this.radius),(this.centre.To - this.centre.From).Length),
-            1, 360);
+        private Mesh myMesh;
+        private void setMesh()
+        {
+            myMesh = Mesh.CreateFromCylinder(
+                new Cylinder(
+                    new Circle(this.plane, this.radius),
+                    (this.centre.To - this.centre.From).Length
+                    ), 1, 360);
+        }
 
+        public Mesh getMesh()
+        {
+            if (myMesh == null) { setMesh(); }
+            return myMesh;
+        }
+        public BoundingBox getBoundingBox()
+        {
+            if (myMesh == null) { setMesh(); }
+            return myMesh.GetBoundingBox(false);
+        }
     }
 
 }

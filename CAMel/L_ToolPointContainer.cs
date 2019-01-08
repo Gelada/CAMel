@@ -13,8 +13,9 @@ namespace CAMel.Types
         string name { get; set; }
         string preCode { get; set; }
         string postCode { get; set; }
-
+        
         ToolPath getSinglePath();
+        BoundingBox getBoundingBox();
 
         ToolPoint firstP { get; }
         ToolPoint lastP { get; }

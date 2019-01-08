@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using Rhino;
-using Rhino.DocObjects;
 using Rhino.Geometry;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -127,12 +125,6 @@ namespace CAMel.Types
         public string preCode { get; set; }
         public string postCode { get; set; }
 
-        public int Count => ((IList<ToolPath>)this.TPs).Count;
-
-        public bool IsReadOnly => ((IList<ToolPath>)this.TPs).IsReadOnly;
-
-        public ToolPath this[int index] { get => ((IList<ToolPath>)this.TPs)[index]; set => ((IList<ToolPath>)this.TPs)[index] = value; }
-
         public override string ToString()
         {
             int total_TP = 0;
@@ -217,109 +209,6 @@ namespace CAMel.Types
             eP = oldPath;
         }
 
-        // Get the list of tooltip locations
-        public List<List<Point3d>> getPoints()
-        {
-            List<List<Point3d>> Pts = new List<List<Point3d>>();
-            foreach (ToolPath TP in this) { Pts.Add(TP.getPoints()); }
-            return Pts;
-        }
-        // Get the list of tool directions
-        public List<List<Vector3d>> getDirs()
-        {
-            List<List<Vector3d>> Dirs = new List<List<Vector3d>>();
-            foreach (ToolPath TP in this) { Dirs.Add(TP.getDirs()); }
-            return Dirs;
-        }
-        // Create a path with the points 
-        public List<List<Point3d>> getPointsandDirs(out List<List<Vector3d>> Dirs)
-        {
-            List<List<Point3d>> Ptsout = new List<List<Point3d>>();
-            Dirs = new List<List<Vector3d>>();
-            List<Vector3d> TPDirs;
-            foreach (ToolPath TP in this)
-            {
-                TPDirs = new List<Vector3d>();
-                Ptsout.Add(TP.getPointsandDirs(out TPDirs));
-                Dirs.Add(TPDirs);
-            }
-            return Ptsout;
-        }
-        // Create a polyline
-        public List<PolylineCurve> getLines()
-        {
-            List<PolylineCurve> lines = new List<PolylineCurve>();
-            foreach(ToolPath TP in this) { lines.Add(TP.getLine()); }
-            return lines;
-        }
-        // Lines for each toolpoint
-        public List<Line> toolLines()
-        {
-            List<Line> lines = new List<Line>();
-            foreach (ToolPath TP in this) { lines.AddRange(TP.toolLines()); }
-            return lines;
-        }
-
-        public ToolPath getSinglePath()
-        {
-            ToolPath oP = this[0].getSinglePath();
-            for (int i = 1; i < this.Count; i++) { oP.AddRange(this[i].getSinglePath()); }
-            return oP;
-        }
-        public int IndexOf(ToolPath item)
-        {
-            return ((IList<ToolPath>)this.TPs).IndexOf(item);
-        }
-
-        public void Insert(int index, ToolPath item)
-        {
-            ((IList<ToolPath>)this.TPs).Insert(index, item);
-        }
-
-        public void RemoveAt(int index)
-        {
-            ((IList<ToolPath>)this.TPs).RemoveAt(index);
-        }
-
-        public void Add(ToolPath item)
-        {
-            ((IList<ToolPath>)this.TPs).Add(item);
-        }
-
-        public void Clear()
-        {
-            ((IList<ToolPath>)this.TPs).Clear();
-        }
-
-        public bool Contains(ToolPath item)
-        {
-            return ((IList<ToolPath>)this.TPs).Contains(item);
-        }
-
-        public void CopyTo(ToolPath[] array, int arrayIndex)
-        {
-            ((IList<ToolPath>)this.TPs).CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(ToolPath item)
-        {
-            return ((IList<ToolPath>)this.TPs).Remove(item);
-        }
-
-        public IEnumerator<ToolPath> GetEnumerator()
-        {
-            return ((IList<ToolPath>)this.TPs).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IList<ToolPath>)this.TPs).GetEnumerator();
-        }
-
-        internal Curve getLine()
-        {
-            throw new NotImplementedException();
-        }
 
         // Process a collage of bits and pieces into a list of Operations
         internal static List<MachineOperation> toOperations(object scraps, out int ignores)
@@ -370,12 +259,91 @@ namespace CAMel.Types
             }
             return oMOs;
         }
-    }
+
+
+        #region Point extraction and previews
+        public ToolPath getSinglePath()
+        {
+            ToolPath oP = this[0].getSinglePath();
+            for (int i = 1; i < this.Count; i++) { oP.AddRange(this[i].getSinglePath()); }
+            return oP;
+        }
+        // Get the list of tooltip locations
+        public List<List<Point3d>> getPoints()
+        {
+            List<List<Point3d>> Pts = new List<List<Point3d>>();
+            foreach (ToolPath TP in this) { Pts.Add(TP.getPoints()); }
+            return Pts;
+        }
+        // Get the list of tool directions
+        public List<List<Vector3d>> getDirs()
+        {
+            List<List<Vector3d>> Dirs = new List<List<Vector3d>>();
+            foreach (ToolPath TP in this) { Dirs.Add(TP.getDirs()); }
+            return Dirs;
+        }
+        // Create a path with the points 
+        public List<List<Point3d>> getPointsandDirs(out List<List<Vector3d>> Dirs)
+        {
+            List<List<Point3d>> Ptsout = new List<List<Point3d>>();
+            Dirs = new List<List<Vector3d>>();
+            List<Vector3d> TPDirs;
+            foreach (ToolPath TP in this)
+            {
+                TPDirs = new List<Vector3d>();
+                Ptsout.Add(TP.getPointsandDirs(out TPDirs));
+                Dirs.Add(TPDirs);
+            }
+            return Ptsout;
+        }      
+        // Bounding Box for previews
+        public BoundingBox getBoundingBox()
+        {
+            BoundingBox BB = BoundingBox.Unset;
+            for (int i = 0; i < this.Count; i++)
+            { BB.Union(this[i].getBoundingBox()); }
+            return BB;
+        }
+        // Create single polyline
+        public PolylineCurve getLine() => this.getSinglePath().getLine();
+        // Create polylines
+        public List<PolylineCurve> getLines()
+        {
+            List<PolylineCurve> lines = new List<PolylineCurve>();
+            foreach (ToolPath TP in this) { lines.Add(TP.getLine()); }
+            return lines;
+        }
+        // Lines for each toolpoint
+        public List<Line> toolLines()
+        {
+            List<Line> lines = new List<Line>();
+            foreach (ToolPath TP in this) { lines.AddRange(TP.toolLines()); }
+            return lines;
+        }
+        #endregion
+
+        #region List Functions
+        public int Count => ((IList<ToolPath>)this.TPs).Count;
+        public bool IsReadOnly => ((IList<ToolPath>)this.TPs).IsReadOnly;
+        public ToolPath this[int index] { get => ((IList<ToolPath>)this.TPs)[index]; set => ((IList<ToolPath>)this.TPs)[index] = value; }
+        public int IndexOf(ToolPath item) { return ((IList<ToolPath>)this.TPs).IndexOf(item); }
+        public void Insert(int index, ToolPath item) { ((IList<ToolPath>)this.TPs).Insert(index, item); }
+        public void RemoveAt(int index) { ((IList<ToolPath>)this.TPs).RemoveAt(index); }
+        public void Add(ToolPath item) { ((IList<ToolPath>)this.TPs).Add(item); }
+        public void AddRange(IEnumerable<ToolPath> items) { this.TPs.AddRange(items); }
+        public void Clear() { ((IList<ToolPath>)this.TPs).Clear(); }
+        public bool Contains(ToolPath item) { return ((IList<ToolPath>)this.TPs).Contains(item); }
+        public void CopyTo(ToolPath[] array, int arrayIndex) { ((IList<ToolPath>)this.TPs).CopyTo(array, arrayIndex); }
+        public bool Remove(ToolPath item) { return ((IList<ToolPath>)this.TPs).Remove(item); }
+        public IEnumerator<ToolPath> GetEnumerator() { return ((IList<ToolPath>)this.TPs).GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return ((IList<ToolPath>)this.TPs).GetEnumerator(); }
+        #endregion
+}
 
     // Grasshopper Type Wrapper
-    public class GH_MachineOperation : CAMel_Goo<MachineOperation>
+    public class GH_MachineOperation : CAMel_Goo<MachineOperation>, IGH_PreviewData
     {
-        public BoundingBox ClippingBox => throw new NotImplementedException();
+        public BoundingBox ClippingBox => this.Value.getBoundingBox();
 
         // Default Constructor
         public GH_MachineOperation() { this.Value = new MachineOperation(); }
@@ -419,7 +387,6 @@ namespace CAMel.Types
 
             return false;
         }
-
         public override bool CastFrom(object source)
         {
             if (source == null) { return false; }
@@ -433,18 +400,6 @@ namespace CAMel.Types
             return false;
         }
 
-            public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
-        {/*
-            obj_guid = Guid;
-            if (att == null) { att = doc.CreateDefaultAttributes(); }
-            foreach (PolylineCurve L in Value.GetLines())
-            {
-                obj_guid.Add(doc.Objects.AddCurve(L,att));
-            }*/
-            obj_guid = Guid.Empty; 
-            return false;
-        }
-
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
             foreach (PolylineCurve L in this.Value.getLines())
@@ -453,12 +408,11 @@ namespace CAMel.Types
             }
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
-
-        public void DrawViewportMeshes(GH_PreviewMeshArgs args) {}
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
-    public class GH_MachineOperationPar : GH_Param<GH_MachineOperation>
+    public class GH_MachineOperationPar : GH_Param<GH_MachineOperation>, IGH_PreviewObject
     {
         public GH_MachineOperationPar() :
             base("Operation", "MachOp", "Contains a collection of Machine Operations", "CAMel", "  Params", GH_ParamAccess.item) { }
@@ -466,6 +420,13 @@ namespace CAMel.Types
         {
             get { return new Guid("e0dfd958-f0fb-46b7-b743-04e071ea25fd"); }
         }
+
+        public bool Hidden { get; set; }
+        public bool IsPreviewCapable => true;
+        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawWires(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>

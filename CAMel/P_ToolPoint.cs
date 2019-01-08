@@ -143,15 +143,8 @@ namespace CAMel.Types
             this.error.Add(warn);
         }
 
-        public string TypeDescription
-        {
-            get { return "Information about a position of the machine"; }
-        }
-
-        public string TypeName
-        {
-            get { return "ToolPoint"; }
-        }
+        public string TypeDescription => "Information about a position of the machine"; 
+        public string TypeName => "ToolPoint";
 
         public override string ToString()
         {
@@ -165,17 +158,12 @@ namespace CAMel.Types
             return outp;
         }
 
-
-        internal Line toolLine()
-        {
-            return new Line(this.pt, this.pt + this.dir);
-        }
+        private double previewLength = 0.2;
+        internal Line toolLine() => new Line(this.pt, this.pt + this.dir*previewLength);
         public ToolPath getSinglePath() => new ToolPath() { this };
 
-        public object Clone()
-        {
-            throw new NotImplementedException();
-        }
+        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * previewLength });
+
     }
 
     // Grasshopper Type Wrapper
@@ -248,10 +236,7 @@ namespace CAMel.Types
             return false;
         }
 
-        public BoundingBox ClippingBox
-        {
-            get { return this.Value.toolLine().BoundingBox; }
-        }
+        public BoundingBox ClippingBox { get => this.Value.toolLine().BoundingBox; }
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
             args.Pipeline.DrawPoint(this.Value.pt, args.Color);
@@ -261,7 +246,7 @@ namespace CAMel.Types
     }
 
     // Grasshopper Parameter Wrapper
-    public class GH_ToolPointPar : GH_Param<GH_ToolPoint>
+    public class GH_ToolPointPar : GH_Param<GH_ToolPoint>, IGH_PreviewObject
     {
         public GH_ToolPointPar() :
             base("ToolPoint", "ToolPt", "Contains a collection of Tool Points", "CAMel", "  Params", GH_ParamAccess.item) { }
@@ -269,6 +254,13 @@ namespace CAMel.Types
         {
             get { return new Guid("0bbed7c1-88a9-4d61-b7cb-e0dfe82b1b86"); }
         }
+
+        public bool Hidden { get; set; }
+        public bool IsPreviewCapable => true;
+        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawWires(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
