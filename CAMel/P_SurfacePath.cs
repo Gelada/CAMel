@@ -78,21 +78,8 @@ namespace CAMel.Types
             this.surfToolDir = surfToolDir;
         }
 
-        public string TypeDescription
-        {
-            get { return "Path and projection information to generate a surfacing path"; }
-        }
-
-        public string TypeName
-        {
-            get { return "SurfacePath"; }
-        }
-
-        public int Count => ((IList<Curve>)this.Paths).Count;
-
-        public bool IsReadOnly => ((IList<Curve>)this.Paths).IsReadOnly;
-
-        public Curve this[int index] { get => ((IList<Curve>)this.Paths)[index]; set => ((IList<Curve>)this.Paths)[index] = value; }
+        public string TypeDescription =>"Path and projection information to generate a surfacing path"; 
+        public string TypeName => "SurfacePath"; 
 
         public override string ToString()
         {
@@ -119,7 +106,6 @@ namespace CAMel.Types
         {
             return this.generateOperation(S.ToBrep(),offset, MT, MF, TPA);
         }
-
         public MachineOperation generateOperation(Brep B, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             // Just convert to Mesh
@@ -128,7 +114,6 @@ namespace CAMel.Types
 
             return this.generateOperation_(offset, MT, MF, TPA);
         }
-
         public MachineOperation generateOperation(Mesh M, double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
             this.M = M;
@@ -136,7 +121,6 @@ namespace CAMel.Types
 
             return this.generateOperation_(offset, MT, MF, TPA);
         }
-
         // actual code to generate the operation
         private MachineOperation generateOperation_(double offset, MaterialTool MT, IMaterialForm MF, ToolPathAdditions TPA)
         {
@@ -352,60 +336,45 @@ namespace CAMel.Types
             return pd;
         }
 
-        public int IndexOf(Curve item)
+        public Curve getCurve()
         {
-            return ((IList<Curve>)this.Paths).IndexOf(item);
+            var JC = Curve.JoinCurves(this, 1000000, true);
+            if(JC.Length > 0) { return JC[0]; }
+            return null;
         }
 
-        public void Insert(int index, Curve item)
-        {
-            ((IList<Curve>)this.Paths).Insert(index, item);
-        }
-
-        public void RemoveAt(int index)
-        {
-            ((IList<Curve>)this.Paths).RemoveAt(index);
-        }
-
-        public void Add(Curve item)
-        {
-            ((IList<Curve>)this.Paths).Add(item);
-        }
-
-        public void Clear()
-        {
-            ((IList<Curve>)this.Paths).Clear();
-        }
-
-        public bool Contains(Curve item)
-        {
-            return ((IList<Curve>)this.Paths).Contains(item);
-        }
-
-        public void CopyTo(Curve[] array, int arrayIndex)
-        {
-            ((IList<Curve>)this.Paths).CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(Curve item)
-        {
-            return ((IList<Curve>)this.Paths).Remove(item);
-        }
-
-        public IEnumerator<Curve> GetEnumerator()
-        {
-            return ((IList<Curve>)this.Paths).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IList<Curve>)this.Paths).GetEnumerator();
-        }
+        #region List Functions
+        public int Count => ((IList<Curve>)this.Paths).Count;
+        public bool IsReadOnly => ((IList<Curve>)this.Paths).IsReadOnly;
+        public Curve this[int index] { get => ((IList<Curve>)this.Paths)[index]; set => ((IList<Curve>)this.Paths)[index] = value; }
+        public int IndexOf(Curve item) { return ((IList<Curve>)this.Paths).IndexOf(item); }
+        public void Insert(int index, Curve item) { ((IList<Curve>)this.Paths).Insert(index, item); }
+        public void RemoveAt(int index) { ((IList<Curve>)this.Paths).RemoveAt(index); }
+        public void Add(Curve item) { ((IList<Curve>)this.Paths).Add(item); }
+        public void AddRange(IEnumerable<Curve> items) { this.Paths.AddRange(items); }
+        public void Clear() { ((IList<Curve>)this.Paths).Clear(); }
+        public bool Contains(Curve item) { return ((IList<Curve>)this.Paths).Contains(item); }
+        public void CopyTo(Curve[] array, int arrayIndex) { ((IList<Curve>)this.Paths).CopyTo(array, arrayIndex); }
+        public bool Remove(Curve item) { return ((IList<Curve>)this.Paths).Remove(item); }
+        public IEnumerator<Curve> GetEnumerator() { return ((IList<Curve>)this.Paths).GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return ((IList<Curve>)this.Paths).GetEnumerator(); }
+        #endregion
     }
 
     // Grasshopper Type Wrapper
-    public class GH_SurfacePath : CAMel_Goo<SurfacePath>
+    public class GH_SurfacePath : CAMel_Goo<SurfacePath>, IGH_PreviewData
     {
+        public BoundingBox ClippingBox
+        {
+            get
+            {
+                BoundingBox BB = BoundingBox.Unset;
+                for (int i = 0; i < this.Value.Count; i++)
+                { BB.Union(this.Value[i].GetBoundingBox(false)); }
+                return BB;
+            }
+        }
+
         // Default Constructor
         public GH_SurfacePath() { this.Value = null; }
         // Frome Unwrapped
@@ -422,10 +391,20 @@ namespace CAMel.Types
                 target = (Q)(object)this.Value;
                 return true;
             }
+            if (typeof(Q).IsAssignableFrom(typeof(Curve)))
+            {
+                target = (Q)(object)this.Value.getCurve();
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
+            {
+                target = (Q)(object)new GH_Curve(this.Value.getCurve());
+                return true;
+            }
+
 
             return false;
         }
-
         public override bool CastFrom(object source)
         {
             if (source == null) { return false; }
@@ -437,10 +416,17 @@ namespace CAMel.Types
             }
             return false;
         }
+
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        {
+            foreach (Curve L in this.Value) { args.Pipeline.DrawCurve(L, args.Color); }
+        }
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+
     }
 
     // Grasshopper Parameter Wrapper
-    public class GH_SurfacePathPar : GH_Param<GH_SurfacePath>
+    public class GH_SurfacePathPar : GH_Param<GH_SurfacePath>, IGH_PreviewObject
     {
         public GH_SurfacePathPar() :
             base("Surfacing Path", "SurfacePath", "Contains the information to project a path onto a surface", "CAMel", "  Params", GH_ParamAccess.item) { }
@@ -448,6 +434,13 @@ namespace CAMel.Types
         {
             get { return new Guid("FCB36AFC-195B-4DFA-825B-A986875A3A86"); }
         }
+
+        public bool Hidden { get; set; }
+        public bool IsPreviewCapable => true;
+        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawWires(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
