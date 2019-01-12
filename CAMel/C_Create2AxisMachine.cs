@@ -15,8 +15,8 @@ namespace CAMel
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_Create2AxisMachine()
-            : base("Create 3 Axis Machine", "3 Axis",
-                "Create 3 Axis Machine",
+            : base("Create 2 Axis Machine", "2 Axis",
+                "Create 2 Axis Machine",
                 "CAMel", " Hardware")
         {
         }
@@ -29,10 +29,10 @@ namespace CAMel
             pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item,string.Empty);
             var GTPAP = new GH_ToolPathAdditionsPar();
             GTPAP.SetPersistentData(new GH_ToolPathAdditions(TwoAxis._defaultImplents));
+            pManager.AddParameter(GTPAP, "Available ToolPath Additions", "TPA", "ToolPath Additions to be implements by the machine", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
             pManager[2].WireDisplay = GH_ParamWireDisplay.faint;
             pManager[2].Optional = true;
-            pManager.AddParameter(GTPAP, "Available ToolPath Additions", "TPA", "ToolPath Additions to be implements by the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty); List<string> ccDefault = new List<string> { GCode.defaultCommentStart, GCode.defaultCommentEnd, GCode.defaultSectionBreak };
             pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list,ccDefault);
@@ -124,7 +124,7 @@ namespace CAMel
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("{C01AEAE3-73F0-4DAB-8080-420E1FAC01D3}"); }
+            get { return new Guid("{BB5520F1-93DC-42AA-A1FD-FF892EFF3D8B}"); }
         }
     }
 }

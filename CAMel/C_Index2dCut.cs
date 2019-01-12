@@ -34,10 +34,10 @@ namespace CAMel
             tPApar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
             pManager.AddParameter(tPApar,"Additions","TPA", "Additional Processing for the path, note some options like step down might be ignored by some machines.",GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
-            pManager[5].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
-            pManager[6].WireDisplay = GH_ParamWireDisplay.faint;
-            pManager[6].Optional = true;
+            pManager[5].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager[5].Optional = true;
         }
 
         /// <summary>

@@ -36,13 +36,13 @@ namespace CAMel
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty); List<string> ccDefault = new List<string> { GCode.defaultCommentStart, GCode.defaultCommentEnd, GCode.defaultSectionBreak };
             pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list, ccDefault);
-            pManager[6].Optional = true;
+            pManager[5].Optional = true;
             List<string> irDefault = new List<string> { GCode.defaultSpeedChangeCommand };
             pManager.AddTextParameter("Speed", "S", "Command to change speed.", GH_ParamAccess.list);
-            pManager[7].Optional = true;
+            pManager[6].Optional = true;
             List<string> fileDefault = new List<string> { GCode.defaultFileStart, GCode.defaultFileEnd };
             pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
-            pManager[8].Optional = true;
+            pManager[7].Optional = true;
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
         }
 
