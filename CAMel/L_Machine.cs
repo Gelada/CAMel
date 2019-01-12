@@ -302,37 +302,39 @@ namespace CAMel.Types.Machine
             Co.appendComment(MO.postCode);
         }
 
-        static public TPchanges gcPathStart(IGCodeMachine M, ref CodeInfo Co, ToolPath TP)
+        static public TPchanges gcPathStart(IGCodeMachine M, ref CodeInfo Co, ToolPath tP)
         {
+            if (tP.matTool == null) { matToolException(); }
+            if (tP.matForm == null) { matFormException(); }
             TPchanges ch = new TPchanges(false, false);
             Co.appendComment(M.sectionBreak);
             bool preamble = false;
-            if (TP.name != string.Empty)
+            if (tP.name != string.Empty)
             {
-                Co.appendComment(" ToolPath: " + TP.name);
+                Co.appendComment(" ToolPath: " + tP.name);
                 preamble = true;
             }
-            if (TP.matTool != null && TP.matTool.toolName != Co.currentMT.toolName)
+            if (tP.matTool != null && tP.matTool.toolName != Co.currentMT.toolName)
             {
-                Co.appendComment(" using: " + TP.matTool.toolName + " into " + TP.matTool.matName);
-                if (M.toolLengthCompensation && TP.matTool.toolNumber != Co.currentMT.toolNumber) {
-                    Co.append(M.toolChangeCommand + TP.matTool.toolNumber);
+                Co.appendComment(" using: " + tP.matTool.toolName + " into " + tP.matTool.matName);
+                if (M.toolLengthCompensation && tP.matTool.toolNumber != Co.currentMT.toolNumber) {
+                    Co.append(M.toolChangeCommand + tP.matTool.toolNumber);
                 }
-                Co.currentMT = TP.matTool;
+                Co.currentMT = tP.matTool;
                 ch.mT = true;
                 preamble = true;
             }
-            if (TP.matForm != null && TP.matForm.ToString() != Co.currentMF.ToString())
+            if (tP.matForm != null && tP.matForm.ToString() != Co.currentMF.ToString())
             {
-                Co.appendComment(" material: " + TP.matForm.ToString());
-                Co.currentMF = TP.matForm;
+                Co.appendComment(" material: " + tP.matForm.ToString());
+                Co.currentMF = tP.matForm;
                 ch.mF = true;
                 preamble = true;
             }
 
             if (preamble) { Co.appendComment(M.sectionBreak); }
 
-            Co.append(TP.preCode);
+            Co.append(tP.preCode);
             return ch;
         }
         static public void gcPathEnd(IGCodeMachine M, ref CodeInfo Co, ToolPath TP)
