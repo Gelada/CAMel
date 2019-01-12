@@ -176,9 +176,9 @@ namespace CAMel.Types.Machine
 
 
 
-        public static ToolPath leadInOut2d(ToolPath TP, double lead)
+        public static ToolPath leadInOut2d(ToolPath TP)
         {
-            double leadLen = lead * TP.Additions.leadFactor;
+            double leadLen = TP.Additions.leadLength;
             ToolPath newTP = TP.deepClone();
             PolylineCurve toolL = TP.getLine();
 
@@ -226,10 +226,9 @@ namespace CAMel.Types.Machine
                 newTP.Insert(0, LeadTP);
             }
 
-            newTP.Additions.leadFactor = 0;
+            newTP.Additions.leadLength = 0;
             return newTP;
         }
-
 
     }
 
@@ -242,6 +241,10 @@ namespace CAMel.Types.Machine
         internal static readonly string defaultSectionBreak = "------------------------------------------";
         internal static readonly string defaultSpeedChangeCommand = "M03";
         internal static readonly string defaultToolChangeCommand = "G43H";
+        internal static readonly string defaultInsertCommand = "M61";
+        internal static readonly string defaultRetractCommand = "M62";
+        internal static readonly string defaultFileStart = string.Empty;
+        internal static readonly string defaultFileEnd = string.Empty;
 
         // Formatting structure for GCode
 

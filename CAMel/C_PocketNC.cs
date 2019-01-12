@@ -30,12 +30,13 @@ namespace CAMel
             pManager.AddNumberParameter("B-table offset", "Bt", "Distance from B-table to centre of A axis rotation.", GH_ParamAccess.item, 0.836);
             pManager.AddNumberParameter("B maximum", "Bmax", "Maximum value (+ or -) that the B axis can take. This can be adjusted in the machine settings.", GH_ParamAccess.item, 9999);
             pManager.AddBooleanParameter("Tool Compensation", "TC", "Use the machine's tool length compensation?", GH_ParamAccess.item, true);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
+            pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager[4].Optional = true;
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
-            pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
-            pManager[7].WireDisplay = GH_ParamWireDisplay.faint;
-            pManager[7].Optional = true;
+            
         }
 
         /// <summary>
@@ -64,18 +65,18 @@ namespace CAMel
             if (!DA.GetData(0, ref V)) { return; }
             if (V != 0 && V != 1 && V != 2)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Only two version of the PocketNC known.");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Only two version of the PocketNC known. Use 0 for old spindle.");
                 return;
             }
-            if (V == 1) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "All testing done on a V2 machine, please be careful."); }
+            if (V != 2) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "All testing done on a V2 machine, please be careful."); }
 
             if (!DA.GetData(1, ref Bt)) { return; }
             if (!DA.GetData(2, ref Bmax)) { return; }
             if (!DA.GetData(3, ref TLC)) { return; }
-            if (!DA.GetData(4, ref head)) { return; }
-            if (!DA.GetData(5, ref foot)) { return; }
-            if (!DA.GetData(6, ref PJ)) { return; }
-            DA.GetDataList(7, MTs);
+            DA.GetDataList(4, MTs);
+            if (!DA.GetData(5, ref head)) { return; }
+            if (!DA.GetData(6, ref foot)) { return; }
+            if (!DA.GetData(7, ref PJ)) { return; }
 
             double Amin = 0, Amax = Math.PI / 2.0;
 

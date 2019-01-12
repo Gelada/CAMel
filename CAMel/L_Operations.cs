@@ -11,9 +11,8 @@ namespace CAMel.Types
     // Functions to generate operations
     public static class Operations
     {
-        public static MachineOperation opIndex2dCut(Curve C, Vector3d D, double oS, double leadInOut, bool tabs, MaterialTool MT, IMaterialForm MF)
+        public static MachineOperation opIndex2dCut(Curve C, Vector3d D, double oS, ToolPathAdditions TPA, MaterialTool MT, IMaterialForm MF)
         {
-            if (MF == null) { Exceptions.matFormException(); }
             if (MT == null) { Exceptions.matToolException(); }
             // Shift curve to XY plane
 
@@ -51,20 +50,9 @@ namespace CAMel.Types
             foreach (PolylineCurve c in osC)
             {
                 // Create and add name, material/tool and material form
-                TP = new ToolPath("Cut", MT, MF);
+                TP = new ToolPath("Cut", MT, MF,TPA);
                 if (osC.Count > 1) { TP.name = TP.name + " " + i.ToString(); }
                 i++;
-
-                // Additions for toolpath
-                TP.Additions.insert = true;
-                TP.Additions.retract = true;
-                TP.Additions.stepDown = true;
-                TP.Additions.sdDropStart = true;
-                TP.Additions.sdDropMiddle = 8 * MF.safeDistance;
-                TP.Additions.sdDropEnd = true;
-                TP.Additions.threeAxisHeightOffset = true;
-                TP.Additions.tabbing = tabs;
-                TP.Additions.leadFactor = leadInOut;
 
                 // return to original orientation
 

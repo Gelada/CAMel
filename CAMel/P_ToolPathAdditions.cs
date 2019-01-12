@@ -21,7 +21,7 @@ namespace CAMel.Types
         public bool sdDropEnd { get; set; }      // the required depth (Middle is dropped if length greater than value);
         public bool threeAxisHeightOffset { get; set; }
         public bool tabbing { get; set; }        // add tabs if machine wants to.
-        public double leadFactor { get; set; }   // if leading in or out what factor of standard value to use
+        public double leadLength { get; set; }   // if leading in or out what factor of standard value to use
 
         // Adding anything here needs significant support:
         //  Add checker to .any
@@ -40,7 +40,7 @@ namespace CAMel.Types
             this.sdDropEnd = false;
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
-            this.leadFactor = 0;
+            this.leadLength = 0;
         }
 
         private ToolPathAdditions(ToolPathAdditions TPA)
@@ -53,12 +53,12 @@ namespace CAMel.Types
             this.sdDropEnd = TPA.sdDropEnd;
             this.threeAxisHeightOffset = TPA.threeAxisHeightOffset;
             this.tabbing = TPA.tabbing;
-            this.leadFactor = TPA.leadFactor;
+            this.leadLength = TPA.leadLength;
         }
 
         public ToolPathAdditions deepClone() => new ToolPathAdditions(this);
 
-        public static ToolPathAdditions BasicDefault => new ToolPathAdditions()
+        public static ToolPathAdditions basicDefault => new ToolPathAdditions()
         {
             insert = true,
             retract = true,
@@ -68,12 +68,12 @@ namespace CAMel.Types
             sdDropEnd = true,
             threeAxisHeightOffset = false,
             tabbing = false,
-            leadFactor = 1
+            leadLength = 0
         };
 
         public bool any
         {
-            get { return this.insert || this.retract || this.stepDown || this.threeAxisHeightOffset || this.tabbing || this.leadFactor !=0; }
+            get { return this.insert || this.retract || this.stepDown || this.threeAxisHeightOffset || this.tabbing || this.leadLength !=0; }
         }
 
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
@@ -108,23 +108,25 @@ namespace CAMel.Types
             writer.SetBoolean("sdDropEnd", this.Value.sdDropEnd);
             writer.SetBoolean("threeAxisHeightOffset", this.Value.threeAxisHeightOffset);
             writer.SetBoolean("tabbing", this.Value.tabbing);
-            writer.SetDouble("leadFactor", this.Value.leadFactor);
+            writer.SetDouble("leadFactor", this.Value.leadLength);
             return true;
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            ToolPathAdditions TPA = new ToolPathAdditions();
-            TPA.insert = reader.GetBoolean("insert");
-            TPA.retract = reader.GetBoolean("retract");
-            TPA.stepDown = reader.GetBoolean("stepDown");
-            TPA.sdDropStart = reader.GetBoolean("sdDropStart");
-            TPA.sdDropMiddle = reader.GetDouble("sdDropMiddle");
-            TPA.sdDropEnd = reader.GetBoolean("sdDropEnd");
-            TPA.threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset");
-            TPA.tabbing = reader.GetBoolean("tabbing");
-            TPA.leadFactor = reader.GetDouble("leadFactor");
+            ToolPathAdditions TPA = new ToolPathAdditions
+            {
+                insert = reader.GetBoolean("insert"),
+                retract = reader.GetBoolean("retract"),
+                stepDown = reader.GetBoolean("stepDown"),
+                sdDropStart = reader.GetBoolean("sdDropStart"),
+                sdDropMiddle = reader.GetDouble("sdDropMiddle"),
+                sdDropEnd = reader.GetBoolean("sdDropEnd"),
+                threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset"),
+                tabbing = reader.GetBoolean("tabbing"),
+                leadLength = reader.GetDouble("leadFactor")
+            };
 
             this.Value = TPA;
             return true;
@@ -147,7 +149,7 @@ namespace CAMel.Types
             //Cast from unwrapped TPA
             if (typeof(ToolPathAdditions).IsAssignableFrom(source.GetType()))
             {
-                Value = (ToolPathAdditions)source;
+                this.Value = (ToolPathAdditions)source;
                 return true;
             }
 
@@ -207,7 +209,7 @@ namespace CAMel.Types
         protected override GH_GetterResult Prompt_Singular(ref GH_ToolPathAdditions value)
         {
             // Give a reasonable generic
-            value = new GH_ToolPathAdditions(ToolPathAdditions.BasicDefault);
+            value = new GH_ToolPathAdditions(ToolPathAdditions.basicDefault);
             return GH_GetterResult.success;
         }
     }
@@ -220,7 +222,7 @@ namespace CAMel.Types
         [Category(" General"), Description("Add an insert to the start of the toolpath to beging cutting. "),DisplayName(" Insert"), RefreshProperties(RefreshProperties.All)]
         public bool insert
         {
-            get { return Owner.Value.insert; }
+            get { return this.Owner.Value.insert; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
@@ -231,7 +233,7 @@ namespace CAMel.Types
         [Category(" General"), Description("Add a retract to the end of the toolpath to finish cutting. "), DisplayName(" Retract"), RefreshProperties(RefreshProperties.All)]
         public bool retract
         {
-            get { return Owner.Value.retract; }
+            get { return this.Owner.Value.retract; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
@@ -242,7 +244,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("Create a sequence of paths stepping down through the material."), DisplayName(" Step down"), RefreshProperties(RefreshProperties.All)]
         public bool stepdown
         {
-            get { return Owner.Value.stepDown; }
+            get { return this.Owner.Value.stepDown; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
@@ -253,7 +255,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("When stepping down drop the start of paths where roughing is complete."), DisplayName("Drop Start"), RefreshProperties(RefreshProperties.All)]
         public bool sdDropStart
         {
-            get { return Owner.Value.sdDropStart; }
+            get { return this.Owner.Value.sdDropStart; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
@@ -264,7 +266,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("When stepping down drop the middle of paths where roughing is complete, if longer than this."), DisplayName("Drop Middle"), RefreshProperties(RefreshProperties.All)]
         public double sdDropMiddle
         {
-            get { return Owner.Value.sdDropMiddle; }
+            get { return this.Owner.Value.sdDropMiddle; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
@@ -275,7 +277,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("When stepping down drop the end of paths where roughing is complete"), DisplayName("Drop End"), RefreshProperties(RefreshProperties.All)]
         public bool sdDropEnd
         {
-            get { return Owner.Value.sdDropEnd; }
+            get { return this.Owner.Value.sdDropEnd; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
@@ -286,7 +288,7 @@ namespace CAMel.Types
         [Category(" General"), Description("Take account of tool width for 3axis cutting, ensuring the path is followed by the active cutting surface of the tool, not just the tip."), DisplayName("3Axis Height Offset"), RefreshProperties(RefreshProperties.All)]
         public bool threeAxisHeightOffset
         {
-            get { return Owner.Value.threeAxisHeightOffset; }
+            get { return this.Owner.Value.threeAxisHeightOffset; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
@@ -297,7 +299,7 @@ namespace CAMel.Types
         [Category(" Tabbing"), Description("Add bumps to the cut (mainly useful for cutting 2d parts) NOT IMPLEMENTED"), DisplayName("Tabbing"), RefreshProperties(RefreshProperties.All)]
         public bool tabbing
         {
-            get { return Owner.Value.tabbing; }
+            get { return this.Owner.Value.tabbing; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
@@ -305,14 +307,14 @@ namespace CAMel.Types
                 this.Owner.Value = TPA;
             }
         }
-        [Category(" General"), Description("Adjust the machine's default lead factor for systems like Plasma cutting where there is a 2d lead in and out."), DisplayName("Lead Factor"), RefreshProperties(RefreshProperties.All)]
+        [Category(" General"), Description("2d Lead path length for start and end, for systems like Plasma cutting."), DisplayName("Lead Factor"), RefreshProperties(RefreshProperties.All)]
         public double leadFactor
         {
-            get { return Owner.Value.leadFactor; }
+            get { return this.Owner.Value.leadLength; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
-                TPA.leadFactor = value;
+                TPA.leadLength = value;
                 this.Owner.Value = TPA;
             }
         }

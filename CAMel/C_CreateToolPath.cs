@@ -38,7 +38,7 @@ namespace CAMel
             pManager[7].Optional = true; // MatForm
             pManager[7].WireDisplay = GH_ParamWireDisplay.faint;
             var tPApar = new GH_ToolPathAdditionsPar();
-            tPApar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.BasicDefault));
+            tPApar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
             pManager.AddParameter(tPApar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" +
                 "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
             pManager[8].Optional = true; // ToolPathAdditions

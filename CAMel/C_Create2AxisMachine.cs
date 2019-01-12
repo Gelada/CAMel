@@ -5,15 +5,16 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using CAMel.Types;
+using CAMel.Types.Machine;
 
 namespace CAMel
 {
-    public class C_Create3AxisMachine : GH_Component
+    public class C_Create2AxisMachine : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
-        public C_Create3AxisMachine()
+        public C_Create2AxisMachine()
             : base("Create 3 Axis Machine", "3 Axis",
                 "Create 3 Axis Machine",
                 "CAMel", " Hardware")
@@ -26,16 +27,23 @@ namespace CAMel
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item,string.Empty);
+            var GTPAP = new GH_ToolPathAdditionsPar();
+            GTPAP.SetPersistentData(new GH_ToolPathAdditions(TwoAxis._defaultImplents));
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
+            pManager[2].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager[2].Optional = true;
+            pManager.AddParameter(GTPAP, "Available ToolPath Additions", "TPA", "ToolPath Additions to be implements by the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
-            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
+            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty); List<string> ccDefault = new List<string> { GCode.defaultCommentStart, GCode.defaultCommentEnd, GCode.defaultSectionBreak };
+            pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list,ccDefault);
+            pManager[5].Optional = true;
+            List<string> irDefault = new List<string> { GCode.defaultSpeedChangeCommand, GCode.defaultInsertCommand, GCode.defaultRetractCommand };
+            pManager.AddTextParameter("Speed/Insert/Retract", "SIR", "Commands to change speed, insert and retract tool", GH_ParamAccess.list);
+            pManager[6].Optional = true;
+            List<string> fileDefault = new List<string> { GCode.defaultFileStart, GCode.defaultFileEnd };
+            pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
+            pManager[7].Optional = true;
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
-            pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list,string.Empty);
-            pManager.AddTextParameter("Features", "O", "Other features of the machine\n"+
-                "{2d, lead, Insert Code, Retract Code\n}" +
-                "2d is a Boolean (0 or 1), that specifies a 2d machine like a Plasma cutter. \n"+
-                "lead gives the distance for the lead in or out. \n"+
-                "Insert and Retract Codes are added before an insert and after a rectract move.", 
-                GH_ParamAccess.list, string.Empty);
         }
 
         /// <summary>
@@ -56,32 +64,42 @@ namespace CAMel
             string name = string.Empty;
             string head = string.Empty;
             string foot = string.Empty;
-            List<string> CC = new List<string>();
-            List<string> Fe = new List<string>();
-
             double PJ = 0;
 
-            if (!DA.GetData(0, ref name)) return;
-            if (!DA.GetData(1, ref head)) return;
-            if (!DA.GetData(2, ref foot)) return;
-            if (!DA.GetData(3, ref PJ)) return;
+            if (!DA.GetData(0, ref name)) { return; }
+            if (!DA.GetData(8, ref PJ)) { return; }
+            if (!DA.GetData(3, ref head)) { return; }
+            if (!DA.GetData(4, ref foot)) { return; }
 
-            Machine M = new Machine(name, MachineTypes.ThreeAxis, head, foot,string.Empty,string.Empty);
 
-            if (DA.GetDataList(4, CC) && CC[0] != string.Empty)
-            {
-                M.CommentChar = CC[0];
-                if (CC.Count > 1) { M.endCommentChar = CC[1]; }
-                if (CC.Count > 2) { M.SectionBreak = CC[2]; }
-            }
-            if (DA.GetDataList(5, Fe) && (Fe.Count > 1 || Fe[0] != string.Empty))
-            {
-                int dim = 0;
-                if(int.TryParse(Fe[0], out dim)){ if(dim!=0) { M.type = MachineTypes.TwoAxisXY; } }
-                if (Fe.Count > 1) { M.leads = Convert.ToDouble(Fe[1]); }
-                if (Fe.Count > 2) { M.InsertCode = Fe[2]; }
-                if (Fe.Count > 3) { M.RetractCode = Fe[3]; }
-            }
+            List<string> CC = new List<string>();
+            DA.GetDataList(5, CC);
+
+            string commentStart = (CC.Count > 0) ? CC[0] : GCode.defaultCommentStart;
+            string commentEnd = (CC.Count > 1) ? CC[1] : GCode.defaultCommentEnd;
+            string sectionBreak = (CC.Count > 2) ? CC[2] : GCode.defaultSectionBreak;
+
+            List<string> SIR = new List<string>();
+            DA.GetDataList(6, SIR);
+
+            string speed = (SIR.Count > 0) ? SIR[0] : GCode.defaultSpeedChangeCommand;
+            string insert = (SIR.Count > 1) ? SIR[1] : GCode.defaultInsertCommand;
+            string retract = (SIR.Count > 2) ? SIR[2] : GCode.defaultRetractCommand;
+            string tool = (SIR.Count > 3) ? SIR[3] : GCode.defaultToolChangeCommand;
+
+            List<string> SE = new List<string>();
+            DA.GetDataList(7, SE);
+
+            string fileStart = (SIR.Count > 0) ? SE[0] : GCode.defaultFileStart;
+            string fileEnd = (SIR.Count > 1) ? SE[1] : GCode.defaultFileEnd;
+
+            ToolPathAdditions TPA = null;
+            if(!DA.GetData(1,ref TPA)) { return; }
+
+            List<MaterialTool> MTs = new List<MaterialTool>();
+            DA.GetDataList(2, MTs);
+
+            IGCodeMachine M = new TwoAxis(name, TPA, MTs, PJ, head, foot, speed, insert, retract, tool,commentStart,commentEnd,sectionBreak, fileStart, fileEnd);
 
             DA.SetData(0, M);
         }

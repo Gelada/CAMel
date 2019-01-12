@@ -26,19 +26,24 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item,string.Empty);
+            pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item, string.Empty);
+            var GTPAP = new GH_ToolPathAdditionsPar();
+            GTPAP.SetPersistentData(new GH_ToolPathAdditions(ThreeAxis._defaultImplents));
+            pManager.AddParameter(GTPAP, "Available ToolPath Additions", "TPA", "ToolPath Additions to be implements by the machine", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
+            pManager[2].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager[2].Optional = true;
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
-            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
+            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty); List<string> ccDefault = new List<string> { GCode.defaultCommentStart, GCode.defaultCommentEnd, GCode.defaultSectionBreak };
+            pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list, ccDefault);
+            pManager[6].Optional = true;
+            List<string> irDefault = new List<string> { GCode.defaultSpeedChangeCommand };
+            pManager.AddTextParameter("Speed", "S", "Command to change speed.", GH_ParamAccess.list);
+            pManager[7].Optional = true;
+            List<string> fileDefault = new List<string> { GCode.defaultFileStart, GCode.defaultFileEnd };
+            pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
+            pManager[8].Optional = true;
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
-            pManager.AddTextParameter("Comment", "C", "Characters for start and end of comments", GH_ParamAccess.list);
-            pManager.AddTextParameter("Features", "O", "Other features of the machine\n"+
-                "{2d, lead, Insert Code, Retract Code\n}" +
-                "2d is a Boolean (0 or 1), that specifies a 2d machine like a Plasma cutter. \n"+
-                "lead gives the distance for the lead in or out. \n"+
-                "Insert and Retract Codes are added before an insert and after a rectract move.", 
-                GH_ParamAccess.list, string.Empty);
-
-            pManager[4].Optional = true;
         }
 
         /// <summary>
@@ -59,24 +64,42 @@ namespace CAMel
             string name = string.Empty;
             string head = string.Empty;
             string foot = string.Empty;
-            List<string> CC = new List<string>();
-            List<string> Fe = new List<string>();
-
             double PJ = 0;
 
             if (!DA.GetData(0, ref name)) { return; }
-            if (!DA.GetData(1, ref head)) { return; }
-            if (!DA.GetData(2, ref foot)) { return; }
-            if (!DA.GetData(3, ref PJ)) { return; }
-            DA.GetDataList(4, CC);
+            if (!DA.GetData(3, ref head)) { return; }
+            if (!DA.GetData(4, ref foot)) { return; }
+            if (!DA.GetData(8, ref PJ)) { return; }
+
+            List<string> CC = new List<string>();
+            DA.GetDataList(5, CC);
 
             string commentStart = (CC.Count > 0) ? CC[0] : GCode.defaultCommentStart;
-            string commentEnd = (CC.Count > 0) ? CC[0] : GCode.defaultCommentEnd;
-            string sectionBreak = (CC.Count > 0) ? CC[0] : GCode.defaultSectionBreak;
+            string commentEnd = (CC.Count > 1) ? CC[1] : GCode.defaultCommentEnd;
+            string sectionBreak = (CC.Count > 2) ? CC[2] : GCode.defaultSectionBreak;
 
-            IGCodeMachine M = new ThreeAxis(name, head, foot, commentStart,commentEnd,sectionBreak);
+            List<string> SIR = new List<string>();
+            DA.GetDataList(6, SIR);
+
+            string speed = (SIR.Count > 0) ? SIR[0] : GCode.defaultSpeedChangeCommand;
+            string tool = (SIR.Count > 1) ? SIR[1] : GCode.defaultToolChangeCommand;
+
+            List<string> SE = new List<string>();
+            DA.GetDataList(7, SE);
+
+            string fileStart = (SIR.Count > 0) ? SE[0] : GCode.defaultFileStart;
+            string fileEnd = (SIR.Count > 1) ? SE[1] : GCode.defaultFileEnd;
+
+            ToolPathAdditions TPA = null;
+            if (!DA.GetData(1, ref TPA)) { return; }
+
+            List<MaterialTool> MTs = new List<MaterialTool>();
+            DA.GetDataList(2, MTs);
+
+            IGCodeMachine M = new ThreeAxis(name, TPA, MTs, PJ, head, foot, speed, tool, commentStart, commentEnd, sectionBreak, fileStart, fileEnd);
 
             DA.SetData(0, new GH_Machine(M));
+            
         }
 
         /// <summary>

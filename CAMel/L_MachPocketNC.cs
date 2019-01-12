@@ -25,6 +25,7 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         private readonly List<char> terms;
         public List<MaterialTool> MTs { get; }
+        public ToolPathAdditions machineImplements { get; }
 
         private double aMin { get; }
         private double aMax { get; }
@@ -34,7 +35,20 @@ namespace CAMel.Types.Machine
         public Vector3d pivot { get; } // Position of machine origin in design space.
 
         public ToolPathAdditions defaultTPA 
-        { get => ToolPathAdditions.BasicDefault; }
+        { get => ToolPathAdditions.basicDefault; }
+
+        internal static ToolPathAdditions _defaultImplents => new ToolPathAdditions()
+        {
+            insert = true,
+            retract = true,
+            stepDown = true,
+            sdDropStart = true,
+            sdDropMiddle = 1,
+            sdDropEnd = true,
+            threeAxisHeightOffset = true,
+            tabbing = true,
+            leadLength = 0
+        };
 
         public PocketNC(string name, string header, string footer, Vector3d pivot, double Amin, double Amax, double Bmax, bool TLC, double pathJump, List<MaterialTool> MTs)
         {
@@ -44,11 +58,11 @@ namespace CAMel.Types.Machine
             this.footer = footer;
             this.fileStart = String.Empty;
             this.fileEnd = String.Empty;
-            this.commentStart = "(";
-            this.commentEnd = ")";
-            this.sectionBreak = "------------------------------------------";
-            this.speedChangeCommand = "M03";
-            this.toolChangeCommand = "G43H";
+            this.commentStart = GCode.defaultCommentStart;
+            this.commentEnd = GCode.defaultCommentEnd;
+            this.sectionBreak = GCode.defaultSectionBreak;
+            this.speedChangeCommand = GCode.defaultSpeedChangeCommand;
+            this.toolChangeCommand = GCode.defaultToolChangeCommand;
             this.pathJump = pathJump;
             this.MTs = MTs;
             this.pivot = pivot;

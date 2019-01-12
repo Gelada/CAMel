@@ -27,6 +27,7 @@ namespace CAMel.Types.Machine
         bool toolLengthCompensation { get; } // Tool Length Compensation
         ToolPathAdditions defaultTPA { get; }
         List<MaterialTool> MTs { get; } // list of Material Tools used by machine
+        ToolPathAdditions machineImplements { get; }
 
         string comment(string L);
 

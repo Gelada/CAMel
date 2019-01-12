@@ -12,7 +12,7 @@ namespace CAMel.Types.Machine
     {
         public string name { get; }
         public double pathJump { get;}
-        public bool toolLengthCompensation { get; } // Tool Length Compensation
+        public bool toolLengthCompensation { get; } 
         public string sectionBreak { get; }
         public string speedChangeCommand { get; }
         public string toolChangeCommand { get; }
@@ -24,27 +24,38 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         private readonly List<char> terms;
         public List<MaterialTool> MTs { get; }
+        public ToolPathAdditions machineImplements { get; }
 
-        public double leads { get; }
+        public string insert { get; }
+        public string retract { get; }
 
-        public ToolPathAdditions defaultTPA
-        { get => ToolPathAdditions.BasicDefault; }
+        internal static ToolPathAdditions _defaultImplents = new ToolPathAdditions()
+        { insert = true, retract = true, leadLength = 1};
 
-        public TwoAxis(string name, string header, string footer)
+        public ToolPathAdditions defaultTPA { get; }
+
+        public TwoAxis(string name, ToolPathAdditions tPA, List<MaterialTool>MTs, double pJ, string header, string footer, 
+            string speed, string insert, string retract, string tool, string commentStart, string commentEnd, 
+            string sectionBreak, string fileStart, string fileEnd)
         {
             this.name = name;
-            this.toolLengthCompensation = false;
             this.header = header;
             this.footer = footer;
-            this.fileStart = String.Empty;
-            this.fileEnd = String.Empty;
-            this.commentStart = "(";
-            this.commentEnd = ")";
-            this.sectionBreak = "------------------------------------------";
-            this.speedChangeCommand = "M03";
-            this.toolChangeCommand = "G43H";
-            this.pathJump = 1;
-            this.leads = 1;
+            this.pathJump = pJ;
+            this.toolLengthCompensation = false;
+            this.speedChangeCommand = speed;
+            this.insert = insert;
+            this.retract = retract;
+            this.machineImplements = tPA;
+            this.defaultTPA = tPA;
+            this.commentStart = commentStart;
+            this.commentEnd = commentEnd;
+            this.sectionBreak = sectionBreak;
+            this.fileStart = fileStart;
+            this.fileEnd = fileEnd;
+            this.speedChangeCommand = speed;
+            this.toolChangeCommand = tool;
+            this.MTs = MTs;
             this.terms = new List<char> { 'X', 'Y', 'S', 'F' };
         }
 
@@ -57,7 +68,7 @@ namespace CAMel.Types.Machine
             else { return this.commentStart + " " + L + " " + this.commentEnd; }
         }
 
-        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2d(tP, this.leads);
+        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2d(tP);
         
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
         => Kinematics.interpolateLinear(fP, tP, par);

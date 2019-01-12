@@ -12,7 +12,7 @@ namespace CAMel.Types.Machine
     {
         public string name { get; }
         public double pathJump { get; }
-        public bool toolLengthCompensation { get; } // Tool Length Compensation
+        public bool toolLengthCompensation { get; } 
         public string sectionBreak { get; }
         public string speedChangeCommand { get; }
         public string toolChangeCommand { get; }
@@ -24,24 +24,39 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         private readonly List<char> terms;
         public List<MaterialTool> MTs { get; }
+        public ToolPathAdditions machineImplements { get; }
+
+        internal static ToolPathAdditions _defaultImplents => new ToolPathAdditions()
+        {
+            insert = true,
+            retract = true,
+            stepDown = true,
+            sdDropStart = true,
+            sdDropMiddle = 1,
+            sdDropEnd = true,
+            threeAxisHeightOffset = true,
+            tabbing = true,
+            leadLength = 0
+        };
 
         public ToolPathAdditions defaultTPA
-        { get => ToolPathAdditions.BasicDefault; }
+        { get => ToolPathAdditions.basicDefault; }
 
-        public ThreeAxis(string name, string header, string footer, string commentStart, string commentEnd, string sectionBreak)
+        public ThreeAxis(string name, ToolPathAdditions tPA, List<MaterialTool> MTs, double pJ, string head, string foot, string speed, string tool, string commentStart, string commentEnd, string sectionBreak, string fileStart, string fileEnd)
         {
             this.name = name;
-            this.toolLengthCompensation = false;
-            this.header = header;
-            this.footer = footer;
-            this.fileStart = String.Empty;
-            this.fileEnd = String.Empty;
+            this.machineImplements = tPA;
+            this.pathJump = pJ;
+            this.header = head;
+            this.footer = foot;
+            this.speedChangeCommand = speed;
+            this.toolChangeCommand = tool;
             this.commentStart = commentStart;
             this.commentEnd = commentEnd;
             this.sectionBreak = sectionBreak;
-            this.speedChangeCommand = "M03";
-            this.toolChangeCommand = "G43H";
-            this.pathJump = 1;
+            this.fileStart = fileStart;
+            this.fileEnd = fileEnd;
+            this.MTs = MTs;
             this.terms = new List<char> { 'X', 'Y', 'Z', 'S', 'F' };
         }
 
