@@ -24,9 +24,6 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            List<double> TPAdef = new List<double>();
-            for (int i = 0; i < 7; i++) { TPAdef.Add(0); }
-
             pManager.AddCurveParameter("Paths", "P", "Paths to project onto surface", GH_ParamAccess.list);
             pManager.AddNumberParameter("Projection", "Pr", "Type of projection to use.\n 0: Parallel\n 1: Cylindrical\n 2: Spherical", GH_ParamAccess.item,0);
             pManager.AddCurveParameter("Centre Curve", "CC", "Central Curve for cylindrical projection", GH_ParamAccess.item);
