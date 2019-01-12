@@ -51,12 +51,23 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Just a MaterialTool
-        public ToolPath(string name, MaterialTool MT)
+        public ToolPath(MaterialTool MT)
         {
-            this.name = name;
+            this.name = string.Empty;
             this.Pts = new List<ToolPoint>();
             this.matTool = MT;
             this.matForm = null;
+            this.Additions = null;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
+        }
+        // Just a MaterialForm
+        public ToolPath(IMaterialForm MF)
+        {
+            this.name = string.Empty;
+            this.Pts = new List<ToolPoint>();
+            this.matTool = null;
+            this.matForm = MF;
             this.Additions = null;
             this.preCode = string.Empty;
             this.postCode = string.Empty;

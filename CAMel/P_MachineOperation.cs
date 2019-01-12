@@ -7,6 +7,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 
 using CAMel.Types.Machine;
+using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {
@@ -220,6 +221,8 @@ namespace CAMel.Types
 
             if (scraps is MachineOperation) { oMOs.Add((MachineOperation)scraps); }
             if (scraps is List<ToolPath>) { oMOs.Add(new MachineOperation((List<ToolPath>)scraps)); }
+            if (scraps is IMaterialForm) { oMOs.Add(new MachineOperation(new ToolPath((IMaterialForm)scraps))); }
+            if (scraps is MaterialTool) { oMOs.Add(new MachineOperation(new ToolPath((MaterialTool)scraps))); }
 
             // Otherwise process mixed up any other sort of list by term.
             else if (scraps is IEnumerable)
@@ -249,6 +252,8 @@ namespace CAMel.Types
                         if (oB is ToolPath) { oMOs.Add(new MachineOperation(new List<ToolPath> { (ToolPath)oB })); }
                         else if (oB is MachineOperation) { oMOs.Add((MachineOperation)oB); }
                         else if (oB is MachineInstruction) { oMOs.AddRange((MachineInstruction)oB); }
+                        else if (oB is IMaterialForm) { oMOs.Add(new MachineOperation(new ToolPath((IMaterialForm)oB))); }
+                        else if (oB is MaterialTool) { oMOs.Add(new MachineOperation(new ToolPath((MaterialTool)oB))); }
                         else { ignores++; }
                     }
                 }
@@ -393,7 +398,7 @@ namespace CAMel.Types
             //Cast from unwrapped MO
             if (typeof(MachineOperation).IsAssignableFrom(source.GetType()))
             {
-                Value = (MachineOperation)source;
+                this.Value = (MachineOperation)source;
                 return true;
             }
 
