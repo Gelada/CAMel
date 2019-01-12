@@ -214,7 +214,7 @@ namespace CAMel.Types.MaterialForm
         private Mesh myMesh;
         private void setMesh()
         {
-            myMesh = Mesh.CreateFromCylinder(
+            this.myMesh = Mesh.CreateFromCylinder(
                 new Cylinder(
                     new Circle(this.plane, this.radius),
                     (this.centre.To - this.centre.From).Length
@@ -223,13 +223,13 @@ namespace CAMel.Types.MaterialForm
 
         public Mesh getMesh()
         {
-            if (myMesh == null) { setMesh(); }
-            return myMesh;
+            if (this.myMesh == null) { setMesh(); }
+            return this.myMesh;
         }
         public BoundingBox getBoundingBox()
         {
-            if (myMesh == null) { setMesh(); }
-            return myMesh.GetBoundingBox(false);
+            if (this.myMesh == null) { setMesh(); }
+            return this.myMesh.GetBoundingBox(false);
         }
     }
 

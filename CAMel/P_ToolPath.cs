@@ -713,7 +713,7 @@ namespace CAMel.Types
             //Cast from unwrapped ToolPath
             if (typeof(ToolPath).IsAssignableFrom(source.GetType()))
             {
-                Value = (ToolPath)source;
+                this.Value = (ToolPath)source;
                 return true;
             }
             if (typeof(Curve).IsAssignableFrom(source.GetType()))
@@ -723,7 +723,7 @@ namespace CAMel.Types
                 if (((Curve)source).TryGetPolyline(out PL))
                 {
                     TP.AddRange(PL);
-                    Value = TP;
+                    this.Value = TP;
                     return true;
                 }
                 return false;
@@ -735,7 +735,7 @@ namespace CAMel.Types
                 if (((GH_Curve)source).Value.TryGetPolyline(out PL))
                 {
                     TP.AddRange(PL);
-                    Value = TP;
+                    this.Value = TP;
                     return true;
                 }
                 return false;

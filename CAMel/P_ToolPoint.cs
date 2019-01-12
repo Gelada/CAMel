@@ -159,10 +159,10 @@ namespace CAMel.Types
         }
 
         private double previewLength = 0.2;
-        internal Line toolLine() => new Line(this.pt, this.pt + this.dir*previewLength);
+        internal Line toolLine() => new Line(this.pt, this.pt + this.dir* this.previewLength);
         public ToolPath getSinglePath() => new ToolPath() { this };
 
-        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * previewLength });
+        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * this.previewLength });
 
     }
 

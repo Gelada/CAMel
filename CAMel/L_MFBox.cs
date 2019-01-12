@@ -165,13 +165,13 @@ namespace CAMel.Types.MaterialForm
         private Mesh myMesh;
         private void setMesh()
         {
-            myMesh = Mesh.CreateFromBox(this.box, 1, 1, 1);
+            this.myMesh = Mesh.CreateFromBox(this.box, 1, 1, 1);
         }
 
         public Mesh getMesh()
         {
-            if (myMesh == null) { setMesh(); }
-            return myMesh;
+            if (this.myMesh == null) { setMesh(); }
+            return this.myMesh;
         }
         public BoundingBox getBoundingBox()
         {
