@@ -131,7 +131,7 @@ namespace CAMel
             };
 
             // Use Toolpath so we standardise Curve convertion
-            ToolPath CTP = new ToolPath(string.Empty, MT);
+            ToolPath CTP = new ToolPath(MT);
 
             double Zmin=0, Zmax=0;
             int i;
