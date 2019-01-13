@@ -122,11 +122,8 @@ namespace CAMel.Types
         public override string ToString()
         {
             int total_TP = 0;
-            foreach(MachineOperation MO in this)
-            {
-                foreach (ToolPath TP in MO) { total_TP = total_TP + TP.Count; }
-            }
-            return "Machine Instruction: " + this.name + ", " + this.Count + " operations, " + total_TP + " total Instructions.";
+            foreach(MachineOperation MO in this) {  foreach (ToolPath TP in MO) { total_TP += TP.Count; } }
+            return "Machine Instruction: " + this.name + ", " + this.Count + " operations, " + total_TP + " total points.";
         }
 
         // Main functions

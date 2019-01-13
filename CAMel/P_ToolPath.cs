@@ -139,7 +139,7 @@ namespace CAMel.Types
         public string preCode { get; set; }
         public string postCode { get; set; }
 
-        public override string ToString() => "Toolpath with " + this.Count + " points.";
+        public override string ToString() => "Toolpath: " + this.name + " with " + this.Count + " points.";
 
         // Main functions
 

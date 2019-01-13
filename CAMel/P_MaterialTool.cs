@@ -136,7 +136,7 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            string outp = "Tool " + this.toolNumber + " " + this.toolName + " into " + this.matName + " Plunge feed: " + this.feedPlunge.ToString() + " Cut Depth: " + this.cutDepth.ToString();
+            string outp = "Tool " + this.toolNumber + ", " + this.toolName + " into " + this.matName;
             return outp;
         }
 

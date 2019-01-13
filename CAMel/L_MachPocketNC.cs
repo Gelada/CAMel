@@ -82,6 +82,8 @@ namespace CAMel.Types.Machine
             else { return this.commentStart + " " + L + " " + this.commentEnd; }
         }
 
+        public override string ToString() => this.name;
+
 
         public ToolPath insertRetract(ToolPath tP)
         {

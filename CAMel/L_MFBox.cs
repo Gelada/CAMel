@@ -29,7 +29,8 @@ namespace CAMel.Types.MaterialForm
 
         public override string ToString()
         {
-            return "MFBox "+this.box.ToString();
+            return "Box Material ("+ this.box.X.Min.ToString("0.00") + ", " + this.box.Y.Min.ToString("0.00") + ", " + this.box.Z.Min.ToString("0.00")+") "
+                + "to ("+ this.box.X.Max.ToString("0.00") + ", " + this.box.Y.Max.ToString("0.00") + ", " + this.box.Z.Max.ToString("0.00")+")";
         }
         
         public ToolPath insertRetract(ToolPath TP)

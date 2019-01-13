@@ -64,6 +64,8 @@ namespace CAMel.Types.Machine
         { get { return @"Instructions for a 3-Axis machine"; } }
         public string TypeName
         { get { return @"CAMelThreeAxis"; } }
+
+        public override string ToString() => "2Axis: " + this.name;
         public string comment(string L)
         {
             if (L == "" || L == " ") { return " "; }

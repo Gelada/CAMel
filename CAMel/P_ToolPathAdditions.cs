@@ -77,8 +77,8 @@ namespace CAMel.Types
         }
 
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
-
         public string TypeName => "ToolPathAdditions";
+        public override string ToString() => "Toolpath Additons";
     }
 
     // Grasshopper Type Wrapper

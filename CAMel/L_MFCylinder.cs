@@ -35,7 +35,7 @@ namespace CAMel.Types.MaterialForm
         public override string ToString()
         {
             Point3d end = this.plane.Origin + this.height * this.plane.ZAxis;
-            return "MFCylinder r:" + this.radius.ToString() + " s:" + this.plane.Origin.ToString() + " e:" + end.ToString();
+            return "Cylinder Material r:" + this.radius.ToString() + " s:" + this.plane.Origin.ToString() + " e:" + end.ToString();
         }
 
         public ToolPath insertRetract(ToolPath TP)

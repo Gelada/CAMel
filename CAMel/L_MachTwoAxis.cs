@@ -62,6 +62,8 @@ namespace CAMel.Types.Machine
         public string TypeDescription => @"Instructions for a 2-Axis machine";
         public string TypeName => @"CAMelTwoAxis";
 
+        public override string ToString() => "2Axis: " + this.name;
+
         public string comment(string L)
         {
             if (L == "" || L == " ") { return " "; }
