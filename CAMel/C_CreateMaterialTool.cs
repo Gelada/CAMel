@@ -38,6 +38,7 @@ namespace CAMel
             pManager.AddNumberParameter("Tool Width", "TW", "Width of tool", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis)", GH_ParamAccess.item, 0);
             pManager.AddTextParameter("Tool Shape", "TS", "End shape of tool", GH_ParamAccess.item, "Ball");
+            pManager.AddNumberParameter("Side Load", "SL", "Fraction of the tool to engage with the material when surfacing.", GH_ParamAccess.item, 0.7);
         }
 
         /// <summary>

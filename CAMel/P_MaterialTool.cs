@@ -28,6 +28,7 @@ namespace CAMel.Types
         public double toolWidth { get; set; }   // width of tool (assumed unset for negative values)
         public double toolLength { get; set; }  // length from the tip of the tool to the spindle
         public string shape { get; set; }       // End shape of the tool
+        public double sideLoad { get; set; }    // Suggested side load for the tool.
         public double tolerance { get; set; }   // The maximum permitted distance of approximation from curve
         public double minStep { get; set; }     // shortest path permitted
 
@@ -51,17 +52,25 @@ namespace CAMel.Types
         public double toolWidth { get; }   // width of tool (assumed unset for negative values)
         public double toolLength { get; }  // length from the tip of the tool to the spindle
         public EndShape shape { get; }     // End shape of the tool
+        public double sideLoad { get; }    // Suggested side load for the tool.
 
         // settings for curve approximation
 
         public double tolerance { get; }   // The maximum permitted distance of approximation from curve
         public double minStep { get; }     // shortest path permitted
 
+        // Adding anything here needs significant support:
+        //  Add to MaterialToolReader
+        //  Add to csv mapping
+        //  Add to create Material Tool
+        //  Add to Constructors
+        //  Add to default.
+
         // Empty default constructor (so grasshopper can get type name when nothing is present. 
         public MaterialTool() { }
 
         // Everything, with defaults
-        public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0)
+        public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0, double sideLoad = 0.7)
         {
             this.matName = Mat;
             this.toolName = Tool;
@@ -76,6 +85,7 @@ namespace CAMel.Types
             this.tolerance = tol;
             this.minStep = mS;
             this.shape = ES;
+            this.sideLoad = sideLoad;
         }
 
         public MaterialTool(MaterialToolBuilder MT)
@@ -102,6 +112,7 @@ namespace CAMel.Types
                 default: ES = EndShape.Error; break;
             }
             this.shape = ES;
+            this.sideLoad = MT.sideLoad;
         }
 
         public static MaterialTool changeFinishDepth(MaterialTool MT, double fd)
@@ -109,7 +120,7 @@ namespace CAMel.Types
             return new MaterialTool(
                 MT.matName, MT.toolName, MT.toolNumber, MT.speed, 
                 MT.feedCut, MT.feedPlunge, MT.cutDepth, fd, 
-                MT.toolWidth, MT.toolLength, MT.shape, MT.tolerance, MT.minStep);
+                MT.toolWidth, MT.toolLength, MT.shape, MT.tolerance, MT.minStep, MT.sideLoad);
         }
 
         public string TypeDescription
@@ -121,6 +132,7 @@ namespace CAMel.Types
         {
             get { return "MaterialTool"; }
         }
+
 
         public override string ToString()
         {

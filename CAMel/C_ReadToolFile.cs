@@ -15,8 +15,6 @@ namespace CAMel
 {
     // Mappings for csv helper
 
-    
-
     public class ShapeConverter : DefaultTypeConverter
     {
         public override object ConvertFromString(TypeConverterOptions tCO, string text)
@@ -67,6 +65,7 @@ namespace CAMel
             Map(m => m.tolerance).Name("Tolerance");
             Map(m => m.minStep).Name("Min Step");
             Map(m => m.shape).Name("Shape");
+            Map(m => m.sideLoad).Name("Side Load");
         }
     }
 

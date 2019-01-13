@@ -35,7 +35,7 @@ namespace CAMel
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item,0);
-            pManager.AddNumberParameter("Step over", "SO", "Stepover as a mutliple of tool width. Default .5.", GH_ParamAccess.item, 0.5);
+            pManager.AddNumberParameter("Step over", "SO", "Stepover as a mutliple of tool width. Default to Tools side load (for negavtive values).", GH_ParamAccess.item, -1);
             pManager.AddBooleanParameter("Clockwise", "CW", "Run clockwise as you rise around the piece. For a clockwise bit this gives conventional cutting. ", GH_ParamAccess.item, true);
         }
 
@@ -45,7 +45,7 @@ namespace CAMel
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_SurfacePathPar(), "SurfacePath", "SP", "Surfacing Path", GH_ParamAccess.item);
-            pManager.AddCurveParameter("Paths", "P", "Paths", GH_ParamAccess.list);
+            //pManager.AddCurveParameter("Paths", "P", "Paths", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -71,6 +71,9 @@ namespace CAMel
             if (!DA.GetData(4, ref TD)) { return; }
             if (!DA.GetData(5, ref stepOver)) { return; }
             if (!DA.GetData(6, ref CW)) { return; }
+
+            if (stepOver <0) { stepOver = MT.sideLoad; }
+            if (stepOver > MT.sideLoad) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
 
             // process the bounding box
 
