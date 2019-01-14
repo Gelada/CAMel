@@ -260,6 +260,8 @@ namespace CAMel
         {
             this.WS = WriteState.Finished;
             this.writeProgress = 1;
+            long fileSize = new FileInfo(this.filePath).Length;
+            ((WriteCodeAttributes)this.Attributes).setFileSize(fileSize);
             //this.OnDisplayExpired(true);
         }
 

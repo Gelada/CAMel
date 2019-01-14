@@ -23,6 +23,12 @@ namespace CAMel
         }
         
         private Dictionary<WriteState, String> WriteMessages;
+        
+        public void setFileSize(long l)
+        {
+            double lMB = l / 1000000.0; // Use smallest MB possibility so numbers are not larger. 
+            WriteMessages[WriteState.Finished] = lMB.ToString(".0")+" MB Written";
+        }
 
         protected override void Layout()
         {
