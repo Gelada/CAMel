@@ -408,7 +408,7 @@ namespace CAMel.Types
             //Cast from unwrapped MO
             if (typeof(IMaterialForm).IsAssignableFrom(source.GetType()))
             {
-                Value = (IMaterialForm)source;
+                this.Value = (IMaterialForm)source;
                 return true;
             }
             return false;
