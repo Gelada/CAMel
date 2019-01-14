@@ -158,7 +158,7 @@ namespace CAMel.Types
             return outp;
         }
 
-        private double previewLength = 0.2;
+        private const double previewLength = 0.2;
         internal Line toolLine() => new Line(this.pt, this.pt + this.dir* this.previewLength);
         public ToolPath getSinglePath() => new ToolPath() { this };
 
