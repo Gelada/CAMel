@@ -8,4 +8,9 @@
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "member", Target = "~M:CAMel.Types.ToolPath.AddRange(System.Collections.Generic.IEnumerable{Rhino.Geometry.Point3d})")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "member", Target = "~M:CAMel.Types.ToolPath.AddRange(System.Collections.Generic.IEnumerable{CAMel.Types.ToolPoint})")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "member", Target = "~M:CAMel.Types.ToolPath.Add(Rhino.Geometry.Point3d)")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "member", Target = "~M:CAMel.Types.SurfacePath.AddRange(System.Collections.Generic.IEnumerable{Rhino.Geometry.Curve})")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "member", Target = "~M:CAMel.Types.MaterialForm.MFintersects.Add(CAMel.Types.MaterialForm.MFintersection)")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "member", Target = "~M:CAMel.Types.MaterialForm.MFintersects.Add(Rhino.Geometry.Point3d,Rhino.Geometry.Vector3d,System.Double)")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "member", Target = "~P:CAMel.Types.MaterialForm.MFintersects.Count")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "member", Target = "~M:CAMel.Types.MachineInstruction.AddRange(System.Collections.Generic.IEnumerable{CAMel.Types.MachineOperation})")]
 
