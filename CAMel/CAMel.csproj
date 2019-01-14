@@ -87,6 +87,7 @@
     </None>
     <None Include="ClassDiagram1.cd" />
     <Compile Include="C_Create2AxisMachine.cs" />
+    <Compile Include="C_ToToolPath.cs" />
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_SelectTool.cs" />
     <Compile Include="C_ReadToolFile.cs" />
@@ -209,6 +210,8 @@
     <None Include="Resources\toolpoint.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\selectmaterialtool.png" />
+    <None Include="Resources\totoolpoints.png" />
     <None Include="Resources\readmaterialtool.png" />
     <None Include="Resources\index2dcutting.png" />
     <None Include="Resources\toolpathadditions.png" />
