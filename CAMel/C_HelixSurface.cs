@@ -245,7 +245,7 @@ namespace CAMel
 
             SurfacePath SP = new SurfacePath(Paths, Dir.ZAxis, CC, STD);
             DA.SetData(0, new GH_SurfacePath(SP));
-            DA.SetDataList(1, Paths);
+            //DA.SetDataList(1, Paths);
 
         }
 
