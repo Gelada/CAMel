@@ -145,14 +145,14 @@ namespace CAMel.Types
                 valid.startPath.Add(this.firstP.deepClone());
                 valid.startPath.firstP.feed = 0;
             }
-            validTP = startPath;
+            validTP = valid.startPath;
 
             // process and validate all Operations
             foreach(MachineOperation MO in this)
             { valid.Add(MO.processAdditions(this.mach, ref validTP)); }
 
             // validate endPath, validTP will have the most recent information
-            valid.endPath = this.endPath ?? validTP;
+            if (valid.endPath == null) { valid.endPath = validTP.deepCloneWithNewPoints(new List<ToolPoint>()); }
             valid.endPath.validate(validTP, M);
             if (valid.endPath.Count == 0)
             {
