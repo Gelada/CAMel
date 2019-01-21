@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
-using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
+using Grasshopper.Kernel.Expressions;
 
 namespace CAMel.Types
 {
@@ -54,6 +54,39 @@ namespace CAMel.Types
     }
     static class CAMel_Goo
     {
+        public static string doubleToCSV(IEnumerable<double> vals, string format)
+        {
+            // Adapted from https://www.dotnetperls.com/convert-list-string
+            StringBuilder builder = new StringBuilder();
+            foreach (double d in vals)
+            {
+                // Append each int to the StringBuilder overload.
+                builder.Append(d.ToString(format)).Append(", ");
+            }
+            string result = builder.ToString();
+            result = result.TrimEnd(',',' ');
+            return result;
+        }
+        public static List<double> cSVToDouble(string vals)
+        {
+            List<double> result = new List<double>();
+            // Adapted from https://www.dotnetperls.com/convert-list-string
+            string[] parts = vals.Split(','); // Call Split method
+            List<string> list = new List<string>(parts); // Use List constructor
+            foreach (string item in list)
+            {
+                double p = 0;
+                if (double.TryParse(item, out p)) { result.Add(p); }
+                else
+                {
+                    var parser = new GH_ExpressionParser(false);
+                    var val = parser.Evaluate(item);
+                    if(val.Type == GH_VariantType.@double || val.Type == GH_VariantType.@int) { result.Add(val._Double); }
+                }
+            }
+            return result;
+        }
+
         public static object cleanGooList(object Gooey)
         {
             if (Gooey is IGH_Goo) { return ((IGH_Goo)Gooey).ScriptVariable(); }

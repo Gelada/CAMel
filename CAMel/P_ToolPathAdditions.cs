@@ -19,6 +19,7 @@ namespace CAMel.Types
         public bool sdDropStart { get; set; }    // How stepdown will deal with 
         public double sdDropMiddle { get; set; } // points that have reached  
         public bool sdDropEnd { get; set; }      // the required depth (Middle is dropped if length greater than value);
+        public List<double> onion { get; set; }  // thicknesses to leave before final cut.
         public bool threeAxisHeightOffset { get; set; }
         public bool tabbing { get; set; }        // add tabs if machine wants to.
         public double leadLength { get; set; }   // if leading in or out what factor of standard value to use
@@ -41,6 +42,7 @@ namespace CAMel.Types
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
             this.leadLength = 0;
+            this.onion = new List<double>();
         }
 
         private ToolPathAdditions(ToolPathAdditions TPA)
@@ -51,6 +53,8 @@ namespace CAMel.Types
             this.sdDropStart = TPA.sdDropStart;
             this.sdDropMiddle = TPA.sdDropMiddle;
             this.sdDropEnd = TPA.sdDropEnd;
+            this.onion = new List<double>();
+            this.onion.AddRange(TPA.onion);
             this.threeAxisHeightOffset = TPA.threeAxisHeightOffset;
             this.tabbing = TPA.tabbing;
             this.leadLength = TPA.leadLength;
@@ -66,6 +70,7 @@ namespace CAMel.Types
             sdDropStart = true,
             sdDropMiddle = 1,
             sdDropEnd = true,
+            onion = new List<double>() { 0 },
             threeAxisHeightOffset = false,
             tabbing = false,
             leadLength = 0
@@ -106,30 +111,43 @@ namespace CAMel.Types
             writer.SetBoolean("sdDropStart", this.Value.sdDropStart);
             writer.SetDouble("sdDropMiddle", this.Value.sdDropMiddle);
             writer.SetBoolean("sdDropEnd", this.Value.sdDropEnd);
+            for(int i=0; i< this.Value.onion.Count;i++)
+            {writer.SetDouble("onion", i, this.Value.onion[i]);}
+            writer.SetInt32("onionCount", this.Value.onion.Count);
             writer.SetBoolean("threeAxisHeightOffset", this.Value.threeAxisHeightOffset);
             writer.SetBoolean("tabbing", this.Value.tabbing);
             writer.SetDouble("leadFactor", this.Value.leadLength);
-            return true;
+            return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            ToolPathAdditions TPA = new ToolPathAdditions
+            try
             {
-                insert = reader.GetBoolean("insert"),
-                retract = reader.GetBoolean("retract"),
-                stepDown = reader.GetBoolean("stepDown"),
-                sdDropStart = reader.GetBoolean("sdDropStart"),
-                sdDropMiddle = reader.GetDouble("sdDropMiddle"),
-                sdDropEnd = reader.GetBoolean("sdDropEnd"),
-                threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset"),
-                tabbing = reader.GetBoolean("tabbing"),
-                leadLength = reader.GetDouble("leadFactor")
-            };
-
-            this.Value = TPA;
-            return true;
+                ToolPathAdditions TPA = new ToolPathAdditions();
+                if (reader.ItemExists("insert")) { TPA.insert = reader.GetBoolean("insert"); }
+                if (reader.ItemExists("retract")) { TPA.retract = reader.GetBoolean("retract"); }
+                if (reader.ItemExists("stepDown")) { TPA.stepDown = reader.GetBoolean("stepDown"); }
+                if (reader.ItemExists("sdDropStart")) { TPA.sdDropStart = reader.GetBoolean("sdDropStart"); }
+                if (reader.ItemExists("sdDropMiddle")) { TPA.sdDropMiddle = reader.GetDouble("sdDropMiddle"); }
+                if (reader.ItemExists("sdDropEnd")) { TPA.sdDropEnd = reader.GetBoolean("sdDropEnd"); }
+                if (reader.ItemExists("onionCount"))
+                {
+                    int Count = reader.GetInt32("onionCount");
+                    for (int i = 0; i < Count; i++)
+                    { TPA.onion.Add(reader.GetDouble("onion", i)); }
+                }
+                if (reader.ItemExists("threeAxisHeightOffset")) { TPA.threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset"); }
+                if (reader.ItemExists("tabbing")) { TPA.tabbing = reader.GetBoolean("tabbing"); }
+                if (reader.ItemExists("leadLength")) { TPA.leadLength = reader.GetDouble("leadLength"); }
+                this.Value = TPA;
+                return base.Read(reader);
+            }
+            catch(Exception ex) when (ex is OverflowException || ex is InvalidCastException || ex is NullReferenceException)
+            {
+                throw new FormatException("ToolPathAdditions deserialization failed due to badly formatted data.", ex);
+            }
         }
 
         public override bool CastTo<Q>(ref Q target)
@@ -184,7 +202,7 @@ namespace CAMel.Types
         {
             // Do our own thing as we do not really implement 
             // set 1 and set multiple.
-            //base.AppendAdditionalMenuItems(menu);
+
             this.Menu_AppendWireDisplay(menu);
             this.Menu_AppendDisconnectWires(menu);
             this.Menu_AppendPrincipalParameter(menu);
@@ -285,6 +303,18 @@ namespace CAMel.Types
                 this.Owner.Value = TPA;
             }
         }
+
+        [Category(" Step Down"), Description("Perform a pass at this height before the final pass (can be a list)."), DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All)]
+        public string onion
+        {
+            get { return CAMel_Goo.doubleToCSV( this.Owner.Value.onion, "0.####"); }
+            set
+            {
+                ToolPathAdditions TPA = this.Owner.Value;
+                TPA.onion = CAMel_Goo.cSVToDouble(value);
+                this.Owner.Value = TPA;
+            }
+        }
         [Category(" General"), Description("Take account of tool width for 3axis cutting, ensuring the path is followed by the active cutting surface of the tool, not just the tip."), DisplayName("3Axis Height Offset"), RefreshProperties(RefreshProperties.All)]
         public bool threeAxisHeightOffset
         {
@@ -307,7 +337,7 @@ namespace CAMel.Types
                 this.Owner.Value = TPA;
             }
         }
-        [Category(" General"), Description("2d Lead path length for start and end, for systems like Plasma cutting."), DisplayName("Lead Factor"), RefreshProperties(RefreshProperties.All)]
+        [Category(" General"), Description("2d Lead path length for start and end, for systems like Plasma cutting."), DisplayName("Lead Length"), RefreshProperties(RefreshProperties.All)]
         public double leadFactor
         {
             get { return this.Owner.Value.leadLength; }
