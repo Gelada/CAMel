@@ -28,11 +28,16 @@ namespace CAMel
         {
             pManager.AddCurveParameter("Curves", "C", "The curves for the tip of the tool to follow", GH_ParamAccess.list);
             pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0,0,1));
+            var tPApar = new GH_ToolPathAdditionsPar();
+            tPApar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
+            pManager.AddParameter(tPApar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" +
+                "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
+            pManager[2].Optional = true; // ToolPathAdditions
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
-            pManager[2].WireDisplay = GH_ParamWireDisplay.faint;
-            pManager[2].Optional = true; // MaterialTool
-            pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
             pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
+            pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager[4].Optional = true; // MaterialForm
         }
 
         /// <summary>
@@ -51,18 +56,20 @@ namespace CAMel
         {
             List<Curve> C = new List<Curve>();
             Vector3d Dir = new Vector3d();
+            ToolPathAdditions tPA = null;
             MaterialTool MT = null;
             IMaterialForm MF = null;
 
 
             if (!DA.GetDataList(0, C)) { return;}
             if (!DA.GetData(1, ref Dir)) { return;}
-            if (!DA.GetData(2, ref MT)) { return;}
-            DA.GetData(3, ref MF);
+            DA.GetData(2, ref tPA);
+            if (!DA.GetData(3, ref MT)) { return; }
+            DA.GetData(4, ref MF);
 
             int invalidCurves = 0;
 
-            MachineOperation Op = Operations.opIndex3Axis(C, Dir, MT, MF, out invalidCurves);
+            MachineOperation Op = Operations.opIndex3Axis(C, Dir, tPA, MT, MF, out invalidCurves);
 
             if( invalidCurves > 1)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + invalidCurves.ToString() + " invalid curves (probably nulls) were ignored."); }
