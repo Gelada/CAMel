@@ -67,9 +67,8 @@ namespace CAMel.Types
             return Op;
         }
 
-        public static MachineOperation opIndex3Axis(List<Curve> C, Vector3d dir, MaterialTool MT, IMaterialForm MF, out int InvalidCurves)
+        public static MachineOperation opIndex3Axis(List<Curve> C, Vector3d dir, ToolPathAdditions tPA, MaterialTool MT, IMaterialForm MF, out int InvalidCurves)
         {
-            if(MF == null) { Exceptions.matFormException(); }
             MachineOperation Op = new MachineOperation
             { name = "Index 3-Axis Cutting with " + C.Count.ToString() + " path" };
             if (C.Count > 1) { Op.name = Op.name + "s"; }
@@ -86,13 +85,7 @@ namespace CAMel.Types
                 if (C.Count > 1) { TP.name = TP.name + " " + i.ToString(); }
 
                 // Additions for toolpath
-                TP.Additions.insert = true;
-                TP.Additions.retract = true;
-                TP.Additions.stepDown = true;
-                TP.Additions.sdDropStart = true;
-                TP.Additions.sdDropMiddle = 8 * MF.safeDistance;
-                TP.Additions.sdDropEnd = true;
-                TP.Additions.threeAxisHeightOffset = true;
+                TP.Additions = tPA;
 
                 // Turn Curve into path
 

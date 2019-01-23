@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Rhino;
 using Rhino.Geometry;
-using Rhino.DocObjects;
 
 using CAMel.Types.MaterialForm;
 using CAMel.Types.Machine;
@@ -109,6 +108,18 @@ namespace CAMel.Types
 
         public ToolPath deepClone() => new ToolPath(this);
 
+        public ToolPath deepClone(double h, IMachine M)
+        {
+            ToolPath tP = deepCloneWithNewPoints(new List<ToolPoint>());
+            foreach (ToolPoint tPt in this)
+            {
+                ToolPoint newTPt = tPt.deepClone();
+                newTPt.pt = newTPt.pt + h * M.toolDir(tPt);
+                tP.Add(newTPt);
+            }
+            return tP;
+        }
+
         public ToolPath deepCloneWithNewPoints(List<ToolPoint> Pts)
         {
             ToolPath newTP = new ToolPath()
@@ -145,9 +156,10 @@ namespace CAMel.Types
 
         // Process any additions to the path and return 
         // list of list of toolpaths (for stepdown)
-        public List<List<ToolPath>> processAdditions(IMachine M)
+        public List<List<ToolPath>> processAdditions(IMachine M, out List<ToolPath> fP)
         {
             if (this.matTool == null) { matToolException(); }
+            if (this.matForm == null) { matFormException(); }
             int i, j, k, l;
             List<List<ToolPath>> NewPaths = new List<List<ToolPath>>();
             // need a list for each step down as it might split into more than one path
@@ -159,13 +171,14 @@ namespace CAMel.Types
 
             // adjust path for three axis (or index three axis)
             if(this.Additions.threeAxisHeightOffset)
-            {
-                useTP = this.threeAxisHeightOffset(M);
-            }
+            { useTP = this.threeAxisHeightOffset(M); }
             else
-            {
-                useTP = this;
-            }
+            { useTP = this; }
+
+            if(useTP.Additions.sdDropMiddle < 0) { useTP.Additions.sdDropMiddle = 8.0 * useTP.matForm.safeDistance; }
+
+            // get the sorted list of onion cuts
+            IOrderedEnumerable<double> onionSort = this.Additions.sortOnion;
 
             // add steps into material
             if (this.Additions.stepDown)
@@ -182,14 +195,16 @@ namespace CAMel.Types
                 ToolPath refPath = useTP.matForm.refine(useTP, M);
                 MaterialForm.MFintersection inter;
 
-                foreach(ToolPoint TP in refPath)
+                double finishDepth = useTP.matTool.finishDepth + onionSort.First();
+
+                foreach (ToolPoint TP in refPath)
                 {
                     inter = useTP.matForm.intersect(TP, 0).through;
                     MatDist.Add(inter.lineP); // distance to material surface
                     if (MatDist[MatDist.Count - 1] < 0) { MatDist[MatDist.Count - 1] = 0; }// avoid negative distances (outside material)
                     MatNorm.Add(new Vector3d(inter.away));
                     // calculate maximum number of cutDepth height steps down to finishDepth above material
-                    NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1]-useTP.matTool.finishDepth)/useTP.matTool.cutDepth));
+                    NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1]-finishDepth)/useTP.matTool.cutDepth));
                     if (NumSteps[NumSteps.Count - 1] > MaxSteps) { MaxSteps = NumSteps[NumSteps.Count - 1]; }
                 }
 
@@ -216,6 +231,7 @@ namespace CAMel.Types
                     tempTP = useTP.deepCloneWithNewPoints(new List<ToolPoint>());
                     tempTP.name = useTP.name + " Pass " + (i + 1).ToString();
                     tempTP.Additions.stepDown = false;
+                    tempTP.Additions.onion = new List<double>() { 0 };
 
                     start = true;
                     end = false;
@@ -230,14 +246,14 @@ namespace CAMel.Types
                             if(start && j > 0)
                             {
                                 TPt = refPath[j - 1].deepClone();
-                                height = useTP.matTool.finishDepth;
+                                height = finishDepth;
                                 if (height > MatDist[j - 1]) { height = 0; }
                                 TPt.pt = M.toolDir(TPt) * height + TPt.pt; // stay finishDepth above final path
 
                                 tempTP.Add(TPt);
                             }
                             height = MatDist[j] - CutLevel[i];
-                            if (height < useTP.matTool.finishDepth) { height = useTP.matTool.finishDepth; } // stay finishDepth above final path
+                            if (height < finishDepth) { height = finishDepth; } // stay finishDepth above final path
                             TPt = refPath[j].deepClone();
                             TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                             tempTP.Add(TPt);
@@ -249,7 +265,7 @@ namespace CAMel.Types
                             if(!useTP.Additions.sdDropStart) // we are not dropping the start
                             {
                                 TPt = refPath[j].deepClone();
-                                height = useTP.matTool.finishDepth;
+                                height = finishDepth;
                                 if (height > MatDist[j]) { height = 0; }
                                 TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                 tempTP.Add(TPt);
@@ -266,7 +282,7 @@ namespace CAMel.Types
                                     // Add point as the previous one was deep, 
                                     // then set end to true so we finish
                                     TPt = refPath[j].deepClone();
-                                    height = useTP.matTool.finishDepth;
+                                    height = finishDepth;
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                     tempTP.Add(TPt);
                                     end = true;
@@ -274,7 +290,7 @@ namespace CAMel.Types
                                 else // add point
                                 {
                                     TPt = refPath[j].deepClone();
-                                    height = useTP.matTool.finishDepth;
+                                    height = finishDepth;
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                     tempTP.Add(TPt);
                                 }
@@ -284,7 +300,7 @@ namespace CAMel.Types
                                 if (useTP.Additions.sdDropMiddle < 0 || (k - j) < 3) // we are not dropping middle or there are not enough points to justify it
                                 {
                                     TPt = refPath[j].deepClone();
-                                    height = useTP.matTool.finishDepth;
+                                    height = finishDepth;
                                     TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                     tempTP.Add(TPt);
                                 }
@@ -299,7 +315,7 @@ namespace CAMel.Types
                                     {
                                         // add point, as previous point was in material
                                         TPt = refPath[j].deepClone();
-                                        height = useTP.matTool.finishDepth;
+                                        height = finishDepth;
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                         tempTP.Add(TPt);
                                         // leap forward cut path and start a new one
@@ -312,11 +328,12 @@ namespace CAMel.Types
                                         tempTP.name = useTP.name + " Continuing Pass " + i.ToString();
                                         tempTP.Additions.insert = true;
                                         tempTP.Additions.stepDown = false;
+                                        tempTP.Additions.onion = new List<double>() { 0 };
 
                                         // add k-1 point as k is deep
                                         // this will not result in a double point as we checked (k-j) >=3
                                         TPt = refPath[k - 1].deepClone();
-                                        height = useTP.matTool.finishDepth;
+                                        height = finishDepth;
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                         tempTP.Add(TPt);
                                         j = k - 1; //set j to k-1 so it deals with the k point next
@@ -325,7 +342,7 @@ namespace CAMel.Types
                                     else // after all that we still need to add the point
                                     {
                                         TPt = refPath[j].deepClone();
-                                        height = useTP.matTool.finishDepth;
+                                        height = finishDepth;
                                         TPt.pt = M.toolDir(TPt) * height + TPt.pt;
                                         tempTP.Add(TPt);
                                     }
@@ -337,19 +354,28 @@ namespace CAMel.Types
                 }
             }
 
-            // add a copy of the original path, making sure step down is false
-            // if passes were added, rename with "Final Pass"
+            // add copies of the original path, making sure step down is false
+            // at levels given by the property onion in the ToolPathAdditions
+            // give sensible names
 
-            NewPaths.Add(new List<ToolPath>());
-            NewPaths[NewPaths.Count - 1].Add(useTP.deepClone());
-            NewPaths[NewPaths.Count - 1][0].Additions.stepDown = false;
-            if (NewPaths.Count > 1) { NewPaths[NewPaths.Count - 1][0].name = useTP.name + " Final Pass"; }
+            fP = new List<ToolPath>();
+
+            foreach (double height in onionSort)
+            {
+                ToolPath tP = useTP.deepClone(height, M);
+                tP.Additions.stepDown = false;
+                tP.Additions.onion = new List<double>() { 0 };
+                fP.Add(tP);
+
+            }
 
             // add insert and retract moves
 
             for (i = 0; i < NewPaths.Count; i++) {
                 for (j = 0; j < NewPaths[i].Count; j++)
                 { NewPaths[i][j] = M.insertRetract(NewPaths[i][j]); }}
+            for (i = 0; i < fP.Count; i++) { fP[i] = M.insertRetract(fP[i]); }
+
 
             return NewPaths;
         }

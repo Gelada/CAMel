@@ -1,11 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Forms;
+using System.Linq;
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Grasshopper.Kernel.Utility;
+
 
 
 namespace CAMel.Types
@@ -42,7 +43,7 @@ namespace CAMel.Types
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
             this.leadLength = 0;
-            this.onion = new List<double>();
+            this.onion = new List<double>() { 0 };
         }
 
         private ToolPathAdditions(ToolPathAdditions TPA)
@@ -68,7 +69,7 @@ namespace CAMel.Types
             retract = true,
             stepDown = true,
             sdDropStart = true,
-            sdDropMiddle = 1,
+            sdDropMiddle = -1,
             sdDropEnd = true,
             onion = new List<double>() { 0 },
             threeAxisHeightOffset = false,
@@ -78,11 +79,30 @@ namespace CAMel.Types
 
         public bool any
         {
-            get { return this.insert || this.retract || this.stepDown || this.threeAxisHeightOffset || this.tabbing || this.leadLength !=0; }
+            get
+            {
+                return this.insert ||
+                    this.retract ||
+                    this.stepDown ||
+                    this.threeAxisHeightOffset ||
+                    this.tabbing ||
+                    this.leadLength != 0 ||
+                    (this.onion.Count == 1 && this.onion[0] != 0) ||
+                    this.onion.Count > 1;
+            }
         }
 
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
         public string TypeName => "ToolPathAdditions";
+
+        public IOrderedEnumerable<double> sortOnion
+        {
+            get
+            {
+                return this.onion.OrderByDescending(d => d);
+            }
+        }
+
         public override string ToString() => "Toolpath Additons";
     }
 
@@ -281,7 +301,7 @@ namespace CAMel.Types
                 this.Owner.Value = TPA;
             }
         }
-        [Category(" Step Down"), Description("When stepping down drop the middle of paths where roughing is complete, if longer than this."), DisplayName("Drop Middle"), RefreshProperties(RefreshProperties.All)]
+        [Category(" Step Down"), Description("When stepping down drop the middle of paths where roughing is complete, if longer than this. Set as negative for automatic value."), DisplayName("Drop Middle"), RefreshProperties(RefreshProperties.All)]
         public double sdDropMiddle
         {
             get { return this.Owner.Value.sdDropMiddle; }
@@ -304,7 +324,7 @@ namespace CAMel.Types
             }
         }
 
-        [Category(" Step Down"), Description("Perform a pass at this height before the final pass (can be a list)."), DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All)]
+        [Category(" Step Down"), Description("Height above toolpath to cut the finish path, for onion skinning. Can be a comma separated list. "), DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All)]
         public string onion
         {
             get { return CAMel_Goo.doubleToCSV( this.Owner.Value.onion, "0.####"); }

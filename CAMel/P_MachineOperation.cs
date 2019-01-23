@@ -148,11 +148,16 @@ namespace CAMel.Types
 
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
 
+            // Store finishing paths separately
+            List<List<ToolPath>> finishPaths = new List<List<ToolPath>>();
+            List<ToolPath> fP = null;
+
             foreach (ToolPath TP in this)
             {
                 TP.validate(validTP, M);
                 validTP = TP;
-                newPaths.Add(TP.processAdditions(M));
+                newPaths.Add(TP.processAdditions(M, out fP));
+                finishPaths.Add(fP);
             }
 
             // Create the list for the output
@@ -165,20 +170,34 @@ namespace CAMel.Types
             foreach (List<List<ToolPath>> LTP in newPaths)
             { if (LTP.Count > levels) { levels = LTP.Count; } }
             // do the roughing layers
-            for (int i = 0; i < levels - 1; i++)
+            for (int i = 0; i < levels; i++)
             {
                 levelPaths = new List<ToolPath>();
                 foreach (List<List<ToolPath>> LTP in newPaths)
-                { if (i < LTP.Count - 1) { levelPaths.AddRange(LTP[i]); } }
+                { if (i < LTP.Count) { levelPaths.AddRange(LTP[i]); } }
+
                 // sort here (remember to only move chunks that are outside the material!)
+
                 procPaths.AddRange(levelPaths);
             }
-            // final cut of everything
+            // finishing cuts
+            // find path with most levels
+            levels = 0;
+            foreach (List<ToolPath> LTP in finishPaths)
+            { if (LTP.Count > levels) { levels = LTP.Count; } }
+            // add finishing paths
             levelPaths = new List<ToolPath>();
-            foreach (List<List<ToolPath>> LTP in newPaths)
-            { levelPaths.AddRange(LTP[LTP.Count - 1]); }
-            // sort here (remember to only move chunks that are outside the material!)
-            procPaths.AddRange(levelPaths);
+
+            for (int i = 0; i < levels; i++)
+            {
+                levelPaths = new List<ToolPath>();
+                foreach (List<ToolPath> LTP in finishPaths)
+                { if (i < LTP.Count) { levelPaths.Add(LTP[i]); } }
+
+                // sort here (remember to only move chunks that are outside the material!)
+
+                procPaths.AddRange(levelPaths);
+            }
 
             return this.deepCloneWithNewPaths(procPaths);
         }
