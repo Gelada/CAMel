@@ -87,7 +87,7 @@
     </None>
     <None Include="ClassDiagram1.cd" />
     <Compile Include="C_Create2AxisMachine.cs" />
-    <Compile Include="C_ToToolPath.cs" />
+    <Compile Include="C_ToToolPoints.cs" />
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_SelectTool.cs" />
     <Compile Include="C_ReadToolFile.cs" />

@@ -16,7 +16,7 @@ namespace CAMel
         /// </summary>
         public C_PocketNC()
             : base("PocketNC Machine", "PocketNC",
-                "PocketNC Axis Machine",
+                "PocketNC 5 Axis Machine",
                 "CAMel", " Hardware")
         {
         }

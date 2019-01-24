@@ -15,7 +15,7 @@ namespace CAMel
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_Create2AxisMachine()
-            : base("Create 2 Axis Machine", "2 Axis",
+            : base("Create 2 Axis Machine", "2Axis",
                 "Create 2 Axis Machine",
                 "CAMel", " Hardware")
         {

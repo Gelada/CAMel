@@ -17,7 +17,7 @@ namespace CAMel
         /// </summary>
         public C_DrillOperation()
             : base("Drill Operation", "Drill",
-                "Create a Machine Operations drilling at a certain point.",
+                "Create a Machine Operation drilling at a certain point.",
                 "CAMel", " Operations")
         {
         }

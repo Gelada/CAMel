@@ -76,7 +76,7 @@ namespace CAMel
         /// </summary>
         public C_ReadToolFile()
             : base("Read Tool File", "FindMT",
-                "Read in a .csv file with tool details",
+                "Read in a .csv file with material and tool details",
                 "CAMel", " Hardware")
         {
         }
