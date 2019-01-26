@@ -93,7 +93,7 @@ namespace CAMel.Types
                     op = op + " Cylindrical Projection";
                     break;
                 case SurfProj.Spherical:
-                    op = op + " Cylindrical Projection";
+                    op = op + " Spherical Projection";
                     break;
                 default:
                     break;
