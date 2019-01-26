@@ -101,7 +101,7 @@ namespace CAMel
                     return;
             }
 
-            SurfacePath SP = Surfacing.Parallel(C, Dir, stepOver,ZZ, STD, BB, MT);
+            SurfacePath SP = Surfacing.parallel(C, Dir, stepOver,ZZ, STD, BB, MT);
             DA.SetData(0, new GH_SurfacePath(SP));
 
         }

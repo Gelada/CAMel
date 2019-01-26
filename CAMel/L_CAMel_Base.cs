@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
+using Rhino.Geometry;
+
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Expressions;
 
@@ -85,6 +87,21 @@ namespace CAMel.Types
                 }
             }
             return result;
+        }
+
+        // convert to cylindrical coordinate
+        public static Point3d toCyl(Point3d Pt)
+        {
+            Vector3d PlPt = new Vector3d(Pt.X, Pt.Y, 0);
+            double angle = Math.Atan2(Pt.Y, Pt.X);
+            if (angle < 0) { angle = angle + Math.PI * 2.0; }
+            return new Point3d(PlPt.Length, angle, Pt.Z);
+        }
+
+        // convert from cylindrical coordinate
+        public static Point3d fromCyl(Point3d Pt)
+        {
+            return new Point3d(Pt.X * Math.Cos(Pt.Y), Pt.X * Math.Sin(Pt.Y), Pt.Z);
         }
 
         public static object cleanGooList(object Gooey)
