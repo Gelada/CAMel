@@ -446,22 +446,16 @@ namespace CAMel.Types
             if (this.matTool == null) { matToolException(); }
             List<ToolPoint> offsetPath = new List<ToolPoint>();
 
-            Vector3d dir = (Vector3d)(this[1].pt - this[0].pt);
-            dir.Unitize();
+            Vector3d travel = (Vector3d)(this[1].pt - this[0].pt);
+            travel.Unitize();
 
             ToolPoint point;
-            Vector3d orth = new Vector3d(0, 0, 0);
-            bool orthSet = false;
+            Vector3d orth = Vector3d.CrossProduct(travel, M.toolDir(this[0]));
+            Vector3d uOrth = orth;
 
-            if (dir == M.toolDir(this[0]) || dir == -M.toolDir(this[0])) { point = this[0]; }
-            else
-            {
-                orth = Vector3d.CrossProduct(dir, M.toolDir(this[0]));
-                point = this.matTool.threeAxisHeightOffset(M, this[0], dir, orth);
-                orthSet = true;
-            }
+            point = this.matTool.threeAxisHeightOffset(M, this[0], travel, uOrth);
 
-            List<Line> osLines = new List<Line> { new Line(point.pt, dir) };
+            List<Line> osLines = new List<Line> { new Line(point.pt, travel) };
 
             double inter;
             ToolPoint nextPoint;
@@ -485,22 +479,14 @@ namespace CAMel.Types
                     changeDirection = true;
                 }
                 // Find the next offset line
-                dir = (Vector3d)(this[i + 1].pt - this[i].pt);
-                // Check for vertical moves
-                if (dir == M.toolDir(this[i]) || dir == -M.toolDir(this[i]))
-                {
-                    if (orthSet) { nextPoint = this.matTool.threeAxisHeightOffset(M, this[i], dir, orth); }
-                    else { nextPoint = this[i]; }
-                }
-                else
-                {
-                    orth = Vector3d.CrossProduct(dir, M.toolDir(this[i]));
-                    orthSet = true;
-                    nextPoint = this.matTool.threeAxisHeightOffset(M,this[i], dir, orth);
-                }
+                travel = (Vector3d)(this[i + 1].pt - this[i].pt);
+                orth = Vector3d.CrossProduct(travel, M.toolDir(this[0]));
+                if (orth.Length != 0) { uOrth = orth; }
+
+                nextPoint = this.matTool.threeAxisHeightOffset(M,this[i], travel, uOrth);
 
                 // find the next line we will travel along
-                osLines.Add(new Line(nextPoint.pt, dir));
+                osLines.Add(new Line(nextPoint.pt, travel));
 
                 // we need to find the last path that does not reverse when we travel along our new line. 
                 // if we go in the wrong direction on an offset path then we are gouging back into previously cut material.
@@ -562,18 +548,9 @@ namespace CAMel.Types
 
             // add the final point.
 
-            if (dir == M.toolDir(this.lastP))
-            {
-                if (orthSet) { nextPoint = this.matTool.threeAxisHeightOffset(M, this.lastP, dir, orth); }
-                else { nextPoint = this.lastP; }
-            }
-            else
-            {
-                orth = Vector3d.CrossProduct(dir, M.toolDir(this.lastP));
-                nextPoint = this.matTool.threeAxisHeightOffset(M,this.lastP, dir, orth);
-            }
-
-            offsetPath.Add(nextPoint);
+            orth = Vector3d.CrossProduct(travel, M.toolDir(this.lastP));
+            if (orth.Length != 0) { uOrth = orth; }
+            offsetPath.Add(this.matTool.threeAxisHeightOffset(M, this.lastP, travel, uOrth));
 
             ToolPath retPath = this.deepCloneWithNewPoints(offsetPath);
             retPath.Additions.threeAxisHeightOffset = false;

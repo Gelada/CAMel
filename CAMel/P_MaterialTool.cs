@@ -145,19 +145,23 @@ namespace CAMel.Types
         /// </summary>
         public ToolPoint threeAxisHeightOffset(IMachine M, ToolPoint tP, Vector3d travel, Vector3d orth)
         {
-            // TODO at the moment this offset assumes a round end mill.
-            // CutOffset does most of the work. 
+            // We want to use cutOffset, so need to find the normal
+            // That is the Vector at right angles to the travel direction
+            // in the plane orthogonal to orth
 
-            Vector3d os = travel;
-            os.Unitize();
-            os.Transform(Transform.Rotation(Math.PI / 2, orth,new Point3d(0,0,0)));
-            double testd = os * M.toolDir(tP);
-            if (testd < 0) { os = -1 * os; }
+            // Do nothing if orth does not give a plane
+            if (orth.Length == 0) { return tP; }
+
+            // Rotate 90 degrees, and check we get the one closer to the tool direction
+            Vector3d norm = travel;
+            norm.Transform(Transform.Rotation(Math.PI / 2, orth,new Point3d(0,0,0)));
+            double testd = norm * M.toolDir(tP);
+            if (testd < 0) { norm = -1 * norm; }
 
             ToolPoint osTp = tP.deepClone();   
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
-            osTp.pt = osTp.pt + this.toolWidth*(os - M.toolDir(tP))/2;
+            osTp.pt = osTp.pt + this.cutOffset(M.toolDir(tP),norm);
         
             return osTp;
         }
