@@ -4,16 +4,10 @@ using System.Drawing;
 using System.Diagnostics;
 
 using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using Grasshopper.GUI.Base;
 using Grasshopper.Kernel.Expressions;
+using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
 
-using Emgu.CV;
-using Emgu.CV.Structure;
-using Emgu.CV.CvEnum;
-using Emgu.CV.Util;
-using Emgu.CV.XImgproc;
 using System.Windows.Forms;
 
 namespace CAMel
@@ -35,7 +29,7 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("File", "F", "Name of image file", GH_ParamAccess.item);
+            pManager.AddParameter(new Param_FilePath(), "File", "F", "Name of image file", GH_ParamAccess.item);
             pManager.AddTextParameter("Height Expression", "H", "Function to define height. Evaluates on x along each genrated path from 0 to 1.", GH_ParamAccess.item, "0");
         }
 
@@ -48,7 +42,7 @@ namespace CAMel
             pManager.AddCurveParameter("Polyline", "P", "Polyline of points along traced curve, for more creative processing.", GH_ParamAccess.list);
         }
 
-        int Prune = 3, Jump = 15, Blur = 0, MaxFile = 3;
+        int Jump = 15, Blur = 0, MaxFile = 3;
         private bool m_debug = false;
         public bool debug
         {
@@ -83,205 +77,10 @@ namespace CAMel
             exp = GH_ExpressionSyntaxWriter.RewriteForEvaluator(exp);
             EP.CacheSymbols(exp);
 
-            List<Curve> curves = new List<Curve>();
-            this.times = new List<string>();
+            // Read photo into raw curves list
+            List<Curve> Jcurves = ReadPhoto.trace(filename, this.Blur, this.Jump, this.debug, out this.times);
 
-            Mat imgMat = new Mat(filename);
-
-            CvInvoke.CvtColor(imgMat, imgMat,ColorConversion.Bgr2Gray);
-
-            CvInvoke.GaussianBlur(imgMat, imgMat, new Size(2* this.Blur +1,2* this.Blur +1), 0, 0);
-
-            if (this.debug)
-            {
-                watch.Stop();
-                this.times.Add("Open File: " + watch.ElapsedMilliseconds + " ms");
-                watch = Stopwatch.StartNew();
-            }
-
-            Mat Thresh = new Mat();
-            CvInvoke.AdaptiveThreshold(imgMat, Thresh, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 51, 15);
-            imgMat.Dispose();
-            
-            CvInvoke.BitwiseNot(Thresh,Thresh);
-
-            if (this.debug)
-            {
-                watch.Stop();
-                this.times.Add("Threshold: " + watch.ElapsedMilliseconds + " ms");
-                Thresh.Save(System.IO.Path.Combine(filepath,"CAMelTrace_Thresholded.png"));
-                watch = Stopwatch.StartNew();
-            }
-
-            // Find the outer contour, this will fill in any holes in the path
-            // It does assume that no paths are loops. 
-            VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
-            CvInvoke.FindContours(Thresh, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
-
-            VectorOfVectorOfPoint usecontours = new VectorOfVectorOfPoint();
-            for (int i = 0; i < contours.Size; i++)
-            {
-                if (contours[i].Size > 10)
-                {
-                    usecontours.Push(contours[i]);
-                }
-            }
-
-            Mat ContourBM = new Mat(Thresh.Size, Thresh.Depth, 1);
-            ContourBM.SetTo(new MCvScalar(0));
-            Thresh.Dispose();
-
-            CvInvoke.DrawContours(ContourBM, usecontours, -1, new MCvScalar(255), -1);
-
-            if (this.debug)
-            {
-                watch.Stop();
-                this.times.Add("Redraw Main paths: " + watch.ElapsedMilliseconds + " ms");
-                ContourBM.Save(System.IO.Path.Combine(filepath,"CAMelTrace_Redrawn.png"));
-                watch = Stopwatch.StartNew();
-            }
-
-            // Thin the region to get the center of the curve, with some small branches
-
-            Mat thin = new Mat();
-            XImgprocInvoke.Thinning(ContourBM, thin, ThinningTypes.GuoHall);
-            ContourBM.Dispose();
-
-            if (this.debug)
-            {
-                watch.Stop();
-                this.times.Add("Thin: " + watch.ElapsedMilliseconds + " ms");
-                thin.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Thinned.png"));
-                watch = Stopwatch.StartNew();
-            }
-
-            // Thinning leaves a branching 1 pixel curve
-            // Prune the branches a little
-
-            ElementShape sh = ElementShape.Rectangle;
-            System.Drawing.Point an = new System.Drawing.Point(-1, -1);
-            Mat element = CvInvoke.GetStructuringElement(sh, new Size(3, 3), an);
-
-            Mat thrpts = new Mat(thin.Size,DepthType.Cv8U,1);
-            Mat thinf = new Mat();
-
-            for (int i = 0; i < this.Prune; i++)
-            {
-                CvInvoke.Threshold(thin, thinf, 128, 64, ThresholdType.Binary);
-                CvInvoke.Filter2D(thinf, thrpts, element, an);
-                CvInvoke.Threshold(thrpts, thrpts, 129, 255, ThresholdType.Binary);
-                CvInvoke.BitwiseAnd(thin, thrpts, thin);
-            }
-
-            if (this.debug)
-            {
-                watch.Stop();
-                this.times.Add("Prune: " + watch.ElapsedMilliseconds + " ms");
-                thin.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Pruned.png"));
-                watch = Stopwatch.StartNew();
-            }
-
-            // Now remove triple points to cut off branches
-
-
-            CvInvoke.Threshold(thin, thinf, 128, 64, ThresholdType.Binary);
-            CvInvoke.Filter2D(thinf, thrpts, element, an);
-            CvInvoke.Threshold(thrpts, thrpts, 200, 255, ThresholdType.Binary);
-            CvInvoke.BitwiseNot(thrpts, thrpts);
-            CvInvoke.BitwiseAnd(thin, thrpts, thin);
-
-            if (this.debug)
-            {
-                watch.Stop();
-                this.times.Add("Remove 3 points: " + watch.ElapsedMilliseconds + " ms");
-                thin.Save(System.IO.Path.Combine(filepath,"CAMelTrace_JustLines.png"));
-                watch = Stopwatch.StartNew();
-            }
-
-            // Now we have a collection of 1 pixel thick curves, we can vectorize
-
-            contours = new VectorOfVectorOfPoint();
-            CvInvoke.FindContours(thin, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
-            VectorOfPoint cont;
-            
-            // The contours are loops and there are small paths we want to ignore.
-            // We run ApproxPolyDP to simplify the curve
-            // Finally we convert to a Rhino curve
-
-            for (int i = 0; i < contours.Size; i++)
-            {
-                VectorOfPoint sco = new VectorOfPoint();
-                if (contours[i].Size > 4)
-                {
-                    cont = new VectorOfPoint();
-                    int j = 1;
-                    while(contours[i][j-1] != contours[i][j+1] && j < contours[i].Size-1) { j++; }
-                    System.Drawing.Point[] pt = new System.Drawing.Point[2] { contours[i][j], contours[i][j+1] };
-                    cont.Push(pt);
-                    j+=2;
-                    while (j < contours[i].Size && contours[i][j - 2] != contours[i][j])
-                    {
-                        pt = new System.Drawing.Point[1] { contours[i][j] };
-                        cont.Push(pt);
-                        j++;
-                    }
-                    CvInvoke.ApproxPolyDP(cont, sco, 1, false);
-                    //sco = cont;
-                    List<Point3d> c = new List<Point3d>();
-                    for (j = 0; j < sco.Size; j++) { c.Add(pt2R(sco[j])); }
-                    curves.Add(new PolylineCurve(c));
-                }
-            }
-
-            if (this.debug)
-            {
-                watch.Stop();
-                this.times.Add("Find contours 2: " + watch.ElapsedMilliseconds + " ms");
-                watch = Stopwatch.StartNew();
-            }
-
-            // In Rhino we join the remaining curves, healing the triple points we removed
-            // Hopefully ending up with something close to the intended result. 
-            // This should be replaced with a heuristic that aims to 
-            // create the longest curves possible. 
-
-            curves.Sort(delegate (Curve x, Curve y)
-            {
-                return y.GetLength().CompareTo(x.GetLength());
-            });
-
-            List<Curve> Jcurves = new List<Curve>();
-            List<Curve> Tcurves = new List<Curve>();
-
-            if (curves.Count > 0) { Tcurves.Add(curves[0]); }
-            Jcurves = Tcurves;
-            for(int i=1; i<curves.Count;i++)
-            {
-                Tcurves.Add(curves[i]);
-                Jcurves = new List<Curve>();
-                Jcurves.AddRange(Curve.JoinCurves(Tcurves, 10, false));
-                Tcurves = Jcurves;
-            }
-
-            // Find centre at 0 and do final join.
-
-            Tcurves = Jcurves;
-            Jcurves = new List<Curve>();
-
-            BoundingBox BB = new BoundingBox();
-            for (int i=0;i<Tcurves.Count;i++)
-            {
-                if(Tcurves[i].GetLength()> this.Jump *4)
-                {
-                    Jcurves.Add(Tcurves[i]);
-                    BB.Union(Tcurves[i].GetBoundingBox(false));
-                }
-            }
-            Tcurves = Jcurves;
-            Jcurves = new List<Curve>();
-            Jcurves.AddRange(Curve.JoinCurves(Tcurves, this.Jump + 2* this.Prune, false));
-
-            // Give height and move to centre.
+            // Add height to paths using expression
             for (int i = 0; i < Jcurves.Count; i++)
             {
                 double cp = 0;
@@ -296,11 +95,10 @@ namespace CAMel
                     pl[j] = new Point3d(pl[j].X, pl[j].Y, h);
                 }
                 Jcurves[i] = new PolylineCurve(pl);
-                Jcurves[i].Translate(-(Vector3d)BB.Center);
             }
 
             // Turn polylines into nice smooth curves
-            Tcurves = new List<Curve>();
+            var Tcurves = new List<Curve>();
             for (int i = 0; i < Jcurves.Count; i++)
             {
                 Polyline pl;
@@ -348,7 +146,6 @@ namespace CAMel
             Menu_AppendItem(menu, "Tracing Settings");
             //Menu_AppendNumber(menu, "Jump", this.Jump,"Distance to connect edges (in pixels)");
             //Menu_AppendNumber(menu, "Blur", this.Blur,"Radius of blur (in pixels)");
-            //Menu_AppendNumber(menu, "Prune", this.Prune,"Pixels to prune of ends of every branch");
 
             Menu_AppendSeparator(menu);
             Menu_AppendItem(menu, "Debug", debugClicked, true, this.debug);
@@ -425,9 +222,6 @@ namespace CAMel
                 case "Jump":
                     this.Jump = (int)UD.Value;
                     break;
-                case "Prune":
-                    this.Prune = (int)UD.Value;
-                    break;
                 case "Mega Pixels":
                     this.MaxFile = (int)UD.Value;
                     break;
@@ -443,7 +237,6 @@ namespace CAMel
             // First add our own fields.
             writer.SetInt32("MaxFile", this.MaxFile);
             writer.SetInt32("Jump", this.Jump);
-            writer.SetInt32("Prune", this.Prune);
             writer.SetInt32("Blur", this.Blur);
             writer.SetBoolean("Debug", this.debug);
             // Then call the base class implementation.
@@ -459,10 +252,6 @@ namespace CAMel
             if (reader.ItemExists("Jump"))
             {
                 this.Jump = reader.GetInt32("Jump");
-            }
-            if (reader.ItemExists("Prune"))
-            {
-                this.Prune = reader.GetInt32("Prune");
             }
             if (reader.ItemExists("Blur"))
             {
