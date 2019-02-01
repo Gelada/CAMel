@@ -227,6 +227,8 @@ namespace CAMel.Types.Machine
             }
 
             newTP.Additions.leadLength = 0;
+            newTP.Additions.insert = false;
+            newTP.Additions.retract = false;
             return newTP;
         }
 
