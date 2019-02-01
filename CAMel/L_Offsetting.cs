@@ -11,6 +11,7 @@ namespace CAMel.Types
     // library for doing offsetting
     public static class Offsetting
     {
+        private const double scF = 2000000000.0;
         public static List<PolylineCurve> offset(PolylineCurve P, double d)
         {
             // Bring path into clipper, scaling to take advantage of interger arithmetic
@@ -19,9 +20,9 @@ namespace CAMel.Types
             if(BB.Max.Y > md) { md = BB.Max.Y; }
             if (-BB.Min.X > md) { md = -BB.Min.X; }
             if (-BB.Min.Y > md) { md = -BB.Min.Y; }
-            double sc = 2000000000.0/md;
+            double sc = scF/md;
 
-            List<List<IntPoint>> IP = PLtoInt(P,sc);
+            List<List<IntPoint>> IP = pLtoInt(P,sc);
 
             // Offset the paths.
 
@@ -43,7 +44,7 @@ namespace CAMel.Types
                 oP.Add(clp);
             }
 
-            List<PolylineCurve> oPL = InttoPL(oP,sc);
+            List<PolylineCurve> oPL = intToPL(oP,sc);
             // find point closest to first of original curve
 
             int cp = -1;
@@ -75,27 +76,26 @@ namespace CAMel.Types
             return new Point3d((double)p.X/sc,(double)p.Y/sc,0);
         }
 
-        private static List<List<IntPoint>> PLtoInt(PolylineCurve PC, double sc)
+        private static List<List<IntPoint>> pLtoInt(PolylineCurve PC, double sc)
         {
             List<IntPoint> IntP = new List<IntPoint>();
             Polyline P;
             PC.TryGetPolyline(out P);
             foreach(Point3d p in P) { IntP.Add(dtoi(p,sc)); }
             //List<List<IntPoint>> IntPL = Clipper.SimplifyPolygon(IntP,);
-            List<List<IntPoint>> IntPL = new List<List<IntPoint>>();
-            IntPL.Add(IntP);
+            List<List<IntPoint>> IntPL = new List<List<IntPoint>> { IntP };
 
             return IntPL;
         }
-        private static List<List<IntPoint>> PLtoInt(List<PolylineCurve> P, double sc)
+        private static List<List<IntPoint>> pLtoInt(List<PolylineCurve> P, double sc)
         {
             List<List<IntPoint>> IntPL = new List<List<IntPoint>>();
-            foreach(PolylineCurve PL in P) { IntPL.AddRange(PLtoInt(PL, sc)); }
+            foreach(PolylineCurve PL in P) { IntPL.AddRange(pLtoInt(PL, sc)); }
 
             return IntPL;
         }
 
-        private static List<PolylineCurve> InttoPL(List<List<IntPoint>> IP, double sc)
+        private static List<PolylineCurve> intToPL(List<List<IntPoint>> IP, double sc)
         {
             List<PolylineCurve> PL = new List<PolylineCurve>();
             Polyline P;
