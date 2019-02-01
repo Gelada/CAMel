@@ -409,10 +409,9 @@ namespace CAMel.Types
             }
             return true;
         }
-
+        private const double accTol = 0.000001;
         public static PolylineCurve convertAccurate(Curve C)
         {
-            double accTol = 0.000000001;
             Polyline P;
             PolylineCurve PlC;
             // Check if already a polyline, otherwise make one
