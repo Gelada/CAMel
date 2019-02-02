@@ -23,9 +23,7 @@ namespace CAMel.Types
             if (oS != 0)
             {
                 if (C.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
-                {
-                    C.Reverse();
-                }
+                { C.Reverse(); }
             }
 
             // record the average Z location of the curve
