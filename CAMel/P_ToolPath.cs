@@ -193,9 +193,16 @@ namespace CAMel.Types
                 // ask the material form to refine the path
 
                 ToolPath refPath = useTP.matForm.refine(useTP, M);
-                MaterialForm.MFintersection inter;
+                MFintersection inter;
 
-                double finishDepth = useTP.matTool.finishDepth + onionSort.First();
+                double finishDepth;
+                if (useTP.matTool.finishDepth <= 0) { finishDepth = onionSort.First(); }
+                else { finishDepth = useTP.matTool.finishDepth + onionSort.First(); }
+
+                double cutDepth;
+                if (useTP.matTool.cutDepth <= 0) { cutDepth = double.PositiveInfinity; }
+                else { cutDepth = useTP.matTool.cutDepth; }
+
 
                 foreach (ToolPoint TP in refPath)
                 {
@@ -204,7 +211,7 @@ namespace CAMel.Types
                     if (MatDist[MatDist.Count - 1] < 0) { MatDist[MatDist.Count - 1] = 0; }// avoid negative distances (outside material)
                     MatNorm.Add(new Vector3d(inter.away));
                     // calculate maximum number of cutDepth height steps down to finishDepth above material
-                    NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1]-finishDepth)/useTP.matTool.cutDepth));
+                    NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1] - finishDepth) / cutDepth));
                     if (NumSteps[NumSteps.Count - 1] > MaxSteps) { MaxSteps = NumSteps[NumSteps.Count - 1]; }
                 }
 
@@ -213,7 +220,7 @@ namespace CAMel.Types
                 // Note that maxsteps currently assumes only stepping down by cutDepth.
 
                 List<double> CutLevel = new List<double>();
-                for (i = 0; i < MaxSteps; i++) { CutLevel.Add((i + 1) * useTP.matTool.cutDepth); }
+                for (i = 0; i < MaxSteps; i++) { CutLevel.Add((i + 1) * cutDepth); }
 
                 // process the paths, staying away from the final cut
 

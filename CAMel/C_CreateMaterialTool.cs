@@ -28,17 +28,17 @@ namespace CAMel
             pManager.AddTextParameter("Material Name", "MN", "Name of the material", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Tool Name", "TN", "Name of the tool", GH_ParamAccess.item, string.Empty);
             pManager.AddIntegerParameter("Tool Number", "T", "Number of the tool", GH_ParamAccess.item, 1);
-            pManager.AddNumberParameter("Speed", "S", "Speed of Spindle", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Speed", "S", "Speed of Spindle", GH_ParamAccess.item, -1);
             pManager.AddNumberParameter("Cut Feed", "CF", "Feed rate when cutting", GH_ParamAccess.item);
             pManager.AddNumberParameter("Plunge Feed", "PF", "Feed rate when plunging into material", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Cut Depth", "CD", "Maximum depth of material to cut", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Finish Depth", "FD", "Maximum depth of material in final cut", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Tolerance", "To", "Tolerance when converting curves to toolpaths", GH_ParamAccess.item);
-            pManager.AddNumberParameter("minStep", "mS", "Minimum distance between machine positions", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Cut Depth", "CD", "Maximum depth of material to cut (negative values will allow cuts as deep as needed).", GH_ParamAccess.item, -1);
+            pManager.AddNumberParameter("Finish Depth", "FD", "Maximum depth of material in final cut (negative values will allow cuts as deep as needed).", GH_ParamAccess.item, -1);
+            pManager.AddNumberParameter("Tolerance", "To", "Tolerance when converting curves to toolpaths", GH_ParamAccess.item, 0.005);
+            pManager.AddNumberParameter("minStep", "mS", "Minimum distance between machine positions", GH_ParamAccess.item,.05);
             pManager.AddNumberParameter("Tool Width", "TW", "Width of tool", GH_ParamAccess.item, 0);
-            pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis)", GH_ParamAccess.item, 0);
-            pManager.AddTextParameter("Tool Shape", "TS", "End shape of tool", GH_ParamAccess.item, "Ball");
-            pManager.AddNumberParameter("Side Load", "SL", "Fraction of the tool to engage with the material when surfacing.", GH_ParamAccess.item, 0.7);
+            pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis).", GH_ParamAccess.item, 0);
+            pManager.AddTextParameter("Tool Shape", "TS", "End shape of tool (Ball, Square, V, Other).", GH_ParamAccess.item, "Other");
+            pManager.AddNumberParameter("Side Load", "SL", "Fraction of the tool to engage with the material when surfacing.", GH_ParamAccess.item, 1);
         }
 
         /// <summary>
