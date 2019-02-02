@@ -67,7 +67,9 @@ namespace CAMel
             if (!DA.GetData(2, ref Os)) { return; }
             if (!DA.GetData(3, ref TPA)) { return; }
             if (!DA.GetData(4, ref MT)) { return; }
-            if (!DA.GetData(5, ref MF)) { return; }
+            DA.GetData(5, ref MF);
+
+            TPA=TPA.deepClone();
 
             if (!C.IsClosed && Os != 0)
             {
