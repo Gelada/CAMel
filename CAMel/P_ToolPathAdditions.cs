@@ -136,7 +136,7 @@ namespace CAMel.Types
             writer.SetInt32("onionCount", this.Value.onion.Count);
             writer.SetBoolean("threeAxisHeightOffset", this.Value.threeAxisHeightOffset);
             writer.SetBoolean("tabbing", this.Value.tabbing);
-            writer.SetDouble("leadFactor", this.Value.leadLength);
+            writer.SetDouble("leadLength", this.Value.leadLength);
             return base.Write(writer);
         }
 
