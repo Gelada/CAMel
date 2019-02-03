@@ -166,31 +166,48 @@ namespace CAMel.Types.Machine
 
     public static class Utility
     {
-        //public static Curve blendIn(Point3d fPt, Point3d bPt, Vector3d Dir, double sAng, double eAng)
-        //{
-        //    if(sAng == eAng) // straight line
-        //    {
-        //
-        //    }
-        //}
-
-
-
-        public static ToolPath leadInOut2d(ToolPath TP)
+        // Arc intended to blend the lead into a path
+        // Is constructed in the XY plane finishing in the X direction. 
+        private static PolylineCurve leadArc(Point3d startPt, Point3d endPt, Vector3d tangent, double speed, int pts)
         {
-            double leadLen = TP.Additions.leadLength;
-            ToolPath newTP = TP.deepClone();
-            PolylineCurve toolL = TP.getLine();
+            var Pts = new List<Point3d>() { startPt, endPt - tangent*speed, endPt};
+            Curve C = NurbsCurve.Create(false, 2,Pts);
+            return C.ToPolyline(pts, 0, 0, 0, 0, 0, 0, 0, true);
+        }
+        private static List<double> curveTests = new List<double>() { 0.7,0.6,0.5,0.8,0.4,0.3,0.9,0.2,0.1,1.0 };
 
-            // Find the point on a circle furthest from the toolpath. 
-            int testNumber = 50;
-            Point3d LeadStart = new Point3d(), testPt;
-            double testdist, dist = -1;
-            bool noInter, correctSide;
-            for (int i = 0; i < testNumber; i++)
+        private static PolylineCurve testLeads(Curve toolL, Point3d startPt, Point3d endPt, Vector3d tangent, int pts)
+        {
+            PolylineCurve outC = null, testC = null;
+            double maxSpeed = Math.Abs((endPt - startPt) * tangent); // assuming tangent is unit vector the component 
+            if (maxSpeed > 3.0*(endPt - startPt).Length/pts) // if not too orthogonal try to find a curve
             {
-                double ang = 2.0 * Math.PI * i / (double)testNumber;
-                testPt = TP.firstP.pt + leadLen * new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
+                for (int i = 0; i < curveTests.Count; i++)
+                {
+                    testC = leadArc(startPt, endPt, tangent, curveTests[i] * maxSpeed*2.0, pts);
+                    if(Intersection.CurveCurve(toolL, testC, 0.00001, 0.00001).Count <= 1)
+                    {
+                        outC = testC;
+                        break;
+                    }
+                }
+            }
+
+            return outC;
+        }
+
+        private const int leadAngleTest = 50;
+        private static PolylineCurve testAngles(Curve toolL, Point3d endPt, Vector3d tangent, double leadLen, int pts)
+        {
+            // Find the point on a circle furthest from the toolpath from which we can find a suitable lead
+            Point3d testPt;
+            PolylineCurve leadCurve = null;
+            double testdist, dist = -1;
+            bool correctSide;
+            for (int i = 0; i < leadAngleTest; i++)
+            {
+                double ang = 2.0 * Math.PI * i / (double)leadAngleTest;
+                testPt = endPt + leadLen * new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
 
                 // Check point is inside (or outside) the curve
                 correctSide = toolL.Contains(testPt) == PointContainment.Inside;
@@ -203,27 +220,54 @@ namespace CAMel.Types.Machine
                 {
                     toolL.ClosestPoint(testPt, out testdist);
                     testdist = testPt.DistanceTo(toolL.PointAt(testdist));
-                    noInter = Intersection.CurveCurve(toolL, new Line(TP.firstP.pt, testPt).ToNurbsCurve(), 0.00001, 0.00001).Count <= 1;
-
-                    if (noInter && testdist > dist)
+                    // if start is further from the curve try to find a lead path
+                    if (testdist > dist)
                     {
+                        PolylineCurve C = testLeads(toolL, testPt, endPt, tangent, pts);
                         dist = testdist;
-                        LeadStart = testPt;
+                        if ( C!= null) { leadCurve = C; }
                     }
                 }
             }
-            // If no suitable point found throw an error, otherwise add point to 
-            // start and end
-            if (dist < 0)
-            {
-                newTP.firstP.addError("No suitable point for lead in and out found.");
-            }
+            return leadCurve;
+        }
+
+        public static ToolPath leadInOut2d(ToolPath TP)
+        {
+            double leadLen = TP.Additions.leadLength;
+
+            // if leadLen is 0, there is nothign to be done.
+            if (leadLen == 0) { return TP; }
+
+            ToolPath newTP = TP.deepClone();
+            PolylineCurve toolL = TP.getLine();
+
+            PolylineCurve leadIn = testAngles(toolL, toolL.PointAtStart, toolL.TangentAtStart, leadLen, 10);
+            PolylineCurve leadOut = testAngles(toolL, toolL.PointAtEnd, -toolL.TangentAtEnd, leadLen, 10);
+
+            // If no suitable curve found throw an error
+            if (leadIn == null) { newTP.firstP.addError("No suitable curve for lead in found."); }
             else
             {
-                ToolPoint LeadTP = TP.firstP.deepClone();
-                LeadTP.pt = LeadStart;
-                newTP.Add(LeadTP.deepClone());
-                newTP.Insert(0, LeadTP);
+                List<ToolPoint> tPts = new List<ToolPoint>();
+                for(int i=1; i< leadIn.PointCount;i++)
+                {
+                    ToolPoint tPt = TP.firstP.deepClone();
+                    tPt.pt = leadIn.Point(i);
+                    tPts.Add(tPt);
+                }
+                newTP.InsertRange(0, tPts);
+            }
+            if (leadOut == null) { newTP.firstP.addError("No suitable curve for lead out found."); }
+            else
+            {
+                leadOut.Reverse();
+                for (int i = 1; i < leadOut.PointCount; i++)
+                {
+                    ToolPoint tPt = TP.firstP.deepClone();
+                    tPt.pt = leadOut.Point(i);
+                    newTP.Add(tPt);
+                }
             }
 
             newTP.Additions.leadLength = 0;
