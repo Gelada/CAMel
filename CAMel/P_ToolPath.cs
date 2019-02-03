@@ -170,19 +170,19 @@ namespace CAMel.Types
             // make sure the directions are correct for the machine
 
             // adjust path for three axis (or index three axis)
-            if(this.Additions.threeAxisHeightOffset)
+            if(this.Additions.threeAxisHeightOffset && M.machineImplements.threeAxisHeightOffset)
             { useTP = this.threeAxisHeightOffset(M); }
             else
             { useTP = this; }
-
-            if(useTP.Additions.sdDropMiddle < 0) { useTP.Additions.sdDropMiddle = 8.0 * useTP.matForm.safeDistance; }
 
             // get the sorted list of onion cuts
             IOrderedEnumerable<double> onionSort = this.Additions.sortOnion;
 
             // add steps into material
-            if (this.Additions.stepDown)
+            if (this.Additions.stepDown && M.machineImplements.stepDown)
             {
+                if (useTP.Additions.sdDropMiddle < 0) { useTP.Additions.sdDropMiddle = 8.0 * useTP.matForm.safeDistance; }
+
                 // Use the material form to work out the distance to cut in the
                 // material, the direction to enter the material and the number of passes.
                 List<double> MatDist = new List<double>();
@@ -362,7 +362,7 @@ namespace CAMel.Types
             }
 
             // add copies of the original path, making sure step down is false
-            // at levels given by the property onion in the ToolPathAdditions
+            // Use levels given by the property onion in the ToolPathAdditions
             // give sensible names
 
             fP = new List<ToolPath>();
@@ -378,11 +378,15 @@ namespace CAMel.Types
 
             // add insert and retract moves
 
-            for (i = 0; i < NewPaths.Count; i++) {
-                for (j = 0; j < NewPaths[i].Count; j++)
-                { NewPaths[i][j] = M.insertRetract(NewPaths[i][j]); }}
-            for (i = 0; i < fP.Count; i++) { fP[i] = M.insertRetract(fP[i]); }
-
+            if (this.Additions.insert && M.machineImplements.insert || this.Additions.retract && M.machineImplements.retract)
+            {
+                for (i = 0; i < NewPaths.Count; i++)
+                {
+                    for (j = 0; j < NewPaths[i].Count; j++)
+                    { NewPaths[i][j] = M.insertRetract(NewPaths[i][j]); }
+                }
+                for (i = 0; i < fP.Count; i++) { fP[i] = M.insertRetract(fP[i]); }
+            }
 
             return NewPaths;
         }
