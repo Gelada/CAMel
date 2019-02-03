@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Diagnostics;
 using System.Windows.Forms;
 
 using Rhino.Geometry;
@@ -62,7 +61,6 @@ namespace CAMel
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Stopwatch watch = Stopwatch.StartNew();
             string filename = string.Empty;
 
             if (!DA.GetData(0, ref filename)) { return; }
@@ -119,21 +117,9 @@ namespace CAMel
                 }
                 Tcurves.Add(Curve.CreateControlPointCurve(op));
             }
-            
-            if (this.debug)
-            {
-                watch.Stop();
-                this.times.Add("Join Curves: " + watch.ElapsedMilliseconds + " ms");
-            }
-            watch.Stop();
 
             DA.SetDataList(0, Tcurves);
             DA.SetDataList(1, Jcurves);
-        }
-
-        Point3d pt2R(System.Drawing.Point p)
-        {
-            return new Point3d(p.X, -p.Y, 0);
         }
 
         protected override void AppendAdditionalComponentMenuItems(ToolStripDropDown menu)
