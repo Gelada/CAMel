@@ -70,7 +70,7 @@ namespace CAMel.Types.Machine
             else { return this.commentStart + " " + L + " " + this.commentEnd; }
         }
 
-        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2d(tP);
+        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2d(tP, this.insert, this.retract);
         
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
         => Kinematics.interpolateLinear(fP, tP, par);
@@ -149,7 +149,7 @@ namespace CAMel.Types.Machine
                     PtCode = GCode.gcTwoAxis(Pt);
 
                     // Act if feed has changed
-                    if (FChange)
+                    if (FChange && feed >= 0)
                     {
                         if (feed == 0) { PtCode = "G00 " + PtCode; }
                         else { PtCode = "G01 " + PtCode + " F" + feed.ToString("0"); }
@@ -157,10 +157,8 @@ namespace CAMel.Types.Machine
                     FChange = false;
 
                     // Act if speed has changed
-                    if (SChange)
-                    {
-                        PtCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode;
-                    }
+                    if (SChange && speed >= 0)
+                    { PtCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode; }
                     SChange = false;
 
                     PtCode = Pt.preCode + PtCode + Pt.postCode;
@@ -183,6 +181,8 @@ namespace CAMel.Types.Machine
                 Co.machineState.Add("Y", tP.lastP.pt.Y);
                 Co.machineState.Add("F", feed);
                 Co.machineState.Add("S", speed);
+
+                GCode.gcPathEnd(this, ref Co, tP);
             }       
         }
 

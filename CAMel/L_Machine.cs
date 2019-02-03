@@ -232,7 +232,7 @@ namespace CAMel.Types.Machine
             return leadCurve;
         }
 
-        public static ToolPath leadInOut2d(ToolPath TP)
+        public static ToolPath leadInOut2d(ToolPath TP, string insert, string retract)
         {
             double leadLen = TP.Additions.leadLength;
 
@@ -242,37 +242,46 @@ namespace CAMel.Types.Machine
             ToolPath newTP = TP.deepClone();
             PolylineCurve toolL = TP.getLine();
 
-            PolylineCurve leadIn = testAngles(toolL, toolL.PointAtStart, toolL.TangentAtStart, leadLen, 10);
-            PolylineCurve leadOut = testAngles(toolL, toolL.PointAtEnd, -toolL.TangentAtEnd, leadLen, 10);
-
-            // If no suitable curve found throw an error
-            if (leadIn == null) { newTP.firstP.addError("No suitable curve for lead in found."); }
-            else
+            if(TP.Additions.insert)
             {
-                List<ToolPoint> tPts = new List<ToolPoint>();
-                for(int i=1; i< leadIn.PointCount;i++)
+                PolylineCurve leadIn = testAngles(toolL, toolL.PointAtStart, toolL.TangentAtStart, leadLen, 10);
+                // If no suitable curve found throw an error
+                if (leadIn == null) { newTP.firstP.addError("No suitable curve for lead in found."); }
+                else
                 {
-                    ToolPoint tPt = TP.firstP.deepClone();
-                    tPt.pt = leadIn.Point(i);
-                    tPts.Add(tPt);
+                    List<ToolPoint> tPts = new List<ToolPoint>();
+                    for (int i = 1; i < leadIn.PointCount; i++)
+                    {
+                        ToolPoint tPt = TP.firstP.deepClone();
+                        tPt.pt = leadIn.Point(i);
+                        tPts.Add(tPt);
+                    }
+                    newTP.InsertRange(0, tPts);
                 }
-                newTP.InsertRange(0, tPts);
+                if (insert != String.Empty) { newTP.preCode = newTP.preCode + "\n" + insert; }
+                newTP.Additions.insert = false;
             }
-            if (leadOut == null) { newTP.firstP.addError("No suitable curve for lead out found."); }
-            else
+
+            if (TP.Additions.retract)
             {
-                leadOut.Reverse();
-                for (int i = 1; i < leadOut.PointCount; i++)
+                PolylineCurve leadOut = testAngles(toolL, toolL.PointAtEnd, -toolL.TangentAtEnd, leadLen, 10);
+                if (leadOut == null) { newTP.lastP.addError("No suitable curve for lead out found."); }
+                // If no suitable curve found throw an error
+                else
                 {
-                    ToolPoint tPt = TP.firstP.deepClone();
-                    tPt.pt = leadOut.Point(i);
-                    newTP.Add(tPt);
+                    leadOut.Reverse();
+                    for (int i = 1; i < leadOut.PointCount; i++)
+                    {
+                        ToolPoint tPt = TP.firstP.deepClone();
+                        tPt.pt = leadOut.Point(i);
+                        newTP.Add(tPt);
+                    }
                 }
+                if (retract != String.Empty) { newTP.postCode = newTP.postCode + "\n" + retract; }
+                newTP.Additions.retract = false;
             }
 
             newTP.Additions.leadLength = 0;
-            newTP.Additions.insert = false;
-            newTP.Additions.retract = false;
             return newTP;
         }
 
@@ -422,7 +431,7 @@ namespace CAMel.Types.Machine
         // GCode reading
         private static readonly Regex numbPattern = new Regex(@"^([0-9\-.]+)", RegexOptions.Compiled);
 
-        static private double getValue(string line, char split, double old, ref bool changed, ref bool unset)
+        static private double getValue(string line, char split, double old, ref bool changed)
         {
             double val = old;
             string[] splitLine = line.Split(split);
@@ -433,7 +442,6 @@ namespace CAMel.Types.Machine
                 { val = double.Parse(monkey.Value); }
                 if (val != old) { changed = true; }
             }
-            if (double.IsNaN(val)) { unset = true; }
             return val;
         }
         // TODO detect tool changes and new paths
@@ -441,9 +449,9 @@ namespace CAMel.Types.Machine
         {
             ToolPath TP = new ToolPath(); Dictionary<char, double> vals = new Dictionary<char, double>();
 
-            foreach (char c in terms) { vals.Add(c, double.NaN); }
+            foreach (char c in terms) { vals.Add(c, 0); }
 
-            bool changed, unset;
+            bool changed;
 
             using (StringReader reader = new StringReader(Code))
             {
@@ -452,9 +460,8 @@ namespace CAMel.Types.Machine
                 while ((line = reader.ReadLine()) != null)
                 {
                     changed = false;
-                    unset = false;
                     foreach (char t in terms)
-                    { vals[t] = getValue(line, t, vals[t], ref changed, ref unset); }
+                    { vals[t] = getValue(line, t, vals[t], ref changed); }
                     //interpret a G0 command.
                     if (line.Contains(@"G00") || line.Contains(@"G0 "))
                     {
@@ -464,7 +471,7 @@ namespace CAMel.Types.Machine
                             vals['F'] = 0;
                         }
                     }
-                    if (changed && !unset) { TP.Add(M.readTP(vals, MTs[0])); }
+                    if (changed) { TP.Add(M.readTP(vals, MTs[0])); }
                 }
             }
             return TP;
