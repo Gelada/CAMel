@@ -41,7 +41,7 @@ namespace CAMel
             pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list, ccDefault);
             pManager[5].Optional = true;
             List<string> irDefault = new List<string> { GCode.defaultSpeedChangeCommand };
-            pManager.AddTextParameter("Speed", "S", "Command to change speed.", GH_ParamAccess.list);
+            pManager.AddTextParameter("Speed/ToolChange", "ST", "Command to change speed and change tool", GH_ParamAccess.list);
             pManager[6].Optional = true;
             List<string> fileDefault = new List<string> { GCode.defaultFileStart, GCode.defaultFileEnd };
             pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
