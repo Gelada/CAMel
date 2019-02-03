@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Rhino.Geometry;
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 
 using CAMel.Types.Machine;
-using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {

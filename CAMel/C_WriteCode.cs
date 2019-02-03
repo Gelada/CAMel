@@ -4,9 +4,7 @@ using System.ComponentModel;
 using System.IO;
 
 using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using Grasshopper.GUI.Base;
-using Rhino.Geometry;
+
 using CAMel.Types;
 
 namespace CAMel

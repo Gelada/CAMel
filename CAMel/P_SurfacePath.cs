@@ -1,14 +1,16 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using Rhino.Geometry.Intersect;
+
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
+
 using CAMel.Types.MaterialForm;
-using System.Collections;
 
 namespace CAMel.Types
 {

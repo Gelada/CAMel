@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Diagnostics;
+using System.Windows.Forms;
+
+using Rhino.Geometry;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Expressions;
 using Grasshopper.Kernel.Parameters;
-using Rhino.Geometry;
-
-using System.Windows.Forms;
 
 namespace CAMel
 {

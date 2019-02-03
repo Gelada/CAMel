@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+
+using Rhino.Geometry;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
-using Rhino.Geometry.Intersect;
-using CAMel.Types.MaterialForm;
-using System.Text.RegularExpressions;
 
 namespace CAMel.Types.Machine
 {

@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+
+using Rhino.Geometry;
 
 using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
+
 using CAMel.Types;
 using CAMel.Types.MaterialForm;
-using ClipperLib;
 
 namespace CAMel
 {

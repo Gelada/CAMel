@@ -1,8 +1,9 @@
 ﻿using System;
 
+using Rhino.Geometry;
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
 
 using CAMel.Types;
 

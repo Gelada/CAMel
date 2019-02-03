@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 using Rhino.Geometry;
 
-using CAMel.Types.MaterialForm;
-
 namespace CAMel.Types
 {
 

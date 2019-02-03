@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
-using CAMel.Types.Machine;
+
+using Grasshopper.Kernel;
+
 using CAMel.Types;
+using CAMel.Types.Machine;
 
 namespace CAMel
 {

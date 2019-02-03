@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 using Rhino.Geometry;
-using Rhino.Geometry.Intersect;
+
 using CAMel.Types.MaterialForm;
 using static CAMel.Exceptions;
-using System.Text.RegularExpressions;
 
 namespace CAMel.Types.Machine
 {

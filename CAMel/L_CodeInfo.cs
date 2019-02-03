@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.RegularExpressions;
 
 using Rhino.Geometry;
+
 using CAMel.Types.MaterialForm;
 using CAMel.Types.Machine;
 

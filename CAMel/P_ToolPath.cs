@@ -3,9 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
+using Rhino.Geometry;
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
 
 using CAMel.Types.MaterialForm;
 using CAMel.Types.Machine;
