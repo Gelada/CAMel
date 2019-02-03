@@ -22,7 +22,7 @@ namespace CAMel.Types.Machine
         public string commentStart { get; }
         public string commentEnd { get; }
         private readonly List<char> terms;
-        public List<MaterialTool> MTs { get; }
+        public List<MaterialTool> mTs { get; }
 
         private double aMin { get; }
         private double aMax { get; }
@@ -48,7 +48,7 @@ namespace CAMel.Types.Machine
             this.speedChangeCommand = GCode.defaultSpeedChangeCommand;
             this.toolChangeCommand = GCode.defaultToolChangeCommand;
             this.pathJump = pathJump;
-            this.MTs = MTs;
+            this.mTs = MTs;
             this.pivot = pivot;
             this.aMin = Amin;
             this.aMax = Amax;
@@ -91,8 +91,8 @@ namespace CAMel.Types.Machine
 
         public ToolPath readCode(string Code)
         {
-            if(this.MTs.Count == 0) { noToolException(); }
-            return GCode.gcRead(this, this.MTs, Code, this.terms);
+            if(this.mTs.Count == 0) { noToolException(); }
+            return GCode.gcRead(this, this.mTs, Code, this.terms);
         }
         public ToolPoint readTP(Dictionary<char, double> vals, MaterialTool MT)
         {

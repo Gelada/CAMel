@@ -202,7 +202,7 @@ namespace CAMel.Types
                 }
             }
             // if the machine has one tool use that.
-            if (this.mach.MTs.Count == 1 && mFFound) { valid.matTool = this.mach.MTs[0]; return valid; }
+            if (this.mach.mTs.Count == 1 && mFFound) { valid.matTool = this.mach.mTs[0]; return valid; }
             // if we go through the whole thing without finding all the valid pieces
             throw new InvalidOperationException("Cannot validate Machine Instructions, there are either no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
         }

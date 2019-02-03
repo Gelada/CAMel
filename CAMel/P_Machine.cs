@@ -23,7 +23,7 @@ namespace CAMel.Types.Machine
         double pathJump { get; } // Maximum jump between toolpaths in material
         bool toolLengthCompensation { get; } // Tool Length Compensation
         ToolPathAdditions defaultTPA { get; }
-        List<MaterialTool> MTs { get; } // list of Material Tools used by machine
+        List<MaterialTool> mTs { get; } // list of Material Tools used by machine
 
         // Writing and readind code
         string comment(string L);

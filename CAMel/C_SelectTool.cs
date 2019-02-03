@@ -86,7 +86,7 @@ namespace CAMel
             foreach(object ob in oMTs)
             {
                 if(ob is MaterialTool) { readMTs.Add((MaterialTool)ob); }
-                if(ob is IMachine) { readMTs.UnionWith(((IMachine)ob).MTs); }
+                if(ob is IMachine) { readMTs.UnionWith(((IMachine)ob).mTs); }
             }
 
             var materials = new SortedSet<string>();
