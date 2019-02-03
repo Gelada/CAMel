@@ -111,6 +111,7 @@ namespace CAMel.Types
         // create a lifted path
         public ToolPath deepClone(double h, IMachine M)
         {
+            if(h == 0) { return this.deepClone(); }
             ToolPath tP = deepCloneWithNewPoints(new List<ToolPoint>());
             foreach (ToolPoint tPt in this)
             {
