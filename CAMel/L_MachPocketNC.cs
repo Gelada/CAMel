@@ -298,7 +298,7 @@ namespace CAMel.Types.Machine
                     PtCode = GCode.gcFiveAxisAB(machPt, AB);
 
                     // Act if feed has changed
-                    if (FChange)
+                    if (FChange && feed >= 0)
                     {
                         if (feed == 0) { PtCode = "G00 " + PtCode; }
                         else { PtCode = "G01 " + PtCode + " F" + feed.ToString("0.00"); }
@@ -306,7 +306,7 @@ namespace CAMel.Types.Machine
                     FChange = false;
 
                     // Act if speed has changed
-                    if (SChange)
+                    if (SChange && speed >= 0)
                     {
                         PtCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode;
                     }
@@ -339,6 +339,8 @@ namespace CAMel.Types.Machine
                 Co.machineState.Add("B", AB.Y);
                 Co.machineState.Add("F", feed);
                 Co.machineState.Add("S", speed);
+
+                GCode.gcPathEnd(this, ref Co, tP);
             }    
         }
 

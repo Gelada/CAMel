@@ -152,7 +152,7 @@ namespace CAMel.Types.Machine
                     PtCode = GCode.gcThreeAxis(Pt);
 
                     // Act if feed has changed
-                    if (FChange)
+                    if (FChange && feed >= 0)
                     {
                         if (feed == 0) { PtCode = "G00 " + PtCode; }
                         else { PtCode = "G01 " + PtCode + " F" + feed.ToString("0"); }
@@ -160,7 +160,7 @@ namespace CAMel.Types.Machine
                     FChange = false;
 
                     // Act if speed has changed
-                    if (SChange)
+                    if (SChange && speed >= 0)
                     {
                         PtCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode;
                     }
@@ -188,6 +188,8 @@ namespace CAMel.Types.Machine
                 Co.machineState.Add("Z", tP.lastP.pt.Z);
                 Co.machineState.Add("F", feed);
                 Co.machineState.Add("S", speed);
+
+                GCode.gcPathEnd(this, ref Co, tP);
             }
         }
         public void writeFileStart(ref CodeInfo Co, MachineInstruction MI, ToolPath startPath)
