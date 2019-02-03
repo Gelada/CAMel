@@ -155,6 +155,7 @@ namespace CAMel.Types
                 if (reader.ItemExists("onionCount"))
                 {
                     int Count = reader.GetInt32("onionCount");
+                    TPA.onion = new List<double>();
                     for (int i = 0; i < Count; i++)
                     { TPA.onion.Add(reader.GetDouble("onion", i)); }
                 }
