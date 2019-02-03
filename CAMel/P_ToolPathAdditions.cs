@@ -77,6 +77,20 @@ namespace CAMel.Types
             leadLength = 0
         };
 
+        public static ToolPathAdditions twoAxisDefault => new ToolPathAdditions()
+        {
+            insert = true,
+            retract = true,
+            stepDown = false,
+            sdDropStart = true,
+            sdDropMiddle = -1,
+            sdDropEnd = true,
+            onion = new List<double>() { 0 },
+            threeAxisHeightOffset = false,
+            tabbing = false,
+            leadLength = 1
+        };
+
         public bool any
         {
             get

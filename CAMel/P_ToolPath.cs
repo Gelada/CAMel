@@ -108,7 +108,7 @@ namespace CAMel.Types
         }
 
         public ToolPath deepClone() => new ToolPath(this);
-
+        // create a lifted path
         public ToolPath deepClone(double h, IMachine M)
         {
             ToolPath tP = deepCloneWithNewPoints(new List<ToolPoint>());
@@ -161,235 +161,31 @@ namespace CAMel.Types
         {
             if (this.matTool == null) { matToolException(); }
             if (this.matForm == null) { matFormException(); }
-            int i, j, k, l;
-            List<List<ToolPath>> NewPaths = new List<List<ToolPath>>();
-            // need a list for each step down as it might split into more than one path
-            // and we need to keep those together to coordinate the Machine Operation
-
-            ToolPath useTP;
-
-            // make sure the directions are correct for the machine
 
             // adjust path for three axis (or index three axis)
-            if(this.Additions.threeAxisHeightOffset && M.machineImplements.threeAxisHeightOffset)
-            { useTP = this.threeAxisHeightOffset(M); }
-            else
-            { useTP = this; }
-
-            // get the sorted list of onion cuts
-            IOrderedEnumerable<double> onionSort = this.Additions.sortOnion;
+            ToolPath useTP;
+            if (this.Additions.threeAxisHeightOffset) { useTP = M.threeAxisHeightOffset(this); }
+            else { useTP = this; }
 
             // add steps into material
-            if (this.Additions.stepDown && M.machineImplements.stepDown)
-            {
-                if (useTP.Additions.sdDropMiddle < 0) { useTP.Additions.sdDropMiddle = 8.0 * useTP.matForm.safeDistance; }
-
-                // Use the material form to work out the distance to cut in the
-                // material, the direction to enter the material and the number of passes.
-                List<double> MatDist = new List<double>();
-                List<int> NumSteps = new List<int>();
-                int MaxSteps = 0; // Maximum distance of all points. 
-                List<Vector3d> MatNorm = new List<Vector3d>(); // list of surface normals
-
-                // ask the material form to refine the path
-
-                ToolPath refPath = useTP.matForm.refine(useTP, M);
-                MFintersection inter;
-
-                double finishDepth;
-                if (useTP.matTool.finishDepth <= 0) { finishDepth = onionSort.First(); }
-                else { finishDepth = useTP.matTool.finishDepth + onionSort.First(); }
-
-                double cutDepth;
-                if (useTP.matTool.cutDepth <= 0) { cutDepth = double.PositiveInfinity; }
-                else { cutDepth = useTP.matTool.cutDepth; }
-
-
-                foreach (ToolPoint TP in refPath)
-                {
-                    inter = useTP.matForm.intersect(TP, 0).through;
-                    MatDist.Add(inter.lineP); // distance to material surface
-                    if (MatDist[MatDist.Count - 1] < 0) { MatDist[MatDist.Count - 1] = 0; }// avoid negative distances (outside material)
-                    MatNorm.Add(new Vector3d(inter.away));
-                    // calculate maximum number of cutDepth height steps down to finishDepth above material
-                    NumSteps.Add((int)Math.Ceiling((MatDist[MatDist.Count - 1] - finishDepth) / cutDepth));
-                    if (NumSteps[NumSteps.Count - 1] > MaxSteps) { MaxSteps = NumSteps[NumSteps.Count - 1]; }
-                }
-
-                // make a list of depths to cut at.
-                // This just steps down right now, but makes it easier to add fancier levelling, if ever worthwhile. 
-                // Note that maxsteps currently assumes only stepping down by cutDepth.
-
-                List<double> CutLevel = new List<double>();
-                for (i = 0; i < MaxSteps; i++) { CutLevel.Add((i + 1) * cutDepth); }
-
-                // process the paths, staying away from the final cut
-
-                ToolPoint TPt;
-                bool start;
-                bool end;
-                double droplength; // length of dropped curve in the middle of a path
-                double height; // height above final path
-
-                ToolPath tempTP;
-
-                for(i = 0; i < CutLevel.Count; i++)
-                {
-                    NewPaths.Add(new List<ToolPath>());
-                    tempTP = useTP.deepCloneWithNewPoints(new List<ToolPoint>());
-                    tempTP.name = useTP.name + " Pass " + (i + 1).ToString();
-                    tempTP.Additions.stepDown = false;
-                    tempTP.Additions.onion = new List<double>() { 0 };
-
-                    start = true;
-                    end = false;
-                    droplength = 0;
-
-                    for(j = 0; j < refPath.Count && !end; j++)
-                    {
-                        if(i < NumSteps[j]) // We need to cut here
-                        {
-                            // if this is the first point to cut we need to add the previous one
-                            // if there was one, so we do not miss what was between them
-                            if(start && j > 0)
-                            {
-                                TPt = refPath[j - 1].deepClone();
-                                height = finishDepth;
-                                if (height > MatDist[j - 1]) { height = 0; }
-                                TPt.pt = M.toolDir(TPt) * height + TPt.pt; // stay finishDepth above final path
-
-                                tempTP.Add(TPt);
-                            }
-                            height = MatDist[j] - CutLevel[i];
-                            if (height < finishDepth) { height = finishDepth; } // stay finishDepth above final path
-                            TPt = refPath[j].deepClone();
-                            TPt.pt = M.toolDir(TPt) * height + TPt.pt;
-                            tempTP.Add(TPt);
-                            start = false;
-                            droplength = 0;
-                        }
-                        else if(start) // We have not hit any cutting yet;
-                        {
-                            if(!useTP.Additions.sdDropStart) // we are not dropping the start
-                            {
-                                TPt = refPath[j].deepClone();
-                                height = finishDepth;
-                                if (height > MatDist[j]) { height = 0; }
-                                TPt.pt = M.toolDir(TPt) * height + TPt.pt;
-                                tempTP.Add(TPt);
-                            } // otherwise we do nothing
-                        }
-                        else // We need to look ahead
-                        {
-                            for (k = j; k < refPath.Count && i >= NumSteps[k]; k++) {; } // Look ahead to the next cut
-
-                            if(k == refPath.Count) // No more cutting required
-                            {
-                                if(useTP.Additions.sdDropEnd) // we are dropping the end
-                                {
-                                    // Add point as the previous one was deep, 
-                                    // then set end to true so we finish
-                                    TPt = refPath[j].deepClone();
-                                    height = finishDepth;
-                                    TPt.pt = M.toolDir(TPt) * height + TPt.pt;
-                                    tempTP.Add(TPt);
-                                    end = true;
-                                }
-                                else // add point
-                                {
-                                    TPt = refPath[j].deepClone();
-                                    height = finishDepth;
-                                    TPt.pt = M.toolDir(TPt) * height + TPt.pt;
-                                    tempTP.Add(TPt);
-                                }
-                            }
-                            else // into the middle
-                            {
-                                if (useTP.Additions.sdDropMiddle < 0 || (k - j) < 3) // we are not dropping middle or there are not enough points to justify it
-                                {
-                                    TPt = refPath[j].deepClone();
-                                    height = finishDepth;
-                                    TPt.pt = M.toolDir(TPt) * height + TPt.pt;
-                                    tempTP.Add(TPt);
-                                }
-                                else //check length of drop
-                                {
-                                    if (droplength == 0) // If we are at the start of a possible drop Add the length until we hit the end or go over 
-                                    {
-                                        for (l = j; droplength < useTP.Additions.sdDropMiddle && l < k; l++)
-                                        { droplength += refPath[l].pt.DistanceTo(refPath[l + 1].pt); }
-                                    }
-                                    if (droplength > useTP.Additions.sdDropMiddle)
-                                    {
-                                        // add point, as previous point was in material
-                                        TPt = refPath[j].deepClone();
-                                        height = finishDepth;
-                                        TPt.pt = M.toolDir(TPt) * height + TPt.pt;
-                                        tempTP.Add(TPt);
-                                        // leap forward cut path and start a new one
-                                        // giving settings to add inserts and retracts
-
-                                        tempTP.Additions.retract = true;
-                                        NewPaths[NewPaths.Count - 1].Add(tempTP); // add path and create a new one
-
-                                        tempTP = (ToolPath)useTP.deepCloneWithNewPoints(new List<ToolPoint>());
-                                        tempTP.name = useTP.name + " Continuing Pass " + i.ToString();
-                                        tempTP.Additions.insert = true;
-                                        tempTP.Additions.stepDown = false;
-                                        tempTP.Additions.onion = new List<double>() { 0 };
-
-                                        // add k-1 point as k is deep
-                                        // this will not result in a double point as we checked (k-j) >=3
-                                        TPt = refPath[k - 1].deepClone();
-                                        height = finishDepth;
-                                        TPt.pt = M.toolDir(TPt) * height + TPt.pt;
-                                        tempTP.Add(TPt);
-                                        j = k - 1; //set j to k-1 so it deals with the k point next
-
-                                    }
-                                    else // after all that we still need to add the point
-                                    {
-                                        TPt = refPath[j].deepClone();
-                                        height = finishDepth;
-                                        TPt.pt = M.toolDir(TPt) * height + TPt.pt;
-                                        tempTP.Add(TPt);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    NewPaths[NewPaths.Count - 1].Add(tempTP);
-                }
-            }
+            var roughPaths = new List<List<ToolPath>>();
+            if(useTP.Additions.stepDown) { roughPaths = M.stepDown(useTP); }
 
             // add copies of the original path, making sure step down is false
             // Use levels given by the property onion in the ToolPathAdditions
-            // give sensible names
 
-            fP = new List<ToolPath>();
-
-            foreach (double height in onionSort)
-            {
-                ToolPath tP = useTP.deepClone(height, M);
-                tP.Additions.stepDown = false;
-                tP.Additions.onion = new List<double>() { 0 };
-                fP.Add(tP);
-
-            }
+            fP = M.finishPaths(useTP);
 
             // add insert and retract moves
 
-            if (this.Additions.insert && M.machineImplements.insert || this.Additions.retract && M.machineImplements.retract)
-            {
-                for (i = 0; i < NewPaths.Count; i++)
+            for (int i = 0; i < roughPaths.Count; i++)
                 {
-                    for (j = 0; j < NewPaths[i].Count; j++)
-                    { NewPaths[i][j] = M.insertRetract(NewPaths[i][j]); }
+                    for (int j = 0; j < roughPaths[i].Count; j++)
+                    { roughPaths[i][j] = M.insertRetract(roughPaths[i][j]); }
                 }
-                for (i = 0; i < fP.Count; i++) { fP[i] = M.insertRetract(fP[i]); }
-            }
+            for (int i = 0; i < fP.Count; i++) { fP[i] = M.insertRetract(fP[i]); }
 
-            return NewPaths;
+            return roughPaths;
         }
 
         // Use a curve and direction vector to create a path of toolpoints
@@ -447,131 +243,6 @@ namespace CAMel.Types
                 }
             }
             return oP;
-        }
-
-        // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
-        // TODO make this guarantee that it does not gouge locally. There is a problem 
-        // with paths that are steep down, followed by some bottom moves followed by steep out. 
-        public ToolPath threeAxisHeightOffset(IMachine M)
-        {
-            if (this.matTool == null) { matToolException(); }
-            List<ToolPoint> offsetPath = new List<ToolPoint>();
-
-            Vector3d travel = (Vector3d)(this[1].pt - this[0].pt);
-            travel.Unitize();
-
-            ToolPoint point;
-            Vector3d orth = Vector3d.CrossProduct(travel, M.toolDir(this[0]));
-            Vector3d uOrth = orth;
-
-            point = this.matTool.threeAxisHeightOffset(M, this[0], travel, uOrth);
-
-            List<Line> osLines = new List<Line> { new Line(point.pt, travel) };
-
-            double inter;
-            ToolPoint nextPoint;
-            double nextinter;
-            double orient;
-            ToolPoint endCP, startCP;
-
-            bool changeDirection = false; // Has tool direction changed?
-
-            offsetPath.Add(point);
-
-            // loop through the lines of the toolpath finding their offset path 
-            // and then travelling to the closest point to the next offset path
-
-            for (int i = 1; i < this.Count - 1; i++)
-            {
-                // Keep track of tool point direction to warn if it changes (but only once)
-                if (M.toolDir(this[i - 1]) != M.toolDir(this[i]) && !changeDirection)
-                {
-                    this[i].warning.Add("Height offsetting is not designed for 5-Axis motion, it may be unpredictable.");
-                    changeDirection = true;
-                }
-                // Find the next offset line
-                travel = (Vector3d)(this[i + 1].pt - this[i].pt);
-                orth = Vector3d.CrossProduct(travel, M.toolDir(this[0]));
-                if (orth.Length != 0) { uOrth = orth; }
-
-                nextPoint = this.matTool.threeAxisHeightOffset(M,this[i], travel, uOrth);
-
-                // find the next line we will travel along
-                osLines.Add(new Line(nextPoint.pt, travel));
-
-                // we need to find the last path that does not reverse when we travel along our new line. 
-                // if we go in the wrong direction on an offset path then we are gouging back into previously cut material.
-                // In the following we discuss intersection, for lines in 3d this is given by the closest point for two lines.
-
-                // intersect the new line with the last line we used
-                Rhino.Geometry.Intersect.Intersection.LineLine(osLines[osLines.Count - 2], osLines[osLines.Count - 1], out inter, out nextinter);
-                // find the orientation of the new path
-                orient = (osLines[osLines.Count - 2].PointAt(inter) - offsetPath[offsetPath.Count - 1].pt) * osLines[osLines.Count - 2].UnitTangent;
-
-                // loop until we find a suitable line, removing previous points that are now problematic
-                // checking the length of offsetPath should ensure we don't try to go past the start 
-                // and osLines is always at least 2 long, but we check both just in case.
-                while (orient < 0 && offsetPath.Count > 1 && osLines.Count > 1)
-                {
-                    // remove the reversing line
-                    osLines.RemoveAt(osLines.Count - 2);
-                    // remove the last point on the offsetPath, which were given by the intersection we are removing
-                    offsetPath.RemoveRange(offsetPath.Count - 1, 1);
-                    // find the new intersection and orientation
-                    Rhino.Geometry.Intersect.Intersection.LineLine(osLines[osLines.Count - 2], osLines[osLines.Count - 1], out inter, out nextinter);
-                    orient = (osLines[osLines.Count - 2].PointAt(inter) - offsetPath[offsetPath.Count - 1].pt) * osLines[osLines.Count - 2].UnitTangent;
-                }
-
-                // if we got to the start and things are still bad we have to deal with things differently
-                if (orient < 0)
-                {
-                    // remove the old start point and add the closest point on the new first line
-                    offsetPath.RemoveAt(0);
-
-                    // intersect our new line with the first direction 
-                    Rhino.Geometry.Intersect.Intersection.LineLine(osLines[0], osLines[osLines.Count - 1], out inter, out nextinter);
-
-                    // note that we keep the information from the toolpoint before the line we are going to be cutting
-                    // this might be removed on later passes, if the line is removed.
-                    startCP = this[i].deepClone();
-                    startCP.pt = osLines[osLines.Count - 1].PointAt(nextinter);
-                    offsetPath.Add(startCP);
-
-                }
-                else
-                {
-                    // Add the new intersection we like using the closest points on the two lines (the points on each line closest to the other line)
-                    // note that we keep the information from the toolpoint before the line we are going to be cutting
-                    // this might be removed on later passes, if the line is removed.
-                    endCP = this[i].deepClone();
-                    endCP.pt = osLines[osLines.Count - 2].PointAt(inter);
-                    startCP = this[i].deepClone();
-                    startCP.pt = osLines[osLines.Count - 1].PointAt(nextinter);
-
-                    // take the midpoint of the two intersections
-                    // there is possibly something clever to do here
-                    startCP.pt = (startCP.pt + endCP.pt) / 2;
-
-                    offsetPath.Add(startCP);
-                    //offsetPath.Add(endCP);
-                }
-            }
-
-            // add the final point.
-
-            orth = Vector3d.CrossProduct(travel, M.toolDir(this.lastP));
-            if (orth.Length != 0) { uOrth = orth; }
-            offsetPath.Add(this.matTool.threeAxisHeightOffset(M, this.lastP, travel, uOrth));
-
-            ToolPath retPath = this.deepCloneWithNewPoints(offsetPath);
-            retPath.Additions.threeAxisHeightOffset = false;
-
-            if (!retPath.Additions.insert)
-            { retPath.firstP.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
-            if (!retPath.Additions.retract)
-            { retPath.lastP.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
-
-            return retPath;
         }
 
         #region Point extraction and previews

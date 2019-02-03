@@ -24,28 +24,13 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         private readonly List<char> terms;
         public List<MaterialTool> MTs { get; }
-        public ToolPathAdditions machineImplements { get; }
-
-        internal static ToolPathAdditions _defaultImplents => new ToolPathAdditions()
-        {
-            insert = true,
-            retract = true,
-            stepDown = true,
-            sdDropStart = true,
-            sdDropMiddle = 1,
-            sdDropEnd = true,
-            threeAxisHeightOffset = true,
-            tabbing = true,
-            leadLength = 0
-        };
 
         public ToolPathAdditions defaultTPA
         { get => ToolPathAdditions.basicDefault; }
 
-        public ThreeAxis(string name, ToolPathAdditions tPA, List<MaterialTool> MTs, double pJ, string head, string foot, string speed, string tool, string commentStart, string commentEnd, string sectionBreak, string fileStart, string fileEnd)
+        public ThreeAxis(string name, List<MaterialTool> MTs, double pJ, string head, string foot, string speed, string tool, string commentStart, string commentEnd, string sectionBreak, string fileStart, string fileEnd)
         {
             this.name = name;
-            this.machineImplements = tPA;
             this.pathJump = pJ;
             this.header = head;
             this.footer = foot;
@@ -73,6 +58,9 @@ namespace CAMel.Types.Machine
         }
 
         public ToolPath insertRetract(ToolPath tP) => tP.matForm.insertRetract(tP);
+        public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
+        public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
+        public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
 
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
         => Kinematics.interpolateLinear(fP, tP, par);

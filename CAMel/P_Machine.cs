@@ -24,8 +24,8 @@ namespace CAMel.Types.Machine
         bool toolLengthCompensation { get; } // Tool Length Compensation
         ToolPathAdditions defaultTPA { get; }
         List<MaterialTool> MTs { get; } // list of Material Tools used by machine
-        ToolPathAdditions machineImplements { get; }
 
+        // Writing and readind code
         string comment(string L);
 
         void writeFileStart(ref CodeInfo Co, MachineInstruction MI, ToolPath startPath);
@@ -37,11 +37,17 @@ namespace CAMel.Types.Machine
 
         ToolPath readCode(string Code);
 
+        // Functions needed to process additions
         ToolPath insertRetract(ToolPath tP);
+        List<List<ToolPath>> stepDown(ToolPath tP);
+        ToolPath threeAxisHeightOffset(ToolPath tP);
+        List<ToolPath> finishPaths(ToolPath tP);
+
+        // Machine movement
         Vector3d toolDir(ToolPoint TP);
         ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng);
         double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng); // max change for orientation axes
-}
+    }
 
  
 

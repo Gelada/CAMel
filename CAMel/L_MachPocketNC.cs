@@ -23,7 +23,6 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         private readonly List<char> terms;
         public List<MaterialTool> MTs { get; }
-        public ToolPathAdditions machineImplements { get; }
 
         private double aMin { get; }
         private double aMax { get; }
@@ -34,19 +33,6 @@ namespace CAMel.Types.Machine
 
         public ToolPathAdditions defaultTPA 
         { get => ToolPathAdditions.basicDefault; }
-
-        internal static ToolPathAdditions _defaultImplents => new ToolPathAdditions()
-        {
-            insert = true,
-            retract = true,
-            stepDown = true,
-            sdDropStart = true,
-            sdDropMiddle = 1,
-            sdDropEnd = true,
-            threeAxisHeightOffset = true,
-            tabbing = true,
-            leadLength = 0
-        };
 
         public PocketNC(string name, string header, string footer, Vector3d pivot, double Amin, double Amax, double Bmax, bool TLC, double pathJump, List<MaterialTool> MTs)
         {
@@ -82,12 +68,15 @@ namespace CAMel.Types.Machine
 
         public override string ToString() => this.name;
 
-
         public ToolPath insertRetract(ToolPath tP)
         {
             if(tP.matForm == null) { matFormException(); }
             return tP.matForm.insertRetract(tP);
         }
+
+        public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
+        public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
+        public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
 
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
         {
@@ -369,8 +358,6 @@ namespace CAMel.Types.Machine
         // This should call a utility with standard options 
         // a good time to move it is when a second 5-axis is added
         // hopefully at that point there is a better understanding of safe moves!
-
-
 
         public void writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first)
         {

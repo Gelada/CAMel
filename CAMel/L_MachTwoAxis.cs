@@ -24,17 +24,13 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         private readonly List<char> terms;
         public List<MaterialTool> MTs { get; }
-        public ToolPathAdditions machineImplements { get; }
 
         public string insert { get; }
         public string retract { get; }
 
-        internal static ToolPathAdditions _defaultImplents = new ToolPathAdditions()
-        { insert = true, retract = true, leadLength = 1};
+        public ToolPathAdditions defaultTPA { get => ToolPathAdditions.twoAxisDefault; }
 
-        public ToolPathAdditions defaultTPA { get; }
-
-        public TwoAxis(string name, ToolPathAdditions tPA, List<MaterialTool>MTs, double pJ, string header, string footer, 
+        public TwoAxis(string name, List<MaterialTool>MTs, double pJ, string header, string footer, 
             string speed, string insert, string retract, string tool, string commentStart, string commentEnd, 
             string sectionBreak, string fileStart, string fileEnd)
         {
@@ -46,8 +42,6 @@ namespace CAMel.Types.Machine
             this.speedChangeCommand = speed;
             this.insert = insert;
             this.retract = retract;
-            this.machineImplements = tPA;
-            this.defaultTPA = tPA;
             this.commentStart = commentStart;
             this.commentEnd = commentEnd;
             this.sectionBreak = sectionBreak;
@@ -71,7 +65,10 @@ namespace CAMel.Types.Machine
         }
 
         public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2d(tP, this.insert, this.retract);
-        
+        public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
+        public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
+        public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
+
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng)
         => Kinematics.interpolateLinear(fP, tP, par);
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng) => 0;
