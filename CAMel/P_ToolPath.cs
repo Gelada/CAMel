@@ -629,7 +629,7 @@ namespace CAMel.Types
             foreach (ToolPoint TP in this) { lines.Add(TP.toolLine()); }
             return lines;
         }
-       #endregion
+        #endregion
 
         #region List Functions
         public int Count => ((IList<ToolPoint>)this.Pts).Count;
@@ -637,6 +637,7 @@ namespace CAMel.Types
         public ToolPoint this[int index] { get => ((IList<ToolPoint>)this.Pts)[index]; set => ((IList<ToolPoint>)this.Pts)[index] = value; }
         public int IndexOf(ToolPoint item) { return ((IList<ToolPoint>)this.Pts).IndexOf(item); }
         public void Insert(int index, ToolPoint item) { ((IList<ToolPoint>)this.Pts).Insert(index, item); }
+        public void InsertRange(int index, IEnumerable<ToolPoint> items) { this.Pts.InsertRange(index, items); }
         public void RemoveAt(int index) { ((IList<ToolPoint>)this.Pts).RemoveAt(index); }
         public void Add(ToolPoint item) { ((IList<ToolPoint>)this.Pts).Add(item); }
         public void Add(Point3d item) { ((IList<ToolPoint>)this.Pts).Add(new ToolPoint(item)); }

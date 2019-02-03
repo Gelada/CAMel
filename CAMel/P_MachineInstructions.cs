@@ -136,27 +136,30 @@ namespace CAMel.Types
             MachineInstruction valid = this.deepCloneWithNewPaths(new List<MachineOperation>());
 
             // Mix this.startPath and this.validStart as required to 
-            // give a valid non-zero length startPath.
+            // give a valid startPath.
             ToolPath validTP = this.validStart();
             valid.startPath = this.startPath ?? validTP;
             valid.startPath.validate(validTP, M);
-            if(valid.startPath.Count == 0)
-            {
-                valid.startPath.Add(this.firstP.deepClone());
-                valid.startPath.firstP.feed = 0;
-            }
             validTP = valid.startPath;
 
             // process and validate all Operations
-            foreach(MachineOperation MO in this)
+            foreach (MachineOperation MO in this)
             { valid.Add(MO.processAdditions(this.mach, ref validTP)); }
+
+            // If the startpath has no points add the first point of the processed points
+            if (valid.startPath.Count == 0)
+            {
+                valid.startPath.Add(valid.firstP.deepClone());
+                valid.startPath.firstP.feed = 0;
+            }
 
             // validate endPath, validTP will have the most recent information
             if (valid.endPath == null) { valid.endPath = validTP.deepCloneWithNewPoints(new List<ToolPoint>()); }
             valid.endPath.validate(validTP, M);
+            // if we need a point add the last point of the processed paths.
             if (valid.endPath.Count == 0)
             {
-                valid.endPath.Add(this.lastP.deepClone());
+                valid.endPath.Add(valid.lastP.deepClone());
                 valid.endPath.firstP.feed = 0;
             }
 
@@ -183,8 +186,7 @@ namespace CAMel.Types
         // Hunt through the ToolPaths until we find all we need
         private ToolPath validStart()
         {
-            // we need a point, a MaterialTool and a MaterialForm
-            bool ptFound = false;
+            // we need a MaterialTool and a MaterialForm
             bool mTFound = false;
             bool mFFound = false;
 
@@ -194,16 +196,15 @@ namespace CAMel.Types
             {
                 foreach (ToolPath tP in mO)
                 {
-                    if (!ptFound && tP.Count > 0) { ptFound = true; valid.Add(tP.firstP); }
                     if (!mTFound && tP.matTool != null) { mTFound = true; valid.matTool = tP.matTool; }
                     if (!mFFound && tP.matForm != null) { mFFound = true; valid.matForm = tP.matForm; }
-                    if (ptFound && mTFound && mFFound) { return valid; }
+                    if (mTFound && mFFound) { return valid; }
                 }
             }
             // if the machine has one tool use that.
-            if (this.mach.MTs.Count == 1 && ptFound && mFFound) { valid.matTool = this.mach.MTs[0]; return valid; }
+            if (this.mach.MTs.Count == 1 && mFFound) { valid.matTool = this.mach.MTs[0]; return valid; }
             // if we go through the whole thing without finding all the valid pieces
-            throw new InvalidOperationException("Cannot validate Machine Instructions, there are either no points, no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
+            throw new InvalidOperationException("Cannot validate Machine Instructions, there are either no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
         }
 
         #region Point extraction and previews
