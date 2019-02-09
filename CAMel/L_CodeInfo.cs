@@ -207,27 +207,14 @@ namespace CAMel.Types
         public string ToString(int start, int length)
         {
             int ulength;
-            if (start+length > this.Code.Length)
-            {
-                ulength = this.Code.Length - start;
-            } else
-            {
-                ulength = length;
-            }
+            if (start+length > this.Code.Length)  {  ulength = this.Code.Length - start;}
+            else { ulength = length; }
 
-            if( ulength > 0)
-            {
-              return this.Code.ToString(start, ulength);
-            }
-            else{
-                return string.Empty;
-            }
+            if( ulength > 0) { return this.Code.ToString(start, ulength); }
+            else{ return string.Empty; }
         }
 
-        public int Length
-        {
-            get { return this.Code.Length; }
-        }
+        public int Length { get => this.Code.Length; }
         
         public void appendLineNoNum(string L)
         {
@@ -241,16 +228,12 @@ namespace CAMel.Types
 
             if (L.Length > 0)
             {
-                    line = "N" + this.lines.ToString("0000") + "0 " + L;
-                    this.lines++;
+                line = "N" + this.lines.ToString("0000") + "0 " + L;
+                this.lines++;
                 this.appendLineNoNum(line);
             }
         }
-        public void appendComment(string L)
-        {
-            this.appendLineNoNum(this.Mach.comment(L));
-        }
-
+        public void appendComment(string L) => this.appendLineNoNum(this.Mach.comment(L));
         public void append(string L)
         {
             if (L != string.Empty)
@@ -258,10 +241,7 @@ namespace CAMel.Types
                 char[] seps = { '\n', '\r' };
                 String[] Lines = L.Split(seps, StringSplitOptions.RemoveEmptyEntries);
 
-                foreach (String line in Lines)
-                {
-                    this.appendLine(line);
-                }
+                foreach (String line in Lines) { this.appendLine(line); }
             }
         }
 
