@@ -58,11 +58,7 @@ namespace CAMel.Types.Machine
 
         public override string ToString() => "2Axis: " + this.name;
 
-        public string comment(string L)
-        {
-            if (L == "" || L == " ") { return " "; }
-            else { return this.commentStart + " " + L + " " + this.commentEnd; }
-        }
+        public string comment(string L) => GCode.comment(this, L);
 
         public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2d(tP, this.insert, this.retract);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
@@ -158,12 +154,10 @@ namespace CAMel.Types.Machine
                     { PtCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + PtCode; }
                     SChange = false;
 
+                    if (Pt.name != string.Empty) { PtCode = PtCode + " " + this.comment(Pt.name); }
+
                     PtCode = Pt.preCode + PtCode + Pt.postCode;
 
-                    if (Pt.name != string.Empty)
-                    {
-                        PtCode = PtCode + " " + this.comment(Pt.name);
-                    }
                     Co.append(PtCode);
 
                     // Adjust ranges

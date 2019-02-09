@@ -51,11 +51,8 @@ namespace CAMel.Types.Machine
         { get { return @"CAMelThreeAxis"; } }
 
         public override string ToString() => "2Axis: " + this.name;
-        public string comment(string L)
-        {
-            if (L == "" || L == " ") { return " "; }
-            else { return this.commentStart + " " + L + " " + this.commentEnd; }
-        }
+
+        public string comment(string L) => GCode.comment(this, L);
 
         public ToolPath insertRetract(ToolPath tP) => tP.matForm.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
@@ -154,12 +151,10 @@ namespace CAMel.Types.Machine
                     }
                     SChange = false;
 
+                    if (Pt.name != string.Empty) { PtCode = PtCode + " " + this.comment(Pt.name); }
+
                     PtCode = Pt.preCode + PtCode + Pt.postCode;
 
-                    if (Pt.name != string.Empty)
-                    {
-                        PtCode = PtCode + " " + this.comment(Pt.name);
-                    }
                     Co.append(PtCode);
 
                     // Adjust ranges

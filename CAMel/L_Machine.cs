@@ -836,5 +836,21 @@ namespace CAMel.Types.Machine
             }
             return TP;
         }
+
+        public static string comment(IGCodeMachine M, string L)
+        {
+            if (L == "" || L == " ") { return " "; }
+            else
+            {
+                string uL = L;
+                // Avoid "nested comments"
+                if(M.commentStart == "(")
+                {
+                    uL = L.Replace('(', ']');
+                    uL = uL.Replace(')', ']');
+                }
+                return M.commentStart + " " + uL + " " + M.commentEnd;
+            }
+        }
     }
 }

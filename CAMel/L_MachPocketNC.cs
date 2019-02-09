@@ -60,13 +60,10 @@ namespace CAMel.Types.Machine
         { get { return @"Instructions for a PocketNC machine"; } }
         public string TypeName
         { get { return @"CAMelPocketNC"; } }
-        public string comment(string L)
-        {
-            if (L == "" || L == " ") { return " "; }
-            else { return this.commentStart + " " + L + " " + this.commentEnd; }
-        }
 
         public override string ToString() => this.name;
+
+        public string comment(string L) => GCode.comment(this, L);
 
         public ToolPath insertRetract(ToolPath tP)
         {
@@ -299,12 +296,9 @@ namespace CAMel.Types.Machine
                     }
                     SChange = false;
 
-                    PtCode = Pt.preCode + PtCode + Pt.postCode;
+                    if (Pt.name != string.Empty) { PtCode = PtCode + " " + this.comment(Pt.name); }
 
-                    if (Pt.name != string.Empty)
-                    {
-                        PtCode = PtCode + " " + this.commentStart + Pt.name + this.commentEnd;
-                    }
+                    PtCode = Pt.preCode + PtCode + Pt.postCode;
 
                     Co.append(PtCode);
                     // Adjust ranges
