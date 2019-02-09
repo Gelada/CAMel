@@ -72,7 +72,12 @@ namespace CAMel
             {
                 object cleanSP = CAMel_Goo.cleanGooList((object)sP);
                 object cleanEP = CAMel_Goo.cleanGooList((object)eP);
-                Inst = new MachineInstruction(name, M, MO, ToolPath.toPath(cleanSP), ToolPath.toPath(cleanEP));
+                // The start and end paths should be G0.
+                ToolPath startP = ToolPath.toPath(cleanSP);
+                foreach(ToolPoint tPt in startP) { tPt.feed = 0; }
+                ToolPath endP = ToolPath.toPath(cleanEP);
+                foreach (ToolPoint tPt in endP) { tPt.feed = 0; }
+                Inst = new MachineInstruction(name, M, MO, startP, endP);
                 if (ignores > 1)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores.ToString() + " invalid elements (probably nulls) were ignored."); }
                 else if (ignores == 1)
