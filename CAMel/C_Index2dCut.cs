@@ -67,14 +67,21 @@ namespace CAMel
             if (!DA.GetData(3, ref TPA)) { return; }
             if (!DA.GetData(4, ref MT)) { return; }
             DA.GetData(5, ref MF);
-
-            TPA=TPA.deepClone();
+            
+            if (Rhino.Geometry.Intersect.Intersection.CurveSelf(C, 0.00000001).Count > 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Self-intersecting Curve");
+                return;
+            }
+            
+            TPA =TPA.deepClone();
 
             if (!C.IsClosed && Os != 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Curves that are not closed will not be offset.");
                 Os = 0;
             }
+
             // Note multiplication will give negative only if one is positive and the other negative.
             if (Os < 0) {TPA.leadLength = -TPA.leadLength; }
             MachineOperation Op = Operations.opIndex2dCut(C, D, Os, TPA, MT, MF);
