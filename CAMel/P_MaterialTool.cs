@@ -26,6 +26,7 @@ namespace CAMel.Types
         public double cutDepth { get; set; }    // maximum material to cut away (assumed unset for negative values)
         public double finishDepth { get; set; } // thickness to cut in a finish pass
         public double toolWidth { get; set; }   // width of tool (assumed unset for negative values)
+        public double insertWidth { get; set; } // width needed to insert into material
         public double toolLength { get; set; }  // length from the tip of the tool to the spindle
         public string shape { get; set; }       // End shape of the tool
         public double sideLoad { get; set; }    // Suggested side load for the tool.
@@ -41,7 +42,7 @@ namespace CAMel.Types
     // Settings for a particular material and tool
     public class MaterialTool : ICAMel_Base 
     {
-        public string matName { get; }     // Name of the material
+        public string matName { get; }     // Name of the materialMaterialToolReader
         public string toolName { get; }    // Name of the tool 
         public int toolNumber { get; }     // Number of the tool
         public double speed { get; }       // speed of spindle (assumed unset for negative values)
@@ -50,6 +51,7 @@ namespace CAMel.Types
         public double cutDepth { get; }    // maximum material to cut away (assumed unset for negative values)
         public double finishDepth { get; } // thickness to cut in a finish pass
         public double toolWidth { get; }   // width of tool (assumed unset for negative values)
+        public double insertWidth { get; } // width needed to insert into material
         public double toolLength { get; }  // length from the tip of the tool to the spindle
         public EndShape shape { get; }     // End shape of the tool
         public double sideLoad { get; }    // Suggested side load for the tool.
@@ -60,17 +62,16 @@ namespace CAMel.Types
         public double minStep { get; }     // shortest path permitted
 
         // Adding anything here needs significant support:
-        //  Add to MaterialToolReader
+        //  Add to MaterialToolBuilder
         //  Add to csv mapping
         //  Add to create Material Tool
         //  Add to Constructors
-        //  Add to default.
 
         // Empty default constructor (so grasshopper can get type name when nothing is present. 
         public MaterialTool() { }
 
         // Everything, with defaults
-        public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0, double sideLoad = 0.7)
+        public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double iwidth = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0, double sideLoad = 0.7)
         {
             this.matName = Mat;
             this.toolName = Tool;
@@ -81,6 +82,7 @@ namespace CAMel.Types
             this.finishDepth = finishDepth;
             this.cutDepth = cutDepth;
             this.toolWidth = width;
+            this.insertWidth = iwidth;
             this.toolLength = tL;
             this.tolerance = tol;
             this.minStep = mS;
@@ -99,6 +101,7 @@ namespace CAMel.Types
             this.finishDepth = MT.finishDepth;
             this.cutDepth = MT.cutDepth;
             this.toolWidth = MT.toolWidth;
+            this.insertWidth = MT.insertWidth;
             this.toolLength = MT.toolLength;
             this.tolerance = MT.tolerance;
             this.minStep = MT.minStep;
@@ -120,7 +123,7 @@ namespace CAMel.Types
             return new MaterialTool(
                 MT.matName, MT.toolName, MT.toolNumber, MT.speed, 
                 MT.feedCut, MT.feedPlunge, MT.cutDepth, fd, 
-                MT.toolWidth, MT.toolLength, MT.shape, MT.tolerance, MT.minStep, MT.sideLoad);
+                MT.toolWidth, MT.insertWidth, MT.toolLength, MT.shape, MT.tolerance, MT.minStep, MT.sideLoad);
         }
 
         public string TypeDescription

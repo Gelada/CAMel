@@ -34,6 +34,7 @@ namespace CAMel
             pManager.AddNumberParameter("Tolerance", "To", "Tolerance when converting curves to toolpaths", GH_ParamAccess.item, 0.005);
             pManager.AddNumberParameter("minStep", "mS", "Minimum distance between machine positions", GH_ParamAccess.item,.05);
             pManager.AddNumberParameter("Tool Width", "TW", "Width of tool", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("Insert Width", "IW", "Width needed for tool insertion (for example for plasma);", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis).", GH_ParamAccess.item, 0);
             pManager.AddTextParameter("Tool Shape", "TS", "End shape of tool (Ball, Square, V, Other).", GH_ParamAccess.item, "Other");
             pManager.AddNumberParameter("Side Load", "SL", "Fraction of the tool to engage with the material when surfacing.", GH_ParamAccess.item, 1);
@@ -57,51 +58,48 @@ namespace CAMel
             string toolName = string.Empty;
 
             int T = 1;
-            double S = 0, CF = 0, PF = 0, CD = 0, FD = 0, To = 0, mS = 0, TW = 0, TL = 0;
+            double S = 0, CF = 0, PF = 0, CD = 0, FD = 0, To = 0, mS = 0, TW = 0, IW=0, TL = 0, SL =1;
 
             string toolShape = string.Empty;
             EndShape ES;
 
-            if (!DA.GetData(0, ref matName)) { return; }
-            if (!DA.GetData(1, ref toolName)) { return; }
-            if (!DA.GetData(2, ref T)) { return; }
-            if (!DA.GetData(3, ref S)) { return; }
-            if (!DA.GetData(4, ref CF)) { return; }
-            if (!DA.GetData(5, ref PF)) { return; }
-            if (!DA.GetData(6, ref CD)) { return; }
-            if (!DA.GetData(7, ref FD)) { return; }
-            if (!DA.GetData(8, ref To)) { return; }
-            if (!DA.GetData(9, ref mS)) { return; }
-            if (!DA.GetData(10, ref TW)) { return; }
-            if (!DA.GetData(11, ref TL)) { return; }
-            if (!DA.GetData(12, ref toolShape))
+            if (!DA.GetData("Material Name", ref matName)) { return; }
+            if (!DA.GetData("Tool Name", ref toolName)) { return; }
+            if (!DA.GetData("Tool Number", ref T)) { return; }
+            if (!DA.GetData("Speed", ref S)) { return; }
+            if (!DA.GetData("Cut Feed ", ref CF)) { return; }
+            if (!DA.GetData("Plunge Feed", ref PF)) { return; }
+            if (!DA.GetData("Cut Depth", ref CD)) { return; }
+            if (!DA.GetData("Finish Depth", ref FD)) { return; }
+            if (!DA.GetData("Tolerance", ref To)) { return; }
+            if (!DA.GetData("minStep", ref mS)) { return; }
+            if (!DA.GetData("Tool Width", ref TW)) { return; }
+            if (!DA.GetData("Insert Width", ref IW)) { return; }
+            if (!DA.GetData("Tool Length", ref TL)) { return; }
+            if (!DA.GetData("Tool Shape", ref toolShape)) { return; }
+            if (!DA.GetData("Side Load", ref SL)) { return; }
+
+            switch (toolShape)
             {
-                return;
-            }
-            else
-            {
-                switch (toolShape)
-                {
-                    case "Ball":
-                        ES = EndShape.Ball;
-                        break;
-                    case "Square":
-                        ES = EndShape.Square;
-                        break;
-                    case "V":
-                        ES = EndShape.V;
-                        break;
-                    case "Other":
-                        ES = EndShape.Other;
-                        break;
-                    default:
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "End Shape not recognised. Options are \"Ball\", \"Square\", \"V\" use \"Other\" to avoid warning.");
-                        ES = EndShape.Other;
-                        break;
-                }
+                case "Ball":
+                    ES = EndShape.Ball;
+                    break;
+                case "Square":
+                    ES = EndShape.Square;
+                    break;
+                case "V":
+                    ES = EndShape.V;
+                    break;
+                case "Other":
+                    ES = EndShape.Other;
+                    break;
+                default:
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "End Shape not recognised. Options are \"Ball\", \"Square\", \"V\" use \"Other\" to avoid warning.");
+                    ES = EndShape.Other;
+                    break;
             }
 
-            MaterialTool MT = new MaterialTool(matName, toolName, T, S, CF, PF, CD, FD, TW, TL, ES, To, mS);
+            MaterialTool MT = new MaterialTool(matName, toolName, T, S, CF, PF, CD, FD, TW, IW, TL, ES, To, mS, SL);
 
             DA.SetData(0, new GH_MaterialTool(MT));
         }

@@ -56,6 +56,7 @@ namespace CAMel
             Map(m => m.toolName).Name("Tool");
             Map(m => m.toolNumber).Name("Tool Number");
             Map(m => m.toolWidth).Name("Tool Width");
+            Map(m => m.insertWidth).Name("Insert Width");
             Map(m => m.toolLength).Name("Length");
             Map(m => m.speed).Name("Speed");
             Map(m => m.feedCut).Name("Feed Rate");
@@ -75,7 +76,7 @@ namespace CAMel
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_ReadToolFile()
-            : base("Read Tool File", "FindMT",
+            : base("Read Tool File", "ReadMT",
                 "Read in a .csv file with material and tool details",
                 "CAMel", " Hardware")
         {
