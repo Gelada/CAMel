@@ -14,6 +14,8 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using GH_IO.Serialization;
 
+using CAMel.Types;
+
 namespace CAMel
 {
     public class C_OrganisePaths : GH_Component, IGH_PreviewObject
@@ -25,8 +27,6 @@ namespace CAMel
 
         private PathClick _click;
         private GH_Document _doc;
-
-        const string keyN = "CAMelOrder";
 
         private List<Curve> _curves;
         private List<GH_Curve> _latestPaths;
@@ -92,19 +92,18 @@ namespace CAMel
                         if (newPos <= 1)
                         {
                             newPos = 1;
-                            newKey = double.Parse(_curves[0].GetUserString(keyN)) - 1.0;
+                            newKey = _curves[0].getKey() - 1.0;
                         }
                         else if (newPos >= _curves.Count)
                         {
                             newPos = _curves.Count;
-                            newKey = double.Parse(_curves[_curves.Count-1].GetUserString(keyN)) + 1.0;
+                            newKey = _curves[_curves.Count-1].getKey() + 1.0;
                         }
                         else
                         {
-                            newKey = double.Parse(_curves[newPos - 2].GetUserString(keyN)) + double.Parse(_curves[newPos - 1].GetUserString(keyN));
-                            newKey = newKey / 2;
+                            newKey = (_curves[newPos - 2].getKey() + _curves[newPos - 1].getKey())/2.0;
                         }
-                        c.SetUserString(keyN,newKey.ToString());
+                        c.setKey(newKey);
                     }
                     return true;
                 }
@@ -120,7 +119,11 @@ namespace CAMel
         {
             this.Enabled = true;
             var paths = new List<GH_Curve>();
-            if (!DA.GetData("Paths", ref paths)) { return; }
+            if (!DA.GetDataList("Paths", paths))
+            {
+                this.Enabled = false;
+                return;
+            }
 
             double minK = double.PositiveInfinity;
             double maxK = double.NegativeInfinity;
@@ -128,30 +131,37 @@ namespace CAMel
             // Check for current keys, if missing use stored keys
             foreach(GH_Curve p in paths)
             {
-                if (p.Value.GetUserString(keyN) == String.Empty && p.IsReferencedGeometry)
+                if (p==null)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Null curve ignored.");
+                    continue;
+                }
+                if (double.IsNaN(p.Value.getKey()) && p.IsReferencedGeometry)
                 {
                     RhinoObject ro = RhinoDoc.ActiveDoc.Objects.Find(p.ReferenceID);
-                    if (ro != null)
-                    { p.Value.SetUserString(keyN, ro.Attributes.GetUserString(keyN)); }
+                    double key = ro.getKey();
+                    if(!double.IsNaN(key)) { p.Value.setKey(key); }
                 }
-                double read;
-                if(double.TryParse(p.Value.GetUserString(keyN), out read))
+                double read = p.Value.getKey();
+                if(!double.IsNaN(read))
                 {
                     if(read < minK) { minK = read; }
                     if (read > maxK) { maxK = read; }
                 }
             }
 
+            // restore sanityif no values were found.
             if (Double.IsPositiveInfinity(minK)) { minK = 0; }
             if (Double.IsNegativeInfinity(maxK)) { maxK = 0; }
 
             // Add keys to new paths with open paths at the start and closed paths at the end
             foreach (GH_Curve p in paths)
             {
-                if (p.Value.GetUserString(keyN) == String.Empty)
+                if(p == null) { continue; }
+                if (double.IsNaN(p.Value.getKey()))
                 {
-                    if (p.Value.IsClosed) { p.Value.SetUserString(keyN, (maxK++).ToString()); }
-                    else { p.Value.SetUserString(keyN, (minK--).ToString()); }
+                    if (p.Value.IsClosed) { p.Value.setKey(maxK++); }
+                    else { p.Value.setKey(minK--); }
                 }
             }
             
@@ -159,27 +169,16 @@ namespace CAMel
             _curves = new List<Curve>();
             foreach(GH_Curve p in paths)
             {
+                if(p == null) { continue; }
                 if (p.IsReferencedGeometry)
                 {
                     RhinoObject ro = RhinoDoc.ActiveDoc.Objects.Find(p.ReferenceID);
-                    if (ro != null)
-                    {
-                        ro.Attributes.SetUserString(keyN, p.Value.GetUserString(keyN));
-                        ro.CommitChanges();
-                    }
+                    if (ro != null) { ro.setKey(p.Value.getKey()); }
                 } 
-
                 _curves.Add(p.Value);
             }
 
             _curves.Sort(CurveC);
-
-            String m = "hello";
-            foreach(Curve C in _curves)
-            {
-                m = C.GetUserString(keyN);
-                m = "hello";
-            }
 
             // Store the processed data
             if (this.Params.Input[0].SourceCount == 0)
@@ -193,7 +192,7 @@ namespace CAMel
         {
             public int Compare(Curve x, Curve y)
             {
-                return double.Parse(x.GetUserString(keyN)).CompareTo(double.Parse(y.GetUserString(keyN)));
+                return x.getKey().CompareTo(y.getKey());
             }
         }
 
@@ -225,13 +224,14 @@ namespace CAMel
                 {
                     args.Viewport.GetWorldToScreenScale(_curves[i].PointAtStart, out pixelsPerUnit);
 
-                    if (this.Attributes.Selected) { args.Display.DrawCurve(_curves[i], args.WireColour_Selected); }
-                    else { args.Display.DrawCurve(_curves[i], args.WireColour); }
+                    System.Drawing.Color lineC = args.WireColour;
+                    if (this.Attributes.Selected) { lineC = args.WireColour_Selected; }
+                    args.Display.DrawCurve(_curves[i], lineC);
 
                     args.Display.DrawDot(_curves[i].PointAtStart + dotSize / pixelsPerUnit * dotShift, (i + 1).ToString());
 
                     Line dir = new Line(_curves[i].PointAtStart, _curves[i].TangentAtStart * 50.0 / pixelsPerUnit);
-                    args.Display.DrawArrow(dir, args.WireColour);
+                    args.Display.DrawArrow(dir, System.Drawing.Color.AntiqueWhite);
                 }
             }
         }
