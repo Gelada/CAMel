@@ -13,19 +13,19 @@ namespace CAMel
 
         public PathClick(C_OrganisePaths op)
         {
-            _op = op;
-            Enabled = true;
+            this._op = op;
+            this.Enabled = true;
         }
 
         protected override void OnMouseDown(MouseCallbackEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && _op != null && _op.clickQ())
+            if (e.Button == MouseButtons.Left && this._op != null && this._op.clickQ())
             {
                 Line mouseLine = e.View.ActiveViewport.ClientToWorld(e.ViewportPoint);
-                if (_op.found(mouseLine, e.View.ActiveViewport))
+                if (this._op.found(mouseLine, e.View.ActiveViewport))
                 {
                     e.Cancel = true;
-                    _op.ExpireSolution(true);
+                    this._op.ExpireSolution(true);
                 }
             }
             else

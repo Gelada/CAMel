@@ -23,9 +23,9 @@ namespace CAMel
         internal bool InActiveDocument;
         private bool Enabled;
 
-        internal bool clickQ() => Enabled && InActiveDocument;
+        internal bool clickQ() => this.Enabled && this.InActiveDocument;
 
-        private PathClick _click;
+        private readonly PathClick _click;
         private GH_Document _doc;
 
         private List<Curve> _curves;
@@ -36,9 +36,9 @@ namespace CAMel
         /// </summary>
         public C_OrganisePaths() : base("OrganisePaths", "OrgPth", "Reorder a collection of curves", "CAMel", "Test")
         {
-            _click = new PathClick(this);
-            _curves = new List<Curve>();
-            _latestPaths = new List<GH_Curve>();
+            this._click = new PathClick(this);
+            this._curves = new List<Curve>();
+            this._latestPaths = new List<GH_Curve>();
         }
 
         /// <summary>
@@ -59,17 +59,17 @@ namespace CAMel
 
         protected override void BeforeSolveInstance()
         {
-            _doc = OnPingDocument();
-            InActiveDocument = Instances.ActiveCanvas.Document == _doc && Instances.ActiveCanvas.Document.Context == GH_DocumentContext.Loaded;
+            this._doc = OnPingDocument();
+            this.InActiveDocument = Instances.ActiveCanvas.Document == this._doc && Instances.ActiveCanvas.Document.Context == GH_DocumentContext.Loaded;
 
-            Instances.ActiveCanvas.Document.ContextChanged -= ContextChanged;
-            Instances.ActiveCanvas.Document.ContextChanged += ContextChanged;
+            Instances.ActiveCanvas.Document.ContextChanged -= contextChanged;
+            Instances.ActiveCanvas.Document.ContextChanged += contextChanged;
             base.BeforeSolveInstance();
         }
 
-        private void ContextChanged(object sender, GH_DocContextEventArgs e)
+        private void contextChanged(object sender, GH_DocContextEventArgs e)
         {
-            InActiveDocument = e.Document == _doc && e.Context == GH_DocumentContext.Loaded;
+            this.InActiveDocument = e.Document == this._doc && e.Context == GH_DocumentContext.Loaded;
         }
 
         private const int dotSize = 11;
@@ -77,11 +77,11 @@ namespace CAMel
         internal bool found(Line l, RhinoViewport vP)
         {
             double pixelsPerUnit;
-            for(int i = 0;i<_curves.Count; i++) 
+            for(int i = 0;i< this._curves.Count; i++) 
             {
-                Curve c = _curves[i];
+                Curve c = this._curves[i];
                 vP.GetWorldToScreenScale(c.PointAtStart, out pixelsPerUnit);
-                if(l.DistanceTo(c.PointAtStart+ dotSize / pixelsPerUnit * dotShift, false)*pixelsPerUnit < dotSize)
+                if(l.DistanceTo(c.PointAtStart+ dotSize / pixelsPerUnit * this.dotShift, false)*pixelsPerUnit < dotSize)
                 {
                     string newP = string.Empty;
                     Dialogs.ShowEditBox("Reposition", "New position", (i+1).ToString(), false, out newP);
@@ -92,16 +92,16 @@ namespace CAMel
                         if (newPos <= 1)
                         {
                             newPos = 1;
-                            newKey = _curves[0].getKey() - 1.0;
+                            newKey = this._curves[0].getKey() - 1.0;
                         }
-                        else if (newPos >= _curves.Count)
+                        else if (newPos >= this._curves.Count)
                         {
-                            newPos = _curves.Count;
-                            newKey = _curves[_curves.Count-1].getKey() + 1.0;
+                            newPos = this._curves.Count;
+                            newKey = this._curves[this._curves.Count-1].getKey() + 1.0;
                         }
                         else
                         {
-                            newKey = (_curves[newPos - 2].getKey() + _curves[newPos - 1].getKey())/2.0;
+                            newKey = (this._curves[newPos - 2].getKey() + this._curves[newPos - 1].getKey())/2.0;
                         }
                         c.setKey(newKey);
                     }
@@ -164,9 +164,9 @@ namespace CAMel
                     else { p.Value.setKey(minK--); }
                 }
             }
-            
+
             // Store keys and put the values into the referenced objects if they exist. 
-            _curves = new List<Curve>();
+            this._curves = new List<Curve>();
             foreach(GH_Curve p in paths)
             {
                 if(p == null) { continue; }
@@ -174,18 +174,18 @@ namespace CAMel
                 {
                     RhinoObject ro = RhinoDoc.ActiveDoc.Objects.Find(p.ReferenceID);
                     if (ro != null) { ro.setKey(p.Value.getKey()); }
-                } 
-                _curves.Add(p.Value);
+                }
+                this._curves.Add(p.Value);
             }
 
-            _curves.Sort(CurveC);
+            this._curves.Sort(CurveC);
 
             // Store the processed data
             if (this.Params.Input[0].SourceCount == 0)
             {
                 this._latestPaths = paths;
             }
-            DA.SetDataList(0, _curves);
+            DA.SetDataList(0, this._curves);
         }
 
         class CurveComp : IComparer<Curve>
@@ -196,7 +196,7 @@ namespace CAMel
             }
         }
 
-        static CurveComp CurveC = new CurveComp();
+        static readonly CurveComp CurveC = new CurveComp();
 
         //Return a BoundingBox that contains all the geometry you are about to draw.
         public override BoundingBox ClippingBox
@@ -220,17 +220,17 @@ namespace CAMel
             {
                 double pixelsPerUnit;
 
-                for (int i = 0; i < _curves.Count; i++)
+                for (int i = 0; i < this._curves.Count; i++)
                 {
-                    args.Viewport.GetWorldToScreenScale(_curves[i].PointAtStart, out pixelsPerUnit);
+                    args.Viewport.GetWorldToScreenScale(this._curves[i].PointAtStart, out pixelsPerUnit);
 
                     System.Drawing.Color lineC = args.WireColour;
                     if (this.Attributes.Selected) { lineC = args.WireColour_Selected; }
-                    args.Display.DrawCurve(_curves[i], lineC);
+                    args.Display.DrawCurve(this._curves[i], lineC);
 
-                    args.Display.DrawDot(_curves[i].PointAtStart + dotSize / pixelsPerUnit * dotShift, (i + 1).ToString());
+                    args.Display.DrawDot(this._curves[i].PointAtStart + dotSize / pixelsPerUnit * this.dotShift, (i + 1).ToString());
 
-                    Line dir = new Line(_curves[i].PointAtStart, _curves[i].TangentAtStart * 50.0 / pixelsPerUnit);
+                    Line dir = new Line(this._curves[i].PointAtStart, this._curves[i].TangentAtStart * 50.0 / pixelsPerUnit);
                     args.Display.DrawArrow(dir, System.Drawing.Color.AntiqueWhite);
                 }
             }
