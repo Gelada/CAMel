@@ -122,6 +122,7 @@ namespace CAMel
             using (StreamReader fileReader = new StreamReader(file))
             {
                 CsvReader csv = new CsvReader(fileReader);
+                csv.Configuration.WillThrowOnMissingField = false;
                 csv.Configuration.RegisterClassMap<MaterialToolMap>();
                 MTBs.UnionWith(csv.GetRecords<MaterialToolBuilder>());
             }
