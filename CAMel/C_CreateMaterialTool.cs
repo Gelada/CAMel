@@ -67,7 +67,7 @@ namespace CAMel
             if (!DA.GetData("Tool Name", ref toolName)) { return; }
             if (!DA.GetData("Tool Number", ref T)) { return; }
             if (!DA.GetData("Speed", ref S)) { return; }
-            if (!DA.GetData("Cut Feed ", ref CF)) { return; }
+            if (!DA.GetData("Cut Feed", ref CF)) { return; }
             if (!DA.GetData("Plunge Feed", ref PF)) { return; }
             if (!DA.GetData("Cut Depth", ref CD)) { return; }
             if (!DA.GetData("Finish Depth", ref FD)) { return; }
