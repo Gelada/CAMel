@@ -67,20 +67,20 @@ namespace ClipperLib
     using Path = List<IntPoint>;
     using Paths = List<List<IntPoint>>;
 
-    public struct DoublePoint
+    internal struct DoublePoint
     {
-        public double X;
-        public double Y;
+        internal double X;
+        internal double Y;
 
-        public DoublePoint(double x = 0, double y = 0)
+        internal DoublePoint(double x = 0, double y = 0)
         {
             this.X = x; this.Y = y;
         }
-        public DoublePoint(DoublePoint dp)
+        internal DoublePoint(DoublePoint dp)
         {
             this.X = dp.X; this.Y = dp.Y;
         }
-        public DoublePoint(IntPoint ip)
+        internal DoublePoint(IntPoint ip)
         {
             this.X = ip.X; this.Y = ip.Y;
         }
@@ -91,14 +91,14 @@ namespace ClipperLib
     // PolyTree & PolyNode classes
     //------------------------------------------------------------------------------
 
-    public class PolyTree : PolyNode
+    internal class PolyTree : PolyNode
     {
         internal List<PolyNode> m_AllPolys = new List<PolyNode>();
 
         //The GC probably handles this cleanup more efficiently ...
         //~PolyTree(){Clear();}
 
-        public void Clear()
+        internal void Clear()
         {
             for (int i = 0; i < this.m_AllPolys.Count; i++)
                 this.m_AllPolys[i] = null;
@@ -106,7 +106,7 @@ namespace ClipperLib
             this.m_Childs.Clear();
         }
 
-        public PolyNode GetFirst()
+        internal PolyNode GetFirst()
         {
             if (this.m_Childs.Count > 0)
                 return this.m_Childs[0];
@@ -114,7 +114,7 @@ namespace ClipperLib
                 return null;
         }
 
-        public int Total
+        internal int Total
         {
             get
             {
@@ -127,7 +127,7 @@ namespace ClipperLib
 
     }
 
-    public class PolyNode
+    internal class PolyNode
     {
         internal PolyNode m_Parent;
         internal Path m_polygon = new Path();
@@ -148,12 +148,12 @@ namespace ClipperLib
             return result;
         }
 
-        public int ChildCount
+        internal int ChildCount
         {
             get { return this.m_Childs.Count; }
         }
 
-        public Path Contour
+        internal Path Contour
         {
             get { return this.m_polygon; }
         }
@@ -166,7 +166,7 @@ namespace ClipperLib
             Child.m_Index = cnt;
         }
 
-        public PolyNode GetNext()
+        internal PolyNode GetNext()
         {
             if (this.m_Childs.Count > 0)
                 return this.m_Childs[0];
@@ -184,22 +184,22 @@ namespace ClipperLib
                 return this.m_Parent.m_Childs[this.m_Index + 1];
         }
 
-        public List<PolyNode> Childs
+        internal List<PolyNode> Childs
         {
             get { return this.m_Childs; }
         }
 
-        public PolyNode Parent
+        internal PolyNode Parent
         {
             get { return this.m_Parent; }
         }
 
-        public bool IsHole
+        internal bool IsHole
         {
             get { return IsHoleNode(); }
         }
 
-        public bool IsOpen { get; set; }
+        internal bool IsOpen { get; set; }
     }
 
 
@@ -216,26 +216,26 @@ namespace ClipperLib
         private Int64 hi;
         private UInt64 lo;
 
-        public Int128(Int64 _lo)
+        internal Int128(Int64 _lo)
         {
             this.lo = (UInt64)_lo;
             if (_lo < 0) this.hi = -1;
             else this.hi = 0;
         }
 
-        public Int128(Int64 _hi, UInt64 _lo)
+        internal Int128(Int64 _hi, UInt64 _lo)
         {
             this.lo = _lo;
             this.hi = _hi;
         }
 
-        public Int128(Int128 val)
+        internal Int128(Int128 val)
         {
             this.hi = val.hi;
             this.lo = val.lo;
         }
 
-        public bool IsNegative()
+        internal bool IsNegative()
         {
             return this.hi < 0;
         }
@@ -320,7 +320,7 @@ namespace ClipperLib
         //is slow. So, although calling the Int128Mul method doesn't look as clean, the 
         //code runs significantly faster than if we'd used the * operator.
 
-        public static Int128 Int128Mul(Int64 lhs, Int64 rhs)
+        internal static Int128 Int128Mul(Int64 lhs, Int64 rhs)
         {
             bool negate = (lhs < 0) != (rhs < 0);
             if (lhs < 0) lhs = -lhs;
@@ -350,43 +350,43 @@ namespace ClipperLib
     //------------------------------------------------------------------------------
     //------------------------------------------------------------------------------
 
-    public struct IntPoint
+    internal struct IntPoint
     {
-        public cInt X;
-        public cInt Y;
+        internal cInt X;
+        internal cInt Y;
 #if use_xyz
-    public cInt Z;
+    internal cInt Z;
     
-    public IntPoint(cInt x, cInt y, cInt z = 0)
+    internal IntPoint(cInt x, cInt y, cInt z = 0)
     {
       this.X = x; this.Y = y; this.Z = z;
     }
     
-    public IntPoint(double x, double y, double z = 0)
+    internal IntPoint(double x, double y, double z = 0)
     {
       this.X = (cInt)x; this.Y = (cInt)y; this.Z = (cInt)z;
     }
     
-    public IntPoint(DoublePoint dp)
+    internal IntPoint(DoublePoint dp)
     {
       this.X = (cInt)dp.X; this.Y = (cInt)dp.Y; this.Z = 0;
     }
 
-    public IntPoint(IntPoint pt)
+    internal IntPoint(IntPoint pt)
     {
       this.X = pt.X; this.Y = pt.Y; this.Z = pt.Z;
     }
 #else
-        public IntPoint(cInt X, cInt Y)
+        internal IntPoint(cInt X, cInt Y)
         {
             this.X = X; this.Y = Y;
         }
-        public IntPoint(double x, double y)
+        internal IntPoint(double x, double y)
         {
             this.X = (cInt)x; this.Y = (cInt)y;
         }
 
-        public IntPoint(IntPoint pt)
+        internal IntPoint(IntPoint pt)
         {
             this.X = pt.X; this.Y = pt.Y;
         }
@@ -421,36 +421,36 @@ namespace ClipperLib
 
     }// end struct IntPoint
 
-    public struct IntRect
+    internal struct IntRect
     {
-        public cInt left;
-        public cInt top;
-        public cInt right;
-        public cInt bottom;
+        internal cInt left;
+        internal cInt top;
+        internal cInt right;
+        internal cInt bottom;
 
-        public IntRect(cInt l, cInt t, cInt r, cInt b)
+        internal IntRect(cInt l, cInt t, cInt r, cInt b)
         {
             this.left = l; this.top = t;
             this.right = r; this.bottom = b;
         }
-        public IntRect(IntRect ir)
+        internal IntRect(IntRect ir)
         {
             this.left = ir.left; this.top = ir.top;
             this.right = ir.right; this.bottom = ir.bottom;
         }
     }
 
-    public enum ClipType { ctIntersection, ctUnion, ctDifference, ctXor };
-    public enum PolyType { ptSubject, ptClip };
+    internal enum ClipType { ctIntersection, ctUnion, ctDifference, ctXor };
+    internal enum PolyType { ptSubject, ptClip };
 
     //By far the most widely used winding rules for polygon filling are
     //EvenOdd & NonZero (GDI, GDI+, XLib, OpenGL, Cairo, AGG, Quartz, SVG, Gr32)
     //Others rules include Positive, Negative and ABS_GTR_EQ_TWO (only in OpenGL)
     //see http://glprogramming.com/red/chapter11.html
-    public enum PolyFillType { pftEvenOdd, pftNonZero, pftPositive, pftNegative };
+    internal enum PolyFillType { pftEvenOdd, pftNonZero, pftPositive, pftNegative };
 
-    public enum JoinType { jtSquare, jtRound, jtMiter };
-    public enum EndType { etClosedPolygon, etClosedLine, etOpenButt, etOpenSquare, etOpenRound };
+    internal enum JoinType { jtSquare, jtRound, jtMiter };
+    internal enum EndType { etClosedPolygon, etClosedLine, etOpenButt, etOpenSquare, etOpenRound };
 
     internal enum EdgeSide { esLeft, esRight };
     internal enum Direction { dRightToLeft, dLeftToRight };
@@ -477,14 +477,14 @@ namespace ClipperLib
         internal TEdge PrevInSEL;
     };
 
-    public class IntersectNode
+    internal class IntersectNode
     {
         internal TEdge Edge1;
         internal TEdge Edge2;
         internal IntPoint Pt;
     };
 
-    public class MyIntersectNodeSort : IComparer<IntersectNode>
+    internal class MyIntersectNodeSort : IComparer<IntersectNode>
     {
         public int Compare(IntersectNode node1, IntersectNode node2)
         {
@@ -544,7 +544,7 @@ namespace ClipperLib
         internal IntPoint OffPt;
     };
 
-    public class ClipperBase
+    internal class ClipperBase
     {
         internal const double horizontal = -3.4E+38;
         internal const int Skip = -2;
@@ -553,11 +553,11 @@ namespace ClipperLib
         internal static bool near_zero(double val) { return (val > -tolerance) && (val < tolerance); }
 
 #if use_int32
-    public const cInt loRange = 0x7FFF;
-    public const cInt hiRange = 0x7FFF;
+    internal const cInt loRange = 0x7FFF;
+    internal const cInt hiRange = 0x7FFF;
 #else
-        public const cInt loRange = 0x3FFFFFFF;
-        public const cInt hiRange = 0x3FFFFFFFFFFFFFFFL;
+        internal const cInt loRange = 0x3FFFFFFF;
+        internal const cInt hiRange = 0x3FFFFFFFFFFFFFFFL;
 #endif
 
         internal LocalMinima m_MinimaList;
@@ -571,14 +571,14 @@ namespace ClipperLib
 
         //------------------------------------------------------------------------------
 
-        public bool PreserveCollinear
+        internal bool PreserveCollinear
         {
             get;
             set;
         }
         //------------------------------------------------------------------------------
 
-        public void Swap(ref cInt val1, ref cInt val2)
+        internal void Swap(ref cInt val1, ref cInt val2)
         {
             cInt tmp = val1;
             val1 = val2;
@@ -680,7 +680,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public virtual void Clear()
+        internal virtual void Clear()
         {
             DisposeLocalMinimaList();
             for (int i = 0; i < this.m_edges.Count; ++i)
@@ -879,7 +879,7 @@ namespace ClipperLib
         //------------------------------------------------------------------------------
 
 
-        public bool AddPath(Path pg, PolyType polyType, bool Closed)
+        internal bool AddPath(Path pg, PolyType polyType, bool Closed)
         {
 #if use_lines
             if (!Closed && polyType == PolyType.ptClip)
@@ -1051,7 +1051,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public bool AddPaths(Paths ppg, PolyType polyType, bool closed)
+        internal bool AddPaths(Paths ppg, PolyType polyType, bool closed)
         {
             bool result = false;
             for (int i = 0; i < ppg.Count; ++i)
@@ -1163,7 +1163,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static IntRect GetBounds(Paths paths)
+        internal static IntRect GetBounds(Paths paths)
         {
             int i = 0, cnt = paths.Count;
             while (i < cnt && paths[i].Count == 0) i++;
@@ -1357,12 +1357,12 @@ namespace ClipperLib
 
     } //end ClipperBase
 
-    public class Clipper : ClipperBase
+    internal class Clipper : ClipperBase
     {
         //InitOptions that can be passed to the constructor ...
-        public const int ioReverseSolution = 1;
-        public const int ioStrictlySimple = 2;
-        public const int ioPreserveCollinear = 4;
+        internal const int ioReverseSolution = 1;
+        internal const int ioStrictlySimple = 2;
+        internal const int ioPreserveCollinear = 4;
 
         private ClipType m_ClipType;
         private Maxima m_Maxima;
@@ -1376,11 +1376,11 @@ namespace ClipperLib
         private List<Join> m_GhostJoins;
         private bool m_UsingPolyTree;
 #if use_xyz
-      public delegate void ZFillCallback(IntPoint bot1, IntPoint top1, 
+      internal delegate void ZFillCallback(IntPoint bot1, IntPoint top1, 
         IntPoint bot2, IntPoint top2, ref IntPoint pt);
-      public ZFillCallback ZFillFunction { get; set; }
+      internal ZFillCallback ZFillFunction { get; set; }
 #endif
-        public Clipper(int InitOptions = 0) : base() //constructor
+        internal Clipper(int InitOptions = 0) : base() //constructor
         {
             this.m_Scanbeam = null;
             this.m_Maxima = null;
@@ -1433,35 +1433,35 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public bool ReverseSolution
+        internal bool ReverseSolution
         {
             get;
             set;
         }
         //------------------------------------------------------------------------------
 
-        public bool StrictlySimple
+        internal bool StrictlySimple
         {
             get;
             set;
         }
         //------------------------------------------------------------------------------
 
-        public bool Execute(ClipType clipType, Paths solution,
+        internal bool Execute(ClipType clipType, Paths solution,
             PolyFillType FillType = PolyFillType.pftEvenOdd)
         {
             return Execute(clipType, solution, FillType, FillType);
         }
         //------------------------------------------------------------------------------
 
-        public bool Execute(ClipType clipType, PolyTree polytree,
+        internal bool Execute(ClipType clipType, PolyTree polytree,
             PolyFillType FillType = PolyFillType.pftEvenOdd)
         {
             return Execute(clipType, polytree, FillType, FillType);
         }
         //------------------------------------------------------------------------------
 
-        public bool Execute(ClipType clipType, Paths solution,
+        internal bool Execute(ClipType clipType, Paths solution,
             PolyFillType subjFillType, PolyFillType clipFillType)
         {
             if (this.m_ExecuteLocked) return false;
@@ -1490,7 +1490,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public bool Execute(ClipType clipType, PolyTree polytree,
+        internal bool Execute(ClipType clipType, PolyTree polytree,
             PolyFillType subjFillType, PolyFillType clipFillType)
         {
             if (this.m_ExecuteLocked) return false;
@@ -3333,13 +3333,13 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static void ReversePaths(Paths polys)
+        internal static void ReversePaths(Paths polys)
         {
             foreach (var poly in polys) { poly.Reverse(); }
         }
         //------------------------------------------------------------------------------
 
-        public static bool Orientation(Path poly)
+        internal static bool Orientation(Path poly)
         {
             return Area(poly) >= 0;
         }
@@ -3774,7 +3774,7 @@ namespace ClipperLib
         }
         //----------------------------------------------------------------------
 
-        public static int PointInPolygon(IntPoint pt, Path path)
+        internal static int PointInPolygon(IntPoint pt, Path path)
         {
             //returns 0 if false, +1 if true, -1 if pt ON polygon boundary
             //See "The Point in Polygon Problem for Arbitrary Polygons" by Hormann & Agathos
@@ -4106,7 +4106,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static double Area(Path poly)
+        internal static double Area(Path poly)
         {
             int cnt = (int)poly.Count;
             if (cnt < 3) return 0;
@@ -4144,7 +4144,7 @@ namespace ClipperLib
         // Convert self-intersecting polygons into simple polygons
         //------------------------------------------------------------------------------
 
-        public static Paths SimplifyPolygon(Path poly,
+        internal static Paths SimplifyPolygon(Path poly,
               PolyFillType fillType = PolyFillType.pftEvenOdd)
         {
             Paths result = new Paths();
@@ -4156,7 +4156,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static Paths SimplifyPolygons(Paths polys,
+        internal static Paths SimplifyPolygons(Paths polys,
             PolyFillType fillType = PolyFillType.pftEvenOdd)
         {
             Paths result = new Paths();
@@ -4237,7 +4237,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static Path CleanPolygon(Path path, double distance = 1.415)
+        internal static Path CleanPolygon(Path path, double distance = 1.415)
         {
             //distance = proximity in units/pixels below which vertices will be stripped. 
             //Default ~= sqrt(2) so when adjacent vertices or semi-adjacent vertices have 
@@ -4297,7 +4297,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static Paths CleanPolygons(Paths polys,
+        internal static Paths CleanPolygons(Paths polys,
             double distance = 1.415)
         {
             Paths result = new Paths(polys.Count);
@@ -4346,7 +4346,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static Paths MinkowskiSum(Path pattern, Path path, bool pathIsClosed)
+        internal static Paths MinkowskiSum(Path pattern, Path path, bool pathIsClosed)
         {
             Paths paths = Minkowski(pattern, path, true, pathIsClosed);
             Clipper c = new Clipper();
@@ -4365,7 +4365,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static Paths MinkowskiSum(Path pattern, Paths paths, bool pathIsClosed)
+        internal static Paths MinkowskiSum(Path pattern, Paths paths, bool pathIsClosed)
         {
             Paths solution = new Paths();
             Clipper c = new Clipper();
@@ -4385,7 +4385,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static Paths MinkowskiDiff(Path poly1, Path poly2)
+        internal static Paths MinkowskiDiff(Path poly1, Path poly2)
         {
             Paths paths = Minkowski(poly1, poly2, false, true);
             Clipper c = new Clipper();
@@ -4397,7 +4397,7 @@ namespace ClipperLib
 
         internal enum NodeType { ntAny, ntOpen, ntClosed };
 
-        public static Paths PolyTreeToPaths(PolyTree polytree)
+        internal static Paths PolyTreeToPaths(PolyTree polytree)
         {
 
             Paths result = new Paths();
@@ -4424,7 +4424,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static Paths OpenPathsFromPolyTree(PolyTree polytree)
+        internal static Paths OpenPathsFromPolyTree(PolyTree polytree)
         {
             Paths result = new Paths();
             result.Capacity = polytree.ChildCount;
@@ -4435,7 +4435,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public static Paths ClosedPathsFromPolyTree(PolyTree polytree)
+        internal static Paths ClosedPathsFromPolyTree(PolyTree polytree)
         {
             Paths result = new Paths();
             result.Capacity = polytree.Total;
@@ -4446,7 +4446,7 @@ namespace ClipperLib
 
     } //end Clipper
 
-    public class ClipperOffset
+    internal class ClipperOffset
     {
         private Paths m_destPolys;
         private Path m_srcPoly;
@@ -4458,13 +4458,13 @@ namespace ClipperLib
         private IntPoint m_lowest;
         private PolyNode m_polyNodes = new PolyNode();
 
-        public double ArcTolerance { get; set; }
-        public double MiterLimit { get; set; }
+        internal double ArcTolerance { get; set; }
+        internal double MiterLimit { get; set; }
 
         private const double two_pi = Math.PI * 2;
         private const double def_arc_tolerance = 0.25;
 
-        public ClipperOffset(
+        internal ClipperOffset(
           double miterLimit = 2.0, double arcTolerance = def_arc_tolerance)
         {
             this.MiterLimit = miterLimit;
@@ -4473,7 +4473,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public void Clear()
+        internal void Clear()
         {
             this.m_polyNodes.Childs.Clear();
             this.m_lowest.X = -1;
@@ -4486,7 +4486,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public void AddPath(Path path, JoinType joinType, EndType endType)
+        internal void AddPath(Path path, JoinType joinType, EndType endType)
         {
             int highI = path.Count - 1;
             if (highI < 0) return;
@@ -4528,7 +4528,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public void AddPaths(Paths paths, JoinType joinType, EndType endType)
+        internal void AddPaths(Paths paths, JoinType joinType, EndType endType)
         {
             foreach (Path p in paths)
                 AddPath(p, joinType, endType);
@@ -4758,7 +4758,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public void Execute(ref Paths solution, double delta)
+        internal void Execute(ref Paths solution, double delta)
         {
             solution.Clear();
             FixOrientations();
@@ -4789,7 +4789,7 @@ namespace ClipperLib
         }
         //------------------------------------------------------------------------------
 
-        public void Execute(ref PolyTree solution, double delta)
+        internal void Execute(ref PolyTree solution, double delta)
         {
             solution.Clear();
             FixOrientations();
@@ -4923,7 +4923,7 @@ namespace ClipperLib
 
     class ClipperException : Exception
     {
-        public ClipperException(string description) : base(description) { }
+        internal ClipperException(string description) : base(description) { }
     }
     //------------------------------------------------------------------------------
 
