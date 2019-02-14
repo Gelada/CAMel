@@ -141,7 +141,7 @@ namespace CAMel.Types
         public void addWarning(string warn)
         {
             if (this.warning == null) { this.warning = new List<string>(); }
-            this.error.Add(warn);
+            this.warning.Add(warn);
         }
 
         public string TypeDescription => "Information about a position of the machine"; 
