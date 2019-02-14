@@ -83,7 +83,7 @@ namespace CAMel
             }
 
             // Note multiplication will give negative only if one is positive and the other negative.
-            if (Os < 0) {TPA.leadLength = -TPA.leadLength; }
+            if (Os < 0) {TPA.leadCurvature = -TPA.leadCurvature; }
             MachineOperation Op = Operations.opIndex2dCut(C, D, Os, TPA, MT, MF);
 
             DA.SetData(0, new GH_MachineOperation(Op));

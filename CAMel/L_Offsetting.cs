@@ -53,7 +53,7 @@ namespace CAMel.Types
             double di,t, dist = 1000000000000000000;
             for (int i = 0; i < oPL.Count; i++)
             {
-                oPL[i].ClosestPoint(P.PointAt(0), out t, dist);
+                oPL[i].ClosestPoint(P.PointAtStart, out t, dist);
                 di = oPL[i].PointAt(t).DistanceTo(P.PointAt(0));
                 if(di<dist)
                 {

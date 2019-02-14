@@ -18,12 +18,12 @@ namespace CAMel.Types
 
             Plane P = new Plane(Point3d.Origin, D);
             C.Transform(Transform.PlaneToPlane(P, Plane.WorldXY));
-
+            bool reversed = false;
             // ensure the curve is anticlockwise
             if (oS != 0)
             {
                 if (C.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
-                { C.Reverse(); }
+                { C.Reverse(); reversed = true; }
             }
 
             // record the average Z location of the curve
@@ -37,6 +37,8 @@ namespace CAMel.Types
             List<PolylineCurve> osC = new List<PolylineCurve>();
             if (oS == 0) { osC.Add(PL); }
             else { osC = Offsetting.offset(PL, oS * MT.toolWidth / 2.0); }
+
+            if (!reversed) { foreach (Curve c in osC) { c.Reverse(); } }
 
             // create Operation
 

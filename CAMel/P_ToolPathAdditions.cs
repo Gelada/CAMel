@@ -23,7 +23,7 @@ namespace CAMel.Types
         public List<double> onion { get; set; }  // thicknesses to leave before final cut.
         public bool threeAxisHeightOffset { get; set; }
         public bool tabbing { get; set; }        // add tabs if machine wants to.
-        public double leadLength { get; set; }   // if leading in or out what factor of standard value to use
+        public double leadCurvature { get; set; }   // if leading in or out what factor of standard value to use
 
         // Adding anything here needs significant support:
         //  Add checker to .any
@@ -42,7 +42,7 @@ namespace CAMel.Types
             this.sdDropEnd = false;
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
-            this.leadLength = 0;
+            this.leadCurvature = 0;
             this.onion = new List<double>() { 0 };
         }
 
@@ -58,7 +58,7 @@ namespace CAMel.Types
             this.onion.AddRange(TPA.onion);
             this.threeAxisHeightOffset = TPA.threeAxisHeightOffset;
             this.tabbing = TPA.tabbing;
-            this.leadLength = TPA.leadLength;
+            this.leadCurvature = TPA.leadCurvature;
         }
 
         public ToolPathAdditions deepClone() => new ToolPathAdditions(this);
@@ -74,7 +74,7 @@ namespace CAMel.Types
             onion = new List<double>() { 0 },
             threeAxisHeightOffset = false,
             tabbing = false,
-            leadLength = 0
+            leadCurvature = 0
         };
 
         public static ToolPathAdditions twoAxisDefault => new ToolPathAdditions()
@@ -88,7 +88,7 @@ namespace CAMel.Types
             onion = new List<double>() { 0 },
             threeAxisHeightOffset = false,
             tabbing = false,
-            leadLength = 1
+            leadCurvature = 1
         };
 
         public bool any
@@ -100,7 +100,6 @@ namespace CAMel.Types
                     this.stepDown ||
                     this.threeAxisHeightOffset ||
                     this.tabbing ||
-                    this.leadLength != 0 ||
                     (this.onion.Count == 1 && this.onion[0] != 0) ||
                     this.onion.Count > 1;
             }
@@ -150,7 +149,7 @@ namespace CAMel.Types
             writer.SetInt32("onionCount", this.Value.onion.Count);
             writer.SetBoolean("threeAxisHeightOffset", this.Value.threeAxisHeightOffset);
             writer.SetBoolean("tabbing", this.Value.tabbing);
-            writer.SetDouble("leadLength", this.Value.leadLength);
+            writer.SetDouble("leadCurve", this.Value.leadCurvature);
             return base.Write(writer);
         }
 
@@ -175,7 +174,7 @@ namespace CAMel.Types
                 }
                 if (reader.ItemExists("threeAxisHeightOffset")) { TPA.threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset"); }
                 if (reader.ItemExists("tabbing")) { TPA.tabbing = reader.GetBoolean("tabbing"); }
-                if (reader.ItemExists("leadLength")) { TPA.leadLength = reader.GetDouble("leadLength"); }
+                if (reader.ItemExists("leadCurve")) { TPA.leadCurvature = reader.GetDouble("leadCurve"); }
                 this.Value = TPA;
                 return base.Read(reader);
             }
@@ -372,14 +371,14 @@ namespace CAMel.Types
                 this.Owner.Value = TPA;
             }
         }
-        [Category(" General"), Description("2d Lead path length for start and end, for systems like Plasma cutting."), DisplayName("Lead Length"), RefreshProperties(RefreshProperties.All)]
-        public double leadFactor
+        [Category(" General"), Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), DisplayName("Lead Length"), RefreshProperties(RefreshProperties.All)]
+        public double leadCurve
         {
-            get { return this.Owner.Value.leadLength; }
+            get { return this.Owner.Value.leadCurvature; }
             set
             {
                 ToolPathAdditions TPA = this.Owner.Value;
-                TPA.leadLength = value;
+                TPA.leadCurvature = value;
                 this.Owner.Value = TPA;
             }
         }

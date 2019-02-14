@@ -361,85 +361,92 @@ namespace CAMel.Types.Machine
             return NewPaths;
         }
 
-        // Find lead in and out curves
-        private static PolylineCurve leadArc(Point3d startPt, Point3d endPt, Vector3d tangent, double speed, int pts)
+        private static PolylineCurve findLead(PolylineCurve toolL, double leadCurve, double insertWidth, int v, bool start)
         {
-            var Pts = new List<Point3d>() { startPt, endPt - tangent*speed, endPt};
-            Curve C = NurbsCurve.Create(false, 2,Pts);
-            return C.ToPolyline(pts, 0, 0, 0, 0, 0, 0, 0, true);
-        }
-        private static List<double> curveTests = new List<double>() { 0.7,0.6,0.5,0.8,0.4,0.3,0.9,0.2,0.1,1.0 };
-        private static PolylineCurve testLeads(Curve toolL, Point3d startPt, Point3d endPt, Vector3d tangent, int pts)
-        {
-            PolylineCurve outC = null, testC = null;
-            double maxSpeed = Math.Abs((endPt - startPt) * tangent); // assuming tangent is unit vector the component 
-            if (maxSpeed > 3.0*(endPt - startPt).Length/pts) // if not too orthogonal try to find a curve
+            // work out the rotation to get the desired normal
+            double normAng = Math.PI / 2.0;
+            // take into account the orientation of the path
+            if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
+            // now we have the internal normal, flip if we want external.
+            if (leadCurve >= 0) { normAng = -normAng; }
+
+            PointContainment incorrectSide = PointContainment.Inside;
+            if (leadCurve < 0) { incorrectSide = PointContainment.Outside; }
+            double uLeadCurve = Math.Abs(leadCurve);
+
+            Point3d startPt = toolL.PointAtStart;
+            // Get tangents and the Normal pointing in the direction we want the lead.
+            Vector3d startTan = toolL.TangentAtStart;
+            Vector3d startNorm = startTan; startNorm.Rotate(normAng, Vector3d.ZAxis);
+
+            Vector3d endTan = toolL.TangentAtEnd;
+            Vector3d endNorm = endTan; endNorm.Rotate(normAng, Vector3d.ZAxis);
+
+            Vector3d uTan, uNorm;
+
+            if (start) { uTan = -endTan; uNorm = endNorm; } 
+            else { uTan = startTan; uNorm = startNorm; }
+            // Start by using the end version, we will choose the start version 
+
+            ArcCurve leadCirc = new ArcCurve(new Arc(startPt, uTan, startPt + uLeadCurve * (uNorm + uTan)));
+
+            // step along the arc trying to find a point more that insert distance from the path
+            List<double> divs = leadCirc.DivideByCount(v, true).ToList();
+            Polyline outP = new Polyline();
+
+
+            foreach (double d in divs)
             {
-                for (int i = 0; i < curveTests.Count; i++)
-                {
-                    testC = leadArc(startPt, endPt, tangent, curveTests[i] * maxSpeed*2.0, pts);
-                    if(Intersection.CurveCurve(toolL, testC, 0.00001, 0.00001).Count <= 1)
-                    {
-                        outC = testC;
-                        break;
-                    }
-                }
+                Point3d testPt = leadCirc.PointAt(d);
+                outP.Add(testPt);
+                double testdist;
+                if (toolL.Contains(testPt) == incorrectSide ) { return null; }
+                toolL.ClosestPoint(testPt, out testdist);
+                testdist = testPt.DistanceTo(toolL.PointAt(testdist));
+                if (testdist > insertWidth * 0.52) { return new PolylineCurve(outP); }
             }
 
-            return outC;
-        }
-        private const int leadAngleTest = 50;
-        private static PolylineCurve testAngles(Curve toolL, Point3d endPt, Vector3d tangent, double leadLen, int pts)
-        {
-            // Find the point on a circle furthest from the toolpath from which we can find a suitable lead
-            Point3d testPt;
-            PolylineCurve leadCurve = null;
-            double testdist, dist = -1;
-            bool correctSide;
-            for (int i = 0; i < leadAngleTest; i++)
+            // Now try to keep going straight
+            
+            for (double i = insertWidth / 10.0; i < 2 * insertWidth; i = i + insertWidth / 10.0)
             {
-                double ang = 2.0 * Math.PI * i / (double)leadAngleTest;
-                testPt = endPt + leadLen * new Point3d(Math.Cos(ang), Math.Sin(ang), 0);
+                Point3d testPt = leadCirc.PointAtEnd + uNorm * i;
+                outP.Add(testPt);
+                double testdist;
+                if (toolL.Contains(testPt) == incorrectSide) { return null; }
 
-                // Check point is inside (or outside) the curve
-                correctSide = toolL.Contains(testPt) == PointContainment.Inside;
-                if (leadLen > 0) { correctSide = !correctSide; }
-
-                // if on the correct side find the distance to the curve and 
-                // update the point if there is a line from point to curve that
-                // does not hit material.
-                if (correctSide)
-                {
-                    toolL.ClosestPoint(testPt, out testdist);
-                    testdist = testPt.DistanceTo(toolL.PointAt(testdist));
-                    // if start is further from the curve try to find a lead path
-                    if (testdist > dist)
-                    {
-                        PolylineCurve C = testLeads(toolL, testPt, endPt, tangent, pts);
-                        dist = testdist;
-                        if ( C!= null) { leadCurve = C; }
-                    }
-                }
+                toolL.ClosestPoint(testPt, out testdist);
+                testdist = testPt.DistanceTo(toolL.PointAt(testdist));
+                if (testdist > insertWidth * 0.52) { return new PolylineCurve(outP); }
             }
-            return leadCurve;
+            return null; 
         }
+
         public static ToolPath leadInOut2d(ToolPath TP, string insert, string retract)
         {
-            double leadLen = TP.Additions.leadLength;
-
-            // if leadLen is 0, there is nothign to be done.
-            if (leadLen == 0) { return TP; }
+            double leadCurve = TP.Additions.leadCurvature;
 
             ToolPath newTP = TP.deepClone();
+
+            // Just add commands as there is no lead
+            if (leadCurve == 0) {
+                if (TP.Additions.insert && insert != String.Empty) { newTP.postCode = newTP.postCode + "\n" + retract; }
+                if (TP.Additions.retract && retract != String.Empty) { newTP.postCode = newTP.postCode + "\n" + retract; }
+                newTP.Additions.insert = false;
+                newTP.Additions.retract = false;
+                return newTP;
+            }
+
             PolylineCurve toolL = TP.getLine();
 
             if(TP.Additions.insert)
             {
-                PolylineCurve leadIn = testAngles(toolL, toolL.PointAtStart, toolL.TangentAtStart, leadLen, 10);
+                PolylineCurve leadIn = findLead(toolL, leadCurve, TP.matTool.insertWidth, 15, true);
                 // If no suitable curve found throw an error
-                if (leadIn == null) { newTP.firstP.addError("No suitable curve for lead in found."); }
+                if (leadIn == null) { newTP.firstP.addWarning("No suitable curve for lead in found."); }
                 else
                 {
+                    leadIn.Reverse();
                     List<ToolPoint> tPts = new List<ToolPoint>();
                     for (int i = 1; i < leadIn.PointCount; i++)
                     {
@@ -455,12 +462,11 @@ namespace CAMel.Types.Machine
 
             if (TP.Additions.retract)
             {
-                PolylineCurve leadOut = testAngles(toolL, toolL.PointAtEnd, -toolL.TangentAtEnd, leadLen, 10);
-                if (leadOut == null) { newTP.lastP.addError("No suitable curve for lead out found."); }
+                PolylineCurve leadOut = findLead(toolL, leadCurve, TP.matTool.insertWidth, 15, false);
+                if (leadOut == null) { newTP.lastP.addWarning("No suitable curve for lead out found."); }
                 // If no suitable curve found throw an error
                 else
                 {
-                    leadOut.Reverse();
                     for (int i = 1; i < leadOut.PointCount; i++)
                     {
                         ToolPoint tPt = TP.firstP.deepClone();
@@ -472,7 +478,7 @@ namespace CAMel.Types.Machine
                 newTP.Additions.retract = false;
             }
 
-            newTP.Additions.leadLength = 0;
+            newTP.Additions.leadCurvature = 0;
             return newTP;
         }
 
@@ -600,6 +606,14 @@ namespace CAMel.Types.Machine
 
             return retPath;
         }
+        
+        // Clear the addition but don't do anything
+        public static ToolPath clearThreeAxisHeightOffset(ToolPath tP)
+        {
+            ToolPath newTP = tP.deepClone();
+            newTP.Additions.threeAxisHeightOffset = false;
+            return newTP;
+        }
 
         // Add a finishing versions of the path (including onion Skinning)
         public static List<ToolPath> finishPaths(ToolPath tP, IMachine M)
@@ -627,14 +641,6 @@ namespace CAMel.Types.Machine
                 fP.Add(newTP);
             }
             return fP;
-        }
-
-        // Clear the addition but don't do anything
-        public static ToolPath clearThreeAxisHeightOffset(ToolPath tP)
-        {
-            ToolPath newTP = tP.deepClone();
-            newTP.Additions.threeAxisHeightOffset = false;
-            return newTP;
         }
 
         // The finish path is just the toolpath
@@ -831,7 +837,9 @@ namespace CAMel.Types.Machine
                             vals['F'] = 0;
                         }
                     }
-                    if (changed) { TP.Add(M.readTP(vals, MTs[0])); }
+                    MaterialTool uMT = new MaterialTool();
+                    if(MTs.Count > 0) { uMT = MTs[0]; }
+                    if (changed) { TP.Add(M.readTP(vals, uMT)); }
                 }
             }
             return TP;

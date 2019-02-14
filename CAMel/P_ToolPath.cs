@@ -172,8 +172,7 @@ namespace CAMel.Types
             var roughPaths = new List<List<ToolPath>>();
             if(useTP.Additions.stepDown) { roughPaths = M.stepDown(useTP); }
 
-            // add copies of the original path, making sure step down is false
-            // Use levels given by the property onion in the ToolPathAdditions
+            // add finishing paths, processing onion
 
             fP = M.finishPaths(useTP);
 
