@@ -31,7 +31,7 @@ namespace CAMel.Types.MaterialForm
         public bool isSet { get; }
     }
 
-    
+
     public class MFintersects
     {
         public MFintersects()
@@ -42,10 +42,10 @@ namespace CAMel.Types.MaterialForm
             this.midOut = new Vector3d();
         }
 
-        private List<MFintersection> inters { get; } // List of intersections 
+        private List<MFintersection> inters { get; } // List of intersections
 
         public double thrDist => this.through.lineP;
-        public double firstDist => this.first.lineP; 
+        public double firstDist => this.first.lineP;
 
         public MFintersection through { get; private set; }// intersection with highest lineParameter
         public MFintersection first { get; private set; } // intersection with lowest lineParameter
@@ -55,7 +55,7 @@ namespace CAMel.Types.MaterialForm
         private Vector3d _midOut;
         public Vector3d midOut
         { // direction to head to surface from the middle of middle of the line
-            get => this._midOut; 
+            get => this._midOut;
             set
             {
                 value.Unitize();
@@ -177,7 +177,7 @@ namespace CAMel.Types.MaterialForm
         {
             inters = mF.intersect(start, end - start, tolerance);
             double lLength = (end - start).Length;
-            return (inters.hits && 
+            return (inters.hits &&
                 ((inters.firstDist > 0 && inters.firstDist < lLength) ||
                  (inters.thrDist > 0 && inters.thrDist < lLength))
                 );
@@ -185,17 +185,17 @@ namespace CAMel.Types.MaterialForm
 
         internal static ToolPath refine(IMaterialForm mF, ToolPath tP,IMachine m)
         {
-            // for each line check if it intersects 
-            // the MF and add those points. 
+            // for each line check if it intersects
+            // the MF and add those points.
             // also add the midpoint if going more than half way through
-            // TODO problem of long lines getting deep 
+            // TODO problem of long lines getting deep
 
             ToolPath refined = tP.deepCloneWithNewPoints(new List<ToolPoint>());
 
             // Add the first ToolPoint
 
             if (tP.Count > 0) { refined.Add(tP.firstP); }
-            
+
             double lineLen;
             MFintersects inters;
 
@@ -212,7 +212,7 @@ namespace CAMel.Types.MaterialForm
                     {
                         refined.Add(m.interpolate(tP[i], tP[i + 1],tP.matTool, inters.firstDist / lineLen, false));
                     }
-                   
+
                     if(inters.firstDist > 0 && lineLen > inters.thrDist) // add midpoint of intersection if it passes right through
                     {
                         refined.Add(m.interpolate(tP[i], tP[i + 1],tP.matTool, (inters.firstDist+inters.thrDist) / (2.0*lineLen),false));
@@ -237,7 +237,7 @@ namespace CAMel.Types.MaterialForm
 
         MFintersects intersect(Point3d pt, Vector3d direction, double tolerance);
         MFintersects intersect(ToolPoint tP, double tolerance);
-        bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inters); 
+        bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inters);
 
         ToolPath refine(ToolPath tP,IMachine m);
         ToolPath insertRetract(ToolPath tP);
@@ -245,10 +245,10 @@ namespace CAMel.Types.MaterialForm
         Mesh getMesh();
         BoundingBox getBoundingBox();
     }
-    
+
     public static class MaterialForm
     {
-        // Currently links to grasshopper to use "CastTo" behaviours. 
+        // Currently links to grasshopper to use "CastTo" behaviours.
         public static bool create(IGH_Goo inputGeometry, double tolerance, double safeD, out IMaterialForm mF)
         {
             if (inputGeometry.CastTo(out Box boxT))

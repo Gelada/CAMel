@@ -55,9 +55,9 @@ namespace CAMel
         /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess da)
         {
-            IGH_Goo geom = null; 
+            IGH_Goo geom = null;
             BoundingBox BB; // region to mill
-            Curve c = null; // path to move parallel to 
+            Curve c = null; // path to move parallel to
             Plane dir = Plane.WorldXY; // Plane to rotate in as you rise.
             MaterialTool mT = null; // The materialtool, mainly for tool width
             int tD=0;

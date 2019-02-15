@@ -25,10 +25,10 @@ namespace CAMel
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            // TODO This needs to be replaced with the new material form accepting either a list of boxes, 
+            // TODO This needs to be replaced with the new material form accepting either a list of boxes,
             // a plane, or a list of box unions (need good name) all into one parameter
             // Edit: 19/5/17 or does it? Needs more thought.
-            
+
             pManager.AddGenericParameter("Geometry", "G", "Object containing material, can be a plane (material on negative side) a box or a Cylinder.", GH_ParamAccess.item);
             pManager.AddNumberParameter("Safe Distance", "SD", "Safe distance away from material", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("Tolerance", "T", "Tolerance of material positioning", GH_ParamAccess.item, .1);

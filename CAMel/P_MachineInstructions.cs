@@ -11,7 +11,7 @@ using CAMel.Types.Machine;
 
 namespace CAMel.Types
 {
-    // List of toolpaths forming a complete set of instructions 
+    // List of toolpaths forming a complete set of instructions
     // for the machine
     public class MachineInstruction : IList<MachineOperation>, IToolPointContainer
     {
@@ -128,14 +128,14 @@ namespace CAMel.Types
 
         // Main functions
 
-        // Take the collection of paths and hints and validate it into 
+        // Take the collection of paths and hints and validate it into
         // a workable system, including adding MaterialTool and MaterialForm information
         // throughout
         public MachineInstruction processAdditions(IMachine m)
         {
             MachineInstruction valid = deepCloneWithNewPaths(new List<MachineOperation>());
 
-            // Mix this.startPath and this.validStart as required to 
+            // Mix this.startPath and this.validStart as required to
             // give a valid startPath.
             ToolPath validTP = validStart();
             valid.startPath = this.startPath ?? validTP;
@@ -227,7 +227,7 @@ namespace CAMel.Types
             foreach (MachineOperation mO in this) { dirs.Add(mO.getDirs()); }
             return dirs;
         }
-        // Create a path with the points 
+        // Create a path with the points
         public List<List<List<Point3d>>> getPointsandDirs(out List<List<List<Vector3d>>> dirs)
         {
             dirs = getDirs();
@@ -291,7 +291,7 @@ namespace CAMel.Types
         public GH_MachineInstruction(GH_MachineInstruction mI) { this.Value = mI.Value.deepClone(); }
         // Duplicate
         public override IGH_Goo Duplicate() { return new GH_MachineInstruction(this); }
- 
+
         public override bool CastTo<T>(ref T target)
         {
             if (typeof(T).IsAssignableFrom(typeof(MachineInstruction)))

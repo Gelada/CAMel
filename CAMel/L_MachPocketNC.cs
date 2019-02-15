@@ -31,7 +31,7 @@ namespace CAMel.Types.Machine
 
         public Vector3d pivot { get; } // Position of machine origin in design space.
 
-        public ToolPathAdditions defaultTPA 
+        public ToolPathAdditions defaultTPA
         { get => ToolPathAdditions.basicDefault; }
 
         public PocketNC(string name, string header, string footer, Vector3d pivot, double aMin, double aMax, double bMax, bool tLc, double pathJump, List<MaterialTool> mTs)
@@ -103,10 +103,10 @@ namespace CAMel.Types.Machine
                 speed = vals['S'],
                 feed = vals['F']
             };
-            
+
             double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
 
-            return Kinematics.kFiveAxisABTable(tP, this.pivot, toolLength, machPt, ab);        
+            return Kinematics.kFiveAxisABTable(tP, this.pivot, toolLength, machPt, ab);
         }
 
         public Vector3d toolDir(ToolPoint tP) => tP.dir;
@@ -127,7 +127,7 @@ namespace CAMel.Types.Machine
                 // We will adjust A and B as best as possible and otherwise throw errors.
                 // Manual unwinding Grrrr!
 
-                // work out initial values of feed. 
+                // work out initial values of feed.
 
                 bool fChange = false;
                 bool sChange = false;
@@ -200,7 +200,7 @@ namespace CAMel.Types.Machine
 
                     // adjust through cusp
 
-                    if (Math.Abs(newAB.X - Math.PI / 2.0) < CAMel_Goo.tolerance) // already set if nearly there. 
+                    if (Math.Abs(newAB.X - Math.PI / 2.0) < CAMel_Goo.tolerance) // already set if nearly there.
                     {
                         // detect that we are already moving
                         if (bSteps > 0)
@@ -208,7 +208,7 @@ namespace CAMel.Types.Machine
                             newAB.Y = ab.Y + (bTo - ab.Y) / bSteps;
                             bSteps--;
                         }
-                        else // head forward to next non-vertical point or the end. 
+                        else // head forward to next non-vertical point or the end.
                         {
                             j = i + 1;
 
@@ -218,8 +218,8 @@ namespace CAMel.Types.Machine
                                     - Math.PI / 2.0) < this.AngleAcc)
                             { j++; }
 
-                            // If we are at the start of a path and vertical then we can just use the first non-vertical 
-                            // position for the whole run. 
+                            // If we are at the start of a path and vertical then we can just use the first non-vertical
+                            // position for the whole run.
                             if (Math.Abs(ab.X - Math.PI / 2.0) < this.AngleAcc)
                             {
                                 bTo = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
@@ -242,8 +242,8 @@ namespace CAMel.Types.Machine
                         }
                     }
 
-                    // take advantage of the double stance for A, 
-                    // up until now, A is between -90 and 90, all paths start in 
+                    // take advantage of the double stance for A,
+                    // up until now, A is between -90 and 90, all paths start in
                     // that region, but can rotate out of it if necessary.
                     // This will mean some cutable paths bcome impossible.
                     // This assumes only a double stance in positive position.
@@ -323,12 +323,12 @@ namespace CAMel.Types.Machine
                 co.machineState.Add("S", speed);
 
                 GCode.gcPathEnd(this, ref co, tP);
-            }    
+            }
         }
 
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
         {
-            // Set up Machine State  
+            // Set up Machine State
 
             if (startPath.matTool == null) { matToolException(); return; }
 
@@ -350,8 +350,8 @@ namespace CAMel.Types.Machine
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref co, mI, finalPath, endPath);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
-        
-        // This should call a utility with standard options 
+
+        // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
         // hopefully at that point there is a better understanding of safe moves!
 
@@ -417,15 +417,15 @@ namespace CAMel.Types.Machine
 
                     Vector3d mixDir;
                     bool lng = false;
-                    // work out how far angle needs to move 
+                    // work out how far angle needs to move
                     double angSpread = angDiff(fP.lastP, tP.firstP,fP.matTool, false);
 
                     int steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                     if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0
                     int j;
 
-                    // Try to build a path with angles. 
-                    // If a tool line hits the material 
+                    // Try to build a path with angles.
+                    // If a tool line hits the material
                     // switch to the longer rotate and try again
 
                     for (i = 0; i < (route.Count - 1); i++)
@@ -442,7 +442,7 @@ namespace CAMel.Types.Machine
                                 || tP.matForm.intersect(newTP, 0).thrDist > 0))
                             {
                                 if (lng)
-                                {   // something has gone horribly wrong and 
+                                {   // something has gone horribly wrong and
                                     // both angle change directions will hit the material
 
                                     throw new Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");

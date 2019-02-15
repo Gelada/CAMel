@@ -20,7 +20,7 @@ namespace CAMel.Types
         private List<ToolPoint> _pts;     // Positions of the machine
         public MaterialTool matTool { get; set; }   // Material and tool to cut it with
         public IMaterialForm matForm { get; set; }    // Shape of the material
-        public ToolPathAdditions additions;       // Features we might add to the path 
+        public ToolPathAdditions additions;       // Features we might add to the path
 
         public ToolPoint firstP
         {
@@ -87,7 +87,7 @@ namespace CAMel.Types
         {
             this.name = name;
             this._pts = new List<ToolPoint>();
-            this.matTool = mT; 
+            this.matTool = mT;
             this.matForm = mF;
             this.additions = tpa;
             this.preCode = string.Empty;
@@ -135,7 +135,7 @@ namespace CAMel.Types
             };
             return newTP;
         }
-        // Copy in features from the valid ToolPath if this does not yet have its own. 
+        // Copy in features from the valid ToolPath if this does not yet have its own.
         public void validate(ToolPath valid, IMachine m)
         {
             this.matTool = this.matTool ?? valid.matTool;
@@ -144,7 +144,7 @@ namespace CAMel.Types
         }
 
         public string TypeDescription => "An action of the machine, for example cutting a single line";
-        public string TypeName => "ToolPath"; 
+        public string TypeName => "ToolPath";
 
         public string name { get; set; }
 
@@ -155,7 +155,7 @@ namespace CAMel.Types
 
         // Main functions
 
-        // Process any additions to the path and return 
+        // Process any additions to the path and return
         // list of list of toolpaths (for stepdown)
         public List<List<ToolPath>> processAdditions(IMachine m, out List<ToolPath> fP)
         {
@@ -220,7 +220,7 @@ namespace CAMel.Types
         public static PolylineCurve convertAccurate(Curve c)
         {
             // Check if already a polyline, otherwise make one
-            PolylineCurve plC = c.TryGetPolyline(out Polyline p) ? new PolylineCurve(p) : 
+            PolylineCurve plC = c.TryGetPolyline(out Polyline p) ? new PolylineCurve(p) :
                 c.ToPolyline(0, 0, Math.PI, 0, 0, _accTol*5.0, 0, 0, true);
 
             return plC;
@@ -261,7 +261,7 @@ namespace CAMel.Types
             foreach (ToolPoint tP in this) { dirs.Add(tP.dir); }
             return dirs;
         }
-        // Create a path with the points 
+        // Create a path with the points
         public List<Point3d> getPointsandDirs(out List<Vector3d> dirs)
         {
             List<Point3d> ptsOut = new List<Point3d>();
@@ -314,7 +314,7 @@ namespace CAMel.Types
         public void Add(Point3d item) { ((IList<ToolPoint>)this._pts).Add(new ToolPoint(item)); }
         public void AddRange(IEnumerable<ToolPoint> items) { this._pts.AddRange(items); }
         public void AddRange(IEnumerable<Point3d> items)
-        { foreach(Point3d pt in items) { this.Add(pt); } }
+        { foreach(Point3d pt in items) { Add(pt); } }
         public void Clear() { ((IList<ToolPoint>)this._pts).Clear(); }
         public bool Contains(ToolPoint item) { return ((IList<ToolPoint>)this._pts).Contains(item); }
         public void CopyTo(ToolPoint[] array, int arrayIndex) { ((IList<ToolPoint>)this._pts).CopyTo(array, arrayIndex); }
@@ -470,6 +470,6 @@ namespace CAMel.Types
                 return Properties.Resources.toolpath;
             }
         }
-        
+
     }
 }

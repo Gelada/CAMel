@@ -15,7 +15,7 @@ namespace CAMel.Types
     // List of toolpaths forming a general Operation of the machine,
     // from the complex to the simple
     // creating a surface, drilling a whole, cutting out an object...
-    // When paths within an operation have a stepdown then all first 
+    // When paths within an operation have a stepdown then all first
     // step downs with be completed, then the second and so on.
     public class MachineOperation : IList<ToolPath>,IToolPointContainer
     {
@@ -137,14 +137,14 @@ namespace CAMel.Types
             return "Machine Operation: " + this.name + ", " + this.Count + " toolpaths, " + totalTP + " total tool points.";
         }
 
-        // Process the toolpaths for additions and ensure ToolPaths are valid for writing. 
+        // Process the toolpaths for additions and ensure ToolPaths are valid for writing.
         public MachineOperation processAdditions(IMachine m, ref ToolPath validTP)
         {
             // Wow a 3d block of ToolPaths
             // Each of the stepdown paths can have several pieces (1st level)
             // Each ToolPath has several stepdown paths (2nd level)
             // We started with a list of toolpaths (1st level)
-            // We create this block and then order it so we do 
+            // We create this block and then order it so we do
             // all preparation a level at a time and then do a final pass of all paths
 
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
@@ -213,9 +213,9 @@ namespace CAMel.Types
             {
                 if (tP.Count > 0) // If path has length 0 just ignore
                 {
-                    // If a move is needed transition from one path to the next 
+                    // If a move is needed transition from one path to the next
                     if (oldPath.lastP != tP.firstP) { m.writeTransition(ref co, oldPath, tP, first); }
-                    
+
                     // Add Path to Code
                     m.writeCode(ref co, tP);
 
@@ -305,7 +305,7 @@ namespace CAMel.Types
             foreach (ToolPath tP in this) { dirs.Add(tP.getDirs()); }
             return dirs;
         }
-        // Create a path with the points 
+        // Create a path with the points
         public List<List<Point3d>> getPointsAndDirs(out List<List<Vector3d>> dirs)
         {
             List<List<Point3d>> ptsOut = new List<List<Point3d>>();
@@ -316,7 +316,7 @@ namespace CAMel.Types
                 dirs.Add(tPDirs);
             }
             return ptsOut;
-        }      
+        }
         // Bounding Box for previews
         public BoundingBox getBoundingBox()
         {

@@ -67,13 +67,13 @@ namespace CAMel
             if (!da.GetData(3, ref tPa)) { return; }
             if (!da.GetData(4, ref mT)) { return; }
             da.GetData(5, ref mF);
-            
+
             if (Rhino.Geometry.Intersect.Intersection.CurveSelf(c, 0.00000001).Count > 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Self-intersecting Curve");
                 return;
             }
-            
+
             tPa =tPa.deepClone();
 
             if (!c.IsClosed && Math.Abs(os) > CAMel_Goo.tolerance)

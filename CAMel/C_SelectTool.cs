@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using Grasshopper.Kernel;
 
 using CAMel.Types;
 using CAMel.Types.Machine;
+using Grasshopper.Kernel.Special;
 
 namespace CAMel
 {
- 
+
     public class C_SelectTool : GH_Component
     {
         /// <summary>
@@ -30,7 +31,7 @@ namespace CAMel
             pManager.AddTextParameter("Material", "M", "Material to cut", GH_ParamAccess.item,"");
             pManager.AddTextParameter("Tool", "T", "Tool to use", GH_ParamAccess.item,"");
         }
-                
+
 
         /// <summary>
         /// Registers all the output parameters for this component.
@@ -40,11 +41,11 @@ namespace CAMel
             pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTools", "MT", "Correct from the .csv file", GH_ParamAccess.item);
         }
 
-        private void vlUpdate(Grasshopper.Kernel.Special.GH_ValueList vL, ref SortedSet<string> items)
+        private void vlUpdate(GH_ValueList vL, ref SortedSet<string> items)
         {
             string selected = String.Empty;
             bool newList = false;
-            foreach (Grasshopper.Kernel.Special.GH_ValueListItem vLi in vL.ListItems)
+            foreach (GH_ValueListItem vLi in vL.ListItems)
             {
                 if (vLi.Name != "One" && vLi.Name != "Two" && vLi.Name != "Three" && vLi.Name != "Four")
                 { items.Add(vLi.Name); }
@@ -57,7 +58,7 @@ namespace CAMel
                 vL.ListItems.Clear();
                 foreach (string mat in items)
                 {
-                    var vLi = new Grasshopper.Kernel.Special.GH_ValueListItem(mat, "\"" + mat + "\"");
+                    var vLi = new GH_ValueListItem(mat, "\"" + mat + "\"");
                     if (mat == selected) { vLi.Selected = true; }
                     vL.ListItems.Add(vLi);
                 }
@@ -85,12 +86,12 @@ namespace CAMel
 
             foreach(object ob in oMTs)
             {
-                if(ob is MaterialTool) { readMTs.Add((MaterialTool)ob); }
-                if(ob is IMachine) { readMTs.UnionWith(((IMachine)ob).mTs); }
+                if(ob is MaterialTool tool) { readMTs.Add(tool); }
+                if(ob is IMachine machine) { readMTs.UnionWith(machine.mTs); }
             }
 
-            var materials = new SortedSet<string>();
-            var tools = new SortedSet<string>();
+            SortedSet<string> materials = new SortedSet<string>();
+            SortedSet<string> tools = new SortedSet<string>();
 
             bool found = false;
             MaterialTool mT = null;
@@ -107,17 +108,12 @@ namespace CAMel
                 }
             }
 
-            // Want to populate with new options, but not lose old data. 
-            foreach (IGH_Param source in this.Params.Input[1].Sources)
-            {
-                if (source is Grasshopper.Kernel.Special.GH_ValueList)
-                { vlUpdate((Grasshopper.Kernel.Special.GH_ValueList)source, ref materials); }
-            }
-            foreach (IGH_Param source in this.Params.Input[2].Sources)
-            {
-                if (source is Grasshopper.Kernel.Special.GH_ValueList)
-                { vlUpdate((Grasshopper.Kernel.Special.GH_ValueList)source, ref tools); }
-            }
+            // Want to populate with new options, but not lose old data.
+            foreach (GH_ValueList source in this.Params.Input[1].Sources.OfType<GH_ValueList>())
+            { vlUpdate(source, ref materials); }
+
+            foreach (GH_ValueList source in this.Params.Input[2].Sources.OfType<GH_ValueList>())
+            { vlUpdate(source, ref tools); }
 
             if (!found) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No material tool combination found."); }
             else { da.SetData(0, new GH_MaterialTool(mT)); }

@@ -18,7 +18,7 @@ namespace CAMel.Types
     public class MaterialToolBuilder
     {
         public string matName { get; set; }     // Name of the material
-        public string toolName { get; set; }    // Name of the tool 
+        public string toolName { get; set; }    // Name of the tool
         public int toolNumber { get; set; }     // Number of the tool
         public double speed { get; set; }       // speed of spindle (assumed unset for negative values)
         public double feedCut { get; set; }     // feed rate for cutting (assumed unset for negative values)
@@ -40,10 +40,10 @@ namespace CAMel.Types
     }
 
     // Settings for a particular material and tool
-    public class MaterialTool : ICAMelBase 
+    public class MaterialTool : ICAMelBase
     {
         public string matName { get; }     // Name of the materialMaterialToolReader
-        public string toolName { get; }    // Name of the tool 
+        public string toolName { get; }    // Name of the tool
         public int toolNumber { get; }     // Number of the tool
         public double speed { get; }       // speed of spindle (assumed unset for negative values)
         public double feedCut { get; }     // feed rate for cutting (assumed unset for negative values)
@@ -67,7 +67,7 @@ namespace CAMel.Types
         //  Add to create Material Tool
         //  Add to Constructors
 
-        // Empty default constructor (so grasshopper can get type name when nothing is present. 
+        // Empty default constructor (so grasshopper can get type name when nothing is present.
         public MaterialTool() { }
 
         // Everything, with defaults
@@ -121,8 +121,8 @@ namespace CAMel.Types
         public static MaterialTool changeFinishDepth(MaterialTool mT, double fd)
         {
             return new MaterialTool(
-                mT.matName, mT.toolName, mT.toolNumber, mT.speed, 
-                mT.feedCut, mT.feedPlunge, mT.cutDepth, fd, 
+                mT.matName, mT.toolName, mT.toolNumber, mT.speed,
+                mT.feedCut, mT.feedPlunge, mT.cutDepth, fd,
                 mT.toolWidth, mT.insertWidth, mT.toolLength, mT.shape, mT.tolerance, mT.minStep, mT.sideLoad);
         }
 
@@ -144,7 +144,7 @@ namespace CAMel.Types
         }
 
         /// <summary>
-        /// Offset toolpoint so that it does not gouge an angled path. 
+        /// Offset toolpoint so that it does not gouge an angled path.
         /// </summary>
         public ToolPoint threeAxisHeightOffset(IMachine m, ToolPoint tP, Vector3d travel, Vector3d orth)
         {
@@ -161,11 +161,11 @@ namespace CAMel.Types
             double testd = norm * m.toolDir(tP);
             if (testd < 0) { norm = -1 * norm; }
 
-            ToolPoint osTp = tP.deepClone();   
+            ToolPoint osTp = tP.deepClone();
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
             osTp.pt = osTp.pt + cutOffset(m.toolDir(tP),norm);
-        
+
             return osTp;
         }
         // Find the path offset so the cutting surface of the tool is on the path
@@ -178,7 +178,7 @@ namespace CAMel.Types
             Vector3d os;
             switch (this.shape)
             {
-                case EndShape.Ball: // find correct position of ball centre and then push to tip. 
+                case EndShape.Ball: // find correct position of ball centre and then push to tip.
                     os = this.toolWidth * (uNorm - uDir) / 2;
                     break;
                 case EndShape.Square: // Cut with corner if the angle is greater than .01 radians
@@ -195,7 +195,7 @@ namespace CAMel.Types
                     }
                     break;
                 case EndShape.V: // Just use the tip. Beyond a certain angle this will not work
-                                 // TODO store angle of V end mill and use that and width 
+                                 // TODO store angle of V end mill and use that and width
                     os = new Vector3d(0, 0, 0);
                     break;
                 case EndShape.Other:
@@ -247,7 +247,7 @@ namespace CAMel.Types
     // Grasshopper Parameter Wrapper
     public class GH_MaterialToolPar : GH_Param<GH_MaterialTool>
     {
-        public GH_MaterialToolPar() : 
+        public GH_MaterialToolPar() :
             base("Material/Tool","MatTool","Contains a collection of Material Tool Pairs","CAMel","  Params",GH_ParamAccess.item) {}
         public override Guid ComponentGuid
         {

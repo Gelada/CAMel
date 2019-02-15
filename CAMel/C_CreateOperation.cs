@@ -25,7 +25,7 @@ namespace CAMel
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "Name of operation", GH_ParamAccess.item,string.Empty);
-            pManager.AddGenericParameter("Toolpaths", "TP", "The list of toolpaths to use for the operation.\nWill attempt to process various reasonable collections.", GH_ParamAccess.list); 
+            pManager.AddGenericParameter("Toolpaths", "TP", "The list of toolpaths to use for the operation.\nWill attempt to process various reasonable collections.", GH_ParamAccess.list);
 
         }
 

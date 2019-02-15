@@ -14,7 +14,7 @@ namespace CAMel.Types
     {
         string TypeDescription { get; }
         string TypeName { get; }
-        
+
         string ToString();
     }
 

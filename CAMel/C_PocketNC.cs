@@ -40,7 +40,7 @@ namespace CAMel
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
-            
+
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace CAMel
             }
 
             PocketNC m = new PocketNC(version, head, uFoot, pivot, aMin, aMax, bMax, tLc, pj, mTs);
- 
+
             da.SetData(0, new GH_Machine(m));
         }
 
@@ -148,7 +148,7 @@ namespace CAMel
             }
         }
 
-       
+
 
         /// <summary>
         /// Gets the unique ID for this component. Do not change this ID after release.

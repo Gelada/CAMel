@@ -95,7 +95,7 @@ namespace CAMel
             IGCodeMachine m = new ThreeAxis(name, mTs, pj, false, head, foot, speed, tool, commentStart, commentEnd, sectionBreak, fileStart, fileEnd);
 
             da.SetData(0, new GH_Machine(m));
-            
+
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace CAMel
             }
         }
 
-       
+
 
         /// <summary>
         /// Gets the unique ID for this component. Do not change this ID after release.

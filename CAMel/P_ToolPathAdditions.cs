@@ -17,8 +17,8 @@ namespace CAMel.Types
         public bool insert { get; set; }
         public bool retract { get; set; }
         public bool stepDown { get; set; }
-        public bool sdDropStart { get; set; }    // How stepdown will deal with 
-        public double sdDropMiddle { get; set; } // points that have reached  
+        public bool sdDropStart { get; set; }    // How stepdown will deal with
+        public double sdDropMiddle { get; set; } // points that have reached
         public bool sdDropEnd { get; set; }      // the required depth (Middle is dropped if length greater than value);
         public List<double> onion { get; set; }  // thicknesses to leave before final cut.
         public bool threeAxisHeightOffset { get; set; }
@@ -91,19 +91,14 @@ namespace CAMel.Types
             leadCurvature = 1
         };
 
-        public bool any
-        {
-            get
-            {
-                return this.insert ||
-                    this.retract ||
-                    this.stepDown ||
-                    this.threeAxisHeightOffset ||
-                    this.tabbing ||
-                    (this.onion.Count == 1 && Math.Abs(this.onion[0]) > CAMel_Goo.tolerance) ||
-                    this.onion.Count > 1;
-            }
-        }
+        public bool any =>
+            this.insert ||
+            this.retract ||
+            this.stepDown ||
+            this.threeAxisHeightOffset ||
+            this.tabbing ||
+            (this.onion.Count == 1 && Math.Abs(this.onion[0]) > CAMel_Goo.tolerance) ||
+            this.onion.Count > 1;
 
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
         public string TypeName => "ToolPathAdditions";
@@ -207,7 +202,7 @@ namespace CAMel.Types
 
             return false;
         }
-        
+
     }
 
     // Grasshopper Parameter Wrapper
@@ -215,26 +210,18 @@ namespace CAMel.Types
     {
         public GH_ToolPathAdditionsPar() :
             base("Tool Path Additions", "ToolPathAdditions", "Extra work that a ToolPath can do as it is proccessed for cutting.", "CAMel", "  Params") { }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("421A7CE5-4206-4628-964F-1A3810899556"); }
-        }
+        public override Guid ComponentGuid => new Guid("421A7CE5-4206-4628-964F-1A3810899556");
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.toolpathadditions;
-            }
-        }
+        // You can add image files to your project resources and access them like this:
+        // return Resources.IconForThisComponent;
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpathadditions;
 
         public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
         {
-            // Do our own thing as we do not really implement 
+            // Do our own thing as we do not really implement
             // set 1 and set multiple.
 
             Menu_AppendWireDisplay(menu);
@@ -254,10 +241,10 @@ namespace CAMel.Types
 
         protected override GH_GetterResult Prompt_Plural(ref List<GH_ToolPathAdditions> values)
         {
-            values = new List<GH_ToolPathAdditions>();
             return GH_GetterResult.success;
         }
 
+        // ReSharper disable once RedundantAssignment
         protected override GH_GetterResult Prompt_Singular(ref GH_ToolPathAdditions value)
         {
             // Give a reasonable generic
@@ -274,7 +261,7 @@ namespace CAMel.Types
         [Category(" General"), Description("Add an insert to the start of the toolpath to beging cutting. "),DisplayName(" Insert"), RefreshProperties(RefreshProperties.All)]
         public bool insert
         {
-            get { return this.Owner.Value.insert; }
+            get => this.Owner.Value.insert;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -285,7 +272,7 @@ namespace CAMel.Types
         [Category(" General"), Description("Add a retract to the end of the toolpath to finish cutting. "), DisplayName(" Retract"), RefreshProperties(RefreshProperties.All)]
         public bool retract
         {
-            get { return this.Owner.Value.retract; }
+            get => this.Owner.Value.retract;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -296,7 +283,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("Create a sequence of paths stepping down through the material."), DisplayName(" Step down"), RefreshProperties(RefreshProperties.All)]
         public bool stepdown
         {
-            get => this.Owner.Value.stepDown; 
+            get => this.Owner.Value.stepDown;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -307,7 +294,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("When stepping down drop the start of paths where roughing is complete."), DisplayName("Drop Start"), RefreshProperties(RefreshProperties.All)]
         public bool sdDropStart
         {
-            get { return this.Owner.Value.sdDropStart; }
+            get => this.Owner.Value.sdDropStart;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -318,7 +305,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("When stepping down drop the middle of paths where roughing is complete, if longer than this. Set as negative for automatic value."), DisplayName("Drop Middle"), RefreshProperties(RefreshProperties.All)]
         public double sdDropMiddle
         {
-            get { return this.Owner.Value.sdDropMiddle; }
+            get => this.Owner.Value.sdDropMiddle;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -329,7 +316,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("When stepping down drop the end of paths where roughing is complete"), DisplayName("Drop End"), RefreshProperties(RefreshProperties.All)]
         public bool sdDropEnd
         {
-            get { return this.Owner.Value.sdDropEnd; }
+            get => this.Owner.Value.sdDropEnd;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -341,7 +328,7 @@ namespace CAMel.Types
         [Category(" Step Down"), Description("Height above toolpath to cut the finish path, for onion skinning. Can be a comma separated list. "), DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All)]
         public string onion
         {
-            get { return CAMel_Goo.doubleToCsv( this.Owner.Value.onion, "0.####"); }
+            get => CAMel_Goo.doubleToCsv( this.Owner.Value.onion, "0.####");
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -352,7 +339,7 @@ namespace CAMel.Types
         [Category(" General"), Description("Take account of tool width for 3axis cutting, ensuring the path is followed by the active cutting surface of the tool, not just the tip."), DisplayName("3Axis Height Offset"), RefreshProperties(RefreshProperties.All)]
         public bool threeAxisHeightOffset
         {
-            get { return this.Owner.Value.threeAxisHeightOffset; }
+            get => this.Owner.Value.threeAxisHeightOffset;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -363,7 +350,7 @@ namespace CAMel.Types
         [Category(" Tabbing"), Description("Add bumps to the cut (mainly useful for cutting 2d parts) NOT IMPLEMENTED"), DisplayName("Tabbing"), RefreshProperties(RefreshProperties.All)]
         public bool tabbing
         {
-            get { return this.Owner.Value.tabbing; }
+            get => this.Owner.Value.tabbing;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;
@@ -374,7 +361,7 @@ namespace CAMel.Types
         [Category(" General"), Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), DisplayName("Lead Length"), RefreshProperties(RefreshProperties.All)]
         public double leadCurve
         {
-            get { return this.Owner.Value.leadCurvature; }
+            get => this.Owner.Value.leadCurvature;
             set
             {
                 ToolPathAdditions tPa = this.Owner.Value;

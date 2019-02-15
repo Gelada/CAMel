@@ -37,7 +37,7 @@ namespace CAMel
             pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item,0);
             pManager.AddNumberParameter("Step over", "SO", "Stepover as a mutliple of tool width. Default to Tools side load(for negative values).", GH_ParamAccess.item, -1);
             pManager.AddBooleanParameter("Zig and Zag", "Z", "Go forward and back, or just forward along path", GH_ParamAccess.item, true);
-           
+
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace CAMel
         {
             IGH_Goo geom = null;
             BoundingBox BB; // region to mill
-            Curve c = null; // path to move parallel to 
+            Curve c = null; // path to move parallel to
             Plane dir = Plane.WorldXY; // Direction to project onto the surface
             MaterialTool mT = null; // The materialtool, mainly for tool width
             int tD=0;
@@ -81,7 +81,7 @@ namespace CAMel
                 if (geom.CastTo(out Surface s))
                 { BB = s.GetBoundingBox(dir); }     // extents of S in the coordinate system
                 else if (geom.CastTo(out Brep b))
-                { BB = b.GetBoundingBox(dir); }     // extents of B in the coordinate system 
+                { BB = b.GetBoundingBox(dir); }     // extents of B in the coordinate system
                 else if (geom.CastTo(out Mesh m))
                 { BB = m.GetBoundingBox(dir); }     // extents of M in the coordinate system
                 else

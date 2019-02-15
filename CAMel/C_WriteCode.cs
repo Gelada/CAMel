@@ -164,7 +164,10 @@ namespace CAMel
             if (da.GetData(2, ref this._filePath) && this._filePath != string.Empty)
             {
                 this._filePath = Path.GetDirectoryName(this._filePath);
-                this._filePath = Path.Combine(this._filePath, mI.name + "." + this.extension);
+                string filePath = this._filePath;
+                if (filePath != null)
+                { this._filePath = Path.Combine(filePath, mI.name + "." + this.extension); }
+
                 // queue up file write
                 if (!this.writeFileThread.IsBusy)
                 {
@@ -204,13 +207,14 @@ namespace CAMel
         private void bwWriteFile(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker bW = (BackgroundWorker)sender;
-            
+
             const int saveBlockSize = 40000;
             lock (this._saveCode)
             {
                 this.ws = WriteState.Writing;
-                try { File.Delete(this._filePath); }
-                catch (Exception) { }
+
+                if(File.Exists(this._filePath)) { File.Delete(this._filePath); }
+
                 bW.ReportProgress(0);
 
                 using (StreamWriter sW = new StreamWriter(this._filePath))

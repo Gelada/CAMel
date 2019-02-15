@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
-
 using Rhino.Geometry;
 
 using CAMel.Types.MaterialForm;
@@ -30,6 +29,8 @@ namespace CAMel.Types.Machine
         ToolPoint readTP(Dictionary<char, double> vals, MaterialTool mT);
     }
 
+    // ReSharper disable once IdentifierTypo
+    // ReSharper disable once InconsistentNaming
     public struct TPchanges
     {
         public bool mT { get; set; }
@@ -43,7 +44,7 @@ namespace CAMel.Types.Machine
 
     public static class Kinematics
     {
-        // Collection of Inverse Kinematics 
+        // Collection of Inverse Kinematics
 
         // 2-Axis and 3-Axis don't need any work, so they just need writing functions
         // in the GCode library, plus a general purpose linear interpolation.
@@ -80,7 +81,7 @@ namespace CAMel.Types.Machine
                 bo = bo - Math.PI;
                 if (bo < 0) { bo = bo + 2.0 * Math.PI; }
             }
-     
+
             Point3d oPt = tP.pt;
 
             // rotate from material orientation to machine orientation
@@ -116,7 +117,7 @@ namespace CAMel.Types.Machine
             return outTP;
         }
 
-        // Interpolate the machine axes linearly between two positions. 
+        // Interpolate the machine axes linearly between two positions.
         // If both axes have full rotation then there are four ways to do this.
         // If lng is true then reverse the direction on the B axis (for PocketNC)
 
@@ -176,13 +177,11 @@ namespace CAMel.Types.Machine
             // material, the direction to enter the material and the number of passes.
             List<double> matDist = new List<double>();
             List<int> numSteps = new List<int>();
-            int maxSteps = 0; // Maximum distance of all points. 
-            List<Vector3d> matNorm = new List<Vector3d>(); // list of surface normals
+            int maxSteps = 0; // Maximum distance of all points.
 
             // ask the material form to refine the path
 
             ToolPath refPath = tP.matForm.refine(tP, m);
-            MFintersection inter;
 
             double finishDepth;
             if (tP.matTool.finishDepth <= 0) { finishDepth = onionSort.First(); }
@@ -195,17 +194,17 @@ namespace CAMel.Types.Machine
 
             foreach (ToolPoint tPt in refPath)
             {
-                inter = tP.matForm.intersect(tPt, 0).through;
+                MFintersection inter = tP.matForm.intersect(tPt, 0).through;
                 matDist.Add(inter.lineP); // distance to material surface
                 if (matDist[matDist.Count - 1] < 0) { matDist[matDist.Count - 1] = 0; }// avoid negative distances (outside material)
-                matNorm.Add(new Vector3d(inter.away));
+
                 // calculate maximum number of cutDepth height steps down to finishDepth above material
                 numSteps.Add((int)Math.Ceiling((matDist[matDist.Count - 1] - finishDepth) / cutDepth));
                 if (numSteps[numSteps.Count - 1] > maxSteps) { maxSteps = numSteps[numSteps.Count - 1]; }
             }
 
             // make a list of depths to cut at.
-            // This just steps down right now, but makes it easier to add fancier levelling, if ever worthwhile. 
+            // This just steps down right now, but makes it easier to add fancier levelling, if ever worthwhile.
             // Note that maxsteps currently assumes only stepping down by cutDepth.
 
             List<double> cutLevel = new List<double>();
@@ -274,7 +273,7 @@ namespace CAMel.Types.Machine
                         {
                             if (tP.additions.sdDropEnd) // we are dropping the end
                             {
-                                // Add point as the previous one was deep, 
+                                // Add point as the previous one was deep,
                                 // then set end to true so we finish
                                 tPt = refPath[j].deepClone();
                                 height = finishDepth;
@@ -301,7 +300,7 @@ namespace CAMel.Types.Machine
                             }
                             else //check length of drop
                             {
-                                if (Math.Abs(dropLength) < CAMel_Goo.tolerance) // If we are at the start of a possible drop Add the length until we hit the end or go over 
+                                if (Math.Abs(dropLength) < CAMel_Goo.tolerance) // If we are at the start of a possible drop Add the length until we hit the end or go over
                                 {
                                     int l;
                                     for (l = j; dropLength < tP.additions.sdDropMiddle && l < k; l++)
@@ -374,9 +373,9 @@ namespace CAMel.Types.Machine
 
             Vector3d uTan, uNorm;
 
-            if (start) { uTan = -endTan; uNorm = endNorm; } 
+            if (start) { uTan = -endTan; uNorm = endNorm; }
             else { uTan = startTan; uNorm = startNorm; }
-            // Start by using the end version, we will choose the start version 
+            // Start by using the end version, we will choose the start version
 
             ArcCurve leadCirc = new ArcCurve(new Arc(startPt, uTan, startPt + uLeadCurve * (uNorm + uTan)));
 
@@ -397,7 +396,7 @@ namespace CAMel.Types.Machine
             }
 
             // Now try to keep going straight
-            
+
             for (double i = insertWidth / 10.0; i < 2 * insertWidth; i = i + insertWidth / 10.0)
             {
                 Point3d testPt = leadCirc.PointAtEnd + uNorm * i;
@@ -409,7 +408,7 @@ namespace CAMel.Types.Machine
                 testdist = testPt.DistanceTo(toolL.PointAt(testdist));
                 if (testdist > insertWidth * 0.52) { return new PolylineCurve(outP); }
             }
-            return null; 
+            return null;
         }
 
         public static ToolPath leadInOut2D(ToolPath tP, string insert, string retract)
@@ -473,8 +472,8 @@ namespace CAMel.Types.Machine
         }
 
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
-        // TODO make this guarantee that it does not gouge locally. There is a problem 
-        // with paths that are steep down, followed by some bottom moves followed by steep out. 
+        // TODO make this guarantee that it does not gouge locally. There is a problem
+        // with paths that are steep down, followed by some bottom moves followed by steep out.
         public static ToolPath threeAxisHeightOffset(ToolPath tP, IMachine m)
         {
             if (tP.matTool == null) { matToolException(); return null; }
@@ -501,7 +500,7 @@ namespace CAMel.Types.Machine
 
             offsetPath.Add(point);
 
-            // loop through the lines of the toolpath finding their offset path 
+            // loop through the lines of the toolpath finding their offset path
             // and then travelling to the closest point to the next offset path
 
             for (int i = 1; i < tP.Count - 1; i++)
@@ -522,7 +521,7 @@ namespace CAMel.Types.Machine
                 // find the next line we will travel along
                 osLines.Add(new Line(nextPoint.pt, travel));
 
-                // we need to find the last path that does not reverse when we travel along our new line. 
+                // we need to find the last path that does not reverse when we travel along our new line.
                 // if we go in the wrong direction on an offset path then we are gouging back into previously cut material.
                 // In the following we discuss intersection, for lines in 3d this is given by the closest point for two lines.
 
@@ -532,7 +531,7 @@ namespace CAMel.Types.Machine
                 orient = (osLines[osLines.Count - 2].PointAt(inter) - offsetPath[offsetPath.Count - 1].pt) * osLines[osLines.Count - 2].UnitTangent;
 
                 // loop until we find a suitable line, removing previous points that are now problematic
-                // checking the length of offsetPath should ensure we don't try to go past the start 
+                // checking the length of offsetPath should ensure we don't try to go past the start
                 // and osLines is always at least 2 long, but we check both just in case.
                 while (orient < 0 && offsetPath.Count > 1 && osLines.Count > 1)
                 {
@@ -551,7 +550,7 @@ namespace CAMel.Types.Machine
                     // remove the old start point and add the closest point on the new first line
                     offsetPath.RemoveAt(0);
 
-                    // intersect our new line with the first direction 
+                    // intersect our new line with the first direction
                     Rhino.Geometry.Intersect.Intersection.LineLine(osLines[0], osLines[osLines.Count - 1], out inter, out nextinter);
 
                     // note that we keep the information from the toolpoint before the line we are going to be cutting
@@ -596,7 +595,7 @@ namespace CAMel.Types.Machine
 
             return retPath;
         }
-        
+
         // Clear the addition but don't do anything
         public static ToolPath clearThreeAxisHeightOffset(ToolPath tP)
         {
@@ -622,7 +621,7 @@ namespace CAMel.Types.Machine
                 fP.Add(newTP);
             }
 
-            // If onion is empty add the ToolPath anyway. 
+            // If onion is empty add the ToolPath anyway.
             if(fP.Count == 0 )
             {
                 ToolPath newTP = tP.deepClone();
@@ -661,8 +660,11 @@ namespace CAMel.Types.Machine
 
         public static void gcInstStart(IGCodeMachine m, ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
         {
-            if (mI[0][0].matTool == null) { matToolException(); }
-            if (mI[0][0].matForm == null) { matFormException(); }
+            if (mI == null || mI.Count == 0) { noOperationException(); return; }
+            if (mI[0] == null || mI[0].Count == 0) { noToolPathException(); return; }
+            if (mI[0][0].matTool == null) { matToolException(); return; }
+            if (mI[0][0].matForm == null) { matFormException(); return; }
+
             co.currentMT = mI[0][0].matTool;
             co.currentMF = mI[0][0].matForm;
 
@@ -682,7 +684,7 @@ namespace CAMel.Types.Machine
             co.appendComment(m.sectionBreak);
             co.append(m.header);
             co.append(mI.preCode);
-            co.currentMT = new MaterialTool(); // Clear the tool information so we call a tool change. 
+            co.currentMT = new MaterialTool(); // Clear the tool information so we call a tool change.
             m.writeCode(ref co, startPath);
         }
         public static void gcInstEnd(IGCodeMachine m, ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath)
@@ -753,7 +755,7 @@ namespace CAMel.Types.Machine
         }
 
         // Toolpoint writers
-        // These might be simpler to pull 
+        // These might be simpler to pull
         // into a single "write" command taking a dictionary?
         public static string gcTwoAxis(ToolPoint tP)
         {

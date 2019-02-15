@@ -88,6 +88,7 @@ namespace CAMel.Types
 
             return intPl;
         }
+        // ReSharper disable once UnusedMember.Local
         private static List<List<IntPoint>> pLtoInt(List<PolylineCurve> p, double sc)
         {
             List<List<IntPoint>> intPl = new List<List<IntPoint>>();
@@ -98,7 +99,7 @@ namespace CAMel.Types
 
         private static List<PolylineCurve> intToPl(List<List<IntPoint>> iPs, double sc)
         {
-            List<PolylineCurve> PL = new List<PolylineCurve>();
+            List<PolylineCurve> pl = new List<PolylineCurve>();
             Polyline P;
 
             foreach(List<IntPoint> intP in iPs)
@@ -106,10 +107,10 @@ namespace CAMel.Types
                 P = new Polyline();
                 foreach(IntPoint iP in intP) { P.Add(itod(iP, sc)); }
                 if (intP.Count > 0) { P.Add(itod(intP[0], sc)); }
-                PL.Add(new PolylineCurve(P));
+                pl.Add(new PolylineCurve(P));
             }
 
-            return PL;
+            return pl;
         }
 
     }

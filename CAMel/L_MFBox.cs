@@ -33,12 +33,12 @@ namespace CAMel.Types.MaterialForm
             return "Box Material ("+ this.box.X.Min.ToString("0.00") + ", " + this.box.Y.Min.ToString("0.00") + ", " + this.box.Z.Min.ToString("0.00")+") "
                 + "to ("+ this.box.X.Max.ToString("0.00") + ", " + this.box.Y.Max.ToString("0.00") + ", " + this.box.Z.Max.ToString("0.00")+")";
         }
-        
+
         public ToolPath insertRetract(ToolPath tP) => MFDefault.insertRetract(this, tP);
 
         public MFintersects intersect(ToolPoint tP, double tolerance) => intersect(tP.pt,tP.dir, tolerance);
 
-        public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter) 
+        public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter)
             => MFDefault.lineIntersect(this, start, end, tolerance, out inter);
 
         public MFintersects intersect(Point3d ptIn, Vector3d dirIn, double tolerance)
@@ -80,7 +80,7 @@ namespace CAMel.Types.MaterialForm
         {
             double intDist;
             double shift;
-            
+
             if (Math.Abs(dir.X) > CAMel_Goo.tolerance)
             {
                 shift = (face - pt.X) / (dir.X);

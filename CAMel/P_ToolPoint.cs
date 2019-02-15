@@ -144,7 +144,7 @@ namespace CAMel.Types
             this.warning.Add(warn);
         }
 
-        public string TypeDescription => "Information about a position of the machine"; 
+        public string TypeDescription => "Information about a position of the machine";
         public string TypeName => "ToolPoint";
 
         public override string ToString()
@@ -178,7 +178,7 @@ namespace CAMel.Types
         public GH_ToolPoint(GH_ToolPoint tP) { this.Value = tP.Value.deepClone(); }
         // Duplicate
         public override IGH_Goo Duplicate() {return new GH_ToolPoint(this); }
-  
+
         public override bool CastTo<T>(ref T target)
         {
             if (typeof(T).IsAssignableFrom(typeof(ToolPoint)))
@@ -213,7 +213,7 @@ namespace CAMel.Types
             }
             return false;
         }
-        
+
         public override bool CastFrom(object source)
         {
             if (source == null) { return false; }

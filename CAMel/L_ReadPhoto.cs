@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Diagnostics;
 
@@ -16,9 +17,12 @@ namespace CAMel
     {
         public static  List<Curve> trace(string filename, int blur, int jump, bool debug, out List<string> times)
         {
+            if(filename == null) { times = new List<string>(); return new List<Curve>(); }
+
             Stopwatch watch = Stopwatch.StartNew();
 
             string filepath = System.IO.Path.GetDirectoryName(filename);
+            if(filepath == null) { filepath = String.Empty; }
 
             List<Curve> curves = new List<Curve>();
             times = new List<string>();
@@ -27,7 +31,7 @@ namespace CAMel
 
             CvInvoke.CvtColor(imgMat, imgMat, ColorConversion.Bgr2Gray);
 
-            CvInvoke.GaussianBlur(imgMat, imgMat, new Size(2 * blur + 1, 2 * blur + 1), 0, 0);
+            CvInvoke.GaussianBlur(imgMat, imgMat, new Size(2 * blur + 1, 2 * blur + 1), 0);
 
             if (debug)
             {
@@ -46,12 +50,13 @@ namespace CAMel
             {
                 watch.Stop();
                 times.Add("Threshold: " + watch.ElapsedMilliseconds + " ms");
+                // ReSharper disable once AssignNullToNotNullAttribute
                 thresh.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Thresholded.png"));
                 watch = Stopwatch.StartNew();
             }
 
             // Find the outer contour, this will fill in any holes in the path
-            // It does assume that no paths are loops. 
+            // It does assume that no paths are loops.
             VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
             CvInvoke.FindContours(thresh, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
 
@@ -132,12 +137,12 @@ namespace CAMel
                     cont = new VectorOfPoint();
                     int j = 1;
                     while (contours[i][j - 1] != contours[i][j + 1] && j < contours[i].Size - 1) { j++; }
-                    System.Drawing.Point[] pt = new System.Drawing.Point[2] { contours[i][j], contours[i][j + 1] };
+                    System.Drawing.Point[] pt = { contours[i][j], contours[i][j + 1] };
                     cont.Push(pt);
                     j += 2;
                     while (j < contours[i].Size && contours[i][j - 2] != contours[i][j])
                     {
-                        pt = new System.Drawing.Point[1] { contours[i][j] };
+                        pt = new[] { contours[i][j] };
                         cont.Push(pt);
                         j++;
                     }
@@ -157,20 +162,20 @@ namespace CAMel
             }
 
             // In Rhino we join the remaining curves, healing the triple points we removed
-            // Hopefully ending up with something close to the intended result. 
-            // This should be replaced with an algorithm that creates the longest 
-            // possible curves, then deletes everything under a threshold. 
+            // Hopefully ending up with something close to the intended result.
+            // This should be replaced with an algorithm that creates the longest
+            // possible curves, then deletes everything under a threshold.
 
             curves.Sort(delegate (Curve x, Curve y)
             {
                 return y.GetLength().CompareTo(x.GetLength());
             });
 
-            List<Curve> jCurves = new List<Curve>();
             List<Curve> tCurves = new List<Curve>();
 
             if (curves.Count > 0) { tCurves.Add(curves[0]); }
-            jCurves = tCurves;
+            List<Curve> jCurves = tCurves;
+
             for (int i = 1; i < curves.Count; i++)
             {
                 tCurves.Add(curves[i]);

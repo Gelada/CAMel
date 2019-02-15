@@ -72,7 +72,7 @@ namespace CAMel
             da.SetDataList(1, selPt);
             da.SetDataList(2, selDir);
             da.SetDataList(3, tP.getSpeedFeed());
-            
+
         }
 
         /// <summary>

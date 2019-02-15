@@ -52,7 +52,7 @@ namespace CAMel
             List<GH_ToolPoint> tPtPs = new List<GH_ToolPoint>();
             foreach(ToolPoint tPt in tP.getSinglePath())
             { tPtPs.Add(new GH_ToolPoint(tPt)); }
-            
+
             da.SetDataList(0, tPtPs);
         }
 

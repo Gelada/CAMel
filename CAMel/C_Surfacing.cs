@@ -11,7 +11,7 @@ namespace CAMel
 {
     enum SurfaceType
 	{
-	   Brep, Mesh   
+	   Brep, Mesh
 	}
     public class C_Surfacing : GH_Component
     {

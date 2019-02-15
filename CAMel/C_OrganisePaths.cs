@@ -18,13 +18,14 @@ using CAMel.Types;
 
 namespace CAMel
 {
-    public class C_OrganisePaths : GH_Component, IGH_PreviewObject
+    public class C_OrganisePaths : GH_Component // locally implemeents IGH_PreviewObject
     {
         internal bool inActiveDocument;
         private bool _enabled;
 
         internal bool clickQ() => this._enabled && this.inActiveDocument;
 
+        // ReSharper disable once NotAccessedField.Local
         private readonly PathClick _click;
         private GH_Document _doc;
 
@@ -77,7 +78,7 @@ namespace CAMel
         internal bool found(Line l, RhinoViewport vP)
         {
             double pixelsPerUnit;
-            for(int i = 0;i< this._curves.Count; i++) 
+            for(int i = 0;i< this._curves.Count; i++)
             {
                 Curve c = this._curves[i];
                 vP.GetWorldToScreenScale(c.PointAtStart, out pixelsPerUnit);
@@ -158,7 +159,7 @@ namespace CAMel
                 }
             }
 
-            // Store keys and put the values into the referenced objects if they exist. 
+            // Store keys and put the values into the referenced objects if they exist.
             this._curves = new List<Curve>();
             foreach(GH_Curve p in paths)
             {

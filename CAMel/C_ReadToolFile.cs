@@ -13,8 +13,8 @@ using CsvHelper;
 namespace CAMel
 {
     // Mappings for csv helper
-   
-    public class MaterialToolMap : CsvClassMap<MaterialToolBuilder>
+
+    public sealed class MaterialToolMap : CsvClassMap<MaterialToolBuilder>
     {
         public MaterialToolMap()
         {
@@ -55,7 +55,7 @@ namespace CAMel
         {
             pManager.AddParameter(new Param_FilePath(),"File", "F", "File containing Material Tool Details", GH_ParamAccess.item);
         }
-                
+
 
         /// <summary>
         /// Registers all the output parameters for this component.

@@ -10,7 +10,7 @@ using CAMel.Types.Machine;
 namespace CAMel.Types
 {
     // Attach a collection of information
-    // to a Code string, including 
+    // to a Code string, including
     // errors, warnings and ranges.
 
     // TODO update error handling to include error line numbers
@@ -206,21 +206,22 @@ namespace CAMel.Types
 
         public string ToString(int start, int length)
         {
-            int ulength;
-            if (start+length > this.Code.Length)  {  ulength = this.Code.Length - start;}
-            else { ulength = length; }
+            int uLength;
+            if (start+length > this.Code.Length)  {  uLength = this.Code.Length - start;}
+            else { uLength = length; }
 
-            if( ulength > 0) { return this.Code.ToString(start, ulength); }
+            if( uLength > 0) { return this.Code.ToString(start, uLength); }
             else{ return string.Empty; }
         }
 
-        public int Length { get => this.Code.Length; }
-        
+        // ReSharper disable once InconsistentNaming
+        public int Length => this.Code.Length;
+
         public void appendLineNoNum(string l)
         {
-            // Add \r\n manually to ensure consistency of 
-            // files between OSX and Windows. 
-            if (l.Length > 0) { this.Code.Append(l+ "\r\n"); }  
+            // Add \r\n manually to ensure consistency of
+            // files between OSX and Windows.
+            if (l.Length > 0) { this.Code.Append(l+ "\r\n"); }
         }
         public void appendLine(string l)
         {

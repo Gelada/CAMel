@@ -14,7 +14,7 @@ using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {
-    // The type of projection. 
+    // The type of projection.
     // Parallel is along a single direction
     // Cylindrical points towards a path along a direction
     // Spherical points towards a point
@@ -27,8 +27,8 @@ namespace CAMel.Types
 
     // The tool direction for surfacing.
     // Projection is along the projection direction
-    // Path Tangent and Path Normal mix the projection and 
-    // surface normals. 
+    // Path Tangent and Path Normal mix the projection and
+    // surface normals.
     // Path Tangent gives the normal to the path in the plane given by the path tangent and projection direction
     // Path Normal gives the normal to the path in the plane given by the surface tangent normal to the path and projection direction
     // Normal is surface normal
@@ -51,7 +51,7 @@ namespace CAMel.Types
         public SurfToolDir surfToolDir { get; } // method to calculate tool direction
 
         // private storage when processing a model
-        
+
         private Mesh _m; // Mesh
 
         // Parallel constructor
@@ -80,8 +80,8 @@ namespace CAMel.Types
             this.surfToolDir = surfToolDir;
         }
 
-        public string TypeDescription =>"Path and projection information to generate a surfacing path"; 
-        public string TypeName => "SurfacePath"; 
+        public string TypeDescription =>"Path and projection information to generate a surfacing path";
+        public string TypeName => "SurfacePath";
 
         public override string ToString()
         {
@@ -154,7 +154,7 @@ namespace CAMel.Types
                      intersectInfo[tPtP] = firstIntersect(tPtP);
                  }
                 );
-                
+
                 tempTP = new ToolPath(string.Empty, mT, mF, tPa);
                 tempN = new List<Vector3d>();
                 FirstIntersectResponse fIR;
@@ -166,7 +166,7 @@ namespace CAMel.Types
                     if (fIR.hit)
                     {
                         tempTP.Add(fIR.tP);
-                        tempN.Add(fIR.norm); 
+                        tempN.Add(fIR.norm);
                     }
                     else if(tempTP.Count > 0 )
                     {
@@ -191,10 +191,10 @@ namespace CAMel.Types
                 for (int i = 0; i < newTPs[j].Count; i++)
                 {
                     // find the tangent vector, assume the curve is not too jagged
-                    // this is reasonable for most paths, but not for space 
+                    // this is reasonable for most paths, but not for space
                     // filling curve styles. Though for those this is a bad option.
                     // For the moment we will look 2 points back and one point forward.
-                    // Some cases to deal with the start, end and short paths. 
+                    // Some cases to deal with the start, end and short paths.
                     // TODO Smooth this out by taking into account individual tangencies?
                     int lookBack, lookForward;
                     if (i == newTPs[j].Count - 1)
@@ -215,7 +215,7 @@ namespace CAMel.Types
                     switch (this.surfToolDir)
                     {
                         case SurfToolDir.Projection: // already set
-                            break; 
+                            break;
                         case SurfToolDir.PathNormal:
                             // get normal to tangent on surface
                             Vector3d stNorm = Vector3d.CrossProduct(norms[j][i], tangent);
@@ -228,10 +228,10 @@ namespace CAMel.Types
                             Vector3d pTplaneN = Vector3d.CrossProduct(tangent,newTPs[j][i].dir);
                             // find vector normal to tangent and in the plane of tangent and projection
                             newTPs[j][i].dir = Vector3d.CrossProduct(pTplaneN, tangent);
-                           
+
                             break;
                         case SurfToolDir.Normal: // set to Norm
-                            newTPs[j][i].dir = norms[j][i]; 
+                            newTPs[j][i].dir = norms[j][i];
                             break;
                     }
                     // Adjust the tool position based on the surface normal and the tool orientation
@@ -270,8 +270,7 @@ namespace CAMel.Types
             Ray3d rayL = new Ray3d(tP.pt, proj);
             fIr.hit = false;
 
-            int[] faces;
-            double inter = Intersection.MeshRay(this._m, rayL, out faces);
+            double inter = Intersection.MeshRay(this._m, rayL, out int[] faces);
             if (inter >= 0)
             {
                 fIr.hit = true;
@@ -296,29 +295,28 @@ namespace CAMel.Types
                     break;
                 case SurfProj.Cylindrical:
                     Plane pl = new Plane(pt,this.dir);
-                    
+
                     if(this.cylOnto.IsLinear()) // if centre is a line treat it as infinite
                     {
-                        double lp;
-                        Line cyline = new Line(this.cylOnto.PointAtStart, this.cylOnto.PointAtEnd);
-                        if(Intersection.LinePlane(cyline, pl, out lp))
+                        Line cyLine = new Line(this.cylOnto.PointAtStart, this.cylOnto.PointAtEnd);
+                        if(Intersection.LinePlane(cyLine, pl, out double lp))
                         {
-                            pd = cyline.PointAt(lp)-pt;
+                            pd = cyLine.PointAt(lp)-pt;
                         } else
                         {
-                            throw new ArgumentOutOfRangeException("Cylinder Parallel","The projection direction is parallel to cylinder centre.");
+                            throw new InvalidOperationException("Cylinder Parallel: The projection direction is parallel to cylinder centre.");
                         }
                     } else // Use curve and warn if no intersection
                     {
                         CurveIntersections ci = Intersection.CurvePlane(this.cylOnto,pl,0.0000001);
                         if(ci.Count == 0)
                         {
-                            throw new ArgumentOutOfRangeException("Short Cylinder", "The cylinder centre curve is shorter than the model."); 
-                        } else 
+                            throw new InvalidOperationException("Short Cylinder:  The cylinder centre curve is shorter than the model.");
+                        } else
                         {
                             if(ci.Count >1 || ci[0].IsOverlap)
                             {
-                                throw new ArgumentOutOfRangeException("Cylinder double cut", "The cylinder centre curve has multiple intersections with a projection plane.");
+                                throw new InvalidOperationException("Cylinder double cut: The cylinder centre curve has multiple intersections with a projection plane.");
                             }
                             pd = ci[0].PointA - pt;
                         }

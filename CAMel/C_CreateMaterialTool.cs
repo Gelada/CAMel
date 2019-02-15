@@ -103,7 +103,7 @@ namespace CAMel
 
             da.SetData(0, new GH_MaterialTool(mT));
         }
-     
+
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>

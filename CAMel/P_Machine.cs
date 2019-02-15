@@ -13,7 +13,7 @@ namespace CAMel.Types.Machine
     // So other languages can be used.
 
     // TODO create a machine state class for each machine
-    //  currently using CodeInfo to store a dictionary of values. 
+    //  currently using CodeInfo to store a dictionary of values.
     //  a bespoke version for each machine type would be better
 
     // Main interface and public face of the machine
@@ -22,6 +22,7 @@ namespace CAMel.Types.Machine
         string name { get; }
         double pathJump { get; } // Maximum jump between toolpaths in material
         bool toolLengthCompensation { get; } // Tool Length Compensation
+        // ReSharper disable once InconsistentNaming
         ToolPathAdditions defaultTPA { get; }
         List<MaterialTool> mTs { get; } // list of Material Tools used by machine
 
@@ -49,7 +50,7 @@ namespace CAMel.Types.Machine
         double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng); // max change for orientation axes
     }
 
- 
+
 
     // Grasshopper Type Wrapper
     public sealed class GH_Machine : CAMel_Goo<IMachine>

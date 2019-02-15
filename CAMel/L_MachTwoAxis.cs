@@ -12,7 +12,7 @@ namespace CAMel.Types.Machine
     {
         public string name { get; }
         public double pathJump { get;}
-        public bool toolLengthCompensation { get; } 
+        public bool toolLengthCompensation { get; }
         public string sectionBreak { get; }
         public string speedChangeCommand { get; }
         public string toolChangeCommand { get; }
@@ -30,8 +30,8 @@ namespace CAMel.Types.Machine
 
         public ToolPathAdditions defaultTPA { get => ToolPathAdditions.twoAxisDefault; }
 
-        public TwoAxis(string name, List<MaterialTool>mTs, double pJ, string header, string footer, 
-            string speed, string insert, string retract, string tool, string commentStart, string commentEnd, 
+        public TwoAxis(string name, List<MaterialTool>mTs, double pJ, string header, string footer,
+            string speed, string insert, string retract, string tool, string commentStart, string commentEnd,
             string sectionBreak, string fileStart, string fileEnd)
         {
             this.name = name;
@@ -174,12 +174,12 @@ namespace CAMel.Types.Machine
                 co.machineState.Add("S", speed);
 
                 GCode.gcPathEnd(this, ref co, tP);
-            }       
+            }
         }
 
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
         {
-            // Set up Machine State  
+            // Set up Machine State
 
             co.machineState.Clear();
             co.machineState.Add("X", startPath.firstP.pt.X);

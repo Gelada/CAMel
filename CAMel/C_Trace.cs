@@ -67,7 +67,7 @@ namespace CAMel
             if (!da.GetData(0, ref filename)) { return; }
 
             string exp = string.Empty;
-            
+
             if (!da.GetData(1, ref exp)) { return; }
             GH_ExpressionParser eP = new GH_ExpressionParser(true);
 
@@ -144,6 +144,7 @@ namespace CAMel
             }
         }
 
+        // ReSharper disable once UnusedMember.Local
         private NumericUpDown menuAppendNumber(ToolStripDropDown menu, string name, int val, string desc)
         {
             Panel mI = new FlowLayoutPanel
@@ -185,9 +186,9 @@ namespace CAMel
             System.Text.StringBuilder traceData = new System.Text.StringBuilder();
 
             for(int i=0;i< this._times.Count;i++) { traceData.AppendLine(this._times[i]); }
-            
+
             Clipboard.SetText(traceData.ToString());
-            
+
         }
         private void debugClicked(object sender, EventArgs e)
         {

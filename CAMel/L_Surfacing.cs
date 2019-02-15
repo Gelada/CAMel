@@ -12,7 +12,7 @@ namespace CAMel.Types
         public static SurfacePath parallel(Curve c, Plane dir, double stepOver, bool zZ, SurfToolDir sTD, BoundingBox bb, MaterialTool mT)
         {
             Curve uC = c;
-            if (c == null) // default to curve running along X-direction on Plane. 
+            if (c == null) // default to curve running along X-direction on Plane.
             { uC = new LineCurve(dir.PointAt(bb.Min.X, bb.Min.Y), dir.PointAt(bb.Max.X, bb.Min.Y)); }
             BoundingBox bbc = uC.GetBoundingBox(dir); // bounding box for curve
 

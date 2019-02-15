@@ -64,7 +64,7 @@ namespace CAMel.Types.MaterialForm
             Vector3d dir2D = dir;
             dir2D.Z = 0;
             double flatDist = dir2D.Length;
-            // test to see where the cylinder is hit. 
+            // test to see where the cylinder is hit.
 
             MFintersects inters = new MFintersects();
             Vector3d intPt;
@@ -77,8 +77,8 @@ namespace CAMel.Types.MaterialForm
             {
                 if (pt.Z <= this.height + uTol && pt.Z >= -uTol) // hits cylinder
                 {
-                    // Find the closest point on the line, the distance to it and so 
-                    // the distance along the line from the closest point to the 
+                    // Find the closest point on the line, the distance to it and so
+                    // the distance along the line from the closest point to the
                     // cylinder
                     linePcen = (Vector3d)pt2D * dir2D;
                     cenDist = ((Vector3d)(pt2D - linePcen * dir2D)).Length;
@@ -110,8 +110,8 @@ namespace CAMel.Types.MaterialForm
 
                 if (inters.count < 2 && flatDist > 0) // not all hits top or bottom
                 {
-                    // Find the closest point on the line, the distance to it and so 
-                    // the distance along the line from the closest point to the 
+                    // Find the closest point on the line, the distance to it and so
+                    // the distance along the line from the closest point to the
                     // cylinder
                     linePcen = (Vector3d)pt2D * dir2D / flatDist;
                     cenDist = ((Vector3d)(pt2D - linePcen * dir2D / flatDist)).Length;

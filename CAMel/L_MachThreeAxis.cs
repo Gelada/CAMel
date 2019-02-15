@@ -12,7 +12,7 @@ namespace CAMel.Types.Machine
     {
         public string name { get; }
         public double pathJump { get; }
-        public bool toolLengthCompensation { get; } 
+        public bool toolLengthCompensation { get; }
         public string sectionBreak { get; }
         public string speedChangeCommand { get; }
         public string toolChangeCommand { get; }
@@ -178,7 +178,7 @@ namespace CAMel.Types.Machine
         }
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
         {
-            // Set up Machine State  
+            // Set up Machine State
 
             co.machineState.Clear();
             co.machineState.Add("X", startPath.firstP.pt.X);
@@ -192,7 +192,7 @@ namespace CAMel.Types.Machine
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref co, mI, finalPath, endPath);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
-        
+
         public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
         {
             // check there is anything to transition from or to
@@ -223,7 +223,7 @@ namespace CAMel.Types.Machine
                 }
                 else // Safely move from one safe point to another.
                 {
-                    // Start with a straight line, see how close it 
+                    // Start with a straight line, see how close it
                     // comes to danger. If its too close add a new
                     // point and try again.
 

@@ -21,12 +21,12 @@ namespace CAMel
                 { WriteState.Waiting, @"Waiting" }
             };
         }
-        
+
         private Dictionary<WriteState, String> WriteMessages;
-        
+
         public void setFileSize(long l)
         {
-            double lMB = l / 1000000.0; // Use smallest MB possibility so numbers are not larger. 
+            double lMB = l / 1000000.0; // Use smallest MB possibility so numbers are not larger.
             if (lMB > .99) { this.WriteMessages[WriteState.Finished] = lMB.ToString(".0") + " MB Written"; }
             else { this.WriteMessages[WriteState.Finished] = (1000*lMB).ToString("0") + " KB Written"; }
         }
@@ -55,12 +55,12 @@ namespace CAMel
             if (channel == GH_CanvasChannel.Objects)
             {
                 GH_Capsule progressOl = GH_Capsule.CreateCapsule(
-                    this.progressBounds, 
-                    GH_Palette.Blue, 
+                    this.progressBounds,
+                    GH_Palette.Blue,
                      0, 1);
 
                 System.Drawing.Rectangle progressPercent = this.progressBounds;
-                progressPercent.Width = 
+                progressPercent.Width =
                     (int)(this.progressBounds.Width * ((C_WriteCode)this.Owner).writeProgress);
 
                 GH_Capsule progress = GH_Capsule.CreateCapsule(
