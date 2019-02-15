@@ -24,7 +24,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Tool List", "L", "List of Material Tool Details or Machine with list of Material Tools", GH_ParamAccess.list);
             pManager.AddTextParameter("Material", "M", "Material to cut", GH_ParamAccess.item,"");
@@ -35,7 +35,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTools", "MT", "Correct from the .csv file", GH_ParamAccess.item);
         }
@@ -68,18 +68,18 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
             string matName = string.Empty;
             string toolName = string.Empty;
             List<object> oMTs = new List<object>();
 
-            if (!DA.GetDataList(0, oMTs)) { return; }
-            DA.GetData(1, ref matName);
-            DA.GetData(2, ref toolName);
+            if (!da.GetDataList(0, oMTs)) { return; }
+            da.GetData(1, ref matName);
+            da.GetData(2, ref toolName);
 
-            oMTs = (List<object>)CAMel_Goo.cleanGooList((object)oMTs);
+            oMTs = (List<object>)CAMel_Goo.cleanGooList(oMTs);
 
             var readMTs = new HashSet<MaterialTool>();
 
@@ -93,17 +93,17 @@ namespace CAMel
             var tools = new SortedSet<string>();
 
             bool found = false;
-            MaterialTool MT = null;
-            foreach (MaterialTool iMT in readMTs)
+            MaterialTool mT = null;
+            foreach (MaterialTool imT in readMTs)
             {
-                materials.Add(iMT.matName);
-                tools.Add(iMT.toolName);
+                materials.Add(imT.matName);
+                tools.Add(imT.toolName);
 
-                if (iMT.toolName == toolName && iMT.matName == matName)
+                if (imT.toolName == toolName && imT.matName == matName)
                 {
                     if (found)
                     { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "More than one material tool combination found, using first."); }
-                    else { found = true; MT = iMT; }
+                    else { found = true; mT = imT; }
                 }
             }
 
@@ -120,7 +120,7 @@ namespace CAMel
             }
 
             if (!found) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No material tool combination found."); }
-            else { DA.SetData(0, new GH_MaterialTool(MT)); }
+            else { da.SetData(0, new GH_MaterialTool(mT)); }
         }
 
         /// <summary>

@@ -26,7 +26,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddParameter(new Param_FilePath(), "File", "F", "Name of image file", GH_ParamAccess.item);
             pManager.AddTextParameter("Height Expression", "H", "Function to define height. Evaluates on x along each genrated path from 0 to 1.", GH_ParamAccess.item, "0");
@@ -35,73 +35,72 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddCurveParameter("Curves", "C", "Traced Curves", GH_ParamAccess.list);
             pManager.AddCurveParameter("Polyline", "P", "Polyline of points along traced curve, for more creative processing.", GH_ParamAccess.list);
         }
 
-        int Jump = 15, Blur = 0, MaxFile = 3;
-        private bool m_debug = false;
+        private int _jump = 15, _blur, _maxFile = 3;
+        private bool _debug;
         public bool debug
         {
-            get { return this.m_debug; }
+            get { return this._debug; }
             set
             {
-                this.m_debug = value;
-                if ((this.m_debug)) { this.Message = "Showing work..."; }
+                this._debug = value;
+                if ((this._debug)) { this.Message = "Showing work..."; }
                 else { this.Message = string.Empty; }
             }
         }
-        List<string> times;
+
+        private List<string> _times;
 
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
             string filename = string.Empty;
 
-            if (!DA.GetData(0, ref filename)) { return; }
-           
-            string filepath= System.IO.Path.GetDirectoryName(filename);
+            if (!da.GetData(0, ref filename)) { return; }
 
             string exp = string.Empty;
             
-            if (!DA.GetData(1, ref exp)) { return; }
-            GH_ExpressionParser EP = new GH_ExpressionParser(true);
+            if (!da.GetData(1, ref exp)) { return; }
+            GH_ExpressionParser eP = new GH_ExpressionParser(true);
 
             exp = GH_ExpressionSyntaxWriter.RewriteForEvaluator(exp);
-            EP.CacheSymbols(exp);
+            eP.CacheSymbols(exp);
 
             // Read photo into raw curves list
-            List<Curve> Jcurves = ReadPhoto.trace(filename, this.Blur, this.Jump, this.debug, out this.times);
+            List<Curve> jCurves = ReadPhoto.trace(filename, this._blur, this._jump, this.debug, out this._times);
 
             // Add height to paths using expression
-            for (int i = 0; i < Jcurves.Count; i++)
+            for (int i = 0; i < jCurves.Count; i++)
             {
                 double cp = 0;
-                double cl = Jcurves[i].GetLength();
+                double cl = jCurves[i].GetLength();
                 Polyline pl;
-                Jcurves[i].TryGetPolyline(out pl);
+                jCurves[i].TryGetPolyline(out pl);
                 for(int j=0; j<pl.Count; j++)
                 {
                     if (j > 0) { cp = cp + (pl[j]-pl[j-1]).Length/cl; }
-                    EP.AddVariable("x", cp);
-                    double h = EP.Evaluate()._Double;
+                    eP.AddVariable("x", cp);
+                    double h = eP.Evaluate()._Double;
                     pl[j] = new Point3d(pl[j].X, pl[j].Y, h);
                 }
-                Jcurves[i] = new PolylineCurve(pl);
+                jCurves[i] = new PolylineCurve(pl);
             }
 
             // Turn polylines into nice smooth curves
-            var Tcurves = new List<Curve>();
-            for (int i = 0; i < Jcurves.Count; i++)
+            var tCurves = new List<Curve>();
+            for (int i = 0; i < jCurves.Count; i++)
             {
                 Polyline pl;
                 List<Point3d> op = new List<Point3d>();
-                Jcurves[i].TryGetPolyline(out pl);
+                jCurves[i].TryGetPolyline(out pl);
                 for (int j = 1; j < pl.Count; j++)
                 {
                     if ((pl[j - 1] - pl[j]).Length > 5)
@@ -115,11 +114,11 @@ namespace CAMel
                     }
                     op.Add(pl[j]);
                 }
-                Tcurves.Add(Curve.CreateControlPointCurve(op));
+                tCurves.Add(Curve.CreateControlPointCurve(op));
             }
 
-            DA.SetDataList(0, Tcurves);
-            DA.SetDataList(1, Jcurves);
+            da.SetDataList(0, tCurves);
+            da.SetDataList(1, jCurves);
         }
 
         protected override void AppendAdditionalComponentMenuItems(ToolStripDropDown menu)
@@ -137,9 +136,9 @@ namespace CAMel
             Menu_AppendItem(menu, "Debug", debugClicked, true, this.debug);
             if (this.debug)
             {
-                for (int i = 0; i < this.times.Count; i++)
+                for (int i = 0; i < this._times.Count; i++)
                 {
-                    Menu_AppendItem(menu, this.times[i]);
+                    Menu_AppendItem(menu, this._times[i]);
                 }
                 Menu_AppendItem(menu, "Copy Data", copyDataClicked);
             }
@@ -147,7 +146,7 @@ namespace CAMel
 
         private NumericUpDown menuAppendNumber(ToolStripDropDown menu, string name, int val, string desc)
         {
-            Panel MI = new FlowLayoutPanel
+            Panel mI = new FlowLayoutPanel
             {
                 Text = name,
                 AutoSize = true,
@@ -162,32 +161,32 @@ namespace CAMel
             uD.ValueChanged += traceSettings;
             uD.Width = 50;
 
-            Label L = new Label
+            Label l = new Label
             {
                 Text = name
             };
 
-            MI.Controls.Add(L);
-            MI.Controls.Add(uD);
+            mI.Controls.Add(l);
+            mI.Controls.Add(uD);
 
-            MI.Height = uD.Height+6;
+            mI.Height = uD.Height+6;
 
-            ToolStripItem tSI = new ToolStripControlHost(MI)
+            ToolStripItem tSi = new ToolStripControlHost(mI)
             {
                 ToolTipText = desc
             };
 
-            menu.Items.Add(tSI);
+            menu.Items.Add(tSi);
 
             return uD;
         }
         private void copyDataClicked(object sender, EventArgs e)
         {
-            System.Text.StringBuilder TraceData = new System.Text.StringBuilder();
+            System.Text.StringBuilder traceData = new System.Text.StringBuilder();
 
-            for(int i=0;i< this.times.Count;i++) { TraceData.AppendLine(this.times[i]); }
+            for(int i=0;i< this._times.Count;i++) { traceData.AppendLine(this._times[i]); }
             
-            Clipboard.SetText(TraceData.ToString());
+            Clipboard.SetText(traceData.ToString());
             
         }
         private void debugClicked(object sender, EventArgs e)
@@ -198,20 +197,18 @@ namespace CAMel
         }
         private void traceSettings(object sender, EventArgs e)
         {
-            NumericUpDown UD = (NumericUpDown)sender;
-            RecordUndoEvent(UD.Name);
-            switch (UD.Name)
+            NumericUpDown ud = (NumericUpDown)sender;
+            RecordUndoEvent(ud.Name);
+            switch (ud.Name)
             {
                 case "Blur":
-                    this.Blur = (int)UD.Value;
+                    this._blur = (int)ud.Value;
                     break;
                 case "Jump":
-                    this.Jump = (int)UD.Value;
+                    this._jump = (int)ud.Value;
                     break;
                 case "Mega Pixels":
-                    this.MaxFile = (int)UD.Value;
-                    break;
-                default:
+                    this._maxFile = (int)ud.Value;
                     break;
             }
 
@@ -221,9 +218,9 @@ namespace CAMel
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
             // First add our own fields.
-            writer.SetInt32("MaxFile", this.MaxFile);
-            writer.SetInt32("Jump", this.Jump);
-            writer.SetInt32("Blur", this.Blur);
+            writer.SetInt32("MaxFile", this._maxFile);
+            writer.SetInt32("Jump", this._jump);
+            writer.SetInt32("Blur", this._blur);
             writer.SetBoolean("Debug", this.debug);
             // Then call the base class implementation.
             return base.Write(writer);
@@ -233,15 +230,15 @@ namespace CAMel
             // First read our own fields.
             if (reader.ItemExists("MaxFile"))
             {
-                this.MaxFile = reader.GetInt32("MaxFile");
+                this._maxFile = reader.GetInt32("MaxFile");
             }
             if (reader.ItemExists("Jump"))
             {
-                this.Jump = reader.GetInt32("Jump");
+                this._jump = reader.GetInt32("Jump");
             }
             if (reader.ItemExists("Blur"))
             {
-                this.Blur = reader.GetInt32("Blur");
+                this._blur = reader.GetInt32("Blur");
             }
             if (reader.ItemExists("Debug"))
             {
@@ -255,7 +252,7 @@ namespace CAMel
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
+        protected override Bitmap Icon
         {
             get
             {

@@ -7,131 +7,133 @@ using CAMel.Types.MaterialForm;
 
 namespace CAMel.Types
 {
-
     // Functions to generate operations
     public static class Operations
     {
-        public static MachineOperation opIndex2dCut(Curve C, Vector3d D, double oS, ToolPathAdditions TPA, MaterialTool MT, IMaterialForm MF)
+        public static MachineOperation opIndex2DCut(Curve c, Vector3d d, double oS, ToolPathAdditions tPa, MaterialTool mT, IMaterialForm mF)
         {
-            if (MT == null) { Exceptions.matToolException(); }
+            if (mT == null) { Exceptions.matToolException(); return null; }
             // Shift curve to XY plane
 
-            Plane P = new Plane(Point3d.Origin, D);
-            C.Transform(Transform.PlaneToPlane(P, Plane.WorldXY));
+            Plane p = new Plane(Point3d.Origin, d);
+            c.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
             bool reversed = false;
             // ensure the curve is anticlockwise
-            if (oS != 0)
+            if (Math.Abs(oS) > CAMel_Goo.tolerance)
             {
-                if (C.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
-                { C.Reverse(); reversed = true; }
+                if (c.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
+                { c.Reverse(); reversed = true; }
             }
 
             // record the average Z location of the curve
-            BoundingBox BB = C.GetBoundingBox(true);
-            double useZ = (BB.Max.Z + BB.Min.Z) / 2.0;
+            BoundingBox bb = c.GetBoundingBox(true);
+            double useZ = (bb.Max.Z + bb.Min.Z) / 2.0;
 
             // turn the curve into a Polyline
-            PolylineCurve PL = ToolPath.convertAccurate(C);
+            PolylineCurve pl = ToolPath.convertAccurate(c);
 
             // offSet
             List<PolylineCurve> osC = new List<PolylineCurve>();
-            if (oS == 0) { osC.Add(PL); }
-            else { osC = Offsetting.offset(PL, oS * MT.toolWidth / 2.0); }
+            if (Math.Abs(oS) < CAMel_Goo.tolerance) { osC.Add(pl); }
+            else { osC = Offsetting.offset(pl, oS * mT.toolWidth / 2.0); }
 
-            if (!reversed) { foreach (Curve c in osC) { c.Reverse(); } }
+            if (!reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
 
             // create Operation
 
-            MachineOperation Op = new MachineOperation
+            MachineOperation mO = new MachineOperation
             { name = "2d Cut Path" };
-            ToolPath TP;
-            List<PolylineCurve> Cs = new List<PolylineCurve>();
+
             int i = 1;
-            foreach (PolylineCurve c in osC)
+            foreach (PolylineCurve osPl in osC)
             {
                 // Create and add name, material/tool and material form
-                TP = new ToolPath("Cut", MT, MF,TPA);
-                if (osC.Count > 1) { TP.name = TP.name + " " + i.ToString(); }
+                ToolPath tP = new ToolPath("Cut", mT, mF,tPa);
+                if (osC.Count > 1) { tP.name = tP.name + " " + i.ToString(); }
                 i++;
 
                 // return to original orientation
 
-                c.Translate(new Vector3d(0, 0, -useZ));
-                c.Transform(Transform.PlaneToPlane(Plane.WorldXY, P));
+                osPl.Translate(new Vector3d(0, 0, -useZ));
+                osPl.Transform(Transform.PlaneToPlane(Plane.WorldXY, p));
 
                 // Add to Operation
-                TP.convertCurve(c, D);
-                Op.Add(TP);
-                Cs.Add(TP.getLine());
+                tP.convertCurve(osPl, d);
+                mO.Add(tP);
             }
-            return Op;
+            return mO;
         }
 
-        public static MachineOperation opIndex3Axis(List<Curve> C, Vector3d dir, ToolPathAdditions tPA, MaterialTool MT, IMaterialForm MF, out int InvalidCurves)
+        public static MachineOperation opIndex3Axis(List<Curve> cs, Vector3d dir, ToolPathAdditions tPa, MaterialTool mT, IMaterialForm mF, out int invalidCurves)
         {
-            MachineOperation Op = new MachineOperation
-            { name = "Index 3-Axis Cutting with " + C.Count.ToString() + " path" };
-            if (C.Count > 1) { Op.name = Op.name + "s"; }
+            MachineOperation mO = new MachineOperation
+            { name = "Index 3-Axis Cutting with " + cs.Count.ToString() + " path" };
+            if (cs.Count > 1) { mO.name = mO.name + "s"; }
 
-            ToolPath TP;
             int i = 1;
 
-            InvalidCurves = 0; // Keep track of any invalid curves.
+            invalidCurves = 0; // Keep track of any invalid curves.
 
-            foreach (Curve c in C)
+            foreach (Curve c in cs)
             {
                 // Create and add name, material/tool and material form
-                TP = new ToolPath("Index 3-Axis Path", MT, MF);
-                if (C.Count > 1) { TP.name = TP.name + " " + i.ToString(); }
+                ToolPath tP = new ToolPath("Index 3-Axis Path", mT, mF);
+                if (cs.Count > 1) { tP.name = tP.name + " " + i.ToString(); }
 
                 // Additions for toolpath
-                TP.Additions = tPA;
+                tP.additions = tPa;
 
                 // Turn Curve into path
 
-                if (TP.convertCurve(c, dir)) { Op.Add(TP); }
-                else { InvalidCurves++; }
+                if (tP.convertCurve(c, dir)) { mO.Add(tP); }
+                else { invalidCurves++; }
                 i++;
             }
-            return Op;
+            return mO;
         }
 
-        public static MachineOperation drillOperation(Circle D, double peck, MaterialTool MT, IMaterialForm MF)
+        public static MachineOperation drillOperation(Circle d, double peck, MaterialTool mT, IMaterialForm mF)
         {
-            if (MT == null) { Exceptions.matToolException(); }
-            MachineOperation Op = new MachineOperation
+            if (mT == null) { Exceptions.matToolException(); return null; }
+            MachineOperation mO = new MachineOperation
             {
-                name = "Drilling depth " + D.Radius.ToString("0.000") + " at (" + D.Center.X.ToString("0.000") + "," + D.Center.Y.ToString("0.000") + "," + D.Center.Z.ToString("0.000") + ")."
+                name = "Drilling depth " + d.Radius.ToString("0.000") + " at (" + d.Center.X.ToString("0.000") + "," + d.Center.Y.ToString("0.000") + "," + d.Center.Z.ToString("0.000") + ")."
             };
 
-            ToolPath TP = new ToolPath(string.Empty, MT, MF);
+            ToolPath tP = new ToolPath(string.Empty, mT, mF)
+            {
+                additions =
+                {
+                    insert = true,
+                    retract = true,
+                    stepDown = false,
+                    sdDropStart = false,
+                    sdDropMiddle = 0,
+                    sdDropEnd = false,
+                    threeAxisHeightOffset = false
+                }
+            };
 
             // Additions for toolpath
-            TP.Additions.insert = true;
-            TP.Additions.retract = true;
-            TP.Additions.stepDown = false; // we will handle this with peck
-            TP.Additions.sdDropStart = false;
-            TP.Additions.sdDropMiddle = 0;
-            TP.Additions.sdDropEnd = false;
-            TP.Additions.threeAxisHeightOffset = false;
+            // we will handle this with peck
 
-            TP.Add(new ToolPoint(D.Center, D.Normal, -1, MT.feedPlunge));
+            tP.Add(new ToolPoint(d.Center, d.Normal, -1, mT.feedPlunge));
 
             // calculate the number of pecks we need to do
 
             int steps;
-            if (peck > 0) { steps = (int)Math.Ceiling(D.Radius / peck); }
+            if (peck > 0) { steps = (int)Math.Ceiling(d.Radius / peck); }
             else { steps = 1; }
 
             for (int j = 1; j <= steps; j++)
             {
-                TP.Add(new ToolPoint(D.Center - ((double)j / (double)steps) * D.Radius * D.Normal, D.Normal, -1, MT.feedPlunge));
-                TP.Add(new ToolPoint(D.Center, D.Normal, -1, MT.feedPlunge));
+                tP.Add(new ToolPoint(d.Center - j / (double)steps * d.Radius * d.Normal, d.Normal, -1, mT.feedPlunge));
+                tP.Add(new ToolPoint(d.Center, d.Normal, -1, mT.feedPlunge));
             }
 
-            Op.Add(TP);
+            mO.Add(tP);
 
-            return Op;
+            return mO;
         }
     }
 }

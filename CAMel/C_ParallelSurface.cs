@@ -27,7 +27,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddGeometryParameter("Surface", "S", "Brep or Mesh to Mill", GH_ParamAccess.item);
             pManager.AddCurveParameter("Curve", "C", "Curve to run parallel to", GH_ParamAccess.item);
@@ -43,7 +43,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_SurfacePathPar(), "SurfacePath", "SP", "Surfacing Path", GH_ParamAccess.item);
         }
@@ -51,59 +51,59 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            IGH_Goo G = null;
-            BoundingBox BB = new BoundingBox(); // region to mill
-            Curve C = null; // path to move parallel to 
-            Plane Dir = Plane.WorldXY; // Direction to project onto the surface
-            MaterialTool MT = null; // The materialtool, mainly for tool width
-            int TD=0;
+            IGH_Goo geom = null;
+            BoundingBox BB; // region to mill
+            Curve c = null; // path to move parallel to 
+            Plane dir = Plane.WorldXY; // Direction to project onto the surface
+            MaterialTool mT = null; // The materialtool, mainly for tool width
+            int tD=0;
             double stepOver = 0;
-            bool ZZ = true; // ZigZag if true, Zig if false
+            bool zz = true; // ZigZag if true, Zig if false
 
-            if (!DA.GetData(0, ref G)) { return; }
-            DA.GetData(1, ref C);
-            if (!DA.GetData(2, ref Dir)) { return; }
-            if (!DA.GetData(3, ref MT)) { return; }
-            if (!DA.GetData(4, ref TD)) { return; }
-            if (!DA.GetData(5, ref stepOver)) { return; }
-            if (!DA.GetData(6, ref ZZ)) { return; }
+            if (!da.GetData(0, ref geom)) { return; }
+            da.GetData(1, ref c);
+            if (!da.GetData(2, ref dir)) { return; }
+            if (!da.GetData(3, ref mT)) { return; }
+            if (!da.GetData(4, ref tD)) { return; }
+            if (!da.GetData(5, ref stepOver)) { return; }
+            if (!da.GetData(6, ref zz)) { return; }
 
-            if (stepOver < 0) { stepOver = MT.sideLoad; }
-            if (stepOver > MT.sideLoad) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
+            if (stepOver < 0) { stepOver = mT.sideLoad; }
+            if (stepOver > mT.sideLoad) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
 
             // process the bounding box
 
-            if (!G.CastTo<BoundingBox>(out BB))
+            if (!geom.CastTo(out BB))
             {
-                if (G.CastTo<Surface>(out Surface S))
-                { BB = S.GetBoundingBox(Dir); }     // extents of S in the coordinate system
-                else if (G.CastTo<Brep>(out Brep B))
-                { BB = B.GetBoundingBox(Dir); }     // extents of B in the coordinate system 
-                else if (G.CastTo<Mesh>(out Mesh M))
-                { BB = M.GetBoundingBox(Dir); }     // extents of M in the coordinate system
+                if (geom.CastTo(out Surface s))
+                { BB = s.GetBoundingBox(dir); }     // extents of S in the coordinate system
+                else if (geom.CastTo(out Brep b))
+                { BB = b.GetBoundingBox(dir); }     // extents of B in the coordinate system 
+                else if (geom.CastTo(out Mesh m))
+                { BB = m.GetBoundingBox(dir); }     // extents of M in the coordinate system
                 else
-                { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep."); }
-                BB.Inflate(MT.toolWidth);
+                { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep."); }
+                BB.Inflate(mT.toolWidth);
             }
 
             // set Surfacing direction
-            SurfToolDir STD;
-            switch (TD)
+            SurfToolDir sTd;
+            switch (tD)
             {
-                case 0: STD = SurfToolDir.Projection; break;
-                case 1: STD = SurfToolDir.PathTangent; break;
-                case 2: STD = SurfToolDir.PathNormal; break;
-                case 3: STD = SurfToolDir.Normal; break;
+                case 0: sTd = SurfToolDir.Projection; break;
+                case 1: sTd = SurfToolDir.PathTangent; break;
+                case 2: sTd = SurfToolDir.PathNormal; break;
+                case 3: sTd = SurfToolDir.Normal; break;
                 default:
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
                     return;
             }
 
-            SurfacePath SP = Surfacing.parallel(C, Dir, stepOver,ZZ, STD, BB, MT);
-            DA.SetData(0, new GH_SurfacePath(SP));
+            SurfacePath sP = Surfacing.parallel(c, dir, stepOver,zz, sTd, BB, mT);
+            da.SetData(0, new GH_SurfacePath(sP));
 
         }
 

@@ -28,7 +28,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddIntegerParameter("Version", "V", "Machine version, 0 (V1 old spindle), 1 (V1 new spindle) or 2", GH_ParamAccess.item, 2);
             pManager.AddNumberParameter("B-table offset", "Bt", "Distance from B-table to centre of A axis rotation.", GH_ParamAccess.item, 0.836);
@@ -46,7 +46,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachinePar(), "Machine", "M", "Details for a PocketNC 5-axis machine", GH_ParamAccess.item);
         }
@@ -54,87 +54,85 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
             string head = string.Empty;
             string foot = string.Empty;
-            double PJ = 0;
-            double Bt = 0;
-            double Bmax = 0;
-            bool TLC = true;
-            int V = 0;
-            List<MaterialTool> MTs = new List<MaterialTool>();
+            double pj = 0;
+            double bT = 0;
+            double bMax = 0;
+            bool tLc = true;
+            int v = 0;
+            List<MaterialTool> mTs = new List<MaterialTool>();
 
-            if (!DA.GetData(0, ref V)) { return; }
-            if (V != 0 && V != 1 && V != 2)
+            if (!da.GetData(0, ref v)) { return; }
+            if (v != 0 && v != 1 && v != 2)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Only two version of the PocketNC known. Use 0 for old spindle.");
                 return;
             }
-            if (V != 2) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "All testing done on a V2 machine, please be careful."); }
+            if (v != 2) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "All testing done on a V2 machine, please be careful."); }
 
-            if (!DA.GetData(1, ref Bt)) { return; }
-            if (!DA.GetData(2, ref Bmax)) { return; }
-            if (!DA.GetData(3, ref TLC)) { return; }
-            DA.GetDataList(4, MTs);
-            if (!DA.GetData(5, ref head)) { return; }
-            if (!DA.GetData(6, ref foot)) { return; }
-            if (!DA.GetData(7, ref PJ)) { return; }
+            if (!da.GetData(1, ref bT)) { return; }
+            if (!da.GetData(2, ref bMax)) { return; }
+            if (!da.GetData(3, ref tLc)) { return; }
+            da.GetDataList(4, mTs);
+            if (!da.GetData(5, ref head)) { return; }
+            if (!da.GetData(6, ref foot)) { return; }
+            if (!da.GetData(7, ref pj)) { return; }
 
-            double Amin = 0, Amax = Math.PI / 2.0;
+            double aMin = 0, aMax = Math.PI / 2.0;
 
-            string Version;
-            switch (V)
+            string version;
+            switch (v)
             {
                 case 0:
-                    Version = "PocketNC V1 (old spindle)";
-                    Amin = -5 * Math.PI / 180.0;
-                    Amax = 95 * Math.PI / 180.0;
+                    version = "PocketNC V1 (old spindle)";
+                    aMin = -5 * Math.PI / 180.0;
+                    aMax = 95 * Math.PI / 180.0;
                     break;
                 case 1:
-                    Version = "PocketNC V1 (new spindle)";
-                    Amin = -5 * Math.PI / 180.0;
-                    Amax = 95 * Math.PI / 180.0;
+                    version = "PocketNC V1 (new spindle)";
+                    aMin = -5 * Math.PI / 180.0;
+                    aMax = 95 * Math.PI / 180.0;
                     break;
                 case 2:
-                    Version = "PocketNC V2";
-                    Amin = -25 * Math.PI / 180.0;
-                    Amax = 135 * Math.PI / 180.0;
+                    version = "PocketNC V2";
+                    aMin = -25 * Math.PI / 180.0;
+                    aMax = 135 * Math.PI / 180.0;
                     break;
                 default:
-                    Version = "Unknown";
+                    version = "Unknown";
                     break;
             }
 
             Vector3d pivot = new Vector3d();
             string uFoot = foot;
 
-            if (TLC)
+            if (tLc)
             {
-                switch (V)
+                switch (v)
                 {
                     case 0: pivot = new Vector3d(0, 0, 0); break;
                     case 1: pivot = new Vector3d(0, 0, 0); break;
                     case 2: pivot = new Vector3d(0, 0, 0); break;
-                    default: break;
                 }
                 uFoot = "G49 (Clear tool length compensation)\n" + foot;
             }
             else
             {
-                switch (V)
+                switch (v)
                 {
                     case 0: pivot = new Vector3d(0, 0, 3.6); break;
-                    case 1: pivot = new Vector3d(0, 0, 3.0 - Bt); break;
-                    case 2: pivot = new Vector3d(0, 0, 3.0 - Bt); break;
-                    default: break;
+                    case 1: pivot = new Vector3d(0, 0, 3.0 - bT); break;
+                    case 2: pivot = new Vector3d(0, 0, 3.0 - bT); break;
                 }
             }
 
-            PocketNC M = new PocketNC(Version, head, uFoot, pivot, Amin, Amax, Bmax, TLC, PJ, MTs);
+            PocketNC m = new PocketNC(version, head, uFoot, pivot, aMin, aMax, bMax, tLc, pj, mTs);
  
-            DA.SetData(0, new GH_Machine(M));
+            da.SetData(0, new GH_Machine(m));
         }
 
         /// <summary>

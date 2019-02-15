@@ -22,11 +22,8 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            List<double> TPAdef = new List<double>();
-            for (int i = 0; i < 7; i++) { TPAdef.Add(0); }
-
             pManager.AddTextParameter("Name", "N", "Name of operation", GH_ParamAccess.item,string.Empty);
             pManager.AddGenericParameter("Toolpaths", "TP", "The list of toolpaths to use for the operation.\nWill attempt to process various reasonable collections.", GH_ParamAccess.list); 
 
@@ -35,7 +32,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachineOperationPar(),"Machine Operation", "MO", "A machine operation.", GH_ParamAccess.item);
         }
@@ -43,17 +40,17 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            List<object> TPs = new List<object>();
+            List<object> tPs = new List<object>();
             string name = string.Empty;
 
-            if (!DA.GetData(0, ref name)) { return; }
-            if (!DA.GetDataList(1, TPs)) { return; }
-            int ignores = 0;
-            List<MachineOperation> MOs = MachineOperation.toOperations(TPs, out ignores);
-            if (MOs.Count > 0)
+            if (!da.GetData(0, ref name)) { return; }
+            if (!da.GetDataList(1, tPs)) { return; }
+            int ignores;
+            List<MachineOperation> mOs = MachineOperation.toOperations(tPs, out ignores);
+            if (mOs.Count > 0)
             {
                 if (ignores > 1)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores.ToString() + " invalid elements (probably nulls) were ignored."); }
@@ -62,13 +59,13 @@ namespace CAMel
             }
             else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable Machine Operations");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations");
                 return;
             }
-            List<GH_MachineOperation> GH_MOs = new List<GH_MachineOperation>();
-            foreach(MachineOperation MO in MOs) { GH_MOs.Add(new GH_MachineOperation(MO)); }
+            List<GH_MachineOperation> ghMOs = new List<GH_MachineOperation>();
+            foreach(MachineOperation mO in mOs) { ghMOs.Add(new GH_MachineOperation(mO)); }
 
-            DA.SetDataList(0, GH_MOs);
+            da.SetDataList(0, ghMOs);
         }
 
         /// <summary>

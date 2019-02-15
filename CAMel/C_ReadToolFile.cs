@@ -8,51 +8,17 @@ using Grasshopper.Kernel.Parameters;
 using CAMel.Types;
 
 using CsvHelper.Configuration;
-using CsvHelper.TypeConversion;
 using CsvHelper;
 
 namespace CAMel
 {
     // Mappings for csv helper
-
-    public class ShapeConverter : DefaultTypeConverter
-    {
-        public override object ConvertFromString(TypeConverterOptions tCO, string text)
-        {
-            EndShape ES;
-            switch (text)
-            {
-                case "Ball": ES = EndShape.Ball; break;
-                case "Square": ES = EndShape.Square; break;
-                case "V": ES = EndShape.V; break;
-                case "Other": ES = EndShape.Other; break;
-                default: ES = EndShape.Error; break;
-            }
-            return ES;
-        }
-
-        public override string ConvertToString(TypeConverterOptions tCO, object value)
-        {
-            EndShape ES = (EndShape) value;
-            string text = "Error";
-            switch (ES)
-            {
-                case EndShape.Ball : text = "Ball"; break;
-                case EndShape.Square : text = "Square"; break;
-                case EndShape.V : text = "V"; break;
-                case EndShape.Other: text = "Other"; break;
-                case EndShape.Error: text = "Error"; break;
-            }
-            return text;
-        }
-    }
-
    
     public class MaterialToolMap : CsvClassMap<MaterialToolBuilder>
     {
         public MaterialToolMap()
         {
-            this.Map(m => m.matName).Name("Material");
+            Map(m => m.matName).Name("Material");
             Map(m => m.toolName).Name("Tool");
             Map(m => m.toolNumber).Name("Tool Number");
             Map(m => m.toolWidth).Name("Tool Width");
@@ -85,7 +51,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddParameter(new Param_FilePath(),"File", "F", "File containing Material Tool Details", GH_ParamAccess.item);
         }
@@ -94,43 +60,37 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MaterialToolPar(), "MaterialTools", "MTs", "All Material Tools from the .csv file", GH_ParamAccess.list);
-        }
-
-        protected override void BeforeSolveInstance()
-        {
-            base.BeforeSolveInstance();  
-            
         }
 
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
             string file = string.Empty;
 
-            if (!DA.GetData(0, ref file)) { return; }
+            if (!da.GetData(0, ref file)) { return; }
 
             this.Message = Path.GetFileNameWithoutExtension(file);
 
-            var MTBs = new HashSet<MaterialToolBuilder>();
+            var mTbs = new HashSet<MaterialToolBuilder>();
 
             using (StreamReader fileReader = new StreamReader(file))
             {
                 CsvReader csv = new CsvReader(fileReader);
                 csv.Configuration.WillThrowOnMissingField = false;
                 csv.Configuration.RegisterClassMap<MaterialToolMap>();
-                MTBs.UnionWith(csv.GetRecords<MaterialToolBuilder>());
+                mTbs.UnionWith(csv.GetRecords<MaterialToolBuilder>());
             }
 
-            List<MaterialTool> MTs = new List<MaterialTool>();
-            foreach(MaterialToolBuilder MTB in MTBs) { MTs.Add(new MaterialTool(MTB)); }
+            List<MaterialTool> mTs = new List<MaterialTool>();
+            foreach(MaterialToolBuilder mTb in mTbs) { mTs.Add(new MaterialTool(mTb)); }
 
-            DA.SetDataList(0, MTs);
+            da.SetDataList(0, mTs);
         }
 
         /// <summary>

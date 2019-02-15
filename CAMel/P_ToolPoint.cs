@@ -48,9 +48,9 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Just a point, set direction to Z vector.
-        public ToolPoint(Point3d Pt)
+        public ToolPoint(Point3d pt)
         {
-            this.pt = Pt;
+            this.pt = pt;
             this.dir = new Vector3d(0, 0, 1);
             this.speed = -1;
             this.feed = -1;
@@ -61,10 +61,10 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Use point and direction
-        public ToolPoint(Point3d Pt, Vector3d D)
+        public ToolPoint(Point3d pt, Vector3d d)
         {
-            this.pt = Pt;
-            this.dir = D;
+            this.pt = pt;
+            this.dir = d;
             this.speed = -1;
             this.feed = -1;
             this.error = new List<string>();
@@ -74,10 +74,10 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Use point direction and extra Code
-        public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode)
+        public ToolPoint(Point3d pt, Vector3d d, string preCode, string postCode)
         {
-            this.pt = Pt;
-            this.dir = D;
+            this.pt = pt;
+            this.dir = d;
             this.preCode = preCode;
             this.postCode = postCode;
             this.speed = -1;
@@ -89,10 +89,10 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Use point direction and override speed and feed
-        public ToolPoint(Point3d Pt, Vector3d D, double speed, double feed)
+        public ToolPoint(Point3d pt, Vector3d d, double speed, double feed)
         {
-            this.pt = Pt;
-            this.dir = D;
+            this.pt = pt;
+            this.dir = d;
             this.speed = speed;
             this.feed = feed;
             this.error = new List<string>();
@@ -102,10 +102,10 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Use point direction, override speed and feed and add extra Code
-        public ToolPoint(Point3d Pt, Vector3d D, string preCode, string postCode, double speed, double feed)
+        public ToolPoint(Point3d pt, Vector3d d, string preCode, string postCode, double speed, double feed)
         {
-            this.pt = Pt;
-            this.dir = D;
+            this.pt = pt;
+            this.dir = d;
             this.preCode = preCode;
             this.postCode = postCode;
             this.speed = speed;
@@ -115,19 +115,19 @@ namespace CAMel.Types
             this.name = string.Empty;
         }
         // Copy Constructor
-        private ToolPoint(ToolPoint TP)
+        private ToolPoint(ToolPoint tP)
         {
-            this.pt = TP.pt;
-            this.dir = TP.dir;
-            this.preCode = string.Copy(TP.preCode);
-            this.postCode = string.Copy(TP.postCode);
-            this.speed = TP.speed;
-            this.feed = TP.feed;
-            this.name = string.Copy(TP.name);
+            this.pt = tP.pt;
+            this.dir = tP.dir;
+            this.preCode = string.Copy(tP.preCode);
+            this.postCode = string.Copy(tP.postCode);
+            this.speed = tP.speed;
+            this.feed = tP.feed;
+            this.name = string.Copy(tP.name);
             this.error = new List<string>();
-            foreach( string S in TP.error) { this.error.Add(string.Copy(S)); }
+            foreach( string s in tP.error) { this.error.Add(string.Copy(s)); }
             this.warning = new List<string>();
-            foreach (string S in TP.warning) { this.warning.Add(string.Copy(S)); }
+            foreach (string s in tP.warning) { this.warning.Add(string.Copy(s)); }
         }
 
         public ToolPoint deepClone() => new ToolPoint(this);
@@ -159,11 +159,11 @@ namespace CAMel.Types
             return outp;
         }
 
-        private const double previewLength = 0.2;
-        internal Line toolLine() => new Line(this.pt, this.pt + this.dir* previewLength);
+        private const double _previewLength = 0.2;
+        internal Line toolLine() => new Line(this.pt, this.pt + this.dir* _previewLength);
         public ToolPath getSinglePath() => new ToolPath() { this };
 
-        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * previewLength });
+        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * _previewLength });
 
     }
 
@@ -173,42 +173,42 @@ namespace CAMel.Types
         // Default Constructor, set up at the origin with direction set to 0 vector.
         public GH_ToolPoint() { this.Value = new ToolPoint(); }
         // Create from unwrapped version
-        public GH_ToolPoint(ToolPoint TP) { this.Value = TP.deepClone(); }
+        public GH_ToolPoint(ToolPoint tP) { this.Value = tP.deepClone(); }
         // Copy Constructor
-        public GH_ToolPoint(GH_ToolPoint TP) { this.Value = TP.Value.deepClone(); }
+        public GH_ToolPoint(GH_ToolPoint tP) { this.Value = tP.Value.deepClone(); }
         // Duplicate
         public override IGH_Goo Duplicate() {return new GH_ToolPoint(this); }
   
-        public override bool CastTo<Q>(ref Q target)
+        public override bool CastTo<T>(ref T target)
         {
-            if (typeof(Q).IsAssignableFrom(typeof(ToolPoint)))
+            if (typeof(T).IsAssignableFrom(typeof(ToolPoint)))
             {
                 object ptr = this.Value;
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
-            if (typeof(Q).IsAssignableFrom(typeof(Point3d)))
+            if (typeof(T).IsAssignableFrom(typeof(Point3d)))
             {
                 object ptr = this.Value.pt;
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
-            if (typeof(Q).IsAssignableFrom(typeof(GH_Point)))
+            if (typeof(T).IsAssignableFrom(typeof(GH_Point)))
             {
                 object ptr = new GH_Point(this.Value.pt);
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
-            if (typeof(Q).IsAssignableFrom(typeof(Vector3d)))
+            if (typeof(T).IsAssignableFrom(typeof(Vector3d)))
             {
                 object ptr = this.Value.dir;
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
-            if (typeof(Q).IsAssignableFrom(typeof(GH_Vector)))
+            if (typeof(T).IsAssignableFrom(typeof(GH_Vector)))
             {
                 object ptr =new GH_Vector(this.Value.dir);
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
             return false;
@@ -228,10 +228,10 @@ namespace CAMel.Types
                 this.Value = new ToolPoint(pointGoo.Value);
                 return true;
             }
-            Point3d Pt = Point3d.Unset;
-            if (GH_Convert.ToPoint3d(source, ref Pt, GH_Conversion.Both))
+            Point3d pt = Point3d.Unset;
+            if (GH_Convert.ToPoint3d(source, ref pt, GH_Conversion.Both))
             {
-                this.Value = new ToolPoint(Pt);
+                this.Value = new ToolPoint(pt);
                 return true;
             }
             return false;
@@ -258,9 +258,9 @@ namespace CAMel.Types
 
         public bool Hidden { get; set; }
         public bool IsPreviewCapable => true;
-        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
-        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawWires(args);
-        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+        public BoundingBox ClippingBox => Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => Preview_DrawWires(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => Preview_DrawMeshes(args);
 
         /// <summary>
         /// Provides an Icon for the component.

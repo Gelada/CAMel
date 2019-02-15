@@ -25,7 +25,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddCurveParameter("Curves", "C", "The curves for the tip of the tool to follow", GH_ParamAccess.list);
             pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0,0,1));
@@ -44,7 +44,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachineOperationPar(), "Operation", "O", "Machine Operation", GH_ParamAccess.item);
         }
@@ -52,33 +52,33 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            List<Curve> C = new List<Curve>();
-            Vector3d Dir = new Vector3d();
-            ToolPathAdditions tPA = null;
-            MaterialTool MT = null;
-            IMaterialForm MF = null;
+            List<Curve> c = new List<Curve>();
+            Vector3d dir = new Vector3d();
+            ToolPathAdditions tPa = null;
+            MaterialTool mT = null;
+            IMaterialForm mF = null;
 
 
-            if (!DA.GetDataList(0, C)) { return;}
-            if (!DA.GetData(1, ref Dir)) { return;}
-            DA.GetData(2, ref tPA);
-            if (!DA.GetData(3, ref MT)) { return; }
-            DA.GetData(4, ref MF);
+            if (!da.GetDataList(0, c)) { return;}
+            if (!da.GetData(1, ref dir)) { return;}
+            da.GetData(2, ref tPa);
+            if (!da.GetData(3, ref mT)) { return; }
+            da.GetData(4, ref mF);
 
-            int invalidCurves = 0;
+            int invalidCurves;
 
-            MachineOperation Op = Operations.opIndex3Axis(C, Dir, tPA, MT, MF, out invalidCurves);
+            MachineOperation mO = Operations.opIndex3Axis(c, dir, tPa, mT, mF, out invalidCurves);
 
             if( invalidCurves > 1)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + invalidCurves.ToString() + " invalid curves (probably nulls) were ignored."); }
             else if (invalidCurves > 0)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored."); }
 
-            if (Op.Count > 0) { DA.SetData(0, new GH_MachineOperation(Op)); }
-            else { DA.SetData(0, null); }
+            if (mO.Count > 0) { da.SetData(0, new GH_MachineOperation(mO)); }
+            else { da.SetData(0, null); }
         }
 
         /// <summary>

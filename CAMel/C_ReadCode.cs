@@ -25,7 +25,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Code", "C", "CNC code file", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MachinePar(),"Machine", "M", "Machine to read code", GH_ParamAccess.item);
@@ -34,7 +34,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_ToolPathPar(), "ToolPath", "TP", "Full toolpath described by the file", GH_ParamAccess.item);
             pManager.AddPointParameter("Points", "Pts", "Position of the machine", GH_ParamAccess.list);
@@ -45,21 +45,21 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            string Code = string.Empty;
-            IMachine M = null;
+            string code = string.Empty;
+            IMachine m = null;
 
-            if (!DA.GetData(0, ref Code)) { return; }
-            if (!DA.GetData(1, ref M)) { return; }
+            if (!da.GetData(0, ref code)) { return; }
+            if (!da.GetData(1, ref m)) { return; }
 
-            ToolPath TP = M.readCode(Code);
+            ToolPath tP = m.readCode(code);
 
             List<Point3d> selPt = new List<Point3d>();
             List<Vector3d> selDir = new List<Vector3d>();
 
-            foreach(ToolPoint tp in TP)
+            foreach(ToolPoint tp in tP)
             {
                 if(true)
                 {
@@ -68,10 +68,10 @@ namespace CAMel
                 }
             }
 
-            DA.SetData(0,new GH_ToolPath(TP));
-            DA.SetDataList(1, selPt);
-            DA.SetDataList(2, selDir);
-            DA.SetDataList(3, TP.getSpeedFeed());
+            da.SetData(0,new GH_ToolPath(tP));
+            da.SetDataList(1, selPt);
+            da.SetDataList(2, selDir);
+            da.SetDataList(3, tP.getSpeedFeed());
             
         }
 

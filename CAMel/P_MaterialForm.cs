@@ -15,26 +15,20 @@ namespace CAMel.Types.MaterialForm
 
     public struct MFintersection
     {
-        public MFintersection(Point3d Pt, Vector3d Away,double lineP)
+        public MFintersection(Point3d pt, Vector3d away,double lineP)
         {
-            this.point = Pt;
+            this.point = pt;
             this.lineP = lineP;
             this.isSet = true;
-            this._away = Away;
-            this._away.Unitize();
+            this.away = away;
+            this.away.Unitize();
         }
 
-        public Point3d point { get; private set; }    // Point of intersection
-        private Vector3d _away;
-        public Vector3d away { get { return this._away; } // direction to get away from the material (eg normal)
-            private set
-            {
-                this._away = value;
-                this._away.Unitize();
-            }
-        } 
-        public double lineP { get; private set; }  // position along intersecting line
-        public bool isSet { get; private set; }
+        public Point3d point { get; } // Point of intersection
+        public Vector3d away { get; } // direction to get away from the material (eg normal)
+
+        public double lineP { get; }  // position along intersecting line
+        public bool isSet { get; }
     }
 
     
@@ -47,22 +41,21 @@ namespace CAMel.Types.MaterialForm
             this.first = new MFintersection(); // creates and unset value
             this.midOut = new Vector3d();
         }
-        public List<MFintersection> inters { get; private set; } // List of intersections 
 
-        public double thrDist { get { return this.through.lineP; } }
-        public double firstDist { get { return this.first.lineP; } }
+        private List<MFintersection> inters { get; } // List of intersections 
 
-        public MFintersection through { get; protected set; }// intersection with highest lineParameter
-        public MFintersection first { get; protected set; } // intersection with lowest lineParameter
+        public double thrDist => this.through.lineP;
+        public double firstDist => this.first.lineP; 
 
-        public Point3d mid // midpoint through material
-        {
-            get { return (this.first.point + this.through.point) / 2; }
-        }
+        public MFintersection through { get; private set; }// intersection with highest lineParameter
+        public MFintersection first { get; private set; } // intersection with lowest lineParameter
+
+        public Point3d mid => (this.first.point + this.through.point) / 2; // midpoint through material
+
         private Vector3d _midOut;
         public Vector3d midOut
         { // direction to head to surface from the middle of middle of the line
-            get { return this._midOut; }
+            get => this._midOut; 
             set
             {
                 value.Unitize();
@@ -70,49 +63,45 @@ namespace CAMel.Types.MaterialForm
             }
         }
 
-        public void Add(MFintersection inter)
+        public void add(MFintersection inter)
         {
             this.inters.Add(inter);
 
             if(!this.through.isSet || this.through.lineP < inter.lineP ) { this.through = inter; }
             if(!this.first.isSet || this.first.lineP > inter.lineP) { this.first = inter; }
         }
-        public void Add(Point3d Pt, Vector3d away, double lineP)
+        public void add(Point3d pt, Vector3d away, double lineP)
         {
-            this.Add(new MFintersection(Pt, away, lineP));
+            add(new MFintersection(pt, away, lineP));
         }
 
-        public int Count
-        {
-            get { return this.inters.Count; }
-        }
+        public int count => this.inters.Count;
 
-        public bool hits
-        { get { return (this.inters.Count > 0); } }
+        public bool hits => this.inters.Count > 0;
     }
 
     internal static class MFDefault
     {
-        internal static ToolPath insertRetract(IMaterialForm MF, ToolPath tP)
+        internal static ToolPath insertRetract(IMaterialForm mF, ToolPath tP)
         {
-            if (tP.matTool == null) { matToolException(); }
-            if (MF == null) { matFormException(); }
+            if (tP.matTool == null) { matToolException(); return null; }
+            if (mF == null) { matFormException(); return null; }
             ToolPath irTP = tP.deepClone();
-            irTP.Additions.insert = false;
-            irTP.Additions.retract = false;
+            irTP.additions.insert = false;
+            irTP.additions.retract = false;
 
             MFintersection inter;
 
-            double utol = MF.safeDistance * 1.05;
+            double uTol = mF.safeDistance * 1.05;
             ToolPoint tempTP;
 
             // check if we have something to do
-            if (tP.Additions.insert && irTP.Count > 0) // add insert
+            if (tP.additions.insert && irTP.Count > 0) // add insert
             {
                 //note we do this backwards adding points to the start of the path.
 
                 // get distance to surface and insert direction
-                inter = MF.intersect(irTP.firstP, 0).through;
+                inter = mF.intersect(irTP.firstP, 0).through;
 
                 // check to see if there was an intersection
                 if (inter.isSet)
@@ -127,13 +116,13 @@ namespace CAMel.Types.MaterialForm
                     // point out at safe distance
 
                     tempTP = irTP.firstP.deepClone();
-                    tempTP.pt = tempTP.pt + inter.away * utol;
+                    tempTP.pt = tempTP.pt + inter.away * uTol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Insert(0, tempTP);
                 } else
                 {
                     // check intersection with material extended to safe distance
-                    inter = MF.intersect(irTP.firstP,utol).through;
+                    inter = mF.intersect(irTP.firstP,uTol).through;
                     if(inter.isSet)
                     {
                         // point out at safe distance
@@ -144,10 +133,10 @@ namespace CAMel.Types.MaterialForm
                     } //  otherwise nothing needs to be added as we do not interact with material
                 }
             }
-            if (tP.Additions.retract && irTP.Count > 0) // add retract
+            if (tP.additions.retract && irTP.Count > 0) // add retract
             {
                 // get distance to surface and retract direction
-                inter = MF.intersect(irTP.lastP, 0).through;
+                inter = mF.intersect(irTP.lastP, 0).through;
                 if (inter.isSet)
                 {
                     tempTP = irTP.lastP.deepClone();
@@ -163,13 +152,13 @@ namespace CAMel.Types.MaterialForm
                     // Pull away to safe distance
 
                     tempTP = irTP.lastP.deepClone();
-                    tempTP.pt = tempTP.pt + inter.away * utol;
+                    tempTP.pt = tempTP.pt + inter.away * uTol;
                     tempTP.feed = 0; // we can use a rapid move
                     irTP.Add(tempTP);
                 } else
                 {
                     // check intersection with material extended to safe distance
-                    inter = MF.intersect(irTP.lastP, utol).through;
+                    inter = mF.intersect(irTP.lastP, uTol).through;
                     if (inter.isSet)
                     {
                         // point out at safe distance
@@ -184,9 +173,9 @@ namespace CAMel.Types.MaterialForm
         }
 
         // Does the line intersect the surface of the material?
-        internal static bool lineIntersect(IMaterialForm MF,Point3d start, Point3d end, double tolerance, out MFintersects inters)
+        internal static bool lineIntersect(IMaterialForm mF,Point3d start, Point3d end, double tolerance, out MFintersects inters)
         {
-            inters = MF.intersect(start, end - start, tolerance);
+            inters = mF.intersect(start, end - start, tolerance);
             double lLength = (end - start).Length;
             return (inters.hits && 
                 ((inters.firstDist > 0 && inters.firstDist < lLength) ||
@@ -194,64 +183,64 @@ namespace CAMel.Types.MaterialForm
                 );
         }
 
-        internal static ToolPath refine(IMaterialForm MF, ToolPath TP,IMachine M)
+        internal static ToolPath refine(IMaterialForm mF, ToolPath tP,IMachine m)
         {
             // for each line check if it intersects 
             // the MF and add those points. 
             // also add the midpoint if going more than half way through
             // TODO problem of long lines getting deep 
 
-            ToolPath refined = TP.deepCloneWithNewPoints(new List<ToolPoint>());
+            ToolPath refined = tP.deepCloneWithNewPoints(new List<ToolPoint>());
 
             // Add the first ToolPoint
 
-            if (TP.Count > 0) { refined.Add(TP.firstP); }
+            if (tP.Count > 0) { refined.Add(tP.firstP); }
             
             double lineLen;
             MFintersects inters;
 
             // TODO refine on significant changes of direction
-            for (int i = 0; i < TP.Count - 1; i++)
+            for (int i = 0; i < tP.Count - 1; i++)
             {
                 // for every line between points check if we leave or enter the material
 
-                if(MF.intersect(TP[i].pt, TP[i + 1].pt, 0, out inters))
+                if(mF.intersect(tP[i].pt, tP[i + 1].pt, 0, out inters))
                 {
-                    lineLen = (TP[i + 1].pt - TP[i].pt).Length;
+                    lineLen = (tP[i + 1].pt - tP[i].pt).Length;
 
                     if (inters.firstDist > 0) // add first intersection if on line
                     {
-                        refined.Add(M.interpolate(TP[i], TP[i + 1],TP.matTool, inters.firstDist / lineLen, false));
+                        refined.Add(m.interpolate(tP[i], tP[i + 1],tP.matTool, inters.firstDist / lineLen, false));
                     }
                    
                     if(inters.firstDist > 0 && lineLen > inters.thrDist) // add midpoint of intersection if it passes right through
                     {
-                        refined.Add(M.interpolate(TP[i], TP[i + 1],TP.matTool, (inters.firstDist+inters.thrDist) / (2.0*lineLen),false));
+                        refined.Add(m.interpolate(tP[i], tP[i + 1],tP.matTool, (inters.firstDist+inters.thrDist) / (2.0*lineLen),false));
                     }
                     if(lineLen > inters.thrDist) // add last intersection if on line
                     {
-                        refined.Add(M.interpolate(TP[i], TP[i + 1], TP.matTool, inters.thrDist / lineLen,false));
+                        refined.Add(m.interpolate(tP[i], tP[i + 1], tP.matTool, inters.thrDist / lineLen,false));
                     }
 
                 }
-                refined.Add(TP[i + 1]);
+                refined.Add(tP[i + 1]);
             }
 
             return refined;
         }
     }
 
-    public interface IMaterialForm : ICAMel_Base
+    public interface IMaterialForm : ICAMelBase
     {
         double safeDistance { get; }
         double materialTolerance { get; }
 
-        MFintersects intersect(Point3d Pt, Vector3d direction, double tolerance);
-        MFintersects intersect(ToolPoint TP, double tolerance);
+        MFintersects intersect(Point3d pt, Vector3d direction, double tolerance);
+        MFintersects intersect(ToolPoint tP, double tolerance);
         bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inters); 
 
-        ToolPath refine(ToolPath TP,IMachine M);
-        ToolPath insertRetract(ToolPath TP);
+        ToolPath refine(ToolPath tP,IMachine m);
+        ToolPath insertRetract(ToolPath tP);
 
         Mesh getMesh();
         BoundingBox getBoundingBox();
@@ -260,49 +249,46 @@ namespace CAMel.Types.MaterialForm
     public static class MaterialForm
     {
         // Currently links to grasshopper to use "CastTo" behaviours. 
-        public static bool create(IGH_Goo inputGeometry, double tolerance, double safeD, out IMaterialForm MF)
+        public static bool create(IGH_Goo inputGeometry, double tolerance, double safeD, out IMaterialForm mF)
         {
-            if(inputGeometry.CastTo<Box>(out Box BoxT))
+            if (inputGeometry.CastTo(out Box boxT))
             {
-                MF = create(BoxT, tolerance, safeD);
+                mF = create(boxT, tolerance, safeD);
                 return true;
             }
-            else if (inputGeometry.CastTo<Cylinder>(out Cylinder CyT))
+            if (inputGeometry.CastTo(out Cylinder cyT))
             {
-                MF = create(CyT, tolerance, safeD);
+                mF = create(cyT, tolerance, safeD);
                 return true;
             }
-            else if (inputGeometry.CastTo<Mesh>(out Mesh meshT))
+            if (inputGeometry.CastTo(out Mesh meshT))
             {
-                MF = create(meshT, tolerance, safeD);
+                mF = create(meshT, tolerance, safeD);
                 return true;
             }
-            else if (inputGeometry.CastTo<Surface>(out Surface surfT))
+            if (inputGeometry.CastTo(out Surface surfT))
             {
-                MF = create(surfT, tolerance, safeD);
+                mF = create(surfT, tolerance, safeD);
                 return true;
             }
-            else if (inputGeometry.CastTo<Brep>(out Brep brepT))
+            if (inputGeometry.CastTo(out Brep brepT))
             {
-                MF = create(brepT, tolerance, safeD);
+                mF = create(brepT, tolerance, safeD);
                 return true;
             }
-            else
-            {
-                MF = null;
-                return false;
-            }
+            mF = null;
+            return false;
         }
 
         private static IMaterialForm create(Surface inputGeometry, double tolerance, double safeD)
         {
-            Cylinder Cy = new Cylinder();
+            Cylinder Cy;
             if (inputGeometry.TryGetCylinder(out Cy))
             {
                 // Cope with bug in TryGetCylinder
-                BoundingBox BB = inputGeometry.GetBoundingBox(Cy.CircleAt(0).Plane);
-                Cy.Height1 = BB.Min.Z;
-                Cy.Height2 = BB.Max.Z;
+                BoundingBox bb = inputGeometry.GetBoundingBox(Cy.CircleAt(0).Plane);
+                Cy.Height1 = bb.Min.Z;
+                Cy.Height2 = bb.Max.Z;
                 return create(Cy, tolerance, safeD);
             }
             else
@@ -314,20 +300,17 @@ namespace CAMel.Types.MaterialForm
 
         private static IMaterialForm create(Brep inputGeometry, double tolerance, double safeD)
         {
-            Cylinder Cy = new Cylinder();
-            if(inputGeometry.Surfaces.Count == 1 && inputGeometry.Surfaces[0].TryGetCylinder(out Cy))
+            if(inputGeometry.Surfaces.Count == 1 && inputGeometry.Surfaces[0].TryGetCylinder(out Cylinder cy))
             {
                 // Cope with bug in TryGetCylinder
-                BoundingBox BB = inputGeometry.GetBoundingBox(Cy.CircleAt(0).Plane);
-                Cy.Height1 = BB.Min.Z;
-                Cy.Height2 = BB.Max.Z;
-                return create(Cy, tolerance, safeD);
+                BoundingBox bb = inputGeometry.GetBoundingBox(cy.CircleAt(0).Plane);
+                cy.Height1 = bb.Min.Z;
+                cy.Height2 = bb.Max.Z;
+                return create(cy, tolerance, safeD);
             }
-            else
-            {
-                // TODO throw warning that we are just using bounding box
-                return create(inputGeometry.GetBoundingBox(false), tolerance, safeD);
-            }
+
+            // TODO throw warning that we are just using bounding box
+            return create(inputGeometry.GetBoundingBox(false), tolerance, safeD);
         }
 
         private static IMaterialForm create(Mesh inputGeometry, double tolerance, double safeD)
@@ -343,22 +326,22 @@ namespace CAMel.Types.MaterialForm
             }
         }
 
-        private static IMaterialForm create(Box B, double tolerance, double safeD)
+        private static IMaterialForm create(Box b, double tolerance, double safeD)
         {
-            MFBox mB = new MFBox(B, tolerance, safeD);
-            return (IMaterialForm) mB;
+            MFBox mB = new MFBox(b, tolerance, safeD);
+            return mB;
         }
 
-        private static IMaterialForm create(BoundingBox BB, double tolerance, double safeD)
+        private static IMaterialForm create(BoundingBox bb, double tolerance, double safeD)
         {
-            MFBox mB = new MFBox(new Box(BB), tolerance, safeD);
-            return (IMaterialForm)mB;
+            MFBox mB = new MFBox(new Box(bb), tolerance, safeD);
+            return mB;
         }
 
-        private static IMaterialForm create(Cylinder Cy, double tolerance, double safeD)
+        private static IMaterialForm create(Cylinder cy, double tolerance, double safeD)
         {
-            MFCylinder mC = new MFCylinder(Cy, tolerance, safeD);
-            return (IMaterialForm)mC;
+            MFCylinder mC = new MFCylinder(cy, tolerance, safeD);
+            return mC;
         }
     }
 }
@@ -367,36 +350,36 @@ namespace CAMel.Types.MaterialForm
 namespace CAMel.Types
 {
     // Grasshopper Type Wrapper
-    public class GH_MaterialForm : CAMel_Goo<IMaterialForm>, IGH_PreviewData
+    public sealed class GH_MaterialForm : CAMel_Goo<IMaterialForm>, IGH_PreviewData
     {
         public BoundingBox ClippingBox => this.Value.getBoundingBox();
 
         public GH_MaterialForm() { this.Value = null; }
         // Construct from unwrapped object
-        public GH_MaterialForm(IMaterialForm MF) { this.Value = MF; }
+        public GH_MaterialForm(IMaterialForm mF) { this.Value = mF; }
         // Copy Constructor (just reference as MaterialForm is Immutable)
-        public GH_MaterialForm(GH_MaterialForm MF) { this.Value = MF.Value; }
+        public GH_MaterialForm(GH_MaterialForm mF) { this.Value = mF.Value; }
         // Duplicate
         public override IGH_Goo Duplicate() { return new GH_MaterialForm(this); }
 
-        public override bool CastTo<Q>(ref Q target)
+        public override bool CastTo<T>(ref T target)
         {
             // Trivial base case, we already have a IMaterialForm, the cast is safe
-            if (typeof(Q).IsAssignableFrom(typeof(IMaterialForm)))
+            if (typeof(T).IsAssignableFrom(typeof(IMaterialForm)))
             {
                 object ptr = this.Value;
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
 
             // Cast to a Mesh if that is asked for.
-            if (typeof(Q).IsAssignableFrom(typeof(GH_Mesh)))
+            if (typeof(T).IsAssignableFrom(typeof(GH_Mesh)))
             {
                 Mesh m = this.Value.getMesh();
                 if (m.IsValid)
                 {
-                    object GHm = new GH_Mesh(m);
-                    target = (Q)GHm;
+                    object gHm = new GH_Mesh(m);
+                    target = (T)gHm;
                     return true;
                 }
             }
@@ -438,9 +421,9 @@ namespace CAMel.Types
 
         public bool Hidden { get; set; }
         public bool IsPreviewCapable => true;
-        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
-        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
-        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+        public BoundingBox ClippingBox => Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => Preview_DrawMeshes(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => Preview_DrawMeshes(args);
 
         /// <summary>
         /// Provides an Icon for the component.

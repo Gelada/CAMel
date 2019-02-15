@@ -23,7 +23,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             // TODO This needs to be replaced with the new material form accepting either a list of boxes, 
             // a plane, or a list of box unions (need good name) all into one parameter
@@ -37,7 +37,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MaterialFormPar(),"MaterialForm", "MF", "Details of material position", GH_ParamAccess.item);
         }
@@ -45,21 +45,21 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
 
-            IGH_Goo G = null;
-            double SD = 0, T=0;
+            IGH_Goo geom = null;
+            double sd = 0, t = 0;
 
-            if (!DA.GetData(0, ref G)) { return; }
-            if (!DA.GetData(1, ref SD)) { return; }
-            if (!DA.GetData(2, ref T)) { return; }
-            IMaterialForm MF = null;
+            if (!da.GetData(0, ref geom)) { return; }
+            if (!da.GetData(1, ref sd)) { return; }
+            if (!da.GetData(2, ref t)) { return; }
+            IMaterialForm mf;
 
-            if (MaterialForm.create(G, T, SD, out MF))
+            if (MaterialForm.create(geom, t, sd, out mf))
             {
-                DA.SetData(0, new GH_MaterialForm(MF));
+                da.SetData(0, new GH_MaterialForm(mf));
             }
             else
             {

@@ -2,7 +2,6 @@
 //using System.Runtime.InteropServices;
 
 using Rhino.DocObjects;
-using Rhino.Geometry;
 //using Rhino.DocObjects.Custom;
 using Rhino.Runtime;
 //using Rhino.Collections;
@@ -12,17 +11,17 @@ namespace CAMel.Types
 {
     public static class RhinoObjectExtension
     {
-        const string keyN = "95351F55-3489-40D1-BDBA-F49C0B84BDEA";
-        const string guidN = "95351F55-3489-40D1-BDBA-F49C0B84BDEF";
+        const string _keyN = "95351F55-3489-40D1-BDBA-F49C0B84BDEA";
+        const string _guidN = "95351F55-3489-40D1-BDBA-F49C0B84BDEF";
 
         public static double getKey (this RhinoObject ro)
         {
             Guid id;
             double key;
             if (ro != null &&
-                ro.Attributes.UserDictionary.TryGetGuid(guidN, out id) &&
+                ro.Attributes.UserDictionary.TryGetGuid(_guidN, out id) &&
                 id == ro.Id &&
-                ro.Attributes.UserDictionary.TryGetDouble(keyN, out key))
+                ro.Attributes.UserDictionary.TryGetDouble(_keyN, out key))
             { return key; }
 
             return double.NaN;
@@ -32,7 +31,7 @@ namespace CAMel.Types
         {
             double key;
             if (ro != null &&
-                ro.UserDictionary.TryGetDouble(keyN, out key))
+                ro.UserDictionary.TryGetDouble(_keyN, out key))
             { return key; }
 
             return double.NaN;
@@ -42,8 +41,8 @@ namespace CAMel.Types
         {
             if (ro != null)
             {
-                ro.Attributes.UserDictionary.Set(keyN, key);
-                ro.Attributes.UserDictionary.Set(guidN, ro.Id);
+                ro.Attributes.UserDictionary.Set(_keyN, key);
+                ro.Attributes.UserDictionary.Set(_guidN, ro.Id);
                 ro.CommitChanges();
                 return true;
             }
@@ -53,7 +52,7 @@ namespace CAMel.Types
         {
             if (ro != null)
             {
-                ro.UserDictionary.Set(keyN, key);
+                ro.UserDictionary.Set(_keyN, key);
                 return true;
             }
             return false;

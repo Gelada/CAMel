@@ -24,7 +24,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddCurveParameter("Paths", "P", "Paths to project onto surface", GH_ParamAccess.list);
             pManager.AddNumberParameter("Projection", "Pr", "Type of projection to use.\n 0: Parallel\n 1: Cylindrical\n 2: Spherical", GH_ParamAccess.item,0);
@@ -37,7 +37,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_SurfacePathPar(), "SurfacePath", "SP", "Surfacing Path", GH_ParamAccess.item);
         }
@@ -45,38 +45,38 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            List<Curve> Paths = new List<Curve>();
-            int Pr = 0;
-            double Prd = 0;
-            Curve CC = null;
-            Vector3d Dir = new Vector3d(0, 0, -1);
-            Point3d Cen = new Point3d(0, 0, 0);
-            int TD = 0;
-            double TDd = 0;
+            List<Curve> paths = new List<Curve>();
+            int prT;
+            double prD = 0;
+            Curve cc = null;
+            Vector3d dir = new Vector3d(0, 0, -1);
+            Point3d cen = new Point3d(0, 0, 0);
+            int tD;
+            double tDd = 0;
 
-            SurfacePath SP;
+            SurfacePath sP;
 
-            if (!DA.GetDataList(0, Paths)) { return; }
-            if (!DA.GetData(5, ref TDd)) { return; }
-            TD = (int)TDd;
+            if (!da.GetDataList(0, paths)) { return; }
+            if (!da.GetData(5, ref tDd)) { return; }
+            tD = (int)tDd;
             // set Surfacing direction
-            SurfToolDir STD;
-            switch (TD)
+            SurfToolDir sTD;
+            switch (tD)
             {
                 case 0:
-                    STD = SurfToolDir.Projection;
+                    sTD = SurfToolDir.Projection;
                     break;
                 case 1:
-                    STD = SurfToolDir.PathTangent;
+                    sTD = SurfToolDir.PathTangent;
                     break;
                 case 2:
-                    STD = SurfToolDir.PathNormal;
+                    sTD = SurfToolDir.PathNormal;
                     break;
                 case 3:
-                    STD = SurfToolDir.Normal;
+                    sTD = SurfToolDir.Normal;
                     break;
                 default:
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
@@ -84,29 +84,29 @@ namespace CAMel
             }
 
             // find the projection type (will effect the information we wish to use)
-            if (!DA.GetData(1, ref Prd)) { return; }
-            Pr = (int)Prd;
-            switch (Pr)
+            if (!da.GetData(1, ref prD)) { return; }
+            prT = (int)prD;
+            switch (prT)
             {
                 case 0: // Parallel
-                    if (!DA.GetData(3, ref Dir)) { return; }
-                    SP = new SurfacePath(Paths, Dir, STD);
+                    if (!da.GetData(3, ref dir)) { return; }
+                    sP = new SurfacePath(paths, dir, sTD);
                     break;
                 case 1: // Cylindrical
-                    if (!DA.GetData(2, ref CC)) { return; }
-                    if (!DA.GetData(3, ref Dir)) { return; }
-                    SP = new SurfacePath(Paths,Dir,CC,STD);
+                    if (!da.GetData(2, ref cc)) { return; }
+                    if (!da.GetData(3, ref dir)) { return; }
+                    sP = new SurfacePath(paths,dir,cc,sTD);
                     break;
                 case 2: // Spherical
-                    if (!DA.GetData(4, ref Cen)) { return; }
-                    SP = new SurfacePath(Paths, Cen, STD);
+                    if (!da.GetData(4, ref cen)) { return; }
+                    sP = new SurfacePath(paths, cen, sTD);
                     break;
                 default:
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter Pr can only have values 0,1 or 2");
                 return;
             }
 
-            DA.SetData(0, new GH_SurfacePath(SP));
+            da.SetData(0, new GH_SurfacePath(sP));
         }
 
         /// <summary>

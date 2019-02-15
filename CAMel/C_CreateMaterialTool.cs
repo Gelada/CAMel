@@ -21,7 +21,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Material Name", "MN", "Name of the material", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Tool Name", "TN", "Name of the tool", GH_ParamAccess.item, string.Empty);
@@ -43,7 +43,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTool", "MT", "Details of material and the tool cutting it", GH_ParamAccess.item);
         }
@@ -51,57 +51,57 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
             string matName = string.Empty;
             string toolName = string.Empty;
 
             int T = 1;
-            double S = 0, CF = 0, PF = 0, CD = 0, FD = 0, To = 0, mS = 0, TW = 0, IW=0, TL = 0, SL =1;
+            double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW=0, tL = 0, sL =1;
 
             string toolShape = string.Empty;
-            EndShape ES;
+            EndShape eS;
 
-            if (!DA.GetData("Material Name", ref matName)) { return; }
-            if (!DA.GetData("Tool Name", ref toolName)) { return; }
-            if (!DA.GetData("Tool Number", ref T)) { return; }
-            if (!DA.GetData("Speed", ref S)) { return; }
-            if (!DA.GetData("Cut Feed", ref CF)) { return; }
-            if (!DA.GetData("Plunge Feed", ref PF)) { return; }
-            if (!DA.GetData("Cut Depth", ref CD)) { return; }
-            if (!DA.GetData("Finish Depth", ref FD)) { return; }
-            if (!DA.GetData("Tolerance", ref To)) { return; }
-            if (!DA.GetData("minStep", ref mS)) { return; }
-            if (!DA.GetData("Tool Width", ref TW)) { return; }
-            if (!DA.GetData("Insert Width", ref IW)) { return; }
-            if (!DA.GetData("Tool Length", ref TL)) { return; }
-            if (!DA.GetData("Tool Shape", ref toolShape)) { return; }
-            if (!DA.GetData("Side Load", ref SL)) { return; }
+            if (!da.GetData("Material Name", ref matName)) { return; }
+            if (!da.GetData("Tool Name", ref toolName)) { return; }
+            if (!da.GetData("Tool Number", ref T)) { return; }
+            if (!da.GetData("Speed", ref s)) { return; }
+            if (!da.GetData("Cut Feed", ref cf)) { return; }
+            if (!da.GetData("Plunge Feed", ref pf)) { return; }
+            if (!da.GetData("Cut Depth", ref cd)) { return; }
+            if (!da.GetData("Finish Depth", ref fd)) { return; }
+            if (!da.GetData("Tolerance", ref to)) { return; }
+            if (!da.GetData("minStep", ref mS)) { return; }
+            if (!da.GetData("Tool Width", ref tW)) { return; }
+            if (!da.GetData("Insert Width", ref iW)) { return; }
+            if (!da.GetData("Tool Length", ref tL)) { return; }
+            if (!da.GetData("Tool Shape", ref toolShape)) { return; }
+            if (!da.GetData("Side Load", ref sL)) { return; }
 
             switch (toolShape)
             {
                 case "Ball":
-                    ES = EndShape.Ball;
+                    eS = EndShape.Ball;
                     break;
                 case "Square":
-                    ES = EndShape.Square;
+                    eS = EndShape.Square;
                     break;
                 case "V":
-                    ES = EndShape.V;
+                    eS = EndShape.V;
                     break;
                 case "Other":
-                    ES = EndShape.Other;
+                    eS = EndShape.Other;
                     break;
                 default:
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "End Shape not recognised. Options are \"Ball\", \"Square\", \"V\" use \"Other\" to avoid warning.");
-                    ES = EndShape.Other;
+                    eS = EndShape.Other;
                     break;
             }
 
-            MaterialTool MT = new MaterialTool(matName, toolName, T, S, CF, PF, CD, FD, TW, IW, TL, ES, To, mS, SL);
+            MaterialTool mT = new MaterialTool(matName, toolName, T, s, cf, pf, cd, fd, tW, iW, tL, eS, to, mS, sL);
 
-            DA.SetData(0, new GH_MaterialTool(MT));
+            da.SetData(0, new GH_MaterialTool(mT));
         }
      
         /// <summary>

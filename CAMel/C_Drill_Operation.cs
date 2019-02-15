@@ -25,7 +25,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddCircleParameter("Drill Points", "D", "A list of circles. The centre of each circle gives the position to drill, the orientation of the circle gives the tool direction and the radius gives the depth.", GH_ParamAccess.item);
             pManager.AddNumberParameter("Peck Depth", "P", "Depth of Peck", GH_ParamAccess.item, 0);
@@ -39,7 +39,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachineOperationPar(), "Operation", "O", "Machine Operation", GH_ParamAccess.item);
         }
@@ -47,25 +47,25 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            Circle D = new Circle();
+            Circle circ = new Circle();
             double peck = 0;
-            MaterialTool MT = null;
-            IMaterialForm MF = null;
+            MaterialTool mT = null;
+            IMaterialForm mF = null;
 
-            if (!DA.GetData(0, ref D)) { return; }
-            if (!DA.GetData(1, ref peck)) { return; }
-            if (!DA.GetData(2, ref MT)) { return; }
-            DA.GetData(3, ref MF);
+            if (!da.GetData(0, ref circ)) { return; }
+            if (!da.GetData(1, ref peck)) { return; }
+            if (!da.GetData(2, ref mT)) { return; }
+            da.GetData(3, ref mF);
 
-            if (D.Normal.Length == 0)
+            if (Math.Abs(circ.Normal.Length) < CAMel_Goo.tolerance)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Cannot process a circle who's normal is given as the zero vector. Check for null inputs."); }
 
-            MachineOperation Op = drillOperation(D, peck, MT, MF);
+            MachineOperation mO = drillOperation(circ, peck, mT, mF);
 
-            DA.SetData(0, new GH_MachineOperation(Op));
+            da.SetData(0, new GH_MachineOperation(mO));
         }
 
         /// <summary>

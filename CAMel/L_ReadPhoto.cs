@@ -14,7 +14,7 @@ namespace CAMel
 {
     public static class ReadPhoto
     {
-        public static  List<Curve> trace(string filename, int Blur, int Jump, bool debug, out List<string> times)
+        public static  List<Curve> trace(string filename, int blur, int jump, bool debug, out List<string> times)
         {
             Stopwatch watch = Stopwatch.StartNew();
 
@@ -27,7 +27,7 @@ namespace CAMel
 
             CvInvoke.CvtColor(imgMat, imgMat, ColorConversion.Bgr2Gray);
 
-            CvInvoke.GaussianBlur(imgMat, imgMat, new Size(2 * Blur + 1, 2 * Blur + 1), 0, 0);
+            CvInvoke.GaussianBlur(imgMat, imgMat, new Size(2 * blur + 1, 2 * blur + 1), 0, 0);
 
             if (debug)
             {
@@ -36,24 +36,24 @@ namespace CAMel
                 watch = Stopwatch.StartNew();
             }
 
-            Mat Thresh = new Mat();
-            CvInvoke.AdaptiveThreshold(imgMat, Thresh, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 51, 15);
+            Mat thresh = new Mat();
+            CvInvoke.AdaptiveThreshold(imgMat, thresh, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 51, 15);
             imgMat.Dispose();
 
-            CvInvoke.BitwiseNot(Thresh, Thresh);
+            CvInvoke.BitwiseNot(thresh, thresh);
 
             if (debug)
             {
                 watch.Stop();
                 times.Add("Threshold: " + watch.ElapsedMilliseconds + " ms");
-                Thresh.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Thresholded.png"));
+                thresh.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Thresholded.png"));
                 watch = Stopwatch.StartNew();
             }
 
             // Find the outer contour, this will fill in any holes in the path
             // It does assume that no paths are loops. 
             VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
-            CvInvoke.FindContours(Thresh, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
+            CvInvoke.FindContours(thresh, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
 
             VectorOfVectorOfPoint usecontours = new VectorOfVectorOfPoint();
             for (int i = 0; i < contours.Size; i++)
@@ -64,25 +64,25 @@ namespace CAMel
                 }
             }
 
-            Mat ContourBM = new Mat(Thresh.Size, Thresh.Depth, 1);
-            ContourBM.SetTo(new MCvScalar(0));
-            Thresh.Dispose();
+            Mat contourBm = new Mat(thresh.Size, thresh.Depth, 1);
+            contourBm.SetTo(new MCvScalar(0));
+            thresh.Dispose();
 
-            CvInvoke.DrawContours(ContourBM, usecontours, -1, new MCvScalar(255), -1);
+            CvInvoke.DrawContours(contourBm, usecontours, -1, new MCvScalar(255), -1);
 
             if (debug)
             {
                 watch.Stop();
                 times.Add("Redraw Main paths: " + watch.ElapsedMilliseconds + " ms");
-                ContourBM.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Redrawn.png"));
+                contourBm.Save(System.IO.Path.Combine(filepath, "CAMelTrace_Redrawn.png"));
                 watch = Stopwatch.StartNew();
             }
 
             // Thin the region to get the center of the curve, with some small branches
 
             Mat thin = new Mat();
-            XImgprocInvoke.Thinning(ContourBM, thin, ThinningTypes.GuoHall);
-            ContourBM.Dispose();
+            XImgprocInvoke.Thinning(contourBm, thin, ThinningTypes.GuoHall);
+            contourBm.Dispose();
 
             if (debug)
             {
@@ -166,40 +166,40 @@ namespace CAMel
                 return y.GetLength().CompareTo(x.GetLength());
             });
 
-            List<Curve> Jcurves = new List<Curve>();
-            List<Curve> Tcurves = new List<Curve>();
+            List<Curve> jCurves = new List<Curve>();
+            List<Curve> tCurves = new List<Curve>();
 
-            if (curves.Count > 0) { Tcurves.Add(curves[0]); }
-            Jcurves = Tcurves;
+            if (curves.Count > 0) { tCurves.Add(curves[0]); }
+            jCurves = tCurves;
             for (int i = 1; i < curves.Count; i++)
             {
-                Tcurves.Add(curves[i]);
-                Jcurves = new List<Curve>();
-                Jcurves.AddRange(Curve.JoinCurves(Tcurves, 10, false));
-                Tcurves = Jcurves;
+                tCurves.Add(curves[i]);
+                jCurves = new List<Curve>();
+                jCurves.AddRange(Curve.JoinCurves(tCurves, 10, false));
+                tCurves = jCurves;
             }
 
             // Find centre at 0, remove short curves and do final join.
 
-            Tcurves = Jcurves;
-            Jcurves = new List<Curve>();
+            tCurves = jCurves;
+            jCurves = new List<Curve>();
 
-            BoundingBox BB = new BoundingBox();
-            for (int i = 0; i < Tcurves.Count; i++)
+            BoundingBox bb = new BoundingBox();
+            for (int i = 0; i < tCurves.Count; i++)
             {
-                if (Tcurves[i].GetLength() > Jump * 4)
+                if (tCurves[i].GetLength() > jump * 4)
                 {
-                    Jcurves.Add(Tcurves[i]);
-                    BB.Union(Tcurves[i].GetBoundingBox(false));
+                    jCurves.Add(tCurves[i]);
+                    bb.Union(tCurves[i].GetBoundingBox(false));
                 }
             }
-            Tcurves = Jcurves;
-            Jcurves = new List<Curve>();
-            Jcurves.AddRange(Curve.JoinCurves(Tcurves, Jump, false));
+            tCurves = jCurves;
+            jCurves = new List<Curve>();
+            jCurves.AddRange(Curve.JoinCurves(tCurves, jump, false));
 
             // Move to centre.
-            for (int i = 0; i < Jcurves.Count; i++)
-            { Jcurves[i].Translate(-(Vector3d)BB.Center); }
+            for (int i = 0; i < jCurves.Count; i++)
+            { jCurves[i].Translate(-(Vector3d)bb.Center); }
 
             if (debug)
             {
@@ -208,7 +208,7 @@ namespace CAMel
             }
             watch.Stop();
 
-            return Jcurves;
+            return jCurves;
         }
 
         private static Point3d pt2R(System.Drawing.Point p)

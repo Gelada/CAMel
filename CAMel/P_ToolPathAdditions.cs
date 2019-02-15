@@ -12,7 +12,7 @@ using Grasshopper.Kernel.Types;
 namespace CAMel.Types
 {
     // Features we might add to the path
-    public class ToolPathAdditions : ICAMel_Base
+    public class ToolPathAdditions : ICAMelBase
     {
         public bool insert { get; set; }
         public bool retract { get; set; }
@@ -46,19 +46,19 @@ namespace CAMel.Types
             this.onion = new List<double>() { 0 };
         }
 
-        private ToolPathAdditions(ToolPathAdditions TPA)
+        private ToolPathAdditions(ToolPathAdditions tPa)
         {
-            this.insert = TPA.insert;
-            this.retract = TPA.retract;
-            this.stepDown = TPA.stepDown;
-            this.sdDropStart = TPA.sdDropStart;
-            this.sdDropMiddle = TPA.sdDropMiddle;
-            this.sdDropEnd = TPA.sdDropEnd;
+            this.insert = tPa.insert;
+            this.retract = tPa.retract;
+            this.stepDown = tPa.stepDown;
+            this.sdDropStart = tPa.sdDropStart;
+            this.sdDropMiddle = tPa.sdDropMiddle;
+            this.sdDropEnd = tPa.sdDropEnd;
             this.onion = new List<double>();
-            this.onion.AddRange(TPA.onion);
-            this.threeAxisHeightOffset = TPA.threeAxisHeightOffset;
-            this.tabbing = TPA.tabbing;
-            this.leadCurvature = TPA.leadCurvature;
+            this.onion.AddRange(tPa.onion);
+            this.threeAxisHeightOffset = tPa.threeAxisHeightOffset;
+            this.tabbing = tPa.tabbing;
+            this.leadCurvature = tPa.leadCurvature;
         }
 
         public ToolPathAdditions deepClone() => new ToolPathAdditions(this);
@@ -100,7 +100,7 @@ namespace CAMel.Types
                     this.stepDown ||
                     this.threeAxisHeightOffset ||
                     this.tabbing ||
-                    (this.onion.Count == 1 && this.onion[0] != 0) ||
+                    (this.onion.Count == 1 && Math.Abs(this.onion[0]) > CAMel_Goo.tolerance) ||
                     this.onion.Count > 1;
             }
         }
@@ -120,14 +120,14 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_ToolPathAdditions : CAMel_Goo<ToolPathAdditions>
+    public sealed class GH_ToolPathAdditions : CAMel_Goo<ToolPathAdditions>
     {
         // Default Constructor
         public GH_ToolPathAdditions() { this.Value = new ToolPathAdditions(); }
         // Create from unwrapped version
-        public GH_ToolPathAdditions(ToolPathAdditions TP) { this.Value = TP; }
+        public GH_ToolPathAdditions(ToolPathAdditions tP) { this.Value = tP; }
         // Copy Constructor
-        public GH_ToolPathAdditions(GH_ToolPathAdditions TP) { this.Value = TP.Value; }
+        public GH_ToolPathAdditions(GH_ToolPathAdditions tP) { this.Value = tP.Value; }
         // Duplicate
         public override IGH_Goo Duplicate() { return new GH_ToolPathAdditions(this); }
 
@@ -158,24 +158,24 @@ namespace CAMel.Types
         {
             try
             {
-                ToolPathAdditions TPA = new ToolPathAdditions();
-                if (reader.ItemExists("insert")) { TPA.insert = reader.GetBoolean("insert"); }
-                if (reader.ItemExists("retract")) { TPA.retract = reader.GetBoolean("retract"); }
-                if (reader.ItemExists("stepDown")) { TPA.stepDown = reader.GetBoolean("stepDown"); }
-                if (reader.ItemExists("sdDropStart")) { TPA.sdDropStart = reader.GetBoolean("sdDropStart"); }
-                if (reader.ItemExists("sdDropMiddle")) { TPA.sdDropMiddle = reader.GetDouble("sdDropMiddle"); }
-                if (reader.ItemExists("sdDropEnd")) { TPA.sdDropEnd = reader.GetBoolean("sdDropEnd"); }
+                ToolPathAdditions tPa = new ToolPathAdditions();
+                if (reader.ItemExists("insert")) { tPa.insert = reader.GetBoolean("insert"); }
+                if (reader.ItemExists("retract")) { tPa.retract = reader.GetBoolean("retract"); }
+                if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetBoolean("stepDown"); }
+                if (reader.ItemExists("sdDropStart")) { tPa.sdDropStart = reader.GetBoolean("sdDropStart"); }
+                if (reader.ItemExists("sdDropMiddle")) { tPa.sdDropMiddle = reader.GetDouble("sdDropMiddle"); }
+                if (reader.ItemExists("sdDropEnd")) { tPa.sdDropEnd = reader.GetBoolean("sdDropEnd"); }
                 if (reader.ItemExists("onionCount"))
                 {
-                    int Count = reader.GetInt32("onionCount");
-                    TPA.onion = new List<double>();
-                    for (int i = 0; i < Count; i++)
-                    { TPA.onion.Add(reader.GetDouble("onion", i)); }
+                    int count = reader.GetInt32("onionCount");
+                    tPa.onion = new List<double>();
+                    for (int i = 0; i < count; i++)
+                    { tPa.onion.Add(reader.GetDouble("onion", i)); }
                 }
-                if (reader.ItemExists("threeAxisHeightOffset")) { TPA.threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset"); }
-                if (reader.ItemExists("tabbing")) { TPA.tabbing = reader.GetBoolean("tabbing"); }
-                if (reader.ItemExists("leadCurve")) { TPA.leadCurvature = reader.GetDouble("leadCurve"); }
-                this.Value = TPA;
+                if (reader.ItemExists("threeAxisHeightOffset")) { tPa.threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset"); }
+                if (reader.ItemExists("tabbing")) { tPa.tabbing = reader.GetBoolean("tabbing"); }
+                if (reader.ItemExists("leadCurve")) { tPa.leadCurvature = reader.GetDouble("leadCurve"); }
+                this.Value = tPa;
                 return base.Read(reader);
             }
             catch(Exception ex) when (ex is OverflowException || ex is InvalidCastException || ex is NullReferenceException)
@@ -184,12 +184,12 @@ namespace CAMel.Types
             }
         }
 
-        public override bool CastTo<Q>(ref Q target)
+        public override bool CastTo<T>(ref T target)
         {
-            if (typeof(Q).IsAssignableFrom(typeof(ToolPathAdditions)))
+            if (typeof(T).IsAssignableFrom(typeof(ToolPathAdditions)))
             {
                 object ptr = this.Value;
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
             return false;
@@ -237,19 +237,19 @@ namespace CAMel.Types
             // Do our own thing as we do not really implement 
             // set 1 and set multiple.
 
-            this.Menu_AppendWireDisplay(menu);
-            this.Menu_AppendDisconnectWires(menu);
-            this.Menu_AppendPrincipalParameter(menu);
-            this.Menu_AppendReverseParameter(menu);
-            this.Menu_AppendFlattenParameter(menu);
-            this.Menu_AppendGraftParameter(menu);
-            this.Menu_AppendSimplifyParameter(menu);
-            GH_DocumentObject.Menu_AppendSeparator(menu);
-            this.Menu_AppendManageCollection(menu);
-            GH_DocumentObject.Menu_AppendSeparator(menu);
-            this.Menu_AppendDestroyPersistent(menu);
-            this.Menu_AppendInternaliseData(menu);
-            this.Menu_AppendExtractParameter(menu);
+            Menu_AppendWireDisplay(menu);
+            Menu_AppendDisconnectWires(menu);
+            Menu_AppendPrincipalParameter(menu);
+            Menu_AppendReverseParameter(menu);
+            Menu_AppendFlattenParameter(menu);
+            Menu_AppendGraftParameter(menu);
+            Menu_AppendSimplifyParameter(menu);
+            Menu_AppendSeparator(menu);
+            Menu_AppendManageCollection(menu);
+            Menu_AppendSeparator(menu);
+            Menu_AppendDestroyPersistent(menu);
+            Menu_AppendInternaliseData(menu);
+            Menu_AppendExtractParameter(menu);
         }
 
         protected override GH_GetterResult Prompt_Plural(ref List<GH_ToolPathAdditions> values)
@@ -277,9 +277,9 @@ namespace CAMel.Types
             get { return this.Owner.Value.insert; }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.insert = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.insert = value;
+                this.Owner.Value = tPa;
             }
         }
         [Category(" General"), Description("Add a retract to the end of the toolpath to finish cutting. "), DisplayName(" Retract"), RefreshProperties(RefreshProperties.All)]
@@ -288,20 +288,20 @@ namespace CAMel.Types
             get { return this.Owner.Value.retract; }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.retract = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.retract = value;
+                this.Owner.Value = tPa;
             }
         }
         [Category(" Step Down"), Description("Create a sequence of paths stepping down through the material."), DisplayName(" Step down"), RefreshProperties(RefreshProperties.All)]
         public bool stepdown
         {
-            get { return this.Owner.Value.stepDown; }
+            get => this.Owner.Value.stepDown; 
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.stepDown = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.stepDown = value;
+                this.Owner.Value = tPa;
             }
         }
         [Category(" Step Down"), Description("When stepping down drop the start of paths where roughing is complete."), DisplayName("Drop Start"), RefreshProperties(RefreshProperties.All)]
@@ -310,9 +310,9 @@ namespace CAMel.Types
             get { return this.Owner.Value.sdDropStart; }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.sdDropStart = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.sdDropStart = value;
+                this.Owner.Value = tPa;
             }
         }
         [Category(" Step Down"), Description("When stepping down drop the middle of paths where roughing is complete, if longer than this. Set as negative for automatic value."), DisplayName("Drop Middle"), RefreshProperties(RefreshProperties.All)]
@@ -321,9 +321,9 @@ namespace CAMel.Types
             get { return this.Owner.Value.sdDropMiddle; }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.sdDropMiddle = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.sdDropMiddle = value;
+                this.Owner.Value = tPa;
             }
         }
         [Category(" Step Down"), Description("When stepping down drop the end of paths where roughing is complete"), DisplayName("Drop End"), RefreshProperties(RefreshProperties.All)]
@@ -332,21 +332,21 @@ namespace CAMel.Types
             get { return this.Owner.Value.sdDropEnd; }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.sdDropEnd = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.sdDropEnd = value;
+                this.Owner.Value = tPa;
             }
         }
 
         [Category(" Step Down"), Description("Height above toolpath to cut the finish path, for onion skinning. Can be a comma separated list. "), DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All)]
         public string onion
         {
-            get { return CAMel_Goo.doubleToCSV( this.Owner.Value.onion, "0.####"); }
+            get { return CAMel_Goo.doubleToCsv( this.Owner.Value.onion, "0.####"); }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.onion = CAMel_Goo.cSVToDouble(value);
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.onion = CAMel_Goo.cSvToDouble(value);
+                this.Owner.Value = tPa;
             }
         }
         [Category(" General"), Description("Take account of tool width for 3axis cutting, ensuring the path is followed by the active cutting surface of the tool, not just the tip."), DisplayName("3Axis Height Offset"), RefreshProperties(RefreshProperties.All)]
@@ -355,9 +355,9 @@ namespace CAMel.Types
             get { return this.Owner.Value.threeAxisHeightOffset; }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.threeAxisHeightOffset = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.threeAxisHeightOffset = value;
+                this.Owner.Value = tPa;
             }
         }
         [Category(" Tabbing"), Description("Add bumps to the cut (mainly useful for cutting 2d parts) NOT IMPLEMENTED"), DisplayName("Tabbing"), RefreshProperties(RefreshProperties.All)]
@@ -366,9 +366,9 @@ namespace CAMel.Types
             get { return this.Owner.Value.tabbing; }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.tabbing = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.tabbing = value;
+                this.Owner.Value = tPa;
             }
         }
         [Category(" General"), Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), DisplayName("Lead Length"), RefreshProperties(RefreshProperties.All)]
@@ -377,9 +377,9 @@ namespace CAMel.Types
             get { return this.Owner.Value.leadCurvature; }
             set
             {
-                ToolPathAdditions TPA = this.Owner.Value;
-                TPA.leadCurvature = value;
-                this.Owner.Value = TPA;
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.leadCurvature = value;
+                this.Owner.Value = tPa;
             }
         }
     }

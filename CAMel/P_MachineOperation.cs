@@ -19,7 +19,7 @@ namespace CAMel.Types
     // step downs with be completed, then the second and so on.
     public class MachineOperation : IList<ToolPath>,IToolPointContainer
     {
-        private List<ToolPath> TPs;
+        private List<ToolPath> _tPs;
         public ToolPoint firstP
         {
             get
@@ -50,23 +50,23 @@ namespace CAMel.Types
         // Default Constructor
         public MachineOperation()
         {
-            this.TPs = new List<ToolPath>();
+            this._tPs = new List<ToolPath>();
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
         // From list of toolpaths
-        public MachineOperation(List<ToolPath> TPs)
+        public MachineOperation(List<ToolPath> tPs)
         {
-            this.TPs =TPs;
+            this._tPs =tPs;
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
         // From toolpath
-        public MachineOperation(ToolPath TP)
+        public MachineOperation(ToolPath tP)
         {
-            this.TPs = new List<ToolPath>() { TP };
+            this._tPs = new List<ToolPath>() { tP };
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
@@ -75,26 +75,26 @@ namespace CAMel.Types
         public MachineOperation(string name)
         {
             this.name = name;
-            this.TPs = new List<ToolPath>();
+            this._tPs = new List<ToolPath>();
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
         // Name and ToolPaths
-        public MachineOperation(string name, List<ToolPath> TPs)
+        public MachineOperation(string name, List<ToolPath> tPs)
         {
             this.name = name;
-            this.TPs = TPs;
+            this._tPs = tPs;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
         // Copy Constructor
-        private MachineOperation(MachineOperation Op)
+        private MachineOperation(MachineOperation mO)
         {
-            this.name = string.Copy(Op.name);
-            this.preCode = string.Copy(Op.preCode);
-            this.postCode = string.Copy(Op.postCode);
-            this.TPs = new List<ToolPath>();
-            foreach (ToolPath TP in Op) { this.Add(TP.deepClone()); }
+            this.name = string.Copy(mO.name);
+            this.preCode = string.Copy(mO.preCode);
+            this.postCode = string.Copy(mO.postCode);
+            this._tPs = new List<ToolPath>();
+            foreach (ToolPath tP in mO) { Add(tP.deepClone()); }
         }
         public MachineOperation deepClone() => new MachineOperation(this);
 
@@ -106,7 +106,7 @@ namespace CAMel.Types
                 preCode = this.preCode,
                 postCode = this.postCode,
                 name = this.name,
-                TPs = procPaths
+                _tPs = procPaths
             };
 
             return outOp;
@@ -129,16 +129,16 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            int total_TP = 0;
-            foreach (ToolPath TP in this)
+            int totalTP = 0;
+            foreach (ToolPath tP in this)
             {
-                total_TP = total_TP + TP.Count;
+                totalTP = totalTP + tP.Count;
             }
-            return "Machine Operation: " + this.name + ", " + this.Count + " toolpaths, " + total_TP + " total tool points.";
+            return "Machine Operation: " + this.name + ", " + this.Count + " toolpaths, " + totalTP + " total tool points.";
         }
 
         // Process the toolpaths for additions and ensure ToolPaths are valid for writing. 
-        public MachineOperation processAdditions(IMachine M, ref ToolPath validTP)
+        public MachineOperation processAdditions(IMachine m, ref ToolPath validTP)
         {
             // Wow a 3d block of ToolPaths
             // Each of the stepdown paths can have several pieces (1st level)
@@ -151,13 +151,12 @@ namespace CAMel.Types
 
             // Store finishing paths separately
             List<List<ToolPath>> finishPaths = new List<List<ToolPath>>();
-            List<ToolPath> fP = null;
 
-            foreach (ToolPath TP in this)
+            foreach (ToolPath tP in this)
             {
-                TP.validate(validTP, M);
-                validTP = TP;
-                newPaths.Add(TP.processAdditions(M, out fP));
+                tP.validate(validTP, m);
+                validTP = tP;
+                newPaths.Add(tP.processAdditions(m, out List<ToolPath> fP));
                 finishPaths.Add(fP);
             }
 
@@ -168,14 +167,14 @@ namespace CAMel.Types
 
             // Find path with most levels
             int levels = 0;
-            foreach (List<List<ToolPath>> LTP in newPaths)
-            { if (LTP.Count > levels) { levels = LTP.Count; } }
+            foreach (List<List<ToolPath>> lTp in newPaths)
+            { if (lTp.Count > levels) { levels = lTp.Count; } }
             // do the roughing layers
             for (int i = 0; i < levels; i++)
             {
                 levelPaths = new List<ToolPath>();
-                foreach (List<List<ToolPath>> LTP in newPaths)
-                { if (i < LTP.Count) { levelPaths.AddRange(LTP[i]); } }
+                foreach (List<List<ToolPath>> lTp in newPaths)
+                { if (i < lTp.Count) { levelPaths.AddRange(lTp[i]); } }
 
                 // sort here (remember to only move chunks that are outside the material!)
 
@@ -184,49 +183,48 @@ namespace CAMel.Types
             // finishing cuts
             // find path with most levels
             levels = 0;
-            foreach (List<ToolPath> LTP in finishPaths)
-            { if (LTP.Count > levels) { levels = LTP.Count; } }
+            foreach (List<ToolPath> lTp in finishPaths)
+            { if (lTp.Count > levels) { levels = lTp.Count; } }
             // add finishing paths
-            levelPaths = new List<ToolPath>();
 
             for (int i = 0; i < levels; i++)
             {
                 levelPaths = new List<ToolPath>();
-                foreach (List<ToolPath> LTP in finishPaths)
-                { if (i < LTP.Count) { levelPaths.Add(LTP[i]); } }
+                foreach (List<ToolPath> lTp in finishPaths)
+                { if (i < lTp.Count) { levelPaths.Add(lTp[i]); } }
 
                 // sort here (remember to only move chunks that are outside the material!)
 
                 procPaths.AddRange(levelPaths);
             }
 
-            return this.deepCloneWithNewPaths(procPaths);
+            return deepCloneWithNewPaths(procPaths);
         }
 
         // Write GCode for this operation
-        public void writeCode(ref CodeInfo Co, IMachine M, out ToolPath eP, ToolPath sP)
+        public void writeCode(ref CodeInfo co, IMachine m, out ToolPath eP, ToolPath sP)
         {
-            M.writeOpStart(ref Co, this);
+            m.writeOpStart(ref co, this);
 
             ToolPath oldPath = sP;
             bool first = true;
 
-            foreach (ToolPath TP in this)
+            foreach (ToolPath tP in this)
             {
-                if (TP.Count > 0) // If path has length 0 just ignore
+                if (tP.Count > 0) // If path has length 0 just ignore
                 {
                     // If a move is needed transition from one path to the next 
-                    if (oldPath.lastP != TP.firstP) { M.writeTransition(ref Co, oldPath, TP, first); }
+                    if (oldPath.lastP != tP.firstP) { m.writeTransition(ref co, oldPath, tP, first); }
                     
                     // Add Path to Code
-                    M.writeCode(ref Co, TP);
+                    m.writeCode(ref co, tP);
 
-                    oldPath = TP;
+                    oldPath = tP;
                     first = false;
                 }
             }
 
-            Co.append(this.postCode);
+            co.append(this.postCode);
             eP = oldPath;
         }
 
@@ -296,117 +294,115 @@ namespace CAMel.Types
         // Get the list of tooltip locations
         public List<List<Point3d>> getPoints()
         {
-            List<List<Point3d>> Pts = new List<List<Point3d>>();
-            foreach (ToolPath TP in this) { Pts.Add(TP.getPoints()); }
-            return Pts;
+            List<List<Point3d>> pts = new List<List<Point3d>>();
+            foreach (ToolPath tP in this) { pts.Add(tP.getPoints()); }
+            return pts;
         }
         // Get the list of tool directions
         public List<List<Vector3d>> getDirs()
         {
-            List<List<Vector3d>> Dirs = new List<List<Vector3d>>();
-            foreach (ToolPath TP in this) { Dirs.Add(TP.getDirs()); }
-            return Dirs;
+            List<List<Vector3d>> dirs = new List<List<Vector3d>>();
+            foreach (ToolPath tP in this) { dirs.Add(tP.getDirs()); }
+            return dirs;
         }
         // Create a path with the points 
-        public List<List<Point3d>> getPointsandDirs(out List<List<Vector3d>> Dirs)
+        public List<List<Point3d>> getPointsAndDirs(out List<List<Vector3d>> dirs)
         {
-            List<List<Point3d>> Ptsout = new List<List<Point3d>>();
-            Dirs = new List<List<Vector3d>>();
-            List<Vector3d> TPDirs;
-            foreach (ToolPath TP in this)
+            List<List<Point3d>> ptsOut = new List<List<Point3d>>();
+            dirs = new List<List<Vector3d>>();
+            foreach (ToolPath tP in this)
             {
-                TPDirs = new List<Vector3d>();
-                Ptsout.Add(TP.getPointsandDirs(out TPDirs));
-                Dirs.Add(TPDirs);
+                ptsOut.Add(tP.getPointsandDirs(out List<Vector3d> tPDirs));
+                dirs.Add(tPDirs);
             }
-            return Ptsout;
+            return ptsOut;
         }      
         // Bounding Box for previews
         public BoundingBox getBoundingBox()
         {
-            BoundingBox BB = BoundingBox.Unset;
+            BoundingBox bb = BoundingBox.Unset;
             for (int i = 0; i < this.Count; i++)
-            { BB.Union(this[i].getBoundingBox()); }
-            return BB;
+            { bb.Union(this[i].getBoundingBox()); }
+            return bb;
         }
         // Create single polyline
-        public PolylineCurve getLine() => this.getSinglePath().getLine();
+        public PolylineCurve getLine() => getSinglePath().getLine();
         // Create polylines
         public List<PolylineCurve> getLines()
         {
             List<PolylineCurve> lines = new List<PolylineCurve>();
-            foreach (ToolPath TP in this) { lines.Add(TP.getLine()); }
+            foreach (ToolPath tP in this) { lines.Add(tP.getLine()); }
             return lines;
         }
         // Lines for each toolpoint
         public List<Line> toolLines()
         {
             List<Line> lines = new List<Line>();
-            foreach (ToolPath TP in this) { lines.AddRange(TP.toolLines()); }
+            foreach (ToolPath tP in this) { lines.AddRange(tP.toolLines()); }
             return lines;
         }
         #endregion
 
         #region List Functions
-        public int Count => ((IList<ToolPath>)this.TPs).Count;
-        public bool IsReadOnly => ((IList<ToolPath>)this.TPs).IsReadOnly;
-        public ToolPath this[int index] { get => ((IList<ToolPath>)this.TPs)[index]; set => ((IList<ToolPath>)this.TPs)[index] = value; }
-        public int IndexOf(ToolPath item) { return ((IList<ToolPath>)this.TPs).IndexOf(item); }
-        public void Insert(int index, ToolPath item) { ((IList<ToolPath>)this.TPs).Insert(index, item); }
-        public void RemoveAt(int index) { ((IList<ToolPath>)this.TPs).RemoveAt(index); }
-        public void Add(ToolPath item) { ((IList<ToolPath>)this.TPs).Add(item); }
-        public void AddRange(IEnumerable<ToolPath> items) { this.TPs.AddRange(items); }
-        public void Clear() { ((IList<ToolPath>)this.TPs).Clear(); }
-        public bool Contains(ToolPath item) { return ((IList<ToolPath>)this.TPs).Contains(item); }
-        public void CopyTo(ToolPath[] array, int arrayIndex) { ((IList<ToolPath>)this.TPs).CopyTo(array, arrayIndex); }
-        public bool Remove(ToolPath item) { return ((IList<ToolPath>)this.TPs).Remove(item); }
-        public IEnumerator<ToolPath> GetEnumerator() { return ((IList<ToolPath>)this.TPs).GetEnumerator(); }
-        IEnumerator IEnumerable.GetEnumerator() { return ((IList<ToolPath>)this.TPs).GetEnumerator(); }
+        public int Count => ((IList<ToolPath>)this._tPs).Count;
+        public bool IsReadOnly => ((IList<ToolPath>)this._tPs).IsReadOnly;
+        public ToolPath this[int index] { get => ((IList<ToolPath>)this._tPs)[index]; set => ((IList<ToolPath>)this._tPs)[index] = value; }
+        public int IndexOf(ToolPath item) { return ((IList<ToolPath>)this._tPs).IndexOf(item); }
+        public void Insert(int index, ToolPath item) { ((IList<ToolPath>)this._tPs).Insert(index, item); }
+        public void RemoveAt(int index) { ((IList<ToolPath>)this._tPs).RemoveAt(index); }
+        public void Add(ToolPath item) { ((IList<ToolPath>)this._tPs).Add(item); }
+        public void AddRange(IEnumerable<ToolPath> items) { this._tPs.AddRange(items); }
+        public void Clear() { ((IList<ToolPath>)this._tPs).Clear(); }
+        public bool Contains(ToolPath item) { return ((IList<ToolPath>)this._tPs).Contains(item); }
+        public void CopyTo(ToolPath[] array, int arrayIndex) { ((IList<ToolPath>)this._tPs).CopyTo(array, arrayIndex); }
+        public bool Remove(ToolPath item) { return ((IList<ToolPath>)this._tPs).Remove(item); }
+        public IEnumerator<ToolPath> GetEnumerator() { return ((IList<ToolPath>)this._tPs).GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return ((IList<ToolPath>)this._tPs).GetEnumerator(); }
         #endregion
 }
 
     // Grasshopper Type Wrapper
-    public class GH_MachineOperation : CAMel_Goo<MachineOperation>, IGH_PreviewData
+    public sealed class GH_MachineOperation : CAMel_Goo<MachineOperation>, IGH_PreviewData
     {
         public BoundingBox ClippingBox => this.Value.getBoundingBox();
 
         // Default Constructor
         public GH_MachineOperation() { this.Value = new MachineOperation(); }
         // Construct from value alone
-        public GH_MachineOperation(MachineOperation MO) { this.Value = MO; }
+        public GH_MachineOperation(MachineOperation mO) { this.Value = mO; }
         // Copy Constructor.
-        public GH_MachineOperation(GH_MachineOperation Op) { this.Value = Op.Value.deepClone(); }
+        public GH_MachineOperation(GH_MachineOperation mO) { this.Value = mO.Value.deepClone(); }
         // Duplicate
         public override IGH_Goo Duplicate() { return new GH_MachineOperation(this); }
 
-        public override bool CastTo<Q>(ref Q target)
+        public override bool CastTo<T>(ref T target)
         {
-            if (typeof(Q).IsAssignableFrom(typeof(MachineOperation)))
+            if (typeof(T).IsAssignableFrom(typeof(MachineOperation)))
             {
                 object ptr = this.Value;
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
-            if (typeof(Q).IsAssignableFrom(typeof(ToolPath)))
+            if (typeof(T).IsAssignableFrom(typeof(ToolPath)))
             {
                 object ptr = this.Value.getSinglePath();
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
-            if (typeof(Q).IsAssignableFrom(typeof(GH_ToolPath)))
+            if (typeof(T).IsAssignableFrom(typeof(GH_ToolPath)))
             {
                 object ptr = new GH_ToolPath(this.Value.getSinglePath());
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
-            if (typeof(Q).IsAssignableFrom(typeof(Curve)))
+            if (typeof(T).IsAssignableFrom(typeof(Curve)))
             {
-                target = (Q)(object)this.Value.getLine();
+                target = (T)(object)this.Value.getLine();
                 return true;
             }
-            if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
+            if (typeof(T).IsAssignableFrom(typeof(GH_Curve)))
             {
-                target = (Q)(object)new GH_Curve(this.Value.getLine());
+                target = (T)(object)new GH_Curve(this.Value.getLine());
                 return true;
             }
 
@@ -427,9 +423,9 @@ namespace CAMel.Types
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            foreach (PolylineCurve L in this.Value.getLines())
+            foreach (PolylineCurve l in this.Value.getLines())
             {
-                args.Pipeline.DrawCurve(L, args.Color);
+                args.Pipeline.DrawCurve(l, args.Color);
             }
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
@@ -448,9 +444,9 @@ namespace CAMel.Types
 
         public bool Hidden { get; set; }
         public bool IsPreviewCapable => true;
-        public BoundingBox ClippingBox => base.Preview_ComputeClippingBox();
-        public void DrawViewportWires(IGH_PreviewArgs args) => base.Preview_DrawWires(args);
-        public void DrawViewportMeshes(IGH_PreviewArgs args) => base.Preview_DrawMeshes(args);
+        public BoundingBox ClippingBox => Preview_ComputeClippingBox();
+        public void DrawViewportWires(IGH_PreviewArgs args) => Preview_DrawWires(args);
+        public void DrawViewportMeshes(IGH_PreviewArgs args) => Preview_DrawMeshes(args);
 
         /// <summary>
         /// Provides an Icon for the component.

@@ -23,7 +23,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "name", GH_ParamAccess.item,string.Empty);
             pManager.AddGenericParameter("Operations", "MO", "Machine Operations to apply\n Will attempt to process any reasonable collection.", GH_ParamAccess.list);
@@ -38,7 +38,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachineInstructionPar(),"Instructions", "I", "Machine Instructions", GH_ParamAccess.item);
         }
@@ -46,47 +46,46 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            List<MachineOperation> MO = new List<MachineOperation>();
-            List<Object> tempMO = new List<Object>();
+            List<Object> tempMo = new List<Object>();
             List<Object> sP = new List<Object>();
             List<Object> eP = new List<Object>();
 
-            IMachine M = null;
+            IMachine m = null;
             string name = string.Empty;
 
-            if (!DA.GetData(0, ref name)) { return; }
-            if (!DA.GetDataList(1, tempMO)) { return; }
-            DA.GetDataList(2, sP);
-            DA.GetDataList(3, eP);
-            if (!DA.GetData(4, ref M)) { return; }
+            if (!da.GetData(0, ref name)) { return; }
+            if (!da.GetDataList(1, tempMo)) { return; }
+            da.GetDataList(2, sP);
+            da.GetDataList(3, eP);
+            if (!da.GetData(4, ref m)) { return; }
 
-            int ignores = 0;
-            MO = MachineOperation.toOperations(CAMel_Goo.cleanGooList(tempMO), out ignores);
+            int ignores;
+            List<MachineOperation> mo = MachineOperation.toOperations(CAMel_Goo.cleanGooList(tempMo), out ignores);
 
-            MachineInstruction Inst = null;
+            MachineInstruction mi = null;
 
-            if (MO.Count > 0)
+            if (mo.Count > 0)
             {
-                object cleanSP = CAMel_Goo.cleanGooList((object)sP);
-                object cleanEP = CAMel_Goo.cleanGooList((object)eP);
+                object cleanSP = CAMel_Goo.cleanGooList(sP);
+                object cleanEP = CAMel_Goo.cleanGooList(eP);
                 // The start and end paths should be G0.
                 ToolPath startP = ToolPath.toPath(cleanSP);
                 foreach(ToolPoint tPt in startP) { tPt.feed = 0; }
                 ToolPath endP = ToolPath.toPath(cleanEP);
                 foreach (ToolPoint tPt in endP) { tPt.feed = 0; }
-                Inst = new MachineInstruction(name, M, MO, startP, endP);
+                mi = new MachineInstruction(name, m, mo, startP, endP);
                 if (ignores > 1)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores.ToString() + " invalid elements (probably nulls) were ignored."); }
                 else if (ignores == 1)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored."); }
             }
             else
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input paramter MO failed to collect usable Machine Operations"); }
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations"); }
             
-            DA.SetData(0, new GH_MachineInstruction(Inst));
+            da.SetData(0, new GH_MachineInstruction(mi));
         }
 
         /// <summary>

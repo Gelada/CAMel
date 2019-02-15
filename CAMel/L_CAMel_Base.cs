@@ -10,7 +10,7 @@ using Grasshopper.Kernel.Expressions;
 
 namespace CAMel.Types
 {
-    public interface ICAMel_Base
+    public interface ICAMelBase
     {
         string TypeDescription { get; }
         string TypeName { get; }
@@ -19,7 +19,7 @@ namespace CAMel.Types
     }
 
     // Add a little more standard stuff to GH_Goo
-    public class CAMel_Goo<T> : GH_Goo<T> where T : ICAMel_Base
+    public class CAMel_Goo<T> : GH_Goo<T> where T : ICAMelBase
     {
         // Valid if not null
         public override bool IsValid
@@ -56,7 +56,7 @@ namespace CAMel.Types
     }
     static class CAMel_Goo
     {
-        public static string doubleToCSV(IEnumerable<double> vals, string format)
+        public static string doubleToCsv(IEnumerable<double> vals, string format)
         {
             // Adapted from https://www.dotnetperls.com/convert-list-string
             StringBuilder builder = new StringBuilder();
@@ -69,7 +69,7 @@ namespace CAMel.Types
             result = result.TrimEnd(',',' ');
             return result;
         }
-        public static List<double> cSVToDouble(string vals)
+        public static List<double> cSvToDouble(string vals)
         {
             List<double> result = new List<double>();
             // Adapted from https://www.dotnetperls.com/convert-list-string
@@ -77,7 +77,7 @@ namespace CAMel.Types
             List<string> list = new List<string>(parts); // Use List constructor
             foreach (string item in list)
             {
-                double p = 0;
+                double p;
                 if (double.TryParse(item, out p)) { result.Add(p); }
                 else
                 {
@@ -90,34 +90,36 @@ namespace CAMel.Types
         }
 
         // convert to cylindrical coordinate
-        public static Point3d toCyl(Point3d Pt)
+        public static Point3d toCyl(Point3d pt)
         {
-            Vector3d PlPt = new Vector3d(Pt.X, Pt.Y, 0);
-            double angle = Math.Atan2(Pt.Y, Pt.X);
+            Vector3d plPt = new Vector3d(pt.X, pt.Y, 0);
+            double angle = Math.Atan2(pt.Y, pt.X);
             if (angle < 0) { angle = angle + Math.PI * 2.0; }
-            return new Point3d(PlPt.Length, angle, Pt.Z);
+            return new Point3d(plPt.Length, angle, pt.Z);
         }
 
         // convert from cylindrical coordinate
-        public static Point3d fromCyl(Point3d Pt)
+        public static Point3d fromCyl(Point3d pt)
         {
-            return new Point3d(Pt.X * Math.Cos(Pt.Y), Pt.X * Math.Sin(Pt.Y), Pt.Z);
+            return new Point3d(pt.X * Math.Cos(pt.Y), pt.X * Math.Sin(pt.Y), pt.Z);
         }
 
-        public static object cleanGooList(object Gooey)
+        public static object cleanGooList(object gooey)
         {
-            if (Gooey is IGH_Goo) { return ((IGH_Goo)Gooey).ScriptVariable(); }
-            if (Gooey is IEnumerable)
+            if (gooey is IGH_Goo) { return ((IGH_Goo)gooey).ScriptVariable(); }
+            if (gooey is IEnumerable)
             {
                 List<object> oP = new List<object>();
-                foreach (object obj in (IEnumerable)Gooey)
+                foreach (object obj in (IEnumerable)gooey)
                 {
                     if (obj is IGH_Goo) { oP.Add(((IGH_Goo)obj).ScriptVariable()); }
                     else { oP.Add(obj); }
                 }
                 return oP;
             }
-            else { return Gooey; }
+            else { return gooey; }
         }
+
+        public const double tolerance = 0.000000001;
     }
 }

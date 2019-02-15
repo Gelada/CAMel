@@ -22,11 +22,11 @@ namespace CAMel.Types
         private Dictionary<string, Interval> ranges; // Highest and lowest value for each coordinate
         private Dictionary<string, List<int>> warnings; // Warning text and number of occurences
         private Dictionary<string, List<int>> errors; // Error text and number of occurences
-        private readonly IMachine Mach; // Machine for language handling.
+        private readonly IMachine _m; // Machine for language handling.
 
         public MaterialTool currentMT { get; set; }
         public IMaterialForm currentMF { get; set; }
-        private int lines;
+        private int _lines;
 
         public CodeInfo()
         {
@@ -35,29 +35,29 @@ namespace CAMel.Types
             this.errors = new Dictionary<string,List<int>>();
             this.warnings = new Dictionary<string, List<int>>();
             this.machineState = new Dictionary<string, double>();
-            this.lines = 0;
+            this._lines = 0;
         }
 
-        public CodeInfo(IMachine M)
+        public CodeInfo(IMachine m)
         {
             this.Code = new StringBuilder();
-            this.Mach = M;
+            this._m = m;
             this.ranges = new Dictionary<string, Interval>();
             this.errors = new Dictionary<string, List<int>>();
             this.warnings = new Dictionary<string, List<int>>();
             this.machineState = new Dictionary<string, double>();
-            this.lines = 0;
+            this._lines = 0;
         }
 
-        public void growRange(string key, double V)
+        public void growRange(string key, double v)
         {
             Interval temp;
             if (!this.ranges.ContainsKey(key))
-            { this.ranges.Add(key, new Interval(V, V)); }
+            { this.ranges.Add(key, new Interval(v, v)); }
             else
             {
                 temp = this.ranges[key];
-                temp.Grow(V);
+                temp.Grow(v);
                 this.ranges[key] = temp;
             }
         }
@@ -68,26 +68,26 @@ namespace CAMel.Types
         {
             bool newWarning = false;
             if(this.warnings.ContainsKey(warn))
-            { this.warnings[warn].Add(this.lines); }
+            { this.warnings[warn].Add(this._lines); }
             else
             {
-                this.warnings.Add(warn, new List<int>() { this.lines });
+                this.warnings.Add(warn, new List<int>() { this._lines });
                 newWarning = true;
             }
-            this.appendComment(warn);
+            appendComment(warn);
             return newWarning;
         }
         public bool addError(string err)
         {
             bool newError = false;
             if (this.errors.ContainsKey(err))
-            { this.errors[err].Add(this.lines); }
+            { this.errors[err].Add(this._lines); }
             else
             {
-                this.errors.Add(err, new List<int>() { this.lines});
+                this.errors.Add(err, new List<int>() { this._lines});
                 newError = true;
             }
-            this.appendComment(err);
+            appendComment(err);
             return newError;
         }
 
@@ -216,32 +216,30 @@ namespace CAMel.Types
 
         public int Length { get => this.Code.Length; }
         
-        public void appendLineNoNum(string L)
+        public void appendLineNoNum(string l)
         {
             // Add \r\n manually to ensure consistency of 
             // files between OSX and Windows. 
-            if (L.Length > 0) { this.Code.Append(L+ "\r\n"); }  
+            if (l.Length > 0) { this.Code.Append(l+ "\r\n"); }  
         }
-        public void appendLine(string L)
+        public void appendLine(string l)
         {
-            string line = L;
-
-            if (L.Length > 0)
+            if (l.Length > 0)
             {
-                line = "N" + this.lines.ToString("0000") + "0 " + L;
-                this.lines++;
-                this.appendLineNoNum(line);
+                string line = "N" + this._lines.ToString("0000") + "0 " + l;
+                this._lines++;
+                appendLineNoNum(line);
             }
         }
-        public void appendComment(string L) => this.appendLineNoNum(this.Mach.comment(L));
-        public void append(string L)
+        public void appendComment(string l) => appendLineNoNum(this._m.comment(l));
+        public void append(string l)
         {
-            if (L != string.Empty)
+            if (l != string.Empty)
             {
                 char[] seps = { '\n', '\r' };
-                String[] Lines = L.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+                String[] lines = l.Split(seps, StringSplitOptions.RemoveEmptyEntries);
 
-                foreach (String line in Lines) { this.appendLine(line); }
+                foreach (String line in lines) { appendLine(line); }
             }
         }
 

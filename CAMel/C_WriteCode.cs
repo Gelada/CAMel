@@ -11,7 +11,7 @@ namespace CAMel
 {
     public enum WriteState
     {
-        No_path, Writing, Finished, Cancelled, Waiting
+        NoPath, Writing, Finished, Cancelled, Waiting
     }
 
     public class C_WriteCode : GH_Component
@@ -24,15 +24,15 @@ namespace CAMel
                 "Write CNC Code",
                 "CAMel", "CNC Code")
         {
-            this.filePath = string.Empty;
-            this.SaveCode = new CodeInfo();
+            this._filePath = string.Empty;
+            this._saveCode = new CodeInfo();
             this.extension = "ngc";
-            this.WS = WriteState.No_path;
+            this.ws = WriteState.NoPath;
             this.writeProgress = 0;
 
             this.writeFileThread = new BackgroundWorker();
-            this.writeFileThread.DoWork += this.bwWriteFile;
-            this.writeFileThread.RunWorkerCompleted += this.bwCompletedFileWrite;
+            this.writeFileThread.DoWork += bwWriteFile;
+            this.writeFileThread.RunWorkerCompleted += bwCompletedFileWrite;
             this.writeFileThread.ProgressChanged += bwProgressWithFile;
             this.writeFileThread.WorkerReportsProgress = true;
             this.writeFileThread.WorkerSupportsCancellation = true;
@@ -48,18 +48,18 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            List<String> Ig = new List<string> { "Nothing to Ignore." };
+            List<String> ig = new List<string> { "Nothing to Ignore." };
             pManager.AddParameter(new GH_MachineInstructionPar(), "Machine Instructions", "MI", "Complete set of machine instructions to convert to Code for the machine", GH_ParamAccess.item);
-            pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list,Ig);
+            pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list,ig);
             pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, string.Empty);
         }
 
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddTextParameter("Code", "Code", "Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ranges", "R", "Ranges of movement", GH_ParamAccess.item);
@@ -97,9 +97,9 @@ namespace CAMel
 
         private void menuExtensionChange(object sender, string text)
         {
-            base.RecordUndoEvent("Extension");
+            RecordUndoEvent("Extension");
             this.extension = text;
-            this.OnDisplayExpired(true);
+            OnDisplayExpired(true);
         }
 
         protected override void BeforeSolveInstance()
@@ -117,54 +117,54 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            MachineInstruction MI = new MachineInstruction();
-            if (!DA.GetData(0, ref MI)) { return; }
+            MachineInstruction mI = new MachineInstruction();
+            if (!da.GetData(0, ref mI)) { return; }
 
             List<String> ignore = new List<string>();
-            DA.GetDataList(1, ignore);
+            da.GetDataList(1, ignore);
 
-            lock (this.SaveCode)
+            lock (this._saveCode)
             {
-                this.SaveCode = new CodeInfo(MI.mach);
+                this._saveCode = new CodeInfo(mI.mach);
                 MachineInstruction procMI;
-                try { procMI = MI.processAdditions(MI.mach); }
+                try { procMI = mI.processAdditions(mI.mach); }
                 catch (InvalidOperationException e)
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
-                    DA.SetData(2, e.Message);
+                    da.SetData(2, e.Message);
                     return;
                 }
-                procMI.writeCode(ref this.SaveCode);
+                procMI.writeCode(ref this._saveCode);
             }
 
             // Detect Errors and warnings
-            DA.SetData(2, "");
-            string warn = "", error = "";
-            if (this.SaveCode.hasWarnings(ignore))
+            da.SetData(2, "");
+            string warn = "";
+            if (this._saveCode.hasWarnings(ignore))
             {
-                warn = this.SaveCode.getWarnings(ignore);
+                warn = this._saveCode.getWarnings(ignore);
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warn);
-                DA.SetData(2, warn);
+                da.SetData(2, warn);
             }
-            if (this.SaveCode.hasErrors(ignore))
+            if (this._saveCode.hasErrors(ignore))
             {
-                error = this.SaveCode.getErrors(ignore);
+                string error = this._saveCode.getErrors(ignore);
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error);
-                DA.SetData(2, error + warn);
+                da.SetData(2, error + warn);
                 return;
             }
 
-            DA.SetData(0, this.SaveCode.ToString());
-            DA.SetData(1, this.SaveCode.getRangesString());
+            da.SetData(0, this._saveCode.ToString());
+            da.SetData(1, this._saveCode.getRangesString());
 
             // Write Code to file
-            if (DA.GetData(2, ref this.filePath) && this.filePath != string.Empty)
+            if (da.GetData(2, ref this._filePath) && this._filePath != string.Empty)
             {
-                this.filePath = Path.GetDirectoryName(this.filePath);
-                this.filePath = Path.Combine(this.filePath, MI.name + "." + this.extension);
+                this._filePath = Path.GetDirectoryName(this._filePath);
+                this._filePath = Path.Combine(this._filePath, mI.name + "." + this.extension);
                 // queue up file write
                 if (!this.writeFileThread.IsBusy)
                 {
@@ -177,53 +177,53 @@ namespace CAMel
             }
             else
             {
-                this.WS = WriteState.No_path;
+                this.ws = WriteState.NoPath;
                 this.writeProgress = 0;
-                this.OnDisplayExpired(true);
+                OnDisplayExpired(true);
             }
         }
 
         private BackgroundWorker writeFileThread { get; set; }
-        private CodeInfo SaveCode;
-        private string filePath;
-        private string m_extension;
-        public string extension
+        private CodeInfo _saveCode;
+        private string _filePath;
+        private string _extension;
+        private string extension
         {
-            get { return this.m_extension; }
+            get { return this._extension; }
             set
             {
-                this.m_extension = value;
-                this.Message = "." + this.m_extension;
+                this._extension = value;
+                this.Message = "." + this._extension;
             }
         }
         private bool setOffWriting { get; set; }
 
-        public WriteState WS;
+        public WriteState ws;
         public double writeProgress { get; private set; }
 
         private void bwWriteFile(object sender, DoWorkEventArgs e)
         {
-            BackgroundWorker BW = (BackgroundWorker)sender;
+            BackgroundWorker bW = (BackgroundWorker)sender;
             
             const int saveBlockSize = 40000;
-            lock (this.SaveCode)
+            lock (this._saveCode)
             {
-                this.WS = WriteState.Writing;
-                try { File.Delete(this.filePath); }
+                this.ws = WriteState.Writing;
+                try { File.Delete(this._filePath); }
                 catch (Exception) { }
-                BW.ReportProgress(0);
+                bW.ReportProgress(0);
 
-                using (StreamWriter SW = new StreamWriter(this.filePath))
+                using (StreamWriter sW = new StreamWriter(this._filePath))
                 {
-                    for (int i = 0; i < this.SaveCode.Length; i += saveBlockSize)
+                    for (int i = 0; i < this._saveCode.Length; i += saveBlockSize)
                     {
-                        if (BW.CancellationPending)
+                        if (bW.CancellationPending)
                         {
                             e.Cancel = true;
                             break;
                         }
-                        SW.Write(this.SaveCode.ToString(i, saveBlockSize));
-                        BW.ReportProgress((int)Math.Floor(100.0 * i / (double)this.SaveCode.Length));
+                        sW.Write(this._saveCode.ToString(i, saveBlockSize));
+                        bW.ReportProgress((int)Math.Floor(100.0 * i / this._saveCode.Length));
                     }
                 }
             }
@@ -233,10 +233,10 @@ namespace CAMel
         {
             if(e.Cancelled)
             {
-                this.cancelWrite();
+                cancelWrite();
             } else
             {
-                this.finishWrite();
+                finishWrite();
             }
             // Restart writing if asked.
             if(this.setOffWriting)
@@ -248,24 +248,24 @@ namespace CAMel
 
         private void cancelWrite()
         {
-            File.Delete(this.filePath);
-            this.WS = WriteState.Cancelled;
+            File.Delete(this._filePath);
+            this.ws = WriteState.Cancelled;
             this.writeProgress = 0;
-            this.OnDisplayExpired(true);
+            OnDisplayExpired(true);
         }
 
         private void finishWrite()
         {
-            this.WS = WriteState.Finished;
+            this.ws = WriteState.Finished;
             this.writeProgress = 1;
-            long fileSize = new FileInfo(this.filePath).Length;
+            long fileSize = new FileInfo(this._filePath).Length;
             ((WriteCodeAttributes)this.Attributes).setFileSize(fileSize);
             //this.OnDisplayExpired(true);
         }
 
         private void bwProgressWithFile(object sender, ProgressChangedEventArgs e)
         {
-            this.updateWriteProgress(e.ProgressPercentage / 100.0);
+            updateWriteProgress(e.ProgressPercentage / 100.0);
         }
 
         private void updateWriteProgress(double progress)

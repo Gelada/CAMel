@@ -28,7 +28,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddGeometryParameter("Surface", "S","The surface, brep or mesh to carve", GH_ParamAccess.item);
             pManager.AddParameter(new GH_SurfacePathPar(),"Rough Path", "R", "Information to create roughing path", GH_ParamAccess.item);
@@ -44,7 +44,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachineOperationPar(), "Rough", "R", "Roughing Operation", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MachineOperationPar(), "Finish", "F", "Finishing Operation", GH_ParamAccess.item);
@@ -53,56 +53,56 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            SurfaceType ST;
-            GeometryBase G = null;
-            Mesh M = null;
-            Brep B = null;
-            SurfacePath R = null;
-            SurfacePath F = null;
-            MaterialTool MTR = null;
-            MaterialTool MTF = null;
-            IMaterialForm MF = null;
+            SurfaceType sT;
+            GeometryBase geom = null;
+            Mesh m = null;
+            Brep b = null;
+            SurfacePath roughP = null;
+            SurfacePath finalP = null;
+            MaterialTool mTr = null;
+            MaterialTool mTf = null;
+            IMaterialForm mF = null;
 
-            if (!DA.GetData(0, ref G)) { return; }
-            if(G.GetType() == typeof(Mesh))
+            if (!da.GetData(0, ref geom)) { return; }
+            if(geom.GetType() == typeof(Mesh))
             {
-                ST = SurfaceType.Mesh;
-                M = (Mesh)G;
-            } else if(G.GetType() == typeof(Brep))
+                sT = SurfaceType.Mesh;
+                m = (Mesh)geom;
+            } else if(geom.GetType() == typeof(Brep))
             {
-                B = (Brep)G;
-                ST = SurfaceType.Brep;
+                b = (Brep)geom;
+                sT = SurfaceType.Brep;
             } else
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The surface parameter must be a Brep, Surface or Mesh");
                 return;
             }
-            if (!DA.GetData(1, ref R)) { return; }
-            if (!DA.GetData(2, ref MTR)) { return; }
-            if (!DA.GetData(3, ref F)) { return; }
-            if (!DA.GetData(4, ref MTF)) { return; }
-            if (!DA.GetData(5, ref MF)) { return; }
+            if (!da.GetData(1, ref roughP)) { return; }
+            if (!da.GetData(2, ref mTr)) { return; }
+            if (!da.GetData(3, ref finalP)) { return; }
+            if (!da.GetData(4, ref mTf)) { return; }
+            if (!da.GetData(5, ref mF)) { return; }
 
-            MachineOperation Rough = new MachineOperation();
-            MachineOperation Finish = new MachineOperation();
+            MachineOperation roughO = new MachineOperation();
+            MachineOperation finishO = new MachineOperation();
 
-            ToolPathAdditions AddRough = new ToolPathAdditions
+            ToolPathAdditions addRough = new ToolPathAdditions
             {
                 // Additions for Roughing toolpath
                 insert = true,
                 retract = true,
                 stepDown = true,
                 sdDropStart = true,
-                sdDropMiddle = 8 * MF.safeDistance,
+                sdDropMiddle = 8 * mF.safeDistance,
                 sdDropEnd = true,
                 threeAxisHeightOffset = false
             };
-            MTR = MaterialTool.changeFinishDepth(MTR, MTR.cutDepth); // ignore finish depth for roughing
+            mTr = MaterialTool.changeFinishDepth(mTr, mTr.cutDepth); // ignore finish depth for roughing
 
-            ToolPathAdditions AddFinish = new ToolPathAdditions
+            ToolPathAdditions addFinish = new ToolPathAdditions
             {
                 // Additions for Finishing toolpath
                 insert = true,
@@ -114,22 +114,22 @@ namespace CAMel
                 threeAxisHeightOffset = false
             };
 
-            switch (ST)
+            switch (sT)
             {
                 case SurfaceType.Brep:
-                    Rough = R.generateOperation(B, MTF.finishDepth, MTR, MF, AddRough);
-                    Finish = F.generateOperation(B, 0.0, MTF, MF, AddFinish);
+                    roughO = roughP.generateOperation(b, mTf.finishDepth, mTr, mF, addRough);
+                    finishO = finalP.generateOperation(b, 0.0, mTf, mF, addFinish);
                     break;
                 case SurfaceType.Mesh:
-                    Rough = R.generateOperation(M, MTF.finishDepth, MTR, MF, AddRough);
-                    Finish = F.generateOperation(M, 0.0, MTF, MF, AddFinish);
+                    roughO = roughP.generateOperation(m, mTf.finishDepth, mTr, mF, addRough);
+                    finishO = finalP.generateOperation(m, 0.0, mTf, mF, addFinish);
                     break;
             }
-            Rough.name = "Rough " + Rough.name;
-            Finish.name = "Finish " + Finish.name;
+            roughO.name = "Rough " + roughO.name;
+            finishO.name = "Finish " + finishO.name;
 
-            DA.SetData(0, new GH_MachineOperation(Rough));
-            DA.SetData(1, new GH_MachineOperation(Finish));
+            da.SetData(0, new GH_MachineOperation(roughO));
+            da.SetData(1, new GH_MachineOperation(finishO));
         }
 
         /// <summary>

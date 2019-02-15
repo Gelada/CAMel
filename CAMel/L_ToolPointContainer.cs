@@ -2,7 +2,7 @@
 
 namespace CAMel.Types
 {
-    public interface IToolPointContainer : ICAMel_Base
+    public interface IToolPointContainer : ICAMelBase
     {
         string name { get; set; }
         string preCode { get; set; }

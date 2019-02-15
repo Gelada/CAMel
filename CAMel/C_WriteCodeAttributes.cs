@@ -16,7 +16,7 @@ namespace CAMel
             {
                 { WriteState.Cancelled, @"Cancelled" },
                 { WriteState.Finished, @"File Written" },
-                { WriteState.No_path, @"No Path" },
+                { WriteState.NoPath, @"No Path" },
                 { WriteState.Writing, @"Writing..." },
                 { WriteState.Waiting, @"Waiting" }
             };
@@ -54,39 +54,39 @@ namespace CAMel
 
             if (channel == GH_CanvasChannel.Objects)
             {
-                GH_Capsule progress_ol = GH_Capsule.CreateCapsule(
+                GH_Capsule progressOl = GH_Capsule.CreateCapsule(
                     this.progressBounds, 
                     GH_Palette.Blue, 
                      0, 1);
 
-                System.Drawing.Rectangle ProgressPercent = this.progressBounds;
-                ProgressPercent.Width = 
+                System.Drawing.Rectangle progressPercent = this.progressBounds;
+                progressPercent.Width = 
                     (int)(this.progressBounds.Width * ((C_WriteCode)this.Owner).writeProgress);
 
                 GH_Capsule progress = GH_Capsule.CreateCapsule(
-                    ProgressPercent,
+                    progressPercent,
                     GH_Palette.Brown,
                     0, 1);
-                string message = this.WriteMessages[((C_WriteCode)this.Owner).WS];
-                if(((C_WriteCode)this.Owner).WS == WriteState.Writing)
+                string message = this.WriteMessages[((C_WriteCode)this.Owner).ws];
+                if(((C_WriteCode)this.Owner).ws == WriteState.Writing)
                 {
                     message = message + " " + ((int)(((C_WriteCode)this.Owner).writeProgress*100)).ToString() + "%";
                 }
 
-                GH_Capsule text_cap = GH_Capsule.CreateTextCapsule(
+                GH_Capsule textCap = GH_Capsule.CreateTextCapsule(
                     this.progressBounds,
                     this.progressBounds,
                     GH_Palette.Transparent,
                     message,
                     0,1);
 
-                progress_ol.Render(graphics, this.Selected, this.Owner.Locked, false);
+                progressOl.Render(graphics, this.Selected, this.Owner.Locked, false);
                 if (((C_WriteCode)this.Owner).writeProgress > 0)
                 { progress.Render(graphics, this.Selected, this.Owner.Locked, false); }
-                text_cap.Render(graphics, this.Selected, this.Owner.Locked, false);
-                progress_ol.Dispose();
+                textCap.Render(graphics, this.Selected, this.Owner.Locked, false);
+                progressOl.Dispose();
                 progress.Dispose();
-                text_cap.Dispose();
+                textCap.Dispose();
             }
         }
     }

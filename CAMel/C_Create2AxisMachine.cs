@@ -26,7 +26,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item,string.Empty);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
@@ -37,7 +37,7 @@ namespace CAMel
             pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list,ccDefault);
             pManager[4].Optional = true;
             List<string> irDefault = new List<string> { GCode.defaultSpeedChangeCommand, GCode.defaultInsertCommand, GCode.defaultRetractCommand };
-            pManager.AddTextParameter("Speed/Insert/Retract/ToolChange", "SIRT", "Commands to change speed, insert and retract tool, and change tool", GH_ParamAccess.list);
+            pManager.AddTextParameter("Speed/Insert/Retract/ToolChange", "SIRT", "Commands to change speed, insert and retract tool, and change tool", GH_ParamAccess.list, irDefault);
             pManager[5].Optional = true;
             List<string> fileDefault = new List<string> { GCode.defaultFileStart, GCode.defaultFileEnd };
             pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
@@ -48,7 +48,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachinePar(), "Machine", "M", "Details for a CNC machine", GH_ParamAccess.item);
         }
@@ -56,48 +56,48 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
 
             string name = string.Empty;
             string head = string.Empty;
             string foot = string.Empty;
-            double PJ = 0;
+            double pj = 0;
 
-            if (!DA.GetData(0, ref name)) { return; }
-            if (!DA.GetData(7, ref PJ)) { return; }
-            if (!DA.GetData(2, ref head)) { return; }
-            if (!DA.GetData(3, ref foot)) { return; }
+            if (!da.GetData(0, ref name)) { return; }
+            if (!da.GetData(7, ref pj)) { return; }
+            if (!da.GetData(2, ref head)) { return; }
+            if (!da.GetData(3, ref foot)) { return; }
 
 
-            List<string> CC = new List<string>();
-            DA.GetDataList(4, CC);
+            List<string> cc = new List<string>();
+            da.GetDataList(4, cc);
 
-            string commentStart = (CC.Count > 0) ? CC[0] : GCode.defaultCommentStart;
-            string commentEnd = (CC.Count > 1) ? CC[1] : GCode.defaultCommentEnd;
-            string sectionBreak = (CC.Count > 2) ? CC[2] : GCode.defaultSectionBreak;
+            string commentStart = (cc.Count > 0) ? cc[0] : GCode.defaultCommentStart;
+            string commentEnd = (cc.Count > 1) ? cc[1] : GCode.defaultCommentEnd;
+            string sectionBreak = (cc.Count > 2) ? cc[2] : GCode.defaultSectionBreak;
 
-            List<string> SIR = new List<string>();
-            DA.GetDataList(5, SIR);
+            List<string> sir = new List<string>();
+            da.GetDataList(5, sir);
 
-            string speed = (SIR.Count > 0) ? SIR[0] : GCode.defaultSpeedChangeCommand;
-            string insert = (SIR.Count > 1) ? SIR[1] : GCode.defaultInsertCommand;
-            string retract = (SIR.Count > 2) ? SIR[2] : GCode.defaultRetractCommand;
-            string tool = (SIR.Count > 3) ? SIR[3] : GCode.defaultToolChangeCommand;
+            string speed = (sir.Count > 0) ? sir[0] : GCode.defaultSpeedChangeCommand;
+            string insert = (sir.Count > 1) ? sir[1] : GCode.defaultInsertCommand;
+            string retract = (sir.Count > 2) ? sir[2] : GCode.defaultRetractCommand;
+            string tool = (sir.Count > 3) ? sir[3] : GCode.defaultToolChangeCommand;
 
-            List<string> SE = new List<string>();
-            DA.GetDataList(6, SE);
+            List<string> se = new List<string>();
+            da.GetDataList(6, se);
 
-            string fileStart = (SIR.Count > 0) ? SE[0] : GCode.defaultFileStart;
-            string fileEnd = (SIR.Count > 1) ? SE[1] : GCode.defaultFileEnd;
+            string fileStart = (sir.Count > 0) ? se[0] : GCode.defaultFileStart;
+            string fileEnd = (sir.Count > 1) ? se[1] : GCode.defaultFileEnd;
 
-            List<MaterialTool> MTs = new List<MaterialTool>();
-            DA.GetDataList(1, MTs);
+            List<MaterialTool> mTs = new List<MaterialTool>();
+            da.GetDataList(1, mTs);
 
-            IGCodeMachine M = new TwoAxis(name, MTs, PJ, head, foot, speed, insert, retract, tool,commentStart,commentEnd,sectionBreak, fileStart, fileEnd);
+            IGCodeMachine m = new TwoAxis(name, mTs, pj, head, foot, speed, insert, retract, tool,commentStart,commentEnd,sectionBreak, fileStart, fileEnd);
 
-            DA.SetData(0, M);
+            da.SetData(0, m);
         }
 
         /// <summary>

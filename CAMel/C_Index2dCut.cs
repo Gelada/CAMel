@@ -9,12 +9,12 @@ using CAMel.Types.MaterialForm;
 
 namespace CAMel
 {
-    public class C_Index2dCut : GH_Component
+    public class C_Index2DCut : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the WriteCode class.
         /// </summary>
-        public C_Index2dCut()
+        public C_Index2DCut()
             : base("2D Cut", "2D",
                 "Create a Machine Operations cutting out 2D shapes.",
                 "CAMel", " Operations")
@@ -24,7 +24,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddCurveParameter("Cut Path", "C", "Outline of object to cut out.", GH_ParamAccess.item);
             pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
@@ -42,7 +42,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_MachineOperationPar(), "Operation", "O", "2d cut Operation", GH_ParamAccess.item);
         }
@@ -50,43 +50,43 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            Curve C = null;
-            Vector3d D = new Vector3d();
-            double Os = 0;
-            ToolPathAdditions TPA = null;
+            Curve c = null;
+            Vector3d dir = new Vector3d();
+            double os = 0;
+            ToolPathAdditions tPa = null;
 
-            MaterialTool MT = null;
-            IMaterialForm MF = null;
+            MaterialTool mT = null;
+            IMaterialForm mF = null;
 
-            if (!DA.GetData(0, ref C)) { return; }
-            if (!DA.GetData(1, ref D)) { return; }
-            if (!DA.GetData(2, ref Os)) { return; }
-            if (!DA.GetData(3, ref TPA)) { return; }
-            if (!DA.GetData(4, ref MT)) { return; }
-            DA.GetData(5, ref MF);
+            if (!da.GetData(0, ref c)) { return; }
+            if (!da.GetData(1, ref dir)) { return; }
+            if (!da.GetData(2, ref os)) { return; }
+            if (!da.GetData(3, ref tPa)) { return; }
+            if (!da.GetData(4, ref mT)) { return; }
+            da.GetData(5, ref mF);
             
-            if (Rhino.Geometry.Intersect.Intersection.CurveSelf(C, 0.00000001).Count > 0)
+            if (Rhino.Geometry.Intersect.Intersection.CurveSelf(c, 0.00000001).Count > 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Self-intersecting Curve");
                 return;
             }
             
-            TPA =TPA.deepClone();
+            tPa =tPa.deepClone();
 
-            if (!C.IsClosed && Os != 0)
+            if (!c.IsClosed && Math.Abs(os) > CAMel_Goo.tolerance)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Curves that are not closed will not be offset.");
-                Os = 0;
+                os = 0;
             }
 
             // Note multiplication will give negative only if one is positive and the other negative.
-            if (Os < 0) {TPA.leadCurvature = -TPA.leadCurvature; }
-            MachineOperation Op = Operations.opIndex2dCut(C, D, Os, TPA, MT, MF);
+            if (os < 0) {tPa.leadCurvature = -tPa.leadCurvature; }
+            MachineOperation mO = Operations.opIndex2DCut(c, dir, os, tPa, mT, mF);
 
-            DA.SetData(0, new GH_MachineOperation(Op));
+            da.SetData(0, new GH_MachineOperation(mO));
         }
 
         /// <summary>

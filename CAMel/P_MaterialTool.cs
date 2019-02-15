@@ -40,7 +40,7 @@ namespace CAMel.Types
     }
 
     // Settings for a particular material and tool
-    public class MaterialTool : ICAMel_Base 
+    public class MaterialTool : ICAMelBase 
     {
         public string matName { get; }     // Name of the materialMaterialToolReader
         public string toolName { get; }    // Name of the tool 
@@ -71,11 +71,11 @@ namespace CAMel.Types
         public MaterialTool() { }
 
         // Everything, with defaults
-        public MaterialTool(string Mat, string Tool, int ToolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double iwidth = -1, double tL = 0, EndShape ES = EndShape.Ball,double tol = 0, double mS = 0, double sideLoad = 0.7)
+        public MaterialTool(string mat, string tool, int toolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double iwidth = -1, double tL = 0, EndShape eS = EndShape.Other,double tol = 0, double mS = 0, double sideLoad = 0.7)
         {
-            this.matName = Mat;
-            this.toolName = Tool;
-            this.toolNumber = ToolN;
+            this.matName = mat;
+            this.toolName = tool;
+            this.toolNumber = toolN;
             this.speed = speed;
             this.feedCut = feedCut;
             this.feedPlunge = feedPlunge;
@@ -86,44 +86,44 @@ namespace CAMel.Types
             this.toolLength = tL;
             this.tolerance = tol;
             this.minStep = mS;
-            this.shape = ES;
+            this.shape = eS;
             this.sideLoad = sideLoad;
         }
 
-        public MaterialTool(MaterialToolBuilder MT)
+        public MaterialTool(MaterialToolBuilder mT)
         {
-            this.matName = MT.matName;
-            this.toolName = MT.toolName;
-            this.toolNumber = MT.toolNumber;
-            this.speed = MT.speed;
-            this.feedCut = MT.feedCut;
-            this.feedPlunge = MT.feedPlunge;
-            this.finishDepth = MT.finishDepth;
-            this.cutDepth = MT.cutDepth;
-            this.toolWidth = MT.toolWidth;
-            this.insertWidth = MT.insertWidth;
-            this.toolLength = MT.toolLength;
-            this.tolerance = MT.tolerance;
-            this.minStep = MT.minStep;
-            EndShape ES;
-            switch (MT.shape)
+            this.matName = mT.matName;
+            this.toolName = mT.toolName;
+            this.toolNumber = mT.toolNumber;
+            this.speed = mT.speed;
+            this.feedCut = mT.feedCut;
+            this.feedPlunge = mT.feedPlunge;
+            this.finishDepth = mT.finishDepth;
+            this.cutDepth = mT.cutDepth;
+            this.toolWidth = mT.toolWidth;
+            this.insertWidth = mT.insertWidth;
+            this.toolLength = mT.toolLength;
+            this.tolerance = mT.tolerance;
+            this.minStep = mT.minStep;
+            EndShape eS;
+            switch (mT.shape)
             {
-                case "Ball": ES = EndShape.Ball; break;
-                case "Square": ES = EndShape.Square; break;
-                case "V": ES = EndShape.V; break;
-                case "Other": ES = EndShape.Other; break;
-                default: ES = EndShape.Error; break;
+                case "Ball": eS = EndShape.Ball; break;
+                case "Square": eS = EndShape.Square; break;
+                case "V": eS = EndShape.V; break;
+                case "Other": eS = EndShape.Other; break;
+                default: eS = EndShape.Error; break;
             }
-            this.shape = ES;
-            this.sideLoad = MT.sideLoad;
+            this.shape = eS;
+            this.sideLoad = mT.sideLoad;
         }
 
-        public static MaterialTool changeFinishDepth(MaterialTool MT, double fd)
+        public static MaterialTool changeFinishDepth(MaterialTool mT, double fd)
         {
             return new MaterialTool(
-                MT.matName, MT.toolName, MT.toolNumber, MT.speed, 
-                MT.feedCut, MT.feedPlunge, MT.cutDepth, fd, 
-                MT.toolWidth, MT.insertWidth, MT.toolLength, MT.shape, MT.tolerance, MT.minStep, MT.sideLoad);
+                mT.matName, mT.toolName, mT.toolNumber, mT.speed, 
+                mT.feedCut, mT.feedPlunge, mT.cutDepth, fd, 
+                mT.toolWidth, mT.insertWidth, mT.toolLength, mT.shape, mT.tolerance, mT.minStep, mT.sideLoad);
         }
 
         public string TypeDescription
@@ -146,33 +146,33 @@ namespace CAMel.Types
         /// <summary>
         /// Offset toolpoint so that it does not gouge an angled path. 
         /// </summary>
-        public ToolPoint threeAxisHeightOffset(IMachine M, ToolPoint tP, Vector3d travel, Vector3d orth)
+        public ToolPoint threeAxisHeightOffset(IMachine m, ToolPoint tP, Vector3d travel, Vector3d orth)
         {
             // We want to use cutOffset, so need to find the normal
             // That is the Vector at right angles to the travel direction
             // in the plane orthogonal to orth
 
             // Do nothing if orth does not give a plane
-            if (orth.Length == 0) { return tP; }
+            if (Math.Abs(orth.Length) < CAMel_Goo.tolerance) { return tP; }
 
             // Rotate 90 degrees, and check we get the one closer to the tool direction
             Vector3d norm = travel;
             norm.Transform(Transform.Rotation(Math.PI / 2, orth,new Point3d(0,0,0)));
-            double testd = norm * M.toolDir(tP);
+            double testd = norm * m.toolDir(tP);
             if (testd < 0) { norm = -1 * norm; }
 
             ToolPoint osTp = tP.deepClone();   
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
-            osTp.pt = osTp.pt + this.cutOffset(M.toolDir(tP),norm);
+            osTp.pt = osTp.pt + cutOffset(m.toolDir(tP),norm);
         
             return osTp;
         }
         // Find the path offset so the cutting surface of the tool is on the path
-        public Vector3d cutOffset(Vector3d Dir, Vector3d Norm)
+        public Vector3d cutOffset(Vector3d dir, Vector3d norm)
         {
-            Vector3d uDir = Dir;
-            Vector3d uNorm = Norm;
+            Vector3d uDir = dir;
+            Vector3d uNorm = norm;
             uDir.Unitize();
             uNorm.Unitize();
             Vector3d os;
@@ -189,9 +189,9 @@ namespace CAMel.Types
                     else
                     {
                         // find the normal to the plane give by the tool direction and the norm
-                        Vector3d PlN = Vector3d.CrossProduct(uNorm, uDir);
+                        Vector3d plN = Vector3d.CrossProduct(uNorm, uDir);
                         // Now want a vector on that plane orthogonal to tool direction
-                        os = this.toolWidth * Vector3d.CrossProduct(uDir, PlN) / 2;
+                        os = this.toolWidth * Vector3d.CrossProduct(uDir, plN) / 2;
                     }
                     break;
                 case EndShape.V: // Just use the tip. Beyond a certain angle this will not work
@@ -210,22 +210,22 @@ namespace CAMel.Types
     }
 
     // Grasshopper Type Wrapper
-    public class GH_MaterialTool : CAMel_Goo<MaterialTool>
+    public sealed class GH_MaterialTool : CAMel_Goo<MaterialTool>
     {
         public GH_MaterialTool() { this.Value = new MaterialTool();}
         // construct from unwrapped type
-        public GH_MaterialTool(MaterialTool MT) { this.Value = MT; }
+        public GH_MaterialTool(MaterialTool mT) { this.Value = mT; }
         // Copy Constructor (just reference as MaterialTool is Immutable)
-        public GH_MaterialTool(GH_MaterialTool MT) { this.Value = MT.Value; }
+        public GH_MaterialTool(GH_MaterialTool mT) { this.Value = mT.Value; }
         // Duplicate
         public override IGH_Goo Duplicate() { return new GH_MaterialTool(this); }
 
-        public override bool CastTo<Q>( ref Q target)
+        public override bool CastTo<T>( ref T target)
         {
-            if(typeof(Q).IsAssignableFrom(typeof(MaterialTool)))
+            if(typeof(T).IsAssignableFrom(typeof(MaterialTool)))
             {
                 object ptr = this.Value;
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
             return false;

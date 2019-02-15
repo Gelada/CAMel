@@ -25,7 +25,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddPointParameter("Path", "P", "List of toolpoint locations", GH_ParamAccess.list);
             pManager.AddVectorParameter("Directions", "D", "List of vectors giving tool direction", GH_ParamAccess.list,new Vector3d(0,0,1));
@@ -50,7 +50,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_ToolPathPar(), "ToolPath", "TP", "Complete ToolPath", GH_ParamAccess.item);
         }
@@ -58,39 +58,39 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
             List<Point3d> pts = new List<Point3d>();
             List<Vector3d> dirs = new List<Vector3d>();
-            List<Vector3d> SF = new List<Vector3d>();
+            List<Vector3d> sF = new List<Vector3d>();
             List<String> preCode = new List<String>();
             List<String> postCode = new List<String>();
             string name = string.Empty;
-            MaterialTool MT = null;
-            IMaterialForm MF = null;
-            string Co = string.Empty;
-            ToolPathAdditions TPA = new ToolPathAdditions();
+            MaterialTool mT = null;
+            IMaterialForm mF = null;
+            string co = string.Empty;
+            ToolPathAdditions tPa = new ToolPathAdditions();
 
-            if (!DA.GetDataList(0, pts)) { return; }
-            if (!DA.GetDataList(1, dirs)) { return; }
-            if (!DA.GetDataList(2, SF)) { return; }
-            if (!DA.GetDataList(3, preCode)) { return; }
-            if (!DA.GetDataList(4, postCode)) { return; }
-            if (!DA.GetData(5, ref name)) { return; }
-            DA.GetData(6, ref MT);
-            DA.GetData(7, ref MF);
-            DA.GetData(8, ref TPA);
-            if (!DA.GetData(9, ref Co)) { return; }
+            if (!da.GetDataList(0, pts)) { return; }
+            if (!da.GetDataList(1, dirs)) { return; }
+            if (!da.GetDataList(2, sF)) { return; }
+            if (!da.GetDataList(3, preCode)) { return; }
+            if (!da.GetDataList(4, postCode)) { return; }
+            if (!da.GetData(5, ref name)) { return; }
+            da.GetData(6, ref mT);
+            da.GetData(7, ref mF);
+            da.GetData(8, ref tPa);
+            if (!da.GetData(9, ref co)) { return; }
 
-            ToolPath TP = new ToolPath(name, MT, MF, TPA);
+            ToolPath tP = new ToolPath(name, mT, mF, tPa);
 
             Vector3d usedir;
             Vector3d useSF;
             String usePreCo, usePostCo;
 
             if ((dirs.Count == 1 || dirs.Count == pts.Count) &&
-                (SF.Count == 1 || SF.Count == pts.Count) &&
+                (sF.Count == 1 || sF.Count == pts.Count) &&
                 (preCode.Count == 1 || preCode.Count == pts.Count)&&
                 (postCode.Count == 1 || postCode.Count == pts.Count))
             {
@@ -99,8 +99,8 @@ namespace CAMel
                     if (dirs.Count == 1) { usedir = dirs[0]; }
                     else { usedir = dirs[i]; }
 
-                    if (SF.Count == 1) { useSF = SF[0]; }
-                    else { useSF = SF[i]; }
+                    if (sF.Count == 1) { useSF = sF[0]; }
+                    else { useSF = sF[i]; }
 
                     if (preCode.Count == 1) { usePreCo = preCode[0]; }
                     else { usePreCo = preCode[i]; }
@@ -108,7 +108,7 @@ namespace CAMel
                     if (postCode.Count == 1) { usePostCo = postCode[0]; }
                     else { usePostCo = postCode[i]; }
 
-                    TP.Add(new ToolPoint(pts[i], usedir, usePreCo,usePostCo, useSF.X, useSF.Y));
+                    tP.Add(new ToolPoint(pts[i], usedir, usePreCo,usePostCo, useSF.X, useSF.Y));
                 }
             }
             else
@@ -116,7 +116,7 @@ namespace CAMel
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists of directions and speeds/feeds must be a single item or the same length as the list of points.");
             }
 
-            DA.SetData(0, new GH_ToolPath(TP));
+            da.SetData(0, new GH_ToolPath(tP));
         }
 
         /// <summary>

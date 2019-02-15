@@ -20,10 +20,10 @@ namespace CAMel
 {
     public class C_OrganisePaths : GH_Component, IGH_PreviewObject
     {
-        internal bool InActiveDocument;
-        private bool Enabled;
+        internal bool inActiveDocument;
+        private bool _enabled;
 
-        internal bool clickQ() => this.Enabled && this.InActiveDocument;
+        internal bool clickQ() => this._enabled && this.inActiveDocument;
 
         private readonly PathClick _click;
         private GH_Document _doc;
@@ -60,7 +60,7 @@ namespace CAMel
         protected override void BeforeSolveInstance()
         {
             this._doc = OnPingDocument();
-            this.InActiveDocument = Instances.ActiveCanvas.Document == this._doc && Instances.ActiveCanvas.Document.Context == GH_DocumentContext.Loaded;
+            this.inActiveDocument = Instances.ActiveCanvas.Document == this._doc && Instances.ActiveCanvas.Document.Context == GH_DocumentContext.Loaded;
 
             Instances.ActiveCanvas.Document.ContextChanged -= contextChanged;
             Instances.ActiveCanvas.Document.ContextChanged += contextChanged;
@@ -69,11 +69,11 @@ namespace CAMel
 
         private void contextChanged(object sender, GH_DocContextEventArgs e)
         {
-            this.InActiveDocument = e.Document == this._doc && e.Context == GH_DocumentContext.Loaded;
+            this.inActiveDocument = e.Document == this._doc && e.Context == GH_DocumentContext.Loaded;
         }
 
-        private const int dotSize = 11;
-        private readonly Vector3d dotShift = new Vector3d(1, 1, 1);
+        private const int _dotSize = 11;
+        private readonly Vector3d _dotShift = new Vector3d(1, 1, 1);
         internal bool found(Line l, RhinoViewport vP)
         {
             double pixelsPerUnit;
@@ -81,28 +81,21 @@ namespace CAMel
             {
                 Curve c = this._curves[i];
                 vP.GetWorldToScreenScale(c.PointAtStart, out pixelsPerUnit);
-                if(l.DistanceTo(c.PointAtStart+ dotSize / pixelsPerUnit * this.dotShift, false)*pixelsPerUnit < dotSize)
+                if(l.DistanceTo(c.PointAtStart+ _dotSize / pixelsPerUnit * this._dotShift, false)*pixelsPerUnit < _dotSize)
                 {
-                    string newP = string.Empty;
+                    string newP;
                     Dialogs.ShowEditBox("Reposition", "New position", (i+1).ToString(), false, out newP);
                     int newPos;
                     if (int.TryParse(newP, out newPos))
                     {
-                        double newKey = 0;
+                        double newKey;
                         if (newPos <= 1)
-                        {
-                            newPos = 1;
-                            newKey = this._curves[0].getKey() - 1.0;
-                        }
+                        { newKey = this._curves[0].getKey() - 1.0; }
                         else if (newPos >= this._curves.Count)
-                        {
-                            newPos = this._curves.Count;
-                            newKey = this._curves[this._curves.Count-1].getKey() + 1.0;
-                        }
+                        { newKey = this._curves[this._curves.Count-1].getKey() + 1.0; }
                         else
-                        {
-                            newKey = (this._curves[newPos - 2].getKey() + this._curves[newPos - 1].getKey())/2.0;
-                        }
+                        { newKey = (this._curves[newPos - 2].getKey() + this._curves[newPos - 1].getKey())/2.0;}
+
                         c.setKey(newKey);
                     }
                     return true;
@@ -114,14 +107,14 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
-            this.Enabled = true;
+            this._enabled = true;
             var paths = new List<GH_Curve>();
-            if (!DA.GetDataList("Paths", paths))
+            if (!da.GetDataList("Paths", paths))
             {
-                this.Enabled = false;
+                this._enabled = false;
                 return;
             }
 
@@ -178,14 +171,14 @@ namespace CAMel
                 this._curves.Add(p.Value);
             }
 
-            this._curves.Sort(CurveC);
+            this._curves.Sort(_curveC);
 
             // Store the processed data
             if (this.Params.Input[0].SourceCount == 0)
             {
                 this._latestPaths = paths;
             }
-            DA.SetDataList(0, this._curves);
+            da.SetDataList(0, this._curves);
         }
 
         class CurveComp : IComparer<Curve>
@@ -196,7 +189,7 @@ namespace CAMel
             }
         }
 
-        static readonly CurveComp CurveC = new CurveComp();
+        private static readonly CurveComp _curveC = new CurveComp();
 
         //Return a BoundingBox that contains all the geometry you are about to draw.
         public override BoundingBox ClippingBox
@@ -216,7 +209,7 @@ namespace CAMel
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);
-            if (this.Enabled)
+            if (this._enabled)
             {
                 double pixelsPerUnit;
 
@@ -228,7 +221,7 @@ namespace CAMel
                     if (this.Attributes.Selected) { lineC = args.WireColour_Selected; }
                     args.Display.DrawCurve(this._curves[i], lineC);
 
-                    args.Display.DrawDot(this._curves[i].PointAtStart + dotSize / pixelsPerUnit * this.dotShift, (i + 1).ToString());
+                    args.Display.DrawDot(this._curves[i].PointAtStart + _dotSize / pixelsPerUnit * this._dotShift, (i + 1).ToString());
 
                     Line dir = new Line(this._curves[i].PointAtStart, this._curves[i].TangentAtStart * 50.0 / pixelsPerUnit);
                     args.Display.DrawArrow(dir, System.Drawing.Color.AntiqueWhite);
@@ -249,7 +242,7 @@ namespace CAMel
 
         public override void RemovedFromDocument(GH_Document document)
         {
-            this.Enabled = false;
+            this._enabled = false;
             ExpirePreview(true);
             base.RemovedFromDocument(document);
         }

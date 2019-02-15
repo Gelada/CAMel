@@ -17,7 +17,7 @@ namespace CAMel.Types.Machine
     //  a bespoke version for each machine type would be better
 
     // Main interface and public face of the machine
-    public interface IMachine : ICAMel_Base
+    public interface IMachine : ICAMelBase
     {
         string name { get; }
         double pathJump { get; } // Maximum jump between toolpaths in material
@@ -25,17 +25,17 @@ namespace CAMel.Types.Machine
         ToolPathAdditions defaultTPA { get; }
         List<MaterialTool> mTs { get; } // list of Material Tools used by machine
 
-        // Writing and readind code
-        string comment(string L);
+        // Writing and reading code
+        string comment(string l);
 
-        void writeFileStart(ref CodeInfo Co, MachineInstruction MI, ToolPath startPath);
-        void writeFileEnd(ref CodeInfo Co, MachineInstruction MI, ToolPath finalPath,ToolPath endPath);
-        void writeOpStart(ref CodeInfo Co, MachineOperation MO);
-        void writeOpEnd(ref CodeInfo Co, MachineOperation MO);
-        void writeCode(ref CodeInfo Co, ToolPath tP);
-        void writeTransition(ref CodeInfo Co, ToolPath fP, ToolPath tP, bool first);
+        void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath);
+        void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath,ToolPath endPath);
+        void writeOpStart(ref CodeInfo co, MachineOperation mO);
+        void writeOpEnd(ref CodeInfo co, MachineOperation mO);
+        void writeCode(ref CodeInfo co, ToolPath tP);
+        void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first);
 
-        ToolPath readCode(string Code);
+        ToolPath readCode(string code);
 
         // Functions needed to process additions
         ToolPath insertRetract(ToolPath tP);
@@ -44,31 +44,31 @@ namespace CAMel.Types.Machine
         List<ToolPath> finishPaths(ToolPath tP);
 
         // Machine movement
-        Vector3d toolDir(ToolPoint TP);
-        ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool MT, double par, bool lng);
-        double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool MT, bool lng); // max change for orientation axes
+        Vector3d toolDir(ToolPoint tP);
+        ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng);
+        double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng); // max change for orientation axes
     }
 
  
 
     // Grasshopper Type Wrapper
-    public class GH_Machine : CAMel_Goo<IMachine>
+    public sealed class GH_Machine : CAMel_Goo<IMachine>
     {
         // Default constructor
         public GH_Machine() { this.Value = null; }
         // Unwrapped type
-        public GH_Machine(IMachine M) { this.Value = M; }
+        public GH_Machine(IMachine m) { this.Value = m; }
         // Copy Constructor (just reference as Machine is Immutable)
-        public GH_Machine(GH_Machine M) { this.Value = M.Value;  }
+        public GH_Machine(GH_Machine m) { this.Value = m.Value;  }
         // Duplicate
         public override IGH_Goo Duplicate() { return new GH_Machine(this); }
 
-        public override bool CastTo<Q>(ref Q target)
+        public override bool CastTo<T>(ref T target)
         {
-            if (typeof(Q).IsAssignableFrom(typeof(IMachine)))
+            if (typeof(T).IsAssignableFrom(typeof(IMachine)))
             {
                 object ptr = this.Value;
-                target = (Q)ptr;
+                target = (T)ptr;
                 return true;
             }
             return false;

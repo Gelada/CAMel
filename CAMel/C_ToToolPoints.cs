@@ -22,7 +22,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("ToolPoint Container", "T", "Objects containing ToolPoints", GH_ParamAccess.item);
         }
@@ -30,7 +30,7 @@ namespace CAMel
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddParameter(new GH_ToolPointPar(),"ToolPoints", "TP", "ToolPoints contained in input", GH_ParamAccess.list);
         }
@@ -38,12 +38,12 @@ namespace CAMel
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess da)
         {
             IToolPointContainer tP = null;
 
-            if (!DA.GetData(0, ref tP))
+            if (!da.GetData(0, ref tP))
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Only objects containing ToolPoints can be converted.");
                 return;
@@ -53,7 +53,7 @@ namespace CAMel
             foreach(ToolPoint tPt in tP.getSinglePath())
             { tPtPs.Add(new GH_ToolPoint(tPt)); }
             
-            DA.SetDataList(0, tPtPs);
+            da.SetDataList(0, tPtPs);
         }
 
         /// <summary>
