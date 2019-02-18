@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-
-using Grasshopper.Kernel;
-
 using CAMel.Types;
 using CAMel.Types.Machine;
+using Grasshopper.Kernel;
 using JetBrains.Annotations;
 
-namespace CAMel
+namespace CAMel.Grasshopper
 {
     [UsedImplicitly]
     public class C_Create2AxisMachine : GH_Component

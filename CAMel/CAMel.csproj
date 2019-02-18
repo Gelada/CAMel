@@ -92,7 +92,7 @@
     <Compile Include="L_CAMelData.cs" />
     <Compile Include="L_PathClick.cs" />
     <Compile Include="C_OrganisePaths.cs" />
-    <Compile Include="C_Create2AxisMachine.cs" />
+    <Compile Include="Grasshopper\C_Create2AxisMachine.cs" />
     <Compile Include="C_ToToolPoints.cs" />
     <Compile Include="C_Drill_Operation.cs" />
     <Compile Include="C_SelectTool.cs" />
@@ -245,6 +245,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\" />
+    <Folder Include="Grasshopper\Components\" />
+    <Folder Include="Grasshopper\Parameters\" />
+    <Folder Include="Types\Machine\" />
+    <Folder Include="Types\MaterialForm\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
