@@ -5,7 +5,7 @@ using CAMel.Types.Machine;
 using Grasshopper.Kernel;
 using JetBrains.Annotations;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     [UsedImplicitly]
     public class C_CreateInstructions : GH_Component

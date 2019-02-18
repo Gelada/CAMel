@@ -4,7 +4,7 @@ using CAMel.Types;
 using Grasshopper.Kernel;
 using JetBrains.Annotations;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     [UsedImplicitly]
     public class C_ToToolPoints : GH_Component

@@ -8,7 +8,7 @@ using Grasshopper.Kernel;
 using JetBrains.Annotations;
 //using System.Windows.Forms.VisualStyles;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     public enum WriteState
     {

@@ -5,7 +5,7 @@ using Grasshopper.Kernel.Types;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     [UsedImplicitly]
     public class C_HelixSurfacePath : GH_Component

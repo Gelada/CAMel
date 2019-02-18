@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 using Rhino.Geometry;
 using Rhino.Geometry.Intersect;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     [UsedImplicitly]
     public class C_Index2DCut : GH_Component

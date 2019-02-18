@@ -8,7 +8,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using JetBrains.Annotations;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     // Mappings for csv helper
 

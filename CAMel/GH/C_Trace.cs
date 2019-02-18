@@ -9,7 +9,7 @@ using Grasshopper.Kernel.Parameters;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     [UsedImplicitly]
     public class C_Trace : GH_Component

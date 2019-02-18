@@ -5,7 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Attributes;
 using JetBrains.Annotations;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
 
     public class WriteCodeAttributes : GH_ComponentAttributes {

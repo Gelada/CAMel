@@ -1,11 +1,13 @@
 ﻿using System;
-using CAMel.Types;
-using CAMel.Types.MaterialForm;
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
+
+using CAMel.Types.MaterialForm;
+
 using JetBrains.Annotations;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     [UsedImplicitly]
     public class C_CreateMaterialForm : GH_Component

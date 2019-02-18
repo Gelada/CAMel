@@ -15,7 +15,7 @@ using Rhino.DocObjects;
 using Rhino.Geometry;
 using Rhino.UI;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     [UsedImplicitly]
     public class C_OrganisePaths : GH_Component // locally implements IGH_PreviewObject

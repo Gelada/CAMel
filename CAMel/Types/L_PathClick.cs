@@ -2,7 +2,7 @@
 
 using System;
 using System.Windows.Forms;
-using CAMel.Grasshopper;
+using CAMel.GH;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 using Rhino.UI;

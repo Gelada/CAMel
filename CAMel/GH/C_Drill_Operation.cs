@@ -5,7 +5,7 @@ using Grasshopper.Kernel;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
     [UsedImplicitly]
     public class C_DrillOperation : GH_Component

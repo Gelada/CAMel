@@ -7,7 +7,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Special;
 using JetBrains.Annotations;
 
-namespace CAMel.Grasshopper
+namespace CAMel.GH
 {
 
     [UsedImplicitly]
