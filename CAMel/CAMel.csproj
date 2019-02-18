@@ -89,63 +89,63 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="ClassDiagram1.cd" />
-    <Compile Include="L_CAMelData.cs" />
-    <Compile Include="L_PathClick.cs" />
-    <Compile Include="C_OrganisePaths.cs" />
+    <Compile Include="Types\L_CAMelData.cs" />
+    <Compile Include="Types\L_PathClick.cs" />
+    <Compile Include="Grasshopper\C_OrganisePaths.cs" />
     <Compile Include="Grasshopper\C_Create2AxisMachine.cs" />
-    <Compile Include="C_ToToolPoints.cs" />
-    <Compile Include="C_Drill_Operation.cs" />
-    <Compile Include="C_SelectTool.cs" />
-    <Compile Include="C_ReadToolFile.cs" />
-    <Compile Include="L_ReadPhoto.cs" />
-    <Compile Include="C_Trace.cs" />
-    <Compile Include="C_HelixSurface.cs" />
-    <Compile Include="C_CreateSurfacePath.cs" />
-    <Compile Include="C_ParallelSurface.cs" />
-    <Compile Include="C_Surfacing.cs" />
-    <Compile Include="C_PocketNC.cs" />
-    <Compile Include="C_CreateMaterialTool.cs" />
-    <Compile Include="C_CreateMaterialForm.cs" />
-    <Compile Include="C_Create3AxisMachine.cs" />
-    <Compile Include="C_CreateOperation.cs" />
-    <Compile Include="C_CreateToolPath.cs" />
+    <Compile Include="Grasshopper\C_ToToolPoints.cs" />
+    <Compile Include="Grasshopper\C_Drill_Operation.cs" />
+    <Compile Include="Grasshopper\C_SelectTool.cs" />
+    <Compile Include="Grasshopper\C_ReadToolFile.cs" />
+    <Compile Include="Types\L_ReadPhoto.cs" />
+    <Compile Include="Grasshopper\C_Trace.cs" />
+    <Compile Include="Grasshopper\C_HelixSurface.cs" />
+    <Compile Include="Grasshopper\C_CreateSurfacePath.cs" />
+    <Compile Include="Grasshopper\C_ParallelSurface.cs" />
+    <Compile Include="Grasshopper\C_Surfacing.cs" />
+    <Compile Include="Grasshopper\C_PocketNC.cs" />
+    <Compile Include="Grasshopper\C_CreateMaterialTool.cs" />
+    <Compile Include="Grasshopper\C_CreateMaterialForm.cs" />
+    <Compile Include="Grasshopper\C_Create3AxisMachine.cs" />
+    <Compile Include="Grasshopper\C_CreateOperation.cs" />
+    <Compile Include="Grasshopper\C_CreateToolPath.cs" />
     <Compile Include="CAMelInfo.cs" />
-    <Compile Include="C_CreateInstructions.cs" />
-    <Compile Include="C_Index2dCut.cs" />
-    <Compile Include="C_Index3Axis.cs" />
-    <Compile Include="C_ReadCode.cs" />
+    <Compile Include="Grasshopper\C_CreateInstructions.cs" />
+    <Compile Include="Grasshopper\C_Index2dCut.cs" />
+    <Compile Include="Grasshopper\C_Index3Axis.cs" />
+    <Compile Include="Grasshopper\C_ReadCode.cs" />
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="L_Exceptions.cs" />
-    <Compile Include="L_MachPocketNC.cs" />
-    <Compile Include="L_MachTwoAxis.cs" />
-    <Compile Include="L_MachThreeAxis.cs" />
-    <Compile Include="L_MFBox.cs" />
-    <Compile Include="L_MFCylinder.cs" />
-    <Compile Include="L_CodeInfo.cs" />
-    <Compile Include="L_CAMel_Base.cs" />
-    <Compile Include="L_Surfacing.cs" />
-    <Compile Include="L_Operations.cs" />
-    <Compile Include="L_Offsetting.cs" />
-    <Compile Include="L_ToolPointContainer.cs" />
+    <Compile Include="Types\L_Exceptions.cs" />
+    <Compile Include="Types\Machine\L_MachPocketNC.cs" />
+    <Compile Include="Types\Machine\L_MachTwoAxis.cs" />
+    <Compile Include="Types\Machine\L_MachThreeAxis.cs" />
+    <Compile Include="Types\MaterialForm\L_MFBox.cs" />
+    <Compile Include="Types\MaterialForm\L_MFCylinder.cs" />
+    <Compile Include="Types\L_CodeInfo.cs" />
+    <Compile Include="Types\L_CAMel_Base.cs" />
+    <Compile Include="Types\L_Surfacing.cs" />
+    <Compile Include="Types\L_Operations.cs" />
+    <Compile Include="Types\L_Offsetting.cs" />
+    <Compile Include="Types\L_ToolPointContainer.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="clipper.cs" />
-    <Compile Include="L_Machine.cs" />
-    <Compile Include="P_MachineInstructions.cs" />
-    <Compile Include="P_SurfacePath.cs" />
-    <Compile Include="P_MachineOperation.cs" />
-    <Compile Include="P_MaterialForm.cs" />
+    <Compile Include="Types\Machine\L_Machine.cs" />
+    <Compile Include="Types\P_MachineInstructions.cs" />
+    <Compile Include="Types\P_SurfacePath.cs" />
+    <Compile Include="Types\P_MachineOperation.cs" />
+    <Compile Include="Types\MaterialForm\P_MaterialForm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="P_Machine.cs" />
-    <Compile Include="P_MaterialTool.cs" />
-    <Compile Include="P_ToolPathAdditions.cs" />
-    <Compile Include="P_ToolPoint.cs" />
-    <Compile Include="P_ToolPath.cs" />
-    <Compile Include="C_WriteCode.cs" />
-    <Compile Include="C_WriteCodeAttributes.cs" />
+    <Compile Include="Types\Machine\P_Machine.cs" />
+    <Compile Include="Types\P_MaterialTool.cs" />
+    <Compile Include="Types\P_ToolPathAdditions.cs" />
+    <Compile Include="Types\P_ToolPoint.cs" />
+    <Compile Include="Types\P_ToolPath.cs" />
+    <Compile Include="Grasshopper\C_WriteCode.cs" />
+    <Compile Include="Grasshopper\C_WriteCodeAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -245,10 +245,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\" />
-    <Folder Include="Grasshopper\Components\" />
     <Folder Include="Grasshopper\Parameters\" />
-    <Folder Include="Types\Machine\" />
-    <Folder Include="Types\MaterialForm\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
