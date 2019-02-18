@@ -4,22 +4,23 @@ using System.Collections.Generic;
 using Rhino.Geometry;
 
 using CAMel.Types.MaterialForm;
+using JetBrains.Annotations;
 
 namespace CAMel.Types
 {
     // Functions to generate operations
     public static class Operations
     {
-        public static MachineOperation opIndex2DCut(Curve c, Vector3d d, double oS, ToolPathAdditions tPa, MaterialTool mT, IMaterialForm mF)
+        [NotNull]
+        public static MachineOperation opIndex2DCut([NotNull] Curve c, Vector3d d, double oS, [CanBeNull] ToolPathAdditions tPa, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
-            if (mT == null) { Exceptions.matToolException(); return null; }
             // Shift curve to XY plane
 
             Plane p = new Plane(Point3d.Origin, d);
             c.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
             bool reversed = false;
             // ensure the curve is anticlockwise
-            if (Math.Abs(oS) > CAMel_Goo.tolerance)
+            if (Math.Abs(oS) > CAMel_Goo.Tolerance)
             {
                 if (c.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
                 { c.Reverse(); reversed = true; }
@@ -34,7 +35,7 @@ namespace CAMel.Types
 
             // offSet
             List<PolylineCurve> osC = new List<PolylineCurve>();
-            if (Math.Abs(oS) < CAMel_Goo.tolerance) { osC.Add(pl); }
+            if (Math.Abs(oS) < CAMel_Goo.Tolerance) { osC.Add(pl); }
             else { osC = Offsetting.offset(pl, oS * mT.toolWidth / 2.0); }
 
             if (!reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
@@ -49,7 +50,7 @@ namespace CAMel.Types
             {
                 // Create and add name, material/tool and material form
                 ToolPath tP = new ToolPath("Cut", mT, mF,tPa);
-                if (osC.Count > 1) { tP.name = tP.name + " " + i.ToString(); }
+                if (osC.Count > 1) { tP.name = tP.name + " " + i; }
                 i++;
 
                 // return to original orientation
@@ -64,10 +65,11 @@ namespace CAMel.Types
             return mO;
         }
 
-        public static MachineOperation opIndex3Axis(List<Curve> cs, Vector3d dir, ToolPathAdditions tPa, MaterialTool mT, IMaterialForm mF, out int invalidCurves)
+        [NotNull]
+        public static MachineOperation opIndex3Axis([NotNull] List<Curve> cs, Vector3d dir, [CanBeNull] ToolPathAdditions tPa, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, out int invalidCurves)
         {
             MachineOperation mO = new MachineOperation
-            { name = "Index 3-Axis Cutting with " + cs.Count.ToString() + " path" };
+            { name = "Index 3-Axis Cutting with " + cs.Count + " path" };
             if (cs.Count > 1) { mO.name = mO.name + "s"; }
 
             int i = 1;
@@ -78,7 +80,7 @@ namespace CAMel.Types
             {
                 // Create and add name, material/tool and material form
                 ToolPath tP = new ToolPath("Index 3-Axis Path", mT, mF);
-                if (cs.Count > 1) { tP.name = tP.name + " " + i.ToString(); }
+                if (cs.Count > 1) { tP.name = tP.name + " " + i; }
 
                 // Additions for toolpath
                 tP.additions = tPa;
@@ -92,9 +94,9 @@ namespace CAMel.Types
             return mO;
         }
 
-        public static MachineOperation drillOperation(Circle d, double peck, MaterialTool mT, IMaterialForm mF)
+        [NotNull]
+        public static MachineOperation drillOperation(Circle d, double peck, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
-            if (mT == null) { Exceptions.matToolException(); return null; }
             MachineOperation mO = new MachineOperation
             {
                 name = "Drilling depth " + d.Radius.ToString("0.000") + " at (" + d.Center.X.ToString("0.000") + "," + d.Center.Y.ToString("0.000") + "," + d.Center.Z.ToString("0.000") + ")."

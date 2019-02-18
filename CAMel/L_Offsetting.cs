@@ -1,35 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using Rhino.Geometry;
 
 using ClipperLib;
+using JetBrains.Annotations;
 
 namespace CAMel.Types
 {
 
-    // Wrapper clases and library interfaces for leveraging the clipper
+    // Wrapper classes and library interfaces for leveraging the clipper
     // library for doing offsetting
     public static class Offsetting
     {
-        private const double _scF = 2000000000.0;
-        public static List<PolylineCurve> offset(PolylineCurve p, double d)
+        private const double _ScF = 2000000000.0;
+        [NotNull]
+        public static List<PolylineCurve> offset([NotNull] PolylineCurve p, double d)
         {
-            // Bring path into clipper, scaling to take advantage of interger arithmetic
+            // Bring path into clipper, scaling to take advantage of integer arithmetic
             BoundingBox bb = p.GetBoundingBox(false);
             double md = bb.Max.X;
             if(bb.Max.Y > md) { md = bb.Max.Y; }
             if (-bb.Min.X > md) { md = -bb.Min.X; }
             if (-bb.Min.Y > md) { md = -bb.Min.Y; }
-            double sc = _scF/md;
+            double sc = _ScF/md;
 
             List<List<IntPoint>> iPs = pLtoInt(p,sc);
 
             // Offset the paths.
 
-            EndType et;
-            if(p.IsClosed) { et = EndType.etClosedPolygon; }
-            else { et = EndType.etOpenRound; }
+            EndType et = p.IsClosed ? EndType.etClosedPolygon : EndType.etOpenRound;
 
             ClipperOffset co = new ClipperOffset();
             co.AddPaths(iPs, JoinType.jtRound, et);
@@ -50,67 +50,59 @@ namespace CAMel.Types
 
             int cp = -1;
             double pos = 0;
-            double di,t, dist = 1000000000000000000;
+            double dist = 1000000000000000000;
             for (int i = 0; i < oPl.Count; i++)
             {
-                oPl[i].ClosestPoint(p.PointAtStart, out t, dist);
-                di = oPl[i].PointAt(t).DistanceTo(p.PointAt(0));
-                if(di<dist)
-                {
-                    dist = d;
-                    cp = i;
-                    pos = t;
-                }
+                if (oPl[i] == null) { continue;}
+                oPl[i].ClosestPoint(p.PointAtStart, out double t, dist);
+                double di = oPl[i].PointAt(t).DistanceTo(p.PointAt(0));
+                if (!(di < dist)) { continue; }
+
+                dist = d;
+                cp = i;
+                pos = t;
             }
 
-            if (cp >= 0) { oPl[cp].ChangeClosedCurveSeam(pos); }
+            if (cp >= 0 && oPl[cp]!=null) { oPl[cp].ChangeClosedCurveSeam(pos); }
 
             return oPl;
         }
 
-        private static IntPoint dtoi (Point3d p, double sc)
+        private static IntPoint dToi (Point3d p, double sc)
         {
             return new IntPoint((long)Math.Round(p.X * sc), (long)Math.Round(p.Y * sc));
         }
-        private static Point3d itod(IntPoint p, double sc)
+        private static Point3d iTod(IntPoint p, double sc)
         {
             return new Point3d(p.X/sc,p.Y/sc,0);
         }
 
-        private static List<List<IntPoint>> pLtoInt(PolylineCurve pc, double sc)
+        [NotNull]
+        private static List<List<IntPoint>> pLtoInt([NotNull] PolylineCurve pc, double sc)
         {
             List<IntPoint> intP = new List<IntPoint>();
-            Polyline P;
-            pc.TryGetPolyline(out P);
-            foreach(Point3d p in P) { intP.Add(dtoi(p,sc)); }
+            pc.TryGetPolyline(out Polyline p);
+            foreach(Point3d pt in p) { intP.Add(dToi(pt,sc)); }
             //List<List<IntPoint>> IntPL = Clipper.SimplifyPolygon(IntP,);
             List<List<IntPoint>> intPl = new List<List<IntPoint>> { intP };
 
             return intPl;
         }
-        // ReSharper disable once UnusedMember.Local
-        private static List<List<IntPoint>> pLtoInt(List<PolylineCurve> p, double sc)
+
+        [NotNull]
+        private static List<PolylineCurve> intToPl([NotNull] List<List<IntPoint>> iPs, double sc)
         {
-            List<List<IntPoint>> intPl = new List<List<IntPoint>>();
-            foreach(PolylineCurve pl in p) { intPl.AddRange(pLtoInt(pl, sc)); }
+            List<PolylineCurve> pls = new List<PolylineCurve>();
 
-            return intPl;
-        }
-
-        private static List<PolylineCurve> intToPl(List<List<IntPoint>> iPs, double sc)
-        {
-            List<PolylineCurve> pl = new List<PolylineCurve>();
-            Polyline P;
-
-            foreach(List<IntPoint> intP in iPs)
+            foreach(List<IntPoint> intP in iPs.Where(x => x != null))
             {
-                P = new Polyline();
-                foreach(IntPoint iP in intP) { P.Add(itod(iP, sc)); }
-                if (intP.Count > 0) { P.Add(itod(intP[0], sc)); }
-                pl.Add(new PolylineCurve(P));
+                Polyline pl = new Polyline();
+                foreach(IntPoint iP in intP) { pl.Add(iTod(iP, sc)); }
+                if (intP.Count > 0) { pl.Add(iTod(intP[0], sc)); }
+                pls.Add(new PolylineCurve(pl));
             }
 
-            return pl;
+            return pls;
         }
 
     }

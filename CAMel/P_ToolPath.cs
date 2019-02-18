@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-
+using System.Linq;
 using Rhino.Geometry;
 
 using Grasshopper.Kernel;
@@ -9,6 +9,7 @@ using Grasshopper.Kernel.Types;
 
 using CAMel.Types.MaterialForm;
 using CAMel.Types.Machine;
+using JetBrains.Annotations;
 using static CAMel.Exceptions;
 
 namespace CAMel.Types
@@ -17,27 +18,15 @@ namespace CAMel.Types
     // One action of the machine, such as cutting a line
     public class ToolPath : IList<ToolPoint> ,IToolPointContainer
     {
-        private List<ToolPoint> _pts;     // Positions of the machine
+        [ItemNotNull] [NotNull] private List<ToolPoint> _pts;     // Positions of the machine
         public MaterialTool matTool { get; set; }   // Material and tool to cut it with
         public IMaterialForm matForm { get; set; }    // Shape of the material
         public ToolPathAdditions additions;       // Features we might add to the path
 
-        public ToolPoint firstP
-        {
-            get
-            {
-                if (this.Count > 0) { return this[0]; }
-                else { return null; }
-            }
-        }
-        public ToolPoint lastP
-        {
-            get
-            {
-                if (this.Count > 0) { return this[this.Count-1]; }
-                else { return null; }
-            }
-        }
+        public ToolPoint firstP => this.Count > 0 ? this[0] : null;
+
+        public ToolPoint lastP => this.Count > 0 ? this[this.Count - 1] : null;
+
         // Default Constructor, set everything to empty
         public ToolPath()
         {
@@ -50,7 +39,7 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Just a MaterialTool
-        public ToolPath(MaterialTool mT)
+        public ToolPath([NotNull] MaterialTool mT)
         {
             this.name = string.Empty;
             this._pts = new List<ToolPoint>();
@@ -61,7 +50,7 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Just a MaterialForm
-        public ToolPath(IMaterialForm mf)
+        public ToolPath([NotNull] IMaterialForm mf)
         {
             this.name = string.Empty;
             this._pts = new List<ToolPoint>();
@@ -72,7 +61,7 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // MaterialTool and Form
-        public ToolPath(string name, MaterialTool mT, IMaterialForm mF)
+        public ToolPath([NotNull] string name, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
             this.name = name;
             this._pts = new List<ToolPoint>();
@@ -83,7 +72,7 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // MaterialTool, Form and features
-        public ToolPath(string name, MaterialTool mT, IMaterialForm mF, ToolPathAdditions tpa)
+        public ToolPath([NotNull] string name, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [CanBeNull] ToolPathAdditions tpa)
         {
             this.name = name;
             this._pts = new List<ToolPoint>();
@@ -94,23 +83,24 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Copy Constructor
-        private ToolPath(ToolPath tP)
+        private ToolPath([NotNull] ToolPath tP)
         {
             this.name = string.Copy(tP.name);
             this._pts = new List<ToolPoint>();
-            foreach (ToolPoint pt in tP) { Add(pt.deepClone()); }
+            foreach (ToolPoint pt in tP) { Add(pt?.deepClone()); }
             this.matTool = tP.matTool;
             this.matForm = tP.matForm;
             this.preCode = string.Copy(tP.preCode);
             this.postCode = string.Copy(tP.postCode);
-            this.additions = tP.additions.deepClone();
+            this.additions = tP.additions?.deepClone();
         }
 
-        public ToolPath deepClone() => new ToolPath(this);
+        [NotNull, Pure] public ToolPath deepClone() => new ToolPath(this);
         // create a lifted path
-        public ToolPath deepClone(double h, IMachine m)
+        [NotNull, Pure]
+        public ToolPath deepClone(double h, [NotNull] IMachine m)
         {
-            if(Math.Abs(h) < CAMel_Goo.tolerance) { return deepClone(); }
+            if(Math.Abs(h) < CAMel_Goo.Tolerance) { return deepClone(); }
             ToolPath tP = deepCloneWithNewPoints(new List<ToolPoint>());
             foreach (ToolPoint tPt in this)
             {
@@ -121,22 +111,23 @@ namespace CAMel.Types
             return tP;
         }
 
-        public ToolPath deepCloneWithNewPoints(List<ToolPoint> pts)
+        [NotNull, Pure]
+        public ToolPath deepCloneWithNewPoints([CanBeNull] List<ToolPoint> pts)
         {
-            ToolPath newTP = new ToolPath()
+            ToolPath newTP = new ToolPath
             {
                 name = string.Copy(this.name),
                 matTool = this.matTool,
                 matForm = this.matForm,
                 preCode = string.Copy(this.preCode),
                 postCode = string.Copy(this.postCode),
-                additions = this.additions.deepClone(),
-                _pts = pts
+                additions = this.additions?.deepClone(),
+                _pts = pts ?? new List<ToolPoint>()
             };
             return newTP;
         }
         // Copy in features from the valid ToolPath if this does not yet have its own.
-        public void validate(ToolPath valid, IMachine m)
+        public void validate([NotNull] ToolPath valid, [NotNull] IMachine m)
         {
             this.matTool = this.matTool ?? valid.matTool;
             this.matForm = this.matForm ?? valid.matForm;
@@ -157,18 +148,19 @@ namespace CAMel.Types
 
         // Process any additions to the path and return
         // list of list of toolpaths (for stepdown)
-        public List<List<ToolPath>> processAdditions(IMachine m, out List<ToolPath> fP)
+        [NotNull, Pure]
+        public List<List<ToolPath>> processAdditions([NotNull] IMachine m, [CanBeNull] out List<ToolPath> fP)
         {
-            if (this.matTool == null) { matToolException(); fP = null; return null; }
-            if (this.matForm == null) { matFormException(); fP = null; return null; }
+            if (this.matTool == null) { matToolException(); }
+            if (this.matForm == null) { matFormException(); }
+            if (this.additions == null) { additionsNullException(); }
 
             // adjust path for three axis (or index three axis)
-            ToolPath useTP;
-            if (this.additions.threeAxisHeightOffset) { useTP = m.threeAxisHeightOffset(this); }
-            else { useTP = this; }
+            ToolPath useTP = this.additions.threeAxisHeightOffset ? m.threeAxisHeightOffset(this) : this;
+            if (useTP.additions == null) { nullPanic(); }
 
             // add steps into material
-            var roughPaths = new List<List<ToolPath>>();
+            List<List<ToolPath>> roughPaths = new List<List<ToolPath>>();
             if(useTP.additions.stepDown) { roughPaths = m.stepDown(useTP); }
 
             // add finishing paths, processing onion
@@ -177,33 +169,34 @@ namespace CAMel.Types
 
             // add insert and retract moves
 
-            for (int i = 0; i < roughPaths.Count; i++)
+            foreach (List<ToolPath> tP in roughPaths)
+            {
+                if (tP == null) { continue; }
+                for (int i = 0; i < tP.Count; i++)
                 {
-                    for (int j = 0; j < roughPaths[i].Count; j++)
-                    { roughPaths[i][j] = m.insertRetract(roughPaths[i][j]); }
+                    if (tP[i] == null) { continue; }
+                    tP[i] = m.insertRetract(tP[i]);
                 }
-            for (int i = 0; i < fP.Count; i++) { fP[i] = m.insertRetract(fP[i]); }
+            }
+            for (int i = 0; i < fP.Count; i++)
+            {
+                if (fP[i] == null) { continue; }
+                fP[i] = m.insertRetract(fP[i]);
+            }
 
             return roughPaths;
         }
 
         // Use a curve and direction vector to create a path of toolpoints
-        public bool convertCurve(Curve c, Vector3d d)
+        public bool convertCurve([CanBeNull] Curve c, Vector3d d)
         {
-            if (this.matTool == null) { matToolException(); return false; }
+            if (c == null || !c.IsValid) { return false; }
+            if (this.matTool == null) { matToolException(); }
 
-            // Create polyline approximation
-            Polyline pL;
-
-            // Check we are dealing with a valid curve.
-
-            if (c != null && c.IsValid)
-            {
-                Curve c2 = c.ToPolyline(0, 0, Math.PI, 0, 0, this.matTool.tolerance, this.matTool.minStep, 20.0 * this.matTool.toolWidth, true);
-                c2.TryGetPolyline(out pL);
-            }
-            else { return false; }
-
+            Curve c2 = c.ToPolyline(0, 0, Math.PI, 0, 0, this.matTool.tolerance, this.matTool.minStep,
+                    20.0 * this.matTool.toolWidth, true);
+            if (c2 == null) { return false; }
+            c2.TryGetPolyline(out Polyline pL);
 
             this._pts = new List<ToolPoint>();
 
@@ -216,27 +209,34 @@ namespace CAMel.Types
             }
             return true;
         }
-        private const double _accTol = 0.0001;
-        public static PolylineCurve convertAccurate(Curve c)
+        private const double _AccTol = 0.0001;
+        [NotNull]
+        public static PolylineCurve convertAccurate([NotNull] Curve c)
         {
             // Check if already a polyline, otherwise make one
             PolylineCurve plC = c.TryGetPolyline(out Polyline p) ? new PolylineCurve(p) :
-                c.ToPolyline(0, 0, Math.PI, 0, 0, _accTol*5.0, 0, 0, true);
+                c.ToPolyline(0, 0, Math.PI, 0, 0, _AccTol*5.0, 0, 0, true);
 
-            return plC;
+            return plC ?? new PolylineCurve();
         }
 
-        internal static ToolPath toPath(object scraps)
+        [NotNull]
+        internal static ToolPath toPath([CanBeNull] object scraps)
         {
             ToolPath oP = new ToolPath();
-            if (scraps is IToolPointContainer) { oP.AddRange(((IToolPointContainer)scraps).getSinglePath()); }
-            else if (scraps is Point3d) { oP.Add((Point3d)scraps); }
-            else if (scraps is IEnumerable)
-            {
-                foreach (object oB in scraps as IEnumerable)
+            switch (scraps) {
+                case IToolPointContainer container: oP.AddRange(container.getSinglePath()); break;
+                case Point3d pt: oP.Add(pt); break;
+                case IEnumerable li:
                 {
-                    if (oB is IToolPointContainer) { oP.AddRange(((IToolPointContainer)oB).getSinglePath()); }
-                    if (oB is Point3d) { oP.Add((Point3d)oB); }
+                    foreach (object oB in li)
+                    {
+                        switch (oB) {
+                            case IToolPointContainer tPc: oP.AddRange(tPc.getSinglePath()); break;
+                            case Point3d pti: oP.Add(pti); break;
+                        }
+                    }
+                    break;
                 }
             }
             return oP;
@@ -245,6 +245,7 @@ namespace CAMel.Types
         #region Point extraction and previews
         public ToolPath getSinglePath() => deepClone();
         // Get the list of tooltip locations
+        [NotNull, Pure]
         public List<Point3d> getPoints()
         {
             List<Point3d> points = new List<Point3d>();
@@ -254,6 +255,7 @@ namespace CAMel.Types
             return points;
         }
         // Get the list of tool directions
+        [NotNull, Pure]
         public List<Vector3d> getDirs()
         {
             List<Vector3d> dirs = new List<Vector3d>();
@@ -262,7 +264,8 @@ namespace CAMel.Types
             return dirs;
         }
         // Create a path with the points
-        public List<Point3d> getPointsandDirs(out List<Vector3d> dirs)
+        [NotNull, Pure]
+        public List<Point3d> getPointsAndDirs([CanBeNull] out List<Vector3d> dirs)
         {
             List<Point3d> ptsOut = new List<Point3d>();
             dirs = new List<Vector3d>();
@@ -274,6 +277,7 @@ namespace CAMel.Types
             return ptsOut;
         }
         // Get the list of speeds and feeds (a vector with speed in X and feed in Y)
+        [NotNull, Pure]
         public List<Vector3d> getSpeedFeed()
         {
             List<Vector3d> sF = new List<Vector3d>();
@@ -283,7 +287,7 @@ namespace CAMel.Types
         }
 
         // Bounding Box for previews
-        public BoundingBox getBoundingBox()
+        [Pure] public BoundingBox getBoundingBox()
         {
             BoundingBox bb = BoundingBox.Unset;
             for (int i = 0; i < this.Count; i++)
@@ -291,9 +295,10 @@ namespace CAMel.Types
             return bb;
         }
         // Create a polyline
-        public PolylineCurve getLine() => new PolylineCurve(getPoints());
+        [NotNull, Pure] public PolylineCurve getLine() => new PolylineCurve(getPoints());
 
         // Lines for each toolpoint
+        [NotNull, Pure]
         public List<Line> toolLines()
         {
             List<Line> lines = new List<Line>();
@@ -303,43 +308,47 @@ namespace CAMel.Types
         #endregion
 
         #region List Functions
-        public int Count => ((IList<ToolPoint>)this._pts).Count;
+        public int Count => this._pts.Count;
         public bool IsReadOnly => ((IList<ToolPoint>)this._pts).IsReadOnly;
-        public ToolPoint this[int index] { get => ((IList<ToolPoint>)this._pts)[index]; set => ((IList<ToolPoint>)this._pts)[index] = value; }
-        public int IndexOf(ToolPoint item) { return ((IList<ToolPoint>)this._pts).IndexOf(item); }
-        public void Insert(int index, ToolPoint item) { ((IList<ToolPoint>)this._pts).Insert(index, item); }
-        public void InsertRange(int index, IEnumerable<ToolPoint> items) { this._pts.InsertRange(index, items); }
-        public void RemoveAt(int index) { ((IList<ToolPoint>)this._pts).RemoveAt(index); }
-        public void Add(ToolPoint item) { ((IList<ToolPoint>)this._pts).Add(item); }
-        public void Add(Point3d item) { ((IList<ToolPoint>)this._pts).Add(new ToolPoint(item)); }
-        public void AddRange(IEnumerable<ToolPoint> items) { this._pts.AddRange(items); }
-        public void AddRange(IEnumerable<Point3d> items)
-        { foreach(Point3d pt in items) { Add(pt); } }
-        public void Clear() { ((IList<ToolPoint>)this._pts).Clear(); }
-        public bool Contains(ToolPoint item) { return ((IList<ToolPoint>)this._pts).Contains(item); }
-        public void CopyTo(ToolPoint[] array, int arrayIndex) { ((IList<ToolPoint>)this._pts).CopyTo(array, arrayIndex); }
-        public bool Remove(ToolPoint item) { return ((IList<ToolPoint>)this._pts).Remove(item); }
-        public IEnumerator<ToolPoint> GetEnumerator() { return ((IList<ToolPoint>)this._pts).GetEnumerator(); }
-        IEnumerator IEnumerable.GetEnumerator() { return ((IList<ToolPoint>)this._pts).GetEnumerator(); }
+        [NotNull] public ToolPoint this[int index] { get => this._pts[index]; set => this._pts[index] = value; }
+        public int IndexOf(ToolPoint item) => this._pts.IndexOf(item);
+        public void Insert(int index, ToolPoint item) { if(item!=null) {this._pts.Insert(index, item);} }
+        public void InsertRange(int index, [NotNull] IEnumerable<ToolPoint> items) => this._pts.InsertRange(index, items.Where(x => x!=null) );
+        public void RemoveAt(int index) => this._pts.RemoveAt(index);
+        public void Add(ToolPoint item) { if (item != null) { this._pts.Add(item); } }
+        // ReSharper disable once MemberCanBePrivate.Global
+        public void Add(Point3d item) => this._pts.Add(new ToolPoint(item));
+        public void AddRange([NotNull] IEnumerable<ToolPoint> items) => this._pts.AddRange(items.Where(x => x != null));
+        public void AddRange([NotNull] IEnumerable<Point3d> items)
+        {
+            foreach (Point3d pt in items) { Add(pt); }
+        }
+        public void Clear() => this._pts.Clear();
+        public bool Contains(ToolPoint item) => this._pts.Contains(item);
+        public void CopyTo(ToolPoint[] array, int arrayIndex) => this._pts.CopyTo(array, arrayIndex);
+        public bool Remove(ToolPoint item) => this._pts.Remove(item);
+        public IEnumerator<ToolPoint> GetEnumerator() => this._pts.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => this._pts.GetEnumerator();
+
         #endregion
     }
 
     // Grasshopper Type Wrapper
     public sealed class GH_ToolPath : CAMel_Goo<ToolPath>, IGH_PreviewData
     {
-        public BoundingBox ClippingBox => this.Value.getBoundingBox();
-
         // Default Constructor
-        public GH_ToolPath() { this.Value = new ToolPath(); }
+        [UsedImplicitly] public GH_ToolPath() { this.Value = new ToolPath(); }
         // Create from unwrapped version
-        public GH_ToolPath(ToolPath tP) { this.Value = tP; }
+        public GH_ToolPath([CanBeNull] ToolPath tP) { this.Value = tP; }
         // Copy Constructor
-        public GH_ToolPath(GH_ToolPath tP) { this.Value = tP.Value.deepClone(); }
+        // ReSharper disable once MemberCanBePrivate.Global
+        public GH_ToolPath([CanBeNull] GH_ToolPath tP) { this.Value = tP?.Value?.deepClone(); }
         // Duplicate
-        public override IGH_Goo Duplicate() { return new GH_ToolPath(this); }
+        [NotNull] public override IGH_Goo Duplicate() { return new GH_ToolPath(this); }
 
         public override bool CastTo<T>(ref T target)
         {
+            if (this.Value == null) { return false; }
             // Cast from unwrapped ToolPath
             if (typeof(T).IsAssignableFrom(typeof(ToolPath)))
             {
@@ -399,47 +408,40 @@ namespace CAMel.Types
             return false;
         }
 
-        public override bool CastFrom(object source)
+        public override bool CastFrom([CanBeNull] object source)
         {
-            if (source == null) { return false; }
-            //Cast from unwrapped ToolPath
-            if (typeof(ToolPath).IsAssignableFrom(source.GetType()))
-            {
-                this.Value = (ToolPath)source;
-                return true;
-            }
-            if (typeof(Curve).IsAssignableFrom(source.GetType()))
-            {
-                ToolPath tP = new ToolPath();
-                if (((Curve)source).TryGetPolyline(out Polyline pl))
-                {
+            switch (source) {
+                case null: return false;
+                case ToolPath sTP:
+                    this.Value = sTP;
+                    return true;
+                case Curve curve: {
+                    if (!curve.TryGetPolyline(out Polyline pl)) { return false; }
+                    ToolPath tP = new ToolPath();
                     tP.AddRange(pl);
                     this.Value = tP;
                     return true;
                 }
-                return false;
-            }
-            if (typeof(GH_Curve).IsAssignableFrom(source.GetType()))
-            {
-                ToolPath tP = new ToolPath();
-                if (((GH_Curve)source).Value.TryGetPolyline(out Polyline pl))
-                {
+                case GH_Curve ghCurve: {
+                    if (ghCurve.Value == null || !ghCurve.Value.TryGetPolyline(out Polyline pl)) { return false; }
+                    ToolPath tP = new ToolPath();
                     tP.AddRange(pl);
                     this.Value = tP;
                     return true;
                 }
-                return false;
+                default: return false;
             }
-
-            return false;
         }
 
-        public void DrawViewportWires(GH_PreviewWireArgs args)
+        public BoundingBox ClippingBox => this.Value?.getBoundingBox() ?? BoundingBox.Unset;
+
+        public void DrawViewportWires([CanBeNull] GH_PreviewWireArgs args)
         {
+            if (this.Value == null || args?.Pipeline == null) { return; }
             args.Pipeline.DrawCurve(this.Value.getLine(), args.Color);
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
-        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+        public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
@@ -447,29 +449,21 @@ namespace CAMel.Types
     {
         public GH_ToolPathPar() :
             base("ToolPath", "ToolPath", "Contains a collection of Tool Paths", "CAMel", "  Params", GH_ParamAccess.item) { }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("4ea6da38-c19f-43e7-85d4-ada4716c06ac"); }
-        }
+
+        /// <inheritdoc />
+        public override Guid ComponentGuid => new Guid("4ea6da38-c19f-43e7-85d4-ada4716c06ac");
 
         public bool Hidden { get; set; }
         public bool IsPreviewCapable => true;
         public BoundingBox ClippingBox => Preview_ComputeClippingBox();
-        public void DrawViewportWires(IGH_PreviewArgs args) => Preview_DrawWires(args);
-        public void DrawViewportMeshes(IGH_PreviewArgs args) => Preview_DrawMeshes(args);
+        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => Preview_DrawWires(args);
+        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => Preview_DrawMeshes(args);
 
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.toolpath;
-            }
-        }
-
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpath;
     }
 }

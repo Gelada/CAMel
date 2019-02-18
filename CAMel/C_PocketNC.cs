@@ -7,11 +7,14 @@ using Grasshopper.Kernel;
 
 using CAMel.Types;
 using CAMel.Types.Machine;
+using JetBrains.Annotations;
 
 namespace CAMel
 {
+    [UsedImplicitly]
     public class C_PocketNC : GH_Component
     {
+        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
@@ -25,16 +28,19 @@ namespace CAMel
         // put this item in the second batch (Machines)
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
+        /// <inheritdoc />
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_InputParamManager pManager)
+        protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
+            if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddIntegerParameter("Version", "V", "Machine version, 0 (V1 old spindle), 1 (V1 new spindle) or 2", GH_ParamAccess.item, 2);
             pManager.AddNumberParameter("B-table offset", "Bt", "Distance from B-table to centre of A axis rotation.", GH_ParamAccess.item, 0.836);
-            pManager.AddNumberParameter("B maximum", "Bmax", "Maximum value (+ or -) that the B axis can take. This can be adjusted in the machine settings.", GH_ParamAccess.item, 9999);
+            pManager.AddNumberParameter("B maximum", "BMax", "Maximum value (+ or -) that the B axis can take. This can be adjusted in the machine settings.", GH_ParamAccess.item, 9999);
             pManager.AddBooleanParameter("Tool Compensation", "TC", "Use the machine's tool length compensation?", GH_ParamAccess.item, true);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
+            // ReSharper disable once PossibleNullReferenceException
             pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
             pManager[4].Optional = true;
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
@@ -43,20 +49,24 @@ namespace CAMel
 
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
+            if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddParameter(new GH_MachinePar(), "Machine", "M", "Details for a PocketNC 5-axis machine", GH_ParamAccess.item);
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
         /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess da)
+        protected override void SolveInstance([NotNull] IGH_DataAccess da)
         {
+            if (da == null) { throw new ArgumentNullException(); }
             string head = string.Empty;
             string foot = string.Empty;
             double pj = 0;
@@ -135,27 +145,18 @@ namespace CAMel
             da.SetData(0, new GH_Machine(m));
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.create5axis;
-            }
-        }
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.create5axis;
 
 
-
+        /// <inheritdoc />
         /// <summary>
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{A6E20644-AA34-4400-B87E-EEBA8BDF3720}"); }
-        }
+        public override Guid ComponentGuid => new Guid("{A6E20644-AA34-4400-B87E-EEBA8BDF3720}");
     }
 }

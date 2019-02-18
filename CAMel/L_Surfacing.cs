@@ -3,14 +3,21 @@ using System.Collections.Generic;
 
 using Rhino.Geometry;
 
+using static CAMel.Exceptions;
+
+using JetBrains.Annotations;
+
 namespace CAMel.Types
 {
 
     // Functions to generate operations
     public static class Surfacing
     {
-        public static SurfacePath parallel(Curve c, Plane dir, double stepOver, bool zZ, SurfToolDir sTD, BoundingBox bb, MaterialTool mT)
+        [NotNull]
+        public static SurfacePath parallel([CanBeNull] Curve c, Plane dir, double stepOver, bool zZ, SurfToolDir sTD, BoundingBox bb, [CanBeNull] MaterialTool mT)
         {
+            if(mT == null) {matToolException();}
+
             Curve uC = c;
             if (c == null) // default to curve running along X-direction on Plane.
             { uC = new LineCurve(dir.PointAt(bb.Min.X, bb.Min.Y), dir.PointAt(bb.Max.X, bb.Min.Y)); }
@@ -18,6 +25,7 @@ namespace CAMel.Types
 
             List<Curve> paths = new List<Curve>(); // Curves to use
             Curve tempC = uC.DuplicateCurve();
+            if(tempC == null) { throw new NullReferenceException("Rhino.Geometry.Curve.DuplicateCurve failed.");}
             tempC.Translate((Vector3d)dir.PointAt(0, bb.Min.Y - bbc.Max.Y, bb.Max.Z - bbc.Min.Z + 0.1));
 
             // create enough curves to guarantee covering surface
@@ -32,17 +40,19 @@ namespace CAMel.Types
             return new SurfacePath(paths, -dir.ZAxis, sTD);
         }
 
-        public static SurfacePath helix(Curve c, Plane dir, double stepOver, SurfToolDir sTD, BoundingBox bb, MaterialTool mT)
+        [NotNull]
+        public static SurfacePath helix([CanBeNull] Curve c, Plane dir, double stepOver, SurfToolDir sTD, BoundingBox bb, [CanBeNull] MaterialTool mT)
         {
+            if (mT == null) { matToolException(); }
 
-            double outerRadius = (new Vector3d(bb.Max.X - bb.Min.X, bb.Max.Y - bb.Min.Y, 0)).Length / 2;
+            double outerRadius = new Vector3d(bb.Max.X - bb.Min.X, bb.Max.Y - bb.Min.Y, 0).Length / 2;
 
             // Use Toolpath so we standardise Curve conversion
             ToolPath cTp = new ToolPath(mT);
 
             double zMin = 0, zMax = 0;
             int i;
-            double addAngle = 90;
+            const double addAngle = 90;
             if (c == null)
             {
                 for (i = 0; i < addAngle; i++)
@@ -90,31 +100,34 @@ namespace CAMel.Types
 
                 // complete loop by adding points going from
                 // the end point to the start point
+                if (cTp.firstP == null || cTp.lastP == null) { throw new NullReferenceException("SurfacePath.helix has somehow ended up with a zero length curve."); }
                 Point3d startPt = cTp.firstP.pt;
                 Point3d endPt = cTp.lastP.pt;
+
                 if (endPt.Y > 0)
                 { startPt.Y = startPt.Y + turns + 2.0 * Math.PI; }
                 else
                 { startPt.Y = startPt.Y + turns - 2.0 * Math.PI; }
 
 
-                int shiftl = (int)Math.Ceiling(addAngle * Math.Abs((startPt.Y - endPt.Y) / (2.0 * Math.PI)));
-                for (i = 1; i < shiftl; i++)
+                int shiftL = (int)Math.Ceiling(addAngle * Math.Abs((startPt.Y - endPt.Y) / (2.0 * Math.PI)));
+                for (i = 1; i < shiftL; i++)
                 {
                     cTp.Add(new ToolPoint(
                         new Point3d(outerRadius,
-                            (i * startPt.Y + (shiftl - i) * endPt.Y) / shiftl,
-                            (i * startPt.Z + (shiftl - i) * endPt.Z) / shiftl)
+                            (i * startPt.Y + (shiftL - i) * endPt.Y) / shiftL,
+                            (i * startPt.Z + (shiftL - i) * endPt.Z) / shiftL)
                         ));
                 }
 
             }
 
             // Create spiral from the loop
+            if (cTp.firstP == null || cTp.lastP == null) { throw new NullReferenceException("SurfacePath.helix has somehow ended up with a zero length curve."); }
             double winding = (cTp.lastP.pt.Y - cTp.firstP.pt.Y) / (2.0 * Math.PI);
-            double raisePer = (stepOver * mT.toolWidth); // height dealt with by each loop
+            double raisePer = stepOver * mT.toolWidth; // height dealt with by each loop
             double rot =
-                ((bb.Max.Z - bb.Min.Z) // eight of surface
+                (bb.Max.Z - bb.Min.Z // eight of surface
                 + (zMax - zMin) // height variation in path
                 )
                 / (winding * raisePer);
@@ -125,12 +138,12 @@ namespace CAMel.Types
 
             for (i = -1; i <= Math.Abs(rot); i++) // strange limits to make sure we go top to bottom
             {
-                for (int j = 0; j < cTp.Count; j++)
+                foreach (ToolPoint tPt in cTp)
                 {
                     Point3d tempPt = CAMel_Goo.fromCyl(new Point3d(
                         outerRadius,
-                        -cTp[j].pt.Y,
-                        bb.Min.Z - zMax + cTp[j].pt.Z + (2.0 * Math.PI * winding * i + cTp[j].pt.Y) * raisePer));
+                        -tPt.pt.Y,
+                        bb.Min.Z - zMax + tPt.pt.Z + (2.0 * Math.PI * winding * i + tPt.pt.Y) * raisePer));
                     tempPt = dir.PointAt(tempPt.X, tempPt.Y, tempPt.Z);
                     spiralPath.Add(tempPt);
                 }

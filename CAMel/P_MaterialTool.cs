@@ -6,6 +6,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 
 using CAMel.Types.Machine;
+using JetBrains.Annotations;
 
 namespace CAMel.Types
 {
@@ -15,35 +16,31 @@ namespace CAMel.Types
         Ball, Square, V, Other, Error
     }
 
+    [UsedImplicitly]
     public class MaterialToolBuilder
     {
-        public string matName { get; set; }     // Name of the material
-        public string toolName { get; set; }    // Name of the tool
-        public int toolNumber { get; set; }     // Number of the tool
-        public double speed { get; set; }       // speed of spindle (assumed unset for negative values)
-        public double feedCut { get; set; }     // feed rate for cutting (assumed unset for negative values)
-        public double feedPlunge { get; set; }  // feed rate for plunging (assumed unset for negative values)
-        public double cutDepth { get; set; }    // maximum material to cut away (assumed unset for negative values)
-        public double finishDepth { get; set; } // thickness to cut in a finish pass
-        public double toolWidth { get; set; }   // width of tool (assumed unset for negative values)
-        public double insertWidth { get; set; } // width needed to insert into material
-        public double toolLength { get; set; }  // length from the tip of the tool to the spindle
-        public string shape { get; set; }       // End shape of the tool
-        public double sideLoad { get; set; }    // Suggested side load for the tool.
-        public double tolerance { get; set; }   // The maximum permitted distance of approximation from curve
-        public double minStep { get; set; }     // shortest path permitted
-
-        public MaterialToolBuilder()
-        {
-            this.matName = string.Empty;
-        }
+        public string matName { get; [UsedImplicitly] set; }     // Name of the material
+        public string toolName { get; [UsedImplicitly] set; }    // Name of the tool
+        public int toolNumber { get; [UsedImplicitly] set; }     // Number of the tool
+        public double speed { get; [UsedImplicitly] set; }       // speed of spindle (assumed unset for negative values)
+        public double feedCut { get; [UsedImplicitly] set; }     // feed rate for cutting (assumed unset for negative values)
+        public double feedPlunge { get; [UsedImplicitly] set; }  // feed rate for plunging (assumed unset for negative values)
+        public double cutDepth { get; [UsedImplicitly] set; }    // maximum material to cut away (assumed unset for negative values)
+        public double finishDepth { get; [UsedImplicitly] set; } // thickness to cut in a finish pass
+        public double toolWidth { get; [UsedImplicitly] set; }   // width of tool (assumed unset for negative values)
+        public double insertWidth { get; [UsedImplicitly] set; } // width needed to insert into material
+        public double toolLength { get; [UsedImplicitly] set; }  // length from the tip of the tool to the spindle
+        public string shape { get; [UsedImplicitly] set; }       // End shape of the tool
+        public double sideLoad { get; [UsedImplicitly] set; }    // Suggested side load for the tool.
+        public double tolerance { get; [UsedImplicitly] set; }   // The maximum permitted distance of approximation from curve
+        public double minStep { get; [UsedImplicitly] set; }     // shortest path permitted
     }
 
     // Settings for a particular material and tool
     public class MaterialTool : ICAMelBase
     {
-        public string matName { get; }     // Name of the materialMaterialToolReader
-        public string toolName { get; }    // Name of the tool
+        [NotNull] public string matName { get; }     // Name of the materialMaterialToolReader
+        [NotNull] public string toolName { get; }    // Name of the tool
         public int toolNumber { get; }     // Number of the tool
         public double speed { get; }       // speed of spindle (assumed unset for negative values)
         public double feedCut { get; }     // feed rate for cutting (assumed unset for negative values)
@@ -53,7 +50,7 @@ namespace CAMel.Types
         public double toolWidth { get; }   // width of tool (assumed unset for negative values)
         public double insertWidth { get; } // width needed to insert into material
         public double toolLength { get; }  // length from the tip of the tool to the spindle
-        public EndShape shape { get; }     // End shape of the tool
+        private EndShape shape { get; }     // End shape of the tool
         public double sideLoad { get; }    // Suggested side load for the tool.
 
         // settings for curve approximation
@@ -67,14 +64,11 @@ namespace CAMel.Types
         //  Add to create Material Tool
         //  Add to Constructors
 
-        // Empty default constructor (so grasshopper can get type name when nothing is present.
-        public MaterialTool() { }
-
         // Everything, with defaults
-        public MaterialTool(string mat, string tool, int toolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double iwidth = -1, double tL = 0, EndShape eS = EndShape.Other,double tol = 0, double mS = 0, double sideLoad = 0.7)
+        public MaterialTool([CanBeNull] string mat, [CanBeNull] string tool, int toolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth =0, double width = -1, double iWidth = -1, double tL = 0, EndShape eS = EndShape.Other,double tol = 0, double mS = 0, double sideLoad = 0.7)
         {
-            this.matName = mat;
-            this.toolName = tool;
+            this.matName = mat ?? string.Empty;
+            this.toolName = tool ?? string.Empty;
             this.toolNumber = toolN;
             this.speed = speed;
             this.feedCut = feedCut;
@@ -82,7 +76,7 @@ namespace CAMel.Types
             this.finishDepth = finishDepth;
             this.cutDepth = cutDepth;
             this.toolWidth = width;
-            this.insertWidth = iwidth;
+            this.insertWidth = iWidth;
             this.toolLength = tL;
             this.tolerance = tol;
             this.minStep = mS;
@@ -90,10 +84,10 @@ namespace CAMel.Types
             this.sideLoad = sideLoad;
         }
 
-        public MaterialTool(MaterialToolBuilder mT)
+        public MaterialTool([NotNull] MaterialToolBuilder mT)
         {
-            this.matName = mT.matName;
-            this.toolName = mT.toolName;
+            this.matName = mT.matName ?? string.Empty;
+            this.toolName = mT.toolName ?? string.Empty;
             this.toolNumber = mT.toolNumber;
             this.speed = mT.speed;
             this.feedCut = mT.feedCut;
@@ -118,7 +112,8 @@ namespace CAMel.Types
             this.sideLoad = mT.sideLoad;
         }
 
-        public static MaterialTool changeFinishDepth(MaterialTool mT, double fd)
+        [NotNull]
+        public static MaterialTool changeFinishDepth([NotNull] MaterialTool mT, double fd)
         {
             return new MaterialTool(
                 mT.matName, mT.toolName, mT.toolNumber, mT.speed,
@@ -126,40 +121,32 @@ namespace CAMel.Types
                 mT.toolWidth, mT.insertWidth, mT.toolLength, mT.shape, mT.tolerance, mT.minStep, mT.sideLoad);
         }
 
-        public string TypeDescription
-        {
-            get { return "Details of a Material and Tool"; }
-        }
+        [NotNull] public static readonly MaterialTool Empty = new MaterialTool(null,null,-1,-1,-1,-1,-1,-1);
 
-        public string TypeName
-        {
-            get { return "MaterialTool"; }
-        }
+        public string TypeDescription => "Details of a Material and Tool";
 
+        public string TypeName => "MaterialTool";
 
-        public override string ToString()
-        {
-            string outp = "Tool " + this.toolNumber + ", " + this.toolName + " into " + this.matName;
-            return outp;
-        }
+        public override string ToString() => "Tool " + this.toolNumber + ", " + this.toolName + " into " + this.matName;
 
         /// <summary>
         /// Offset toolpoint so that it does not gouge an angled path.
         /// </summary>
-        public ToolPoint threeAxisHeightOffset(IMachine m, ToolPoint tP, Vector3d travel, Vector3d orth)
+        [NotNull]
+        public ToolPoint threeAxisHeightOffset([NotNull] IMachine m, [NotNull] ToolPoint tP, Vector3d travel, Vector3d orthogonal)
         {
             // We want to use cutOffset, so need to find the normal
             // That is the Vector at right angles to the travel direction
-            // in the plane orthogonal to orth
+            // in the plane given by orthogonal
 
-            // Do nothing if orth does not give a plane
-            if (Math.Abs(orth.Length) < CAMel_Goo.tolerance) { return tP; }
+            // Do nothing if orthogonal does not give a plane
+            if (Math.Abs(orthogonal.Length) < CAMel_Goo.Tolerance) { return tP; }
 
             // Rotate 90 degrees, and check we get the one closer to the tool direction
             Vector3d norm = travel;
-            norm.Transform(Transform.Rotation(Math.PI / 2, orth,new Point3d(0,0,0)));
-            double testd = norm * m.toolDir(tP);
-            if (testd < 0) { norm = -1 * norm; }
+            norm.Transform(Transform.Rotation(Math.PI / 2, orthogonal,new Point3d(0,0,0)));
+            double testD = norm * m.toolDir(tP);
+            if (testD < 0) { norm = -1 * norm; }
 
             ToolPoint osTp = tP.deepClone();
 
@@ -212,12 +199,14 @@ namespace CAMel.Types
     // Grasshopper Type Wrapper
     public sealed class GH_MaterialTool : CAMel_Goo<MaterialTool>
     {
-        public GH_MaterialTool() { this.Value = new MaterialTool();}
+        [UsedImplicitly]
+        public GH_MaterialTool() { this.Value = null;}
         // construct from unwrapped type
-        public GH_MaterialTool(MaterialTool mT) { this.Value = mT; }
+        public GH_MaterialTool([CanBeNull] MaterialTool mT) { this.Value = mT; }
         // Copy Constructor (just reference as MaterialTool is Immutable)
-        public GH_MaterialTool(GH_MaterialTool mT) { this.Value = mT.Value; }
+        public GH_MaterialTool([CanBeNull] GH_MaterialTool mT) { this.Value = mT?.Value; }
         // Duplicate
+        [CanBeNull]
         public override IGH_Goo Duplicate() { return new GH_MaterialTool(this); }
 
         public override bool CastTo<T>( ref T target)
@@ -231,16 +220,16 @@ namespace CAMel.Types
             return false;
         }
 
-        public override bool CastFrom( object source )
+        public override bool CastFrom( [CanBeNull] object source )
         {
-            if (source == null) { return false; }
-            // Cast From Unwrapped MT
-            if (typeof(MaterialTool).IsAssignableFrom(source.GetType()))
-            {
-                this.Value = (MaterialTool)source;
-                return true;
+            switch (source) {
+                case null: return false;
+                // Cast From Unwrapped MT
+                case MaterialTool mT:
+                    this.Value = mT;
+                    return true;
+                default: return false;
             }
-            return false;
         }
     }
 
@@ -249,22 +238,14 @@ namespace CAMel.Types
     {
         public GH_MaterialToolPar() :
             base("Material/Tool","MatTool","Contains a collection of Material Tool Pairs","CAMel","  Params",GH_ParamAccess.item) {}
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("147c0724-2d2b-4316-a889-d59fbe748b58"); }
-        }
+        public override Guid ComponentGuid => new Guid("147c0724-2d2b-4316-a889-d59fbe748b58");
+
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.materialtool;
-            }
-        }
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.materialtool;
     }
 
 }

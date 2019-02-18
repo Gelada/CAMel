@@ -6,11 +6,14 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 
 using CAMel.Types;
+using JetBrains.Annotations;
 
 namespace CAMel
 {
+    [UsedImplicitly]
     public class C_HelixSurfacePath : GH_Component
     {
+        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the CreateToolPath class.
         /// </summary>
@@ -24,39 +27,47 @@ namespace CAMel
         // put this item in the second batch (surfacing strategies)
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
+        /// <inheritdoc />
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_InputParamManager pManager)
+        protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Bounding Box", "BB", "Region to Mill as a bounding box oriented by Dir, will be calulated if you add the Mesh or Brep to Mill.", GH_ParamAccess.item);
+            if (pManager == null) { throw new ArgumentNullException(); }
+            pManager.AddGenericParameter("Bounding Box", "BB", "Region to Mill as a bounding box oriented by Dir, will be calculated if you add the Mesh or Brep to Mill.", GH_ParamAccess.item);
             pManager.AddCurveParameter("Curve", "C", "Curve to run parallel to", GH_ParamAccess.item);
+            // ReSharper disable once PossibleNullReferenceException
             pManager[1].Optional = true; // Curve
             pManager.AddPlaneParameter("Direction", "Dir", "Plane to use, Helix around Z.", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
+            // ReSharper disable once PossibleNullReferenceException
             pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item,0);
-            pManager.AddNumberParameter("Step over", "SO", "Stepover as a mutliple of tool width. Default to Tools side load (for negative values).", GH_ParamAccess.item, -1);
+            pManager.AddNumberParameter("Step over", "SO", "Stepover as a multiple of tool width. Default to Tools side load (for negative values).", GH_ParamAccess.item, -1);
             pManager.AddBooleanParameter("Clockwise", "CW", "Run clockwise as you rise around the piece. For a clockwise bit this gives conventional cutting. ", GH_ParamAccess.item, true);
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
+            if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddParameter(new GH_SurfacePathPar(), "SurfacePath", "SP", "Surfacing Path", GH_ParamAccess.item);
             //pManager.AddCurveParameter("Paths", "P", "Paths", GH_ParamAccess.list);
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
         /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess da)
+        protected override void SolveInstance([NotNull] IGH_DataAccess da)
         {
+            if (da == null) { throw new ArgumentNullException(); }
+
             IGH_Goo geom = null;
-            BoundingBox BB; // region to mill
             Curve c = null; // path to move parallel to
             Plane dir = Plane.WorldXY; // Plane to rotate in as you rise.
             MaterialTool mT = null; // The materialtool, mainly for tool width
@@ -77,32 +88,32 @@ namespace CAMel
 
             // process the bounding box
 
-            if (!geom.CastTo(out BB))
+            if (!geom.CastTo(out BoundingBox bb))
             {
                 if (geom.CastTo(out Surface s))
                 {
-                    BB = s.GetBoundingBox(dir);// extents of S in the coordinate system
-                    dir.Origin = dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
-                    BB = s.GetBoundingBox(dir); // extents of S in the coordinate system
+                    bb = s.GetBoundingBox(dir);// extents of S in the coordinate system
+                    dir.Origin = dir.PointAt(bb.Center.X, bb.Center.Y, bb.Center.Z); // Centre everything
+                    bb = s.GetBoundingBox(dir); // extents of S in the coordinate system
                 }
                 else if (geom.CastTo(out Brep b))
                 {
-                    BB = b.GetBoundingBox(dir);// extents of S in the coordinate system
-                    dir.Origin = dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
-                    BB = b.GetBoundingBox(dir); // extents of S in the coordinate system
+                    bb = b.GetBoundingBox(dir);// extents of S in the coordinate system
+                    dir.Origin = dir.PointAt(bb.Center.X, bb.Center.Y, bb.Center.Z); // Centre everything
+                    bb = b.GetBoundingBox(dir); // extents of S in the coordinate system
                 }
                 else if (geom.CastTo(out Mesh m))
                 {
-                    BB = m.GetBoundingBox(dir);// extents of S in the coordinate system
-                    dir.Origin = dir.PointAt(BB.Center.X, BB.Center.Y, BB.Center.Z); // Centre everything
-                    BB = m.GetBoundingBox(dir); // extents of S in the coordinate system
+                    bb = m.GetBoundingBox(dir);// extents of S in the coordinate system
+                    dir.Origin = dir.PointAt(bb.Center.X, bb.Center.Y, bb.Center.Z); // Centre everything
+                    bb = m.GetBoundingBox(dir); // extents of S in the coordinate system
                 }
                 else
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep.");
                 }
 
-                BB.Inflate(mT.toolWidth);
+                bb.Inflate(mT.toolWidth);
             }
 
             // set Surfacing direction
@@ -118,31 +129,23 @@ namespace CAMel
                     return;
             }
 
-            SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTd, BB, mT);
+            SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTd, bb, mT);
             da.SetData(0, new GH_SurfacePath(sP));
             //DA.SetDataList(1, Paths);
 
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.surfacinghelix;
-            }
-        }
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.surfacinghelix;
 
+        /// <inheritdoc />
         /// <summary>
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{504D62AA-7B6A-486E-8499-7D4BFB43AEFA}"); }
-        }
+        public override Guid ComponentGuid => new Guid("{504D62AA-7B6A-486E-8499-7D4BFB43AEFA}");
     }
 }

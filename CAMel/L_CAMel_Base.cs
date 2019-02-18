@@ -7,83 +7,79 @@ using Rhino.Geometry;
 
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Expressions;
+using JetBrains.Annotations;
 
 namespace CAMel.Types
 {
     public interface ICAMelBase
     {
-        string TypeDescription { get; }
-        string TypeName { get; }
+        [NotNull] string TypeDescription { get; }
+        [NotNull] [PublicAPI] string TypeName { get; }
 
-        string ToString();
+        [NotNull] string ToString();
     }
 
     // Add a little more standard stuff to GH_Goo
-    public class CAMel_Goo<T> : GH_Goo<T> where T : ICAMelBase
+    public class CAMel_Goo<T> : GH_Goo<T> where T : class, ICAMelBase
     {
         // Valid if not null
-        public override bool IsValid
-        {
-            get {
-                if (this.Value == null) { return false; }
-                return true;
-            }
-        }
+        public override bool IsValid => this.Value != null;
 
         public override IGH_Goo Duplicate()
         {
             throw new NotImplementedException("Camel_Base object has not implemented its duplicate command.");
         }
 
-        public override string TypeDescription
-        {
-            get
-            {
-                if (this.Value == null) { return "CAMel type currently set to null."; }
-                return this.Value.TypeDescription;
-            }
-        }
+        [NotNull] public override string TypeDescription => this.Value?.TypeDescription ?? "Value of CAMel Grasshopper wrapper currently set to null.";
 
-        public override string TypeName { get { return typeof(T).Name; } }
+        [NotNull] public override string TypeName => typeof(T).Name;
 
-        public override string ToString()
-        {
-            if (this.Value == null) { return "CAMel type currently set to null."; }
-            return this.Value.ToString();
-        }
+        public override string ToString() => this.Value?.ToString() ?? "CAMel type currently set to null.";
 
-        public override object ScriptVariable() => this.Value;
+        [CanBeNull] public override object ScriptVariable() => this.Value;
     }
-    static class CAMel_Goo
+
+    internal static class CAMel_Goo
     {
-        public static string doubleToCsv(IEnumerable<double> vals, string format)
+        [NotNull]
+        public static string doubleToCsv([CanBeNull] IEnumerable<double> values, [NotNull] string format)
         {
             // Adapted from https://www.dotnetperls.com/convert-list-string
+
+            if (values == null) { return string.Empty; }
+
             StringBuilder builder = new StringBuilder();
-            foreach (double d in vals)
+            foreach (double d in values)
             {
                 // Append each int to the StringBuilder overload.
                 builder.Append(d.ToString(format)).Append(", ");
             }
+
             string result = builder.ToString();
-            result = result.TrimEnd(',',' ');
+            result = result.TrimEnd(',', ' ');
+
             return result;
         }
-        public static List<double> cSvToDouble(string vals)
+        [NotNull]
+        public static List<double> cSvToDouble([CanBeNull] string values)
         {
             List<double> result = new List<double>();
             // Adapted from https://www.dotnetperls.com/convert-list-string
-            string[] parts = vals.Split(','); // Call Split method
+            if (values == null) { return result; }
+
+            string[] parts = values.Split(','); // Call Split method
             List<string> list = new List<string>(parts); // Use List constructor
             foreach (string item in list)
             {
-                double p;
-                if (double.TryParse(item, out p)) { result.Add(p); }
+                if (double.TryParse(item, out double p)) { result.Add(p); }
                 else
                 {
-                    var parser = new GH_ExpressionParser(false);
-                    var val = parser.Evaluate(item);
-                    if(val.Type == GH_VariantType.@double || val.Type == GH_VariantType.@int) { result.Add(val._Double); }
+                    GH_ExpressionParser parser = new GH_ExpressionParser(false);
+                    GH_Variant value = parser.Evaluate(item);
+                    if (value?.Type == GH_VariantType.@double || value?.Type == GH_VariantType.@int)
+                    {
+                        result.Add(value._Double);
+                    }
                 }
             }
             return result;
@@ -104,22 +100,28 @@ namespace CAMel.Types
             return new Point3d(pt.X * Math.Cos(pt.Y), pt.X * Math.Sin(pt.Y), pt.Z);
         }
 
-        public static object cleanGooList(object gooey)
+        [CanBeNull]
+        public static object cleanGooList([CanBeNull] object gooey)
         {
-            if (gooey is IGH_Goo) { return ((IGH_Goo)gooey).ScriptVariable(); }
-            if (gooey is IEnumerable)
+            switch (gooey)
             {
-                List<object> oP = new List<object>();
-                foreach (object obj in (IEnumerable)gooey)
+                case IGH_Goo goo:
+                    return goo.ScriptVariable();
+                case IEnumerable objs:
                 {
-                    if (obj is IGH_Goo) { oP.Add(((IGH_Goo)obj).ScriptVariable()); }
-                    else { oP.Add(obj); }
+                    List<object> oP = new List<object>();
+                    foreach (object obj in objs)
+                    {
+                        if (obj is IGH_Goo ghGoo) { oP.Add(ghGoo.ScriptVariable()); }
+                        else { oP.Add(obj); }
+                    }
+                    return oP;
                 }
-                return oP;
+                default:
+                    return gooey;
             }
-            else { return gooey; }
         }
 
-        public const double tolerance = 0.000000001;
+        public const double Tolerance = 0.000000001;
     }
 }

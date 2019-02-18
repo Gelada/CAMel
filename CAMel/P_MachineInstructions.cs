@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-
+using System.Linq;
 using Rhino.Geometry;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 
 using CAMel.Types.Machine;
+using static CAMel.Exceptions;
+
+using JetBrains.Annotations;
 
 namespace CAMel.Types
 {
@@ -15,48 +18,23 @@ namespace CAMel.Types
     // for the machine
     public class MachineInstruction : IList<MachineOperation>, IToolPointContainer
     {
-        private List<MachineOperation> _mOs;
-        public ToolPath startPath { get; set; }
-        public ToolPath endPath { get; set; }
+        [ItemNotNull] [NotNull] private List<MachineOperation> _mOs;
+        [NotNull] public ToolPath startPath { get; set; }
+        [NotNull] public ToolPath endPath { get; set; }
 
         public string name { get; set; }
         public string preCode { get; set; }
         public string postCode { get; set; }
 
-        public IMachine mach { get; set; }
+        [NotNull] public IMachine mach { get; set; }
 
-        public ToolPoint firstP
-        {
-            get
-            {
-                ToolPoint oP = null;
-                // Cycle through to find a path of length greater than 1.
-                for (int i = 0; i < this.Count; i++)
-                {
-                    oP = this[i].firstP;
-                    if(oP != null) { break; }
-                }
-                return oP;
-            }
-        }
-        public ToolPoint lastP
-        {
-            get
-            {
-                ToolPoint oP = null;
-                // Cycle through to find a path of length greater than 1.
-                for (int i = this.Count - 1; i >= 0; i--)
-                {
-                    oP = this[i].lastP;
-                    if (oP != null) { break; }
-                }
-                return oP;
-            }
-        }
+        public ToolPoint firstP => this.First(a => a?.firstP != null)?.firstP;
+        public ToolPoint lastP => this.Last(a => a?.lastP != null)?.lastP;
 
         // Default Constructor
-        public MachineInstruction()
+        public MachineInstruction([NotNull] IMachine m)
         {
+            this.mach = m;
             this._mOs = new List<MachineOperation>();
             this.startPath = new ToolPath();
             this.endPath = new ToolPath();
@@ -66,20 +44,18 @@ namespace CAMel.Types
         }
 
         // Everything but the pre and post codes
-        public MachineInstruction(string name, IMachine mach, List<MachineOperation> mOs, ToolPath startPath = null, ToolPath endPath = null)
+        public MachineInstruction([NotNull] string name, [NotNull] IMachine mach, [CanBeNull] List<MachineOperation> mOs, [CanBeNull] ToolPath startPath = null, [CanBeNull] ToolPath endPath = null)
         {
             this.name = name;
             this.mach = mach;
-            this._mOs = mOs;
-            if (startPath == null) { this.startPath = new ToolPath(); }
-            else { this.startPath = startPath; }
-            if (endPath == null) { this.endPath = new ToolPath(); }
-            else { this.endPath = endPath; }
+            this._mOs = mOs ?? new List<MachineOperation>();
+            this.startPath = startPath ?? new ToolPath();
+            this.endPath = endPath ?? new ToolPath();
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
         // Copy Constructor
-        private MachineInstruction(MachineInstruction mI)
+        private MachineInstruction([NotNull] MachineInstruction mI)
         {
             this.name = string.Copy(mI.name);
             this.preCode = string.Copy(mI.preCode);
@@ -88,36 +64,32 @@ namespace CAMel.Types
             this.startPath = mI.startPath.deepClone();
             this.endPath = mI.endPath.deepClone();
             this._mOs = new List<MachineOperation>();
-            foreach(MachineOperation mO in mI) { this._mOs.Add(mO.deepClone()); }
+            foreach(MachineOperation mO in mI) { this._mOs.Add(mO?.deepClone()); }
         }
 
-        public MachineInstruction deepClone() => new MachineInstruction(this);
+        [NotNull] public MachineInstruction deepClone() => new MachineInstruction(this);
 
         // Copy basic information but add new paths
-        public MachineInstruction deepCloneWithNewPaths(List<MachineOperation> mOs)
+        [NotNull]
+        [PublicAPI]
+        public MachineInstruction deepCloneWithNewPaths([NotNull] List<MachineOperation> mOs)
         {
-            MachineInstruction outInst = new MachineInstruction
+            MachineInstruction outInst = new MachineInstruction(this.mach)
             {
                 name = string.Copy(this.name),
                 preCode = string.Copy(this.preCode),
                 postCode = string.Copy(this.postCode),
                 mach = this.mach,
                 startPath = this.startPath.deepClone(),
-                endPath = this.endPath.deepClone()
+                endPath = this.endPath.deepClone(),
+                _mOs = mOs
             };
-            outInst._mOs = mOs;
             return outInst;
         }
 
-        public string TypeDescription
-        {
-            get { return "Complete set of operations for a run of the machine."; }
-        }
+        public string TypeDescription => "Complete set of operations for a run of the machine.";
 
-        public string TypeName
-        {
-            get { return "MachineInstruction"; }
-        }
+        public string TypeName => "MachineInstruction";
 
         public override string ToString()
         {
@@ -131,44 +103,46 @@ namespace CAMel.Types
         // Take the collection of paths and hints and validate it into
         // a workable system, including adding MaterialTool and MaterialForm information
         // throughout
-        public MachineInstruction processAdditions(IMachine m)
+        [NotNull]
+        public MachineInstruction processAdditions()
         {
             MachineInstruction valid = deepCloneWithNewPaths(new List<MachineOperation>());
 
             // Mix this.startPath and this.validStart as required to
             // give a valid startPath.
             ToolPath validTP = validStart();
-            valid.startPath = this.startPath ?? validTP;
-            valid.startPath.validate(validTP, m);
+            valid.startPath.validate(validTP, this.mach);
             validTP = valid.startPath;
 
             // process and validate all Operations
-            foreach (MachineOperation mO in this)
-            { valid.Add(mO.processAdditions(this.mach, ref validTP)); }
+            foreach (MachineOperation mO in this) { valid.Add(mO.processAdditions(this.mach, ref validTP)); }
 
-            // If the startpath has no points add the first point of the processed points
+            // If the start path has no points add the first point of the processed points
             if (valid.startPath.Count == 0)
             {
-                valid.startPath.Add(valid.firstP.deepClone());
-                valid.startPath.firstP.feed = 0;
+                valid.startPath.Add(valid.firstP?.deepClone());
+                if(valid.startPath.firstP != null) { valid.startPath.firstP.feed = 0; }
             }
 
             // validate endPath, validTP will have the most recent information
-            if (valid.endPath == null) { valid.endPath = validTP.deepCloneWithNewPoints(new List<ToolPoint>()); }
-            valid.endPath.validate(validTP, m);
+             valid.endPath.validate(validTP, this.mach);
             // if we need a point add the last point of the processed paths.
-            if (valid.endPath.Count == 0)
-            {
-                valid.endPath.Add(valid.lastP.deepClone());
-                valid.endPath.firstP.feed = 0;
-            }
+            if (valid.endPath.Count != 0) { return valid; }
+
+            valid.endPath.Add(valid.lastP?.deepClone());
+            if(valid.endPath.firstP != null) { valid.endPath.firstP.feed = 0; }
 
             return valid;
         }
 
-        public void writeCode(ref CodeInfo co)
+        [NotNull]
+        public CodeInfo writeCode()
         {
             ToolPath uStartPath = this.startPath;
+            if (uStartPath.matForm == null) { matFormException(); }
+            if (uStartPath.matTool == null) { matToolException(); }
+
+            CodeInfo co = new CodeInfo(this.mach,uStartPath.matForm,uStartPath.matTool);
 
             this.mach.writeFileStart(ref co, this, uStartPath);
 
@@ -179,10 +153,13 @@ namespace CAMel.Types
             }
 
             this.mach.writeFileEnd(ref co, this, uStartPath, this.endPath);
+
+            return co;
         }
 
 
         // Hunt through the ToolPaths until we find all we need
+        [NotNull]
         private ToolPath validStart()
         {
             // we need a MaterialTool and a MaterialForm
@@ -201,9 +178,13 @@ namespace CAMel.Types
                 }
             }
             // if the machine has one tool use that.
-            if (this.mach.mTs.Count == 1 && mFFound) { valid.matTool = this.mach.mTs[0]; return valid; }
+            if (this.mach.mTs.Count != 1 || !mFFound)
+            {
+                throw new InvalidOperationException(
+                    "Cannot validate Machine Instructions, there are either no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
+            }
+            valid.matTool = this.mach.mTs[0]; return valid;
             // if we go through the whole thing without finding all the valid pieces
-            throw new InvalidOperationException("Cannot validate Machine Instructions, there are either no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
         }
 
         #region Point extraction and previews
@@ -214,6 +195,7 @@ namespace CAMel.Types
             return oP;
         }
         // Get the list of tooltip locations
+        [NotNull, PublicAPI]
         public List<List<List<Point3d>>> getPoints()
         {
             List<List<List<Point3d>>> pts = new List<List<List<Point3d>>>();
@@ -221,6 +203,7 @@ namespace CAMel.Types
             return pts;
         }
         // Get the list of tool directions
+        [NotNull, PublicAPI]
         public List<List<List<Vector3d>>> getDirs()
         {
             List<List<List<Vector3d>>> dirs = new List<List<List<Vector3d>>>();
@@ -228,7 +211,9 @@ namespace CAMel.Types
             return dirs;
         }
         // Create a path with the points
-        public List<List<List<Point3d>>> getPointsandDirs(out List<List<List<Vector3d>>> dirs)
+        [NotNull]
+        [PublicAPI]
+        public List<List<List<Point3d>>> getPointsAndDirs([NotNull] out List<List<List<Vector3d>>> dirs)
         {
             dirs = getDirs();
             return getPoints();
@@ -243,8 +228,9 @@ namespace CAMel.Types
             return bb;
         }
         // Create single polyline
-        public PolylineCurve getLine() => getSinglePath().getLine();
+        [NotNull] public PolylineCurve getLine() => getSinglePath().getLine();
         // Create polylines
+        [NotNull]
         public List<PolylineCurve> getLines()
         {
             List<PolylineCurve> lines = new List<PolylineCurve>();
@@ -252,6 +238,7 @@ namespace CAMel.Types
             return lines;
         }
         // Lines for each toolpoint
+        [NotNull]
         public List<Line> toolLines()
         {
             List<Line> lines = new List<Line>();
@@ -261,39 +248,39 @@ namespace CAMel.Types
         #endregion
 
         #region List Functions 
-        public int Count => ((IList<MachineOperation>)this._mOs).Count;
+        public int Count => this._mOs.Count;
         public bool IsReadOnly => ((IList<MachineOperation>)this._mOs).IsReadOnly;
-        public MachineOperation this[int index] { get => ((IList<MachineOperation>)this._mOs)[index]; set => ((IList<MachineOperation>)this._mOs)[index] = value; }
-        public int IndexOf(MachineOperation item) { return ((IList<MachineOperation>)this._mOs).IndexOf(item); }
-        public void Insert(int index, MachineOperation item) { ((IList<MachineOperation>)this._mOs).Insert(index, item); }
-        public void RemoveAt(int index) { ((IList<MachineOperation>)this._mOs).RemoveAt(index); }
-        public void Add(MachineOperation item) { ((IList<MachineOperation>)this._mOs).Add(item); }
-        public void AddRange(IEnumerable<MachineOperation> items) { this._mOs.AddRange(items); }
-        public void Clear() { ((IList<MachineOperation>)this._mOs).Clear(); }
-        public bool Contains(MachineOperation item) { return ((IList<MachineOperation>)this._mOs).Contains(item); }
-        public void CopyTo(MachineOperation[] array, int arrayIndex) { ((IList<MachineOperation>)this._mOs).CopyTo(array, arrayIndex); }
-        public bool Remove(MachineOperation item) { return ((IList<MachineOperation>)this._mOs).Remove(item); }
-        public IEnumerator<MachineOperation> GetEnumerator() { return ((IList<MachineOperation>)this._mOs).GetEnumerator(); }
-        IEnumerator IEnumerable.GetEnumerator() { return ((IList<MachineOperation>)this._mOs).GetEnumerator(); }
+        [NotNull] public MachineOperation this[int index] { get => this._mOs[index]; set => this._mOs[index] = value; }
+        public int IndexOf(MachineOperation item) => this._mOs.IndexOf(item);
+        public void Insert(int index, MachineOperation item) { if (item != null) { this._mOs.Insert(index, item); } }
+        public void RemoveAt(int index) => this._mOs.RemoveAt(index);
+        public void Add(MachineOperation item) { if (item != null) { this._mOs.Add(item); } }
+        [PublicAPI] public void AddRange([NotNull] IEnumerable<MachineOperation> items) => this._mOs.AddRange(items.Where(x => x != null));
+        public void Clear() => this._mOs.Clear();
+        public bool Contains(MachineOperation item) => this._mOs.Contains(item);
+        public void CopyTo(MachineOperation[] array, int arrayIndex) => this._mOs.CopyTo(array, arrayIndex);
+        public bool Remove(MachineOperation item) => this._mOs.Remove(item);
+        public IEnumerator<MachineOperation> GetEnumerator() => this._mOs.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => this._mOs.GetEnumerator();
+
         #endregion
     }
 
     // Grasshopper Type Wrapper
     public sealed class GH_MachineInstruction : CAMel_Goo<MachineInstruction>, IGH_PreviewData
     {
-        public BoundingBox ClippingBox => this.Value.getBoundingBox();
-
         // Default Constructor;
-        public GH_MachineInstruction() { this.Value = new MachineInstruction(); }
+        [UsedImplicitly] public GH_MachineInstruction() { this.Value = null; }
         // Construct from value alone
-        public GH_MachineInstruction(MachineInstruction mI) { this.Value = mI; }
+        public GH_MachineInstruction([CanBeNull] MachineInstruction mI) { this.Value = mI; }
         // Copy Constructor.
-        public GH_MachineInstruction(GH_MachineInstruction mI) { this.Value = mI.Value.deepClone(); }
+        public GH_MachineInstruction([CanBeNull] GH_MachineInstruction mI) { this.Value = mI?.Value?.deepClone(); }
         // Duplicate
-        public override IGH_Goo Duplicate() { return new GH_MachineInstruction(this); }
+        [NotNull] public override IGH_Goo Duplicate() => new GH_MachineInstruction(this);
 
         public override bool CastTo<T>(ref T target)
         {
+            if (this.Value == null) { return false; }
             if (typeof(T).IsAssignableFrom(typeof(MachineInstruction)))
             {
                 object ptr = this.Value;
@@ -337,27 +324,30 @@ namespace CAMel.Types
 
             return false;
         }
-        public override bool CastFrom(object source)
+        public override bool CastFrom([CanBeNull] object source)
         {
-            if (source == null) { return false; }
-            // Cast from unwrapped MachineInstruction
-            if (typeof(MachineInstruction).IsAssignableFrom(source.GetType()))
-            {
-                this.Value = (MachineInstruction)source;
-                return true;
+            switch (source) {
+                case null: return false;
+                // Cast from unwrapped MachineInstruction
+                case MachineInstruction mI:
+                    this.Value = mI;
+                    return true;
+                default: return false;
             }
-            return false;
         }
 
-        public void DrawViewportWires(GH_PreviewWireArgs args)
+        public BoundingBox ClippingBox => this.Value?.getBoundingBox() ?? BoundingBox.Unset;
+
+        public void DrawViewportWires([CanBeNull] GH_PreviewWireArgs args)
         {
+            if (this.Value == null || args?.Pipeline == null) { return; }
             foreach (PolylineCurve l in this.Value.getLines())
             {
                 args.Pipeline.DrawCurve(l, args.Color);
             }
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
-        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+        public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
 
     }
 
@@ -366,29 +356,20 @@ namespace CAMel.Types
     {
         public GH_MachineInstructionPar() :
             base("Instructions", "MachInst", "Contains a collection of Machine Instructions", "CAMel", "  Params", GH_ParamAccess.item) { }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("7ded80e7-6a29-4534-a848-f9d1b897098f"); }
-        }
+        public override Guid ComponentGuid => new Guid("7ded80e7-6a29-4534-a848-f9d1b897098f");
 
         public bool Hidden { get; set; }
         public bool IsPreviewCapable => true;
         public BoundingBox ClippingBox => Preview_ComputeClippingBox();
-        public void DrawViewportWires(IGH_PreviewArgs args) => Preview_DrawWires(args);
-        public void DrawViewportMeshes(IGH_PreviewArgs args) => Preview_DrawMeshes(args);
+        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => Preview_DrawWires(args);
+        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => Preview_DrawMeshes(args);
 
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.machineinstructions;
-            }
-        }
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.machineinstructions;
     }
 
 }

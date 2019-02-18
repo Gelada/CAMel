@@ -5,6 +5,7 @@ using Rhino.Geometry;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
+using JetBrains.Annotations;
 
 namespace CAMel.Types.Machine
 {
@@ -19,35 +20,36 @@ namespace CAMel.Types.Machine
     // Main interface and public face of the machine
     public interface IMachine : ICAMelBase
     {
-        string name { get; }
-        double pathJump { get; } // Maximum jump between toolpaths in material
+        [NotNull] string name { get; }
+        [PublicAPI] double pathJump { get; } // Maximum jump between toolpaths in material
         bool toolLengthCompensation { get; } // Tool Length Compensation
         // ReSharper disable once InconsistentNaming
         ToolPathAdditions defaultTPA { get; }
-        List<MaterialTool> mTs { get; } // list of Material Tools used by machine
+        [NotNull] List<MaterialTool> mTs { get; } // list of Material Tools used by machine
 
         // Writing and reading code
-        string comment(string l);
+        [NotNull] string comment([NotNull] string l);
 
-        void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath);
-        void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath,ToolPath endPath);
-        void writeOpStart(ref CodeInfo co, MachineOperation mO);
-        void writeOpEnd(ref CodeInfo co, MachineOperation mO);
-        void writeCode(ref CodeInfo co, ToolPath tP);
-        void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first);
+        void writeFileStart([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath);
+        void writeFileEnd([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath,[NotNull] ToolPath endPath);
+        void writeOpStart([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
+        void writeOpEnd([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
+        void writeCode([NotNull] ref CodeInfo co, [NotNull] ToolPath tP);
+        void writeTransition([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool first);
 
-        ToolPath readCode(string code);
+        [NotNull] ToolPath readCode([NotNull] string code);
 
         // Functions needed to process additions
-        ToolPath insertRetract(ToolPath tP);
-        List<List<ToolPath>> stepDown(ToolPath tP);
-        ToolPath threeAxisHeightOffset(ToolPath tP);
-        List<ToolPath> finishPaths(ToolPath tP);
+
+        [NotNull] ToolPath insertRetract([NotNull] ToolPath tP);
+        [NotNull] List<List<ToolPath>> stepDown([NotNull] ToolPath tP);
+        [NotNull] ToolPath threeAxisHeightOffset([NotNull] ToolPath tP);
+        [NotNull] List<ToolPath> finishPaths([NotNull] ToolPath tP);
 
         // Machine movement
-        Vector3d toolDir(ToolPoint tP);
-        ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng);
-        double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng); // max change for orientation axes
+        Vector3d toolDir([NotNull] ToolPoint tP);
+        [NotNull] ToolPoint interpolate([NotNull] ToolPoint fP, [NotNull] ToolPoint tP, [NotNull] MaterialTool mT, double par, bool lng);
+        [UsedImplicitly] double angDiff([NotNull] ToolPoint tP1, [NotNull] ToolPoint tP2, [NotNull] MaterialTool mT, bool lng); // max change for orientation axes
     }
 
 
@@ -56,34 +58,34 @@ namespace CAMel.Types.Machine
     public sealed class GH_Machine : CAMel_Goo<IMachine>
     {
         // Default constructor
+        [UsedImplicitly]
         public GH_Machine() { this.Value = null; }
         // Unwrapped type
-        public GH_Machine(IMachine m) { this.Value = m; }
+        public GH_Machine([CanBeNull] IMachine m) { this.Value = m; }
         // Copy Constructor (just reference as Machine is Immutable)
-        public GH_Machine(GH_Machine m) { this.Value = m.Value;  }
+        public GH_Machine([CanBeNull] GH_Machine m) { this.Value = m?.Value;  }
         // Duplicate
+        [NotNull]
         public override IGH_Goo Duplicate() { return new GH_Machine(this); }
 
         public override bool CastTo<T>(ref T target)
         {
-            if (typeof(T).IsAssignableFrom(typeof(IMachine)))
-            {
-                object ptr = this.Value;
-                target = (T)ptr;
-                return true;
-            }
-            return false;
+            if (!typeof(T).IsAssignableFrom(typeof(IMachine))) { return false; }
+
+            object ptr = this.Value;
+            target = (T)ptr;
+            return true;
         }
 
-        public override bool CastFrom(object source)
+        public override bool CastFrom([CanBeNull] object source)
         {
-            if (source == null) { return false; }
-            if (typeof(IMachine).IsAssignableFrom(source.GetType()))
-            {
-                this.Value = (IMachine)source;
-                return true;
+            switch (source) {
+                case null: return false;
+                case IMachine m:
+                    this.Value = m;
+                    return true;
+                default: return false;
             }
-            return false;
         }
     }
 
@@ -93,22 +95,13 @@ namespace CAMel.Types.Machine
         public GH_MachinePar() :
             base("Machine", "Machine", "Contains a collection of information on CNC machines", "CAMel", "  Params", GH_ParamAccess.item)
         { }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("df6dcfa2-510e-4613-bdae-3685b094e7d7"); }
-        }
+        public override Guid ComponentGuid => new Guid("df6dcfa2-510e-4613-bdae-3685b094e7d7");
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.machine;
-            }
-        }
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.machine;
     }
 
 }

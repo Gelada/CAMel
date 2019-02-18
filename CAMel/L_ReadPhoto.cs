@@ -10,19 +10,20 @@ using Emgu.CV.Structure;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Util;
 using Emgu.CV.XImgproc;
+using JetBrains.Annotations;
 
 namespace CAMel
 {
     public static class ReadPhoto
     {
-        public static  List<Curve> trace(string filename, int blur, int jump, bool debug, out List<string> times)
+        [NotNull]
+        public static  List<Curve> trace([CanBeNull] string filename, int blur, int jump, bool debug, [NotNull] out List<string> times)
         {
             if(filename == null) { times = new List<string>(); return new List<Curve>(); }
 
             Stopwatch watch = Stopwatch.StartNew();
 
-            string filepath = System.IO.Path.GetDirectoryName(filename);
-            if(filepath == null) { filepath = String.Empty; }
+            string filepath = System.IO.Path.GetDirectoryName(filename) ?? string.Empty;
 
             List<Curve> curves = new List<Curve>();
             times = new List<string>();
@@ -60,20 +61,17 @@ namespace CAMel
             VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
             CvInvoke.FindContours(thresh, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
 
-            VectorOfVectorOfPoint usecontours = new VectorOfVectorOfPoint();
+            VectorOfVectorOfPoint useContours = new VectorOfVectorOfPoint();
             for (int i = 0; i < contours.Size; i++)
             {
-                if (contours[i].Size > 10)
-                {
-                    usecontours.Push(contours[i]);
-                }
+                if (contours[i] != null && contours[i].Size > 10) { useContours.Push(contours[i]); }
             }
 
             Mat contourBm = new Mat(thresh.Size, thresh.Depth, 1);
             contourBm.SetTo(new MCvScalar(0));
             thresh.Dispose();
 
-            CvInvoke.DrawContours(contourBm, usecontours, -1, new MCvScalar(255), -1);
+            CvInvoke.DrawContours(contourBm, useContours, -1, new MCvScalar(255), -1);
 
             if (debug)
             {
@@ -98,18 +96,18 @@ namespace CAMel
             }
 
             // Now remove triple points to cut off branches
-            Mat thinf = new Mat();
+            Mat thinF = new Mat();
             System.Drawing.Point an = new System.Drawing.Point(-1, -1);
-            ElementShape sh = ElementShape.Rectangle;
+            const ElementShape sh = ElementShape.Rectangle;
             Mat element = CvInvoke.GetStructuringElement(sh, new Size(3, 3), an);
 
-            Mat thrpts = new Mat(thin.Size, DepthType.Cv8U, 1);
+            Mat thrPts = new Mat(thin.Size, DepthType.Cv8U, 1);
 
-            CvInvoke.Threshold(thin, thinf, 128, 64, ThresholdType.Binary);
-            CvInvoke.Filter2D(thinf, thrpts, element, an); // counts neighbours of a point
-            CvInvoke.Threshold(thrpts, thrpts, 200, 255, ThresholdType.Binary); // selects points with 3 or more neighbours
-            CvInvoke.BitwiseNot(thrpts, thrpts);
-            CvInvoke.BitwiseAnd(thin, thrpts, thin);
+            CvInvoke.Threshold(thin, thinF, 128, 64, ThresholdType.Binary);
+            CvInvoke.Filter2D(thinF, thrPts, element, an); // counts neighbours of a point
+            CvInvoke.Threshold(thrPts, thrPts, 200, 255, ThresholdType.Binary); // selects points with 3 or more neighbours
+            CvInvoke.BitwiseNot(thrPts, thrPts);
+            CvInvoke.BitwiseAnd(thin, thrPts, thin);
 
             if (debug)
             {
@@ -119,11 +117,10 @@ namespace CAMel
                 watch = Stopwatch.StartNew();
             }
 
-            // Now we have a collection of 1 pixel thick curves, we can vectorize
+            // Now we have a collection of 1 pixel thick curves, we can vectorise
 
             contours = new VectorOfVectorOfPoint();
             CvInvoke.FindContours(thin, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
-            VectorOfPoint cont;
 
             // The contours are loops and there are small paths we want to ignore.
             // We run ApproxPolyDP to simplify the curve
@@ -132,26 +129,25 @@ namespace CAMel
             for (int i = 0; i < contours.Size; i++)
             {
                 VectorOfPoint sco = new VectorOfPoint();
-                if (contours[i].Size > 4)
+                if (contours[i] == null || contours[i].Size <= 4) { continue; }
+
+                VectorOfPoint cont = new VectorOfPoint();
+                int j = 1;
+                while (contours[i][j - 1] != contours[i][j + 1] && j < contours[i].Size - 1) { j++; }
+                System.Drawing.Point[] pt = { contours[i][j], contours[i][j + 1] };
+                cont.Push(pt);
+                j += 2;
+                while (j < contours[i].Size && contours[i][j - 2] != contours[i][j])
                 {
-                    cont = new VectorOfPoint();
-                    int j = 1;
-                    while (contours[i][j - 1] != contours[i][j + 1] && j < contours[i].Size - 1) { j++; }
-                    System.Drawing.Point[] pt = { contours[i][j], contours[i][j + 1] };
+                    pt = new[] { contours[i][j] };
                     cont.Push(pt);
-                    j += 2;
-                    while (j < contours[i].Size && contours[i][j - 2] != contours[i][j])
-                    {
-                        pt = new[] { contours[i][j] };
-                        cont.Push(pt);
-                        j++;
-                    }
-                    CvInvoke.ApproxPolyDP(cont, sco, 1, false);
-                    //sco = cont;
-                    List<Point3d> c = new List<Point3d>();
-                    for (j = 0; j < sco.Size; j++) { c.Add(pt2R(sco[j])); }
-                    curves.Add(new PolylineCurve(c));
+                    j++;
                 }
+                CvInvoke.ApproxPolyDP(cont, sco, 1, false);
+                //sco = cont;
+                List<Point3d> c = new List<Point3d>();
+                for (j = 0; j < sco.Size; j++) { c.Add(pt2R(sco[j])); }
+                curves.Add(new PolylineCurve(c));
             }
 
             if (debug)
@@ -166,8 +162,10 @@ namespace CAMel
             // This should be replaced with an algorithm that creates the longest
             // possible curves, then deletes everything under a threshold.
 
-            curves.Sort(delegate (Curve x, Curve y)
+            curves.Sort((x, y) =>
             {
+                if (x == null) { throw new ArgumentNullException(nameof(x)); }
+                if (y == null) { throw new ArgumentNullException(nameof(y)); }
                 return y.GetLength().CompareTo(x.GetLength());
             });
 
@@ -180,7 +178,7 @@ namespace CAMel
             {
                 tCurves.Add(curves[i]);
                 jCurves = new List<Curve>();
-                jCurves.AddRange(Curve.JoinCurves(tCurves, 10, false));
+                jCurves.AddRange(Curve.JoinCurves(tCurves, 10, false) ?? new Curve[0]);
                 tCurves = jCurves;
             }
 
@@ -190,21 +188,19 @@ namespace CAMel
             jCurves = new List<Curve>();
 
             BoundingBox bb = new BoundingBox();
-            for (int i = 0; i < tCurves.Count; i++)
+            foreach (Curve c in tCurves)
             {
-                if (tCurves[i].GetLength() > jump * 4)
-                {
-                    jCurves.Add(tCurves[i]);
-                    bb.Union(tCurves[i].GetBoundingBox(false));
-                }
+                if (c == null || !(c.GetLength() > jump * 4)) { continue; }
+
+                jCurves.Add(c);
+                bb.Union(c.GetBoundingBox(false));
             }
             tCurves = jCurves;
             jCurves = new List<Curve>();
-            jCurves.AddRange(Curve.JoinCurves(tCurves, jump, false));
+            jCurves.AddRange(Curve.JoinCurves(tCurves, jump, false) ?? new Curve[0]);
 
             // Move to centre.
-            for (int i = 0; i < jCurves.Count; i++)
-            { jCurves[i].Translate(-(Vector3d)bb.Center); }
+            foreach (Curve c in jCurves) { c.Translate(-(Vector3d)bb.Center); }
 
             if (debug)
             {

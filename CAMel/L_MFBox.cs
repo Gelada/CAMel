@@ -3,11 +3,11 @@
 using Rhino.Geometry;
 
 using CAMel.Types.Machine;
+using JetBrains.Annotations;
 
 namespace CAMel.Types.MaterialForm
 {
-
-    class MFBox : IMaterialForm
+    public class MFBox : IMaterialForm
     {
         public MFBox(Box box, double matTol, double safeD)
         {
@@ -17,16 +17,15 @@ namespace CAMel.Types.MaterialForm
             this._myMesh = null;
         }
 
-        public Box box { get; }
+        private Box box { get; }
 
         public double materialTolerance { get; }
 
         public double safeDistance { get; }
 
-        public string TypeDescription
-        { get { return "This is a box MaterialForm"; } }
+        public string TypeDescription => "This is a box MaterialForm";
 
-        public string TypeName { get { return "CAMelMFBox"; } }
+        public string TypeName => "CAMelMFBox";
 
         public override string ToString()
         {
@@ -55,8 +54,7 @@ namespace CAMel.Types.MaterialForm
             // test to hit each face (could stop after 2, if efficiency worth it)
 
             MFintersects inters = new MFintersects();
-            double dist;
-            if(testFace(exB.X.Max,exB.Y,exB.Z,pt, dir, out dist))
+            if(testFace(exB.X.Max,exB.Y,exB.Z,pt, dir, out double dist))
             { inters.add(fromPlane(pt + dir * dist), this.box.Plane.XAxis, dist); }
             if (testFace(exB.X.Min, exB.Y, exB.Z, pt, dir, out dist))
             { inters.add(fromPlane(pt + dir * dist), -this.box.Plane.XAxis, dist); }
@@ -76,21 +74,21 @@ namespace CAMel.Types.MaterialForm
         }
         // test the X faces, for other faces reorder point and direction.
 
-        private bool testFace( double face, Interval odi1, Interval odi2, Point3d pt, Vector3d dir,  out double dist)
+        private static bool testFace( double face, Interval odi1, Interval odi2, Point3d pt, Vector3d dir,  out double dist)
         {
             double intDist;
             double shift;
 
-            if (Math.Abs(dir.X) > CAMel_Goo.tolerance)
+            if (Math.Abs(dir.X) > CAMel_Goo.Tolerance)
             {
-                shift = (face - pt.X) / (dir.X);
+                shift = (face - pt.X) / dir.X;
                 intDist = shift * dir.Length;
             } else // parallel
             {
                 dist = 0;
                 return false;
             }
-            Vector3d inter = (Vector3d)(pt + (shift * dir));
+            Vector3d inter = (Vector3d)(pt + shift * dir);
             if( odi1.Min < inter.Y && inter.Y < odi1.Max &&
                 odi2.Min < inter.Z && inter.Z < odi2.Max ) // hit plane
             {
@@ -109,29 +107,29 @@ namespace CAMel.Types.MaterialForm
             // check how close to each face, return normal of closest
             double closeD = this.box.X.Max+uTol - pt.X;
             Vector3d outD = this.box.Plane.XAxis;
-            if(closeD > (pt.X-this.box.X.Min-uTol))
+            if(closeD > pt.X-this.box.X.Min-uTol)
             {
-                closeD = (pt.X- this.box.X.Min-uTol);
+                closeD = pt.X- this.box.X.Min-uTol;
                 outD = -this.box.Plane.XAxis;
             }
-            if (closeD > (this.box.Y.Max+uTol - pt.Y))
+            if (closeD > this.box.Y.Max+uTol - pt.Y)
             {
-                closeD = (this.box.Y.Max+uTol - pt.Y);
+                closeD = this.box.Y.Max+uTol - pt.Y;
                 outD = this.box.Plane.YAxis;
             }
-            if (closeD > (pt.Y - this.box.Y.Min-uTol))
+            if (closeD > pt.Y - this.box.Y.Min-uTol)
             {
-                closeD = (pt.Y - this.box.Y.Min-uTol);
+                closeD = pt.Y - this.box.Y.Min-uTol;
                 outD = -this.box.Plane.YAxis;
             }
-            if (closeD > (this.box.Z.Max+uTol - pt.Z))
+            if (closeD > this.box.Z.Max+uTol - pt.Z)
             {
-                closeD = (this.box.Z.Max+uTol - pt.Z);
+                closeD = this.box.Z.Max+uTol - pt.Z;
                 outD = this.box.Plane.ZAxis;
             }
-            if (closeD > (pt.Z - this.box.Z.Min-uTol))
+            if (closeD > pt.Z - this.box.Z.Min-uTol)
             {
-                closeD = (pt.Z - this.box.Z.Min-uTol);
+                closeD = pt.Z - this.box.Z.Min-uTol;
                 outD = -this.box.Plane.ZAxis;
             }
             if(closeD < -2*uTol) { throw new FormatException("MidOutDir in MFBox called for point outside the Box."); }
@@ -141,13 +139,10 @@ namespace CAMel.Types.MaterialForm
         public ToolPath refine(ToolPath tP, IMachine m) => MFDefault.refine(this, tP, m);
 
         private Mesh _myMesh;
-        private void setMesh() => this._myMesh = Mesh.CreateFromBox(this.box, 1, 1, 1);
+        [NotNull] private Mesh setMesh() => Mesh.CreateFromBox(this.box, 1, 1, 1) ?? new Mesh();
 
-        public Mesh getMesh()
-        {
-            if (this._myMesh == null) { setMesh(); }
-            return this._myMesh;
-        }
+        public Mesh getMesh() => this._myMesh ?? (this._myMesh = setMesh());
+
         public BoundingBox getBoundingBox()
         {
             return this.box.BoundingBox;

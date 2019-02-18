@@ -1,14 +1,24 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace CAMel
 {
-   static class Exceptions
+    internal static class Exceptions
     {
+        [ContractAnnotation("=> halt")]
         public static void matToolException() => throw new InvalidOperationException("Attempting to use ToolPath with no Material Tool information.");
+        [ContractAnnotation("=> halt")]
         public static void matFormException() => throw new InvalidOperationException("Attempting to use ToolPath with no MaterialForm information.");
+        [ContractAnnotation("=> halt")]
         public static void additionsException() => throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.");
+        [ContractAnnotation("=> halt")]
+        public static void additionsNullException() => throw new InvalidOperationException("Attempting to use ToolPath with no ToolPathAdditions information.");
+        [ContractAnnotation("=> halt")]
         public static void noToolException() => throw new InvalidOperationException("Tool not found, the list of Material Tools in your machine is either missing the named tool or simply empty.");
-        public static void noOperationException() => throw new InvalidOperationException("No Operations found in Machine Instructions.");
+        [ContractAnnotation("=> halt")]
         public static void noToolPathException() => throw new InvalidOperationException("No ToolPaths found in Machine Operation.");
+        [ContractAnnotation("=> halt")]
+        public static void nullPanic() => throw new NullReferenceException("Something horrible went wrong, creating a null in CAMel. ");
     }
 }

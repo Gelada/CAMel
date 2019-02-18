@@ -3,13 +3,12 @@
 using Rhino.Geometry;
 
 using CAMel.Types.Machine;
+using JetBrains.Annotations;
 
 namespace CAMel.Types.MaterialForm
 {
-    class MFCylinder : IMaterialForm
+    public class MFCylinder : IMaterialForm
     {
-        public MFCylinder(Line cen, double radius, double matTol, double safeD)
-        { this.centre = cen; this.radius = radius; this.materialTolerance = matTol; this.safeDistance = safeD; }
         public MFCylinder(Cylinder cy, double matTol, double safeD)
         {
             this.centre = new Line(cy.CircleAt(cy.Height1).Center, cy.CircleAt(cy.Height2).Center);
@@ -20,18 +19,17 @@ namespace CAMel.Types.MaterialForm
             this.safeDistance = safeD;
         }
 
-        public Line centre { get; }
-        public double radius { get; }
-        public Plane plane { get; }
-        public double height { get; }
+        private Line centre { get; }
+        private double radius { get; }
+        private Plane plane { get; }
+        private double height { get; }
 
         public double materialTolerance { get; }
         public double safeDistance { get; }
 
-        public string TypeDescription
-        { get { return "This is a cylinder MaterialForm"; } }
+        public string TypeDescription => "This is a cylinder MaterialForm";
 
-        public string TypeName { get { return "CAMelMFCylinder"; } }
+        public string TypeName => "CAMelMFCylinder";
 
         public override string ToString()
         {
@@ -73,7 +71,7 @@ namespace CAMel.Types.MaterialForm
             double cenDist;
             // test for top and bottom
 
-            if (Math.Abs(dir.Z) < CAMel_Goo.tolerance) // parallel to plane
+            if (Math.Abs(dir.Z) < CAMel_Goo.Tolerance) // parallel to plane
             {
                 if (pt.Z <= this.height + uTol && pt.Z >= -uTol) // hits cylinder
                 {
@@ -135,14 +133,7 @@ namespace CAMel.Types.MaterialForm
                     }
                 }
             }
-            if (inters.count > 1)
-            {
-                inters.midOut = midOutDir(inters.mid, dirIn, tolerance);
-            }
-            else
-            {
-                inters.midOut = new Vector3d();
-            }
+            inters.midOut = inters.count > 1 ? midOutDir(inters.mid, dirIn, tolerance) : new Vector3d();
             return inters;
         }
         private Vector3d midOutDir(Point3d ptIn, Vector3d dirIn, double tolerance)
@@ -156,7 +147,7 @@ namespace CAMel.Types.MaterialForm
                 closeD = this.height + uTol - pt.Z;
                 outD = this.plane.ZAxis;
             }
-            if (closeD > (this.radius + uTol - ((Vector3d)zeroZ(pt)).Length)) // closer to side?
+            if (closeD > this.radius + uTol - ((Vector3d)zeroZ(pt)).Length) // closer to side?
             {
                 closeD = this.radius + uTol - ((Vector3d)zeroZ(pt)).Length;
                 if (((Vector3d)zeroZ(pt)).Length > 0.000001)
@@ -198,23 +189,19 @@ namespace CAMel.Types.MaterialForm
         }
 
         private Mesh _myMesh;
-        private void setMesh()
-        {
-            this._myMesh = Mesh.CreateFromCylinder(
-                new Cylinder(
-                    new Circle(this.plane, this.radius),
-                    (this.centre.To - this.centre.From).Length
-                    ), 1, 360);
-        }
 
-        public Mesh getMesh()
-        {
-            if (this._myMesh == null) { setMesh(); }
-            return this._myMesh;
-        }
+        [NotNull]
+        private Mesh setMesh() => Mesh.CreateFromCylinder(
+                                      new Cylinder(
+                                          new Circle(this.plane, this.radius),
+                                          (this.centre.To - this.centre.From).Length
+                                      ), 1, 360) ?? new Mesh();
+
+        public Mesh getMesh() => this._myMesh ?? (this._myMesh = setMesh());
+
         public BoundingBox getBoundingBox()
         {
-            if (this._myMesh == null) { setMesh(); }
+            this._myMesh = this._myMesh ?? (this._myMesh = setMesh());
             return this._myMesh.GetBoundingBox(false);
         }
     }

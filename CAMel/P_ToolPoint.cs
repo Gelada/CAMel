@@ -5,6 +5,7 @@ using Rhino.Geometry;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
+using JetBrains.Annotations;
 
 namespace CAMel.Types
 {
@@ -15,7 +16,7 @@ namespace CAMel.Types
         private Vector3d _dir;
         public Vector3d dir     // Tool Direction (away from position)
         {
-            get { return this._dir; }
+            get => this._dir;
             set
             {
                 this._dir = value;
@@ -23,13 +24,13 @@ namespace CAMel.Types
             }
         }
 
-        public ToolPoint firstP { get => this; }
-        public ToolPoint lastP { get => this; }
+        [NotNull] public ToolPoint firstP => this;
+        [NotNull] public ToolPoint lastP => this;
 
         public double speed { get; set; }    // Considered unset for negative values
         public double feed { get; set; }     // Considered unset for negative values
-        public List<string> error { get; private set; }
-        public List<string> warning { get; private set; }
+        [NotNull] public List<string> error { get; }
+        [NotNull] public List<string> warning { get; }
         public string name { get; set; }
         public string preCode { get; set; }
         public string postCode { get; set; }
@@ -73,21 +74,6 @@ namespace CAMel.Types
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
-        // Use point direction and extra Code
-        public ToolPoint(Point3d pt, Vector3d d, string preCode, string postCode)
-        {
-            this.pt = pt;
-            this.dir = d;
-            this.preCode = preCode;
-            this.postCode = postCode;
-            this.speed = -1;
-            this.feed = -1;
-            this.error = new List<string>();
-            this.warning = new List<string>();
-            this.name = string.Empty;
-            this.preCode = string.Empty;
-            this.postCode = string.Empty;
-        }
         // Use point direction and override speed and feed
         public ToolPoint(Point3d pt, Vector3d d, double speed, double feed)
         {
@@ -102,12 +88,12 @@ namespace CAMel.Types
             this.postCode = string.Empty;
         }
         // Use point direction, override speed and feed and add extra Code
-        public ToolPoint(Point3d pt, Vector3d d, string preCode, string postCode, double speed, double feed)
+        public ToolPoint(Point3d pt, Vector3d d, [CanBeNull] string preCode, [CanBeNull] string postCode, double speed, double feed)
         {
             this.pt = pt;
             this.dir = d;
-            this.preCode = preCode;
-            this.postCode = postCode;
+            this.preCode = preCode ?? string.Empty;
+            this.postCode = postCode ?? string.Empty;
             this.speed = speed;
             this.feed = feed;
             this.error = new List<string>();
@@ -115,7 +101,7 @@ namespace CAMel.Types
             this.name = string.Empty;
         }
         // Copy Constructor
-        private ToolPoint(ToolPoint tP)
+        private ToolPoint([NotNull] ToolPoint tP)
         {
             this.pt = tP.pt;
             this.dir = tP.dir;
@@ -130,18 +116,18 @@ namespace CAMel.Types
             foreach (string s in tP.warning) { this.warning.Add(string.Copy(s)); }
         }
 
+        [NotNull]
         public ToolPoint deepClone() => new ToolPoint(this);
 
-        public void addError(string err)
+        [PublicAPI]
+        public void addError([CanBeNull] string err)
         {
-            if(this.error == null) { this.error = new List<string>(); }
-            this.error.Add(err);
+            if(err!=null) { this.error.Add(err); }
         }
 
-        public void addWarning(string warn)
+        public void addWarning([CanBeNull] string warn)
         {
-            if (this.warning == null) { this.warning = new List<string>(); }
-            this.warning.Add(warn);
+            if (warn != null) { this.warning.Add(warn);  }
         }
 
         public string TypeDescription => "Information about a position of the machine";
@@ -149,38 +135,41 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            string outp = this.name;
-            if(outp != string.Empty) { outp = outp + " "; }
-            outp = outp + "Pt: (" +
+            string outP = this.name;
+            if(outP != string.Empty) { outP = outP + " "; }
+            outP = outP + "Pt: (" +
                 this.pt.X.ToString("0.000") + ", " + this.pt.Y.ToString("0.000") + ", " + this.pt.Z.ToString("0.000") +
                 ") Dir: (" +
                 this.dir.X.ToString("0.000") + ", " + this.dir.Y.ToString("0.000") + ", " + this.dir.Z.ToString("0.000") +
                 ")";
-            return outp;
+            return outP;
         }
 
-        private const double _previewLength = 0.2;
-        internal Line toolLine() => new Line(this.pt, this.pt + this.dir* _previewLength);
-        public ToolPath getSinglePath() => new ToolPath() { this };
+        private const double _PreviewLength = 0.2;
+        internal Line toolLine() => new Line(this.pt, this.pt + this.dir* _PreviewLength);
+        public ToolPath getSinglePath() => new ToolPath { this };
 
-        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * _previewLength });
+        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * _PreviewLength });
 
     }
 
     // Grasshopper Type Wrapper
-    sealed public class GH_ToolPoint : CAMel_Goo<ToolPoint>, IGH_PreviewData
+    public sealed class GH_ToolPoint : CAMel_Goo<ToolPoint>, IGH_PreviewData
     {
         // Default Constructor, set up at the origin with direction set to 0 vector.
+        [UsedImplicitly]
         public GH_ToolPoint() { this.Value = new ToolPoint(); }
         // Create from unwrapped version
-        public GH_ToolPoint(ToolPoint tP) { this.Value = tP.deepClone(); }
+        public GH_ToolPoint([CanBeNull] ToolPoint tP) { this.Value = tP?.deepClone(); }
         // Copy Constructor
-        public GH_ToolPoint(GH_ToolPoint tP) { this.Value = tP.Value.deepClone(); }
+        public GH_ToolPoint([CanBeNull] GH_ToolPoint tP) { this.Value = tP?.Value?.deepClone(); }
         // Duplicate
+        [NotNull]
         public override IGH_Goo Duplicate() {return new GH_ToolPoint(this); }
 
         public override bool CastTo<T>(ref T target)
         {
+            if (this.Value == null) { return false;}
             if (typeof(T).IsAssignableFrom(typeof(ToolPoint)))
             {
                 object ptr = this.Value;
@@ -214,36 +203,30 @@ namespace CAMel.Types
             return false;
         }
 
-        public override bool CastFrom(object source)
+        public override bool CastFrom([CanBeNull] object source)
         {
-            if (source == null) { return false; }
+            switch (source) {
+                case null: return false;
+                case GH_Point pointGoo:
+                    this.Value = new ToolPoint(pointGoo.Value);
+                    return true;
+            }
 
-            if (source is Point3d)
-            {
-                this.Value = new ToolPoint((Point3d)source);
-                return true;
-            }
-            if (source is GH_Point pointGoo)
-            {
-                this.Value = new ToolPoint(pointGoo.Value);
-                return true;
-            }
             Point3d pt = Point3d.Unset;
-            if (GH_Convert.ToPoint3d(source, ref pt, GH_Conversion.Both))
-            {
-                this.Value = new ToolPoint(pt);
-                return true;
-            }
-            return false;
+            if (!GH_Convert.ToPoint3d(source, ref pt, GH_Conversion.Both)) { return false; }
+            this.Value = new ToolPoint(pt);
+            return true;
         }
 
-        public BoundingBox ClippingBox { get => this.Value.toolLine().BoundingBox; }
-        public void DrawViewportWires(GH_PreviewWireArgs args)
+        public BoundingBox ClippingBox => this.Value?.toolLine().BoundingBox ?? BoundingBox.Unset;
+
+        public void DrawViewportWires([CanBeNull] GH_PreviewWireArgs args)
         {
+            if (this.Value == null || args?.Pipeline == null) { return; }
             args.Pipeline.DrawPoint(this.Value.pt, args.Color);
             args.Pipeline.DrawArrow(this.Value.toolLine(), args.Color);
         }
-        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+        public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
@@ -251,28 +234,19 @@ namespace CAMel.Types
     {
         public GH_ToolPointPar() :
             base("ToolPoint", "ToolPt", "Contains a collection of Tool Points", "CAMel", "  Params", GH_ParamAccess.item) { }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("0bbed7c1-88a9-4d61-b7cb-e0dfe82b1b86"); }
-        }
+        public override Guid ComponentGuid => new Guid("0bbed7c1-88a9-4d61-b7cb-e0dfe82b1b86");
 
         public bool Hidden { get; set; }
         public bool IsPreviewCapable => true;
         public BoundingBox ClippingBox => Preview_ComputeClippingBox();
-        public void DrawViewportWires(IGH_PreviewArgs args) => Preview_DrawWires(args);
-        public void DrawViewportMeshes(IGH_PreviewArgs args) => Preview_DrawMeshes(args);
+        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => Preview_DrawWires(args);
+        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => Preview_DrawMeshes(args);
 
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.toolpoint;
-            }
-        }
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpoint;
     }
 }

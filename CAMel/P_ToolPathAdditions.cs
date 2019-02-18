@@ -6,7 +6,9 @@ using System.Linq;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
+using GH_IO.Serialization;
 
+using JetBrains.Annotations;
 
 
 namespace CAMel.Types
@@ -20,6 +22,7 @@ namespace CAMel.Types
         public bool sdDropStart { get; set; }    // How stepdown will deal with
         public double sdDropMiddle { get; set; } // points that have reached
         public bool sdDropEnd { get; set; }      // the required depth (Middle is dropped if length greater than value);
+        [NotNull]
         public List<double> onion { get; set; }  // thicknesses to leave before final cut.
         public bool threeAxisHeightOffset { get; set; }
         public bool tabbing { get; set; }        // add tabs if machine wants to.
@@ -43,10 +46,10 @@ namespace CAMel.Types
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
             this.leadCurvature = 0;
-            this.onion = new List<double>() { 0 };
+            this.onion = new List<double> { 0 };
         }
 
-        private ToolPathAdditions(ToolPathAdditions tPa)
+        private ToolPathAdditions([NotNull] ToolPathAdditions tPa)
         {
             this.insert = tPa.insert;
             this.retract = tPa.retract;
@@ -61,9 +64,11 @@ namespace CAMel.Types
             this.leadCurvature = tPa.leadCurvature;
         }
 
+        [NotNull]
         public ToolPathAdditions deepClone() => new ToolPathAdditions(this);
 
-        public static ToolPathAdditions basicDefault => new ToolPathAdditions()
+        [NotNull]
+        public static ToolPathAdditions basicDefault => new ToolPathAdditions
         {
             insert = true,
             retract = true,
@@ -71,13 +76,14 @@ namespace CAMel.Types
             sdDropStart = true,
             sdDropMiddle = -1,
             sdDropEnd = true,
-            onion = new List<double>() { 0 },
+            onion = new List<double> { 0 },
             threeAxisHeightOffset = false,
             tabbing = false,
             leadCurvature = 0
         };
 
-        public static ToolPathAdditions twoAxisDefault => new ToolPathAdditions()
+        [NotNull]
+        public static ToolPathAdditions twoAxisDefault => new ToolPathAdditions
         {
             insert = true,
             retract = true,
@@ -85,7 +91,7 @@ namespace CAMel.Types
             sdDropStart = true,
             sdDropMiddle = -1,
             sdDropEnd = true,
-            onion = new List<double>() { 0 },
+            onion = new List<double> { 0 },
             threeAxisHeightOffset = false,
             tabbing = false,
             leadCurvature = 1
@@ -97,60 +103,59 @@ namespace CAMel.Types
             this.stepDown ||
             this.threeAxisHeightOffset ||
             this.tabbing ||
-            (this.onion.Count == 1 && Math.Abs(this.onion[0]) > CAMel_Goo.tolerance) ||
+            this.onion.Count == 1 && Math.Abs(this.onion[0]) > CAMel_Goo.Tolerance ||
             this.onion.Count > 1;
 
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
         public string TypeName => "ToolPathAdditions";
 
-        public IOrderedEnumerable<double> sortOnion
-        {
-            get
-            {
-                return this.onion.OrderByDescending(d => d);
-            }
-        }
+        [NotNull]
+        public IOrderedEnumerable<double> sortOnion => this.onion.OrderByDescending(d => d);
 
-        public override string ToString() => "Toolpath Additons";
+        public override string ToString() => "Toolpath Additions";
     }
 
     // Grasshopper Type Wrapper
     public sealed class GH_ToolPathAdditions : CAMel_Goo<ToolPathAdditions>
     {
         // Default Constructor
+        [UsedImplicitly]
         public GH_ToolPathAdditions() { this.Value = new ToolPathAdditions(); }
         // Create from unwrapped version
-        public GH_ToolPathAdditions(ToolPathAdditions tP) { this.Value = tP; }
+        public GH_ToolPathAdditions([CanBeNull] ToolPathAdditions tP) { this.Value = tP; }
         // Copy Constructor
-        public GH_ToolPathAdditions(GH_ToolPathAdditions tP) { this.Value = tP.Value; }
+        public GH_ToolPathAdditions([CanBeNull] GH_ToolPathAdditions tP) { this.Value = tP?.Value; }
         // Duplicate
+        [CanBeNull]
         public override IGH_Goo Duplicate() { return new GH_ToolPathAdditions(this); }
 
-        public override IGH_GooProxy EmitProxy()
-        {
-            return new GH_ToolPathAdditionsProxy(this);
-        }
+        [NotNull]
+        public override IGH_GooProxy EmitProxy() => new GH_ToolPathAdditionsProxy(this);
 
-        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
+        public override bool Write([CanBeNull] GH_IWriter writer)
         {
+            if (this.Value == null || writer == null) { return base.Write(writer); }
+
             writer.SetBoolean("insert", this.Value.insert);
             writer.SetBoolean("retract", this.Value.retract);
             writer.SetBoolean("stepDown", this.Value.stepDown);
             writer.SetBoolean("sdDropStart", this.Value.sdDropStart);
             writer.SetDouble("sdDropMiddle", this.Value.sdDropMiddle);
             writer.SetBoolean("sdDropEnd", this.Value.sdDropEnd);
-            for(int i=0; i< this.Value.onion.Count;i++)
-            {writer.SetDouble("onion", i, this.Value.onion[i]);}
+            for (int i = 0; i < this.Value.onion.Count; i++)
+            { writer.SetDouble("onion", i, this.Value.onion[i]); }
             writer.SetInt32("onionCount", this.Value.onion.Count);
             writer.SetBoolean("threeAxisHeightOffset", this.Value.threeAxisHeightOffset);
             writer.SetBoolean("tabbing", this.Value.tabbing);
             writer.SetDouble("leadCurve", this.Value.leadCurvature);
+
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
-        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        public override bool Read([CanBeNull] GH_IReader reader)
         {
+            if (reader == null) { return false; }
             try
             {
                 ToolPathAdditions tPa = new ToolPathAdditions();
@@ -175,7 +180,7 @@ namespace CAMel.Types
             }
             catch(Exception ex) when (ex is OverflowException || ex is InvalidCastException || ex is NullReferenceException)
             {
-                throw new FormatException("ToolPathAdditions deserialization failed due to badly formatted data.", ex);
+                return false;
             }
         }
 
@@ -190,17 +195,16 @@ namespace CAMel.Types
             return false;
         }
 
-        public override bool CastFrom(object source)
+        public override bool CastFrom([CanBeNull] object source)
         {
-            if (source == null) { return false; }
-            //Cast from unwrapped TPA
-            if (typeof(ToolPathAdditions).IsAssignableFrom(source.GetType()))
-            {
-                this.Value = (ToolPathAdditions)source;
-                return true;
+            switch (source) {
+                case null: return false;
+                //Cast from unwrapped TPA
+                case ToolPathAdditions tPa:
+                    this.Value = tPa;
+                    return true;
+                default: return false;
             }
-
-            return false;
         }
 
     }
@@ -209,17 +213,23 @@ namespace CAMel.Types
     public class GH_ToolPathAdditionsPar : GH_PersistentParam<GH_ToolPathAdditions>
     {
         public GH_ToolPathAdditionsPar() :
-            base("Tool Path Additions", "ToolPathAdditions", "Extra work that a ToolPath can do as it is proccessed for cutting.", "CAMel", "  Params") { }
+            base("Tool Path Additions",
+                "ToolPathAdditions",
+                "Extra work that a ToolPath can do as it is processed for cutting.",
+                "CAMel",
+                "  Params") { }
         public override Guid ComponentGuid => new Guid("421A7CE5-4206-4628-964F-1A3810899556");
 
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
         // You can add image files to your project resources and access them like this:
         // return Resources.IconForThisComponent;
+        [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpathadditions;
 
-        public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
+        public override void AppendAdditionalMenuItems([CanBeNull] ToolStripDropDown menu)
         {
             // Do our own thing as we do not really implement
             // set 1 and set multiple.
@@ -245,7 +255,7 @@ namespace CAMel.Types
         }
 
         // ReSharper disable once RedundantAssignment
-        protected override GH_GetterResult Prompt_Singular(ref GH_ToolPathAdditions value)
+        protected override GH_GetterResult Prompt_Singular([CanBeNull] ref GH_ToolPathAdditions value)
         {
             // Give a reasonable generic
             value = new GH_ToolPathAdditions(ToolPathAdditions.basicDefault);
@@ -255,115 +265,146 @@ namespace CAMel.Types
 
     public class GH_ToolPathAdditionsProxy : GH_GooProxy<GH_ToolPathAdditions>
     {
-        public GH_ToolPathAdditionsProxy(GH_ToolPathAdditions obj) : base(obj)
+        public GH_ToolPathAdditionsProxy([CanBeNull] GH_ToolPathAdditions obj) : base(obj)
         { }
 
         [Category(" General"), Description("Add an insert to the start of the toolpath to beging cutting. "),DisplayName(" Insert"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public bool insert
         {
-            get => this.Owner.Value.insert;
+            get => this.Owner?.Value?.insert ?? ToolPathAdditions.basicDefault.insert;
             set
             {
+                if(this.Owner == null) {  throw new NullReferenceException();}
+                if(this.Owner.Value == null) { this.Owner.Value=new ToolPathAdditions();}
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.insert = value;
                 this.Owner.Value = tPa;
             }
         }
         [Category(" General"), Description("Add a retract to the end of the toolpath to finish cutting. "), DisplayName(" Retract"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public bool retract
         {
-            get => this.Owner.Value.retract;
+            get => this.Owner?.Value?.retract ?? ToolPathAdditions.basicDefault.retract;
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.retract = value;
                 this.Owner.Value = tPa;
             }
         }
         [Category(" Step Down"), Description("Create a sequence of paths stepping down through the material."), DisplayName(" Step down"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public bool stepdown
         {
-            get => this.Owner.Value.stepDown;
+            get => this.Owner?.Value?.stepDown ?? ToolPathAdditions.basicDefault.stepDown;
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.stepDown = value;
                 this.Owner.Value = tPa;
             }
         }
         [Category(" Step Down"), Description("When stepping down drop the start of paths where roughing is complete."), DisplayName("Drop Start"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public bool sdDropStart
         {
-            get => this.Owner.Value.sdDropStart;
+            get => this.Owner?.Value?.sdDropStart ?? ToolPathAdditions.basicDefault.sdDropStart;
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.sdDropStart = value;
                 this.Owner.Value = tPa;
             }
         }
         [Category(" Step Down"), Description("When stepping down drop the middle of paths where roughing is complete, if longer than this. Set as negative for automatic value."), DisplayName("Drop Middle"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public double sdDropMiddle
         {
-            get => this.Owner.Value.sdDropMiddle;
+            get => this.Owner?.Value?.sdDropMiddle ?? ToolPathAdditions.basicDefault.sdDropMiddle;
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.sdDropMiddle = value;
                 this.Owner.Value = tPa;
             }
         }
         [Category(" Step Down"), Description("When stepping down drop the end of paths where roughing is complete"), DisplayName("Drop End"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public bool sdDropEnd
         {
-            get => this.Owner.Value.sdDropEnd;
+            get => this.Owner?.Value?.sdDropEnd ?? ToolPathAdditions.basicDefault.sdDropEnd;
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.sdDropEnd = value;
                 this.Owner.Value = tPa;
             }
         }
 
+        [CanBeNull]
         [Category(" Step Down"), Description("Height above toolpath to cut the finish path, for onion skinning. Can be a comma separated list. "), DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public string onion
         {
-            get => CAMel_Goo.doubleToCsv( this.Owner.Value.onion, "0.####");
+            get => CAMel_Goo.doubleToCsv(this.Owner?.Value?.onion ?? ToolPathAdditions.basicDefault.onion, "0.####");
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.onion = CAMel_Goo.cSvToDouble(value);
                 this.Owner.Value = tPa;
             }
         }
         [Category(" General"), Description("Take account of tool width for 3axis cutting, ensuring the path is followed by the active cutting surface of the tool, not just the tip."), DisplayName("3Axis Height Offset"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public bool threeAxisHeightOffset
         {
-            get => this.Owner.Value.threeAxisHeightOffset;
+            get => this.Owner?.Value?.threeAxisHeightOffset ?? ToolPathAdditions.basicDefault.threeAxisHeightOffset;
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.threeAxisHeightOffset = value;
                 this.Owner.Value = tPa;
             }
         }
         [Category(" Tabbing"), Description("Add bumps to the cut (mainly useful for cutting 2d parts) NOT IMPLEMENTED"), DisplayName("Tabbing"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public bool tabbing
         {
-            get => this.Owner.Value.tabbing;
+            get => this.Owner?.Value?.tabbing ?? ToolPathAdditions.basicDefault.tabbing;
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.tabbing = value;
                 this.Owner.Value = tPa;
             }
         }
         [Category(" General"), Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), DisplayName("Lead Length"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
         public double leadCurve
         {
-            get => this.Owner.Value.leadCurvature;
+            get => this.Owner?.Value?.leadCurvature ?? ToolPathAdditions.basicDefault.leadCurvature;
             set
             {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.leadCurvature = value;
                 this.Owner.Value = tPa;

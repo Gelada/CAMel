@@ -1,17 +1,19 @@
-﻿using Rhino.Geometry;
+﻿using JetBrains.Annotations;
+using Rhino.Geometry;
 
 namespace CAMel.Types
 {
     public interface IToolPointContainer : ICAMelBase
     {
-        string name { get; set; }
-        string preCode { get; set; }
-        string postCode { get; set; }
+        [NotNull] [UsedImplicitly] string name { get; set; }
+        [NotNull] [UsedImplicitly] string preCode { get; set; }
+        [NotNull] [UsedImplicitly] string postCode { get; set; }
 
-        ToolPath getSinglePath();
-        BoundingBox getBoundingBox();
+        [NotNull] ToolPath getSinglePath();
 
-        ToolPoint firstP { get; }
-        ToolPoint lastP { get; }
+        [UsedImplicitly] BoundingBox getBoundingBox();
+
+        [CanBeNull] [UsedImplicitly] ToolPoint firstP { get; }
+        [CanBeNull] [UsedImplicitly] ToolPoint lastP { get; }
     }
 }

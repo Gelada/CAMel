@@ -11,6 +11,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 
 using CAMel.Types.MaterialForm;
+using JetBrains.Annotations;
 
 namespace CAMel.Types
 {
@@ -43,19 +44,19 @@ namespace CAMel.Types
     // TODO write a subclass for each projection
     public class SurfacePath : IList<Curve>, ICAMelBase
     {
-        private readonly List<Curve> _paths; // Curves to project
-        public SurfProj surfProj { get; } // Type of projection
-        public Curve cylOnto { get; }// centre line for Cylindrical projection
-        public Vector3d dir { get; }// direction for parallel projection, or line direction for cylindrical
-        public Point3d cen { get; } // centre for spherical projection
-        public SurfToolDir surfToolDir { get; } // method to calculate tool direction
+        [NotNull] private readonly List<Curve> _paths; // Curves to project
+        private SurfProj surfProj { get; } // Type of projection
+        private Curve cylOnto { get; }// centre line for Cylindrical projection
+        private Vector3d dir { get; }// direction for parallel projection, or line direction for cylindrical
+        private Point3d cen { get; } // centre for spherical projection
+        private SurfToolDir surfToolDir { get; } // method to calculate tool direction
 
         // private storage when processing a model
 
         private Mesh _m; // Mesh
 
         // Parallel constructor
-        public SurfacePath(List<Curve> paths, Vector3d dir, SurfToolDir sTd)
+        public SurfacePath([NotNull] List<Curve> paths, Vector3d dir, SurfToolDir sTd)
         {
             this._paths = paths;
             this.surfProj = SurfProj.Parallel;
@@ -63,7 +64,7 @@ namespace CAMel.Types
             this.surfToolDir = sTd;
         }
         // Cylindrical constructor
-        public SurfacePath(List<Curve> paths, Vector3d dir, Curve cc, SurfToolDir surfToolDir)
+        public SurfacePath([NotNull] List<Curve> paths, Vector3d dir, [NotNull] Curve cc, SurfToolDir surfToolDir)
         {
             this._paths = paths;
             this.surfProj = SurfProj.Cylindrical;
@@ -72,7 +73,7 @@ namespace CAMel.Types
             this.surfToolDir = surfToolDir;
         }
         // Spherical constructor
-        public SurfacePath(List<Curve> paths, Point3d cen, SurfToolDir surfToolDir)
+        public SurfacePath([NotNull] List<Curve> paths, Point3d cen, SurfToolDir surfToolDir)
         {
             this._paths = paths;
             this.surfProj = SurfProj.Spherical;
@@ -102,71 +103,68 @@ namespace CAMel.Types
         }
 
         // Different calls to Generate a Machine Operation from different surfaces
-        public MachineOperation generateOperation(Surface s, double offset, MaterialTool mT, IMaterialForm mF, ToolPathAdditions tPa)
-        {
-            return generateOperation(s.ToBrep(),offset, mT, mF, tPa);
-        }
-        public MachineOperation generateOperation(Brep b, double offset, MaterialTool mT, IMaterialForm mF, ToolPathAdditions tPa)
+
+        [NotNull]
+        public MachineOperation generateOperation([NotNull] Brep b, double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [CanBeNull] ToolPathAdditions tPa)
         {
             // Just convert to Mesh
             MeshingParameters mP = MeshingParameters.Smooth;
-            this._m = Mesh.CreateFromBrep(b, mP)[0];
+            this._m = Mesh.CreateFromBrep(b, mP)?[0];
 
             return generateOperation_(offset, mT, mF, tPa);
         }
-        public MachineOperation generateOperation(Mesh m, double offset, MaterialTool mT, IMaterialForm mF, ToolPathAdditions tPa)
+        [NotNull]
+        public MachineOperation generateOperation([NotNull] Mesh m, double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [CanBeNull] ToolPathAdditions tPa)
         {
+            if(m.FaceNormals == null) { throw new ArgumentNullException(); }
+            m.FaceNormals.ComputeFaceNormals();
             this._m = m;
-            this._m.FaceNormals.ComputeFaceNormals();
 
             return generateOperation_(offset, mT, mF, tPa);
         }
         // actual code to generate the operation
-        private MachineOperation generateOperation_(double offset, MaterialTool mT, IMaterialForm mF, ToolPathAdditions tPa)
+        [NotNull]
+        private MachineOperation generateOperation_(double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [CanBeNull] ToolPathAdditions tPa)
         {
+            if(this._m == null) { throw new NullReferenceException("Trying to generate a surfacing path with no mesh set. ");}
             // create unprojected toolpath (mainly to convert the curve into a list of points)
             List<ToolPath> tPs = new List<ToolPath>();
 
             foreach(Curve p in this._paths)
             {
                 tPs.Add(new ToolPath(string.Empty, mT, mF, tPa));
-                tPs[tPs.Count - 1].convertCurve(p,new Vector3d(0,0,1));
+                tPs[tPs.Count - 1]?.convertCurve(p,new Vector3d(0,0,1));
             }
 
             // move points onto surface storing projection direction
             // on the toolpoint and keeping lists of norms
             List<ToolPath> newTPs = new List<ToolPath>();
             List<List<Vector3d>> norms = new List<List<Vector3d>>();
-            List<Vector3d> tempN;
-
-            ToolPath tempTP;
 
 
             foreach(ToolPath tP in tPs)
             {
-                var intersectInfo = new ConcurrentDictionary<ToolPoint, FirstIntersectResponse>(Environment.ProcessorCount, tP.Count);
+                ConcurrentDictionary<ToolPoint, FirstIntersectResponse> intersectInfo = new ConcurrentDictionary<ToolPoint, FirstIntersectResponse>(Environment.ProcessorCount, tP.Count);
 
                 foreach (ToolPoint tPt in tP) //initialise dictionary
                 { intersectInfo[tPt] = new FirstIntersectResponse(); }
 
                 Parallel.ForEach(tP, tPtP =>
-                 {
-                     intersectInfo[tPtP] = firstIntersect(tPtP);
-                 }
+                    {
+                        if (tPtP != null) { intersectInfo[tPtP] = firstIntersect(tPtP); }
+                    }
                 );
 
-                tempTP = new ToolPath(string.Empty, mT, mF, tPa);
-                tempN = new List<Vector3d>();
-                FirstIntersectResponse fIR;
+                ToolPath tempTP = new ToolPath(string.Empty, mT, mF, tPa);
+                List<Vector3d> tempN = new List<Vector3d>();
 
                 foreach( ToolPoint tPt in tP)
                 {
-
-                    fIR = intersectInfo[tPt];
-                    if (fIR.hit)
+                    FirstIntersectResponse fIr = intersectInfo[tPt];
+                    if (fIr.hit)
                     {
-                        tempTP.Add(fIR.tP);
-                        tempN.Add(fIR.norm);
+                        tempTP.Add(fIr.tP);
+                        tempN.Add(fIr.norm);
                     }
                     else if(tempTP.Count > 0 )
                     {
@@ -179,16 +177,14 @@ namespace CAMel.Types
                         tempN = new List<Vector3d>();
                     }
                 }
-                if (tempTP.Count > 1)
-                {
-                    newTPs.Add(tempTP);
-                    norms.Add(tempN);
-                }
+                if (tempTP.Count <= 1) { continue; }
+                newTPs.Add(tempTP);
+                norms.Add(tempN);
             }
 
             for(int j=0;j<newTPs.Count;j++)
             {
-                for (int i = 0; i < newTPs[j].Count; i++)
+                for (int i = 0; i < newTPs[j]?.Count; i++)
                 {
                     // find the tangent vector, assume the curve is not too jagged
                     // this is reasonable for most paths, but not for space
@@ -211,7 +207,6 @@ namespace CAMel.Types
                     }
 
                     Vector3d tangent = newTPs[j][i+lookForward].pt - newTPs[j][i - lookBack].pt;
-                    Vector3d pNplaneN;
                     switch (this.surfToolDir)
                     {
                         case SurfToolDir.Projection: // already set
@@ -219,7 +214,7 @@ namespace CAMel.Types
                         case SurfToolDir.PathNormal:
                             // get normal to tangent on surface
                             Vector3d stNorm = Vector3d.CrossProduct(norms[j][i], tangent);
-                            pNplaneN = Vector3d.CrossProduct(newTPs[j][i].dir, stNorm);
+                            Vector3d pNplaneN = Vector3d.CrossProduct(newTPs[j][i].dir, stNorm);
                             // find vector normal to the surface in the line orthogonal to the tangent
                             newTPs[j][i].dir = Vector3d.CrossProduct(stNorm,pNplaneN);
                             break;
@@ -262,30 +257,30 @@ namespace CAMel.Types
             }
         }
 
-        private FirstIntersectResponse firstIntersect(ToolPoint tP)
+        private FirstIntersectResponse firstIntersect([NotNull] ToolPoint tP)
         {
-            FirstIntersectResponse fIr = new FirstIntersectResponse();
+            FirstIntersectResponse fIr = new FirstIntersectResponse {hit = false};
+            if (this._m?.FaceNormals == null) { return fIr; }
 
             Vector3d proj = projDir(tP.pt);
             Ray3d rayL = new Ray3d(tP.pt, proj);
-            fIr.hit = false;
 
             double inter = Intersection.MeshRay(this._m, rayL, out int[] faces);
-            if (inter >= 0)
-            {
-                fIr.hit = true;
-                fIr.tP = new ToolPoint(rayL.PointAt(inter), -proj);
-                List<int> lFaces = new List<int>();
-                lFaces.AddRange(faces);
-                fIr.norm = this._m.FaceNormals[lFaces[0]];
 
-                if (fIr.norm * rayL.Direction > 0) { fIr.norm = -fIr.norm; }
-            }
+            if (!(inter >= 0)) { return fIr; }
+
+            fIr.hit = true;
+            fIr.tP = new ToolPoint(rayL.PointAt(inter), -proj);
+            List<int> lFaces = new List<int>();
+            lFaces.AddRange(faces);
+            fIr.norm = this._m.FaceNormals[lFaces[0]];
+
+            if (fIr.norm * rayL.Direction > 0) { fIr.norm = -fIr.norm; }
 
             return fIr;
         }
         // Give the direction of projection for a specific point based on the projection type.
-        private Vector3d projDir(Point3d pt)
+        [Pure] private Vector3d projDir(Point3d pt)
         {
             Vector3d pd = new Vector3d();
             switch (this.surfProj)
@@ -295,7 +290,7 @@ namespace CAMel.Types
                     break;
                 case SurfProj.Cylindrical:
                     Plane pl = new Plane(pt,this.dir);
-
+                    if(this.cylOnto == null) { throw new NullReferenceException("Trying a cylindrical but the path to project to is not set.");}
                     if(this.cylOnto.IsLinear()) // if centre is a line treat it as infinite
                     {
                         Line cyLine = new Line(this.cylOnto.PointAtStart, this.cylOnto.PointAtEnd);
@@ -309,17 +304,15 @@ namespace CAMel.Types
                     } else // Use curve and warn if no intersection
                     {
                         CurveIntersections ci = Intersection.CurvePlane(this.cylOnto,pl,0.0000001);
-                        if(ci.Count == 0)
+                        if(ci == null || ci.Count == 0)
                         {
                             throw new InvalidOperationException("Short Cylinder:  The cylinder centre curve is shorter than the model.");
-                        } else
-                        {
-                            if(ci.Count >1 || ci[0].IsOverlap)
-                            {
-                                throw new InvalidOperationException("Cylinder double cut: The cylinder centre curve has multiple intersections with a projection plane.");
-                            }
-                            pd = ci[0].PointA - pt;
                         }
+                        if(ci.Count >1 || ci[0] == null || ci[0].IsOverlap)
+                        {
+                            throw new InvalidOperationException("Cylinder double cut: The cylinder centre curve has multiple intersections with a projection plane.");
+                        }
+                        pd = ci[0].PointA - pt;
                     }
                     break;
                 case SurfProj.Spherical:
@@ -329,28 +322,36 @@ namespace CAMel.Types
             return pd;
         }
 
+        [CanBeNull]
         public Curve getCurve()
         {
-            var jc = Curve.JoinCurves(this, 1000000, true);
-            if(jc.Length > 0) { return jc[0]; }
+            Curve[] jc = Curve.JoinCurves(this, 1000000, true);
+            if(jc != null && jc.Length > 0) { return jc[0]; }
             return null;
         }
 
         #region List Functions
         public int Count => ((IList<Curve>)this._paths).Count;
         public bool IsReadOnly => ((IList<Curve>)this._paths).IsReadOnly;
-        public Curve this[int index] { get => ((IList<Curve>)this._paths)[index]; set => ((IList<Curve>)this._paths)[index] = value; }
-        public int IndexOf(Curve item) { return ((IList<Curve>)this._paths).IndexOf(item); }
-        public void Insert(int index, Curve item) { ((IList<Curve>)this._paths).Insert(index, item); }
-        public void RemoveAt(int index) { ((IList<Curve>)this._paths).RemoveAt(index); }
-        public void Add(Curve item) { ((IList<Curve>)this._paths).Add(item); }
-        public void AddRange(IEnumerable<Curve> items) { this._paths.AddRange(items); }
-        public void Clear() { ((IList<Curve>)this._paths).Clear(); }
-        public bool Contains(Curve item) { return ((IList<Curve>)this._paths).Contains(item); }
-        public void CopyTo(Curve[] array, int arrayIndex) { ((IList<Curve>)this._paths).CopyTo(array, arrayIndex); }
-        public bool Remove(Curve item) { return ((IList<Curve>)this._paths).Remove(item); }
-        public IEnumerator<Curve> GetEnumerator() { return ((IList<Curve>)this._paths).GetEnumerator(); }
-        IEnumerator IEnumerable.GetEnumerator() { return ((IList<Curve>)this._paths).GetEnumerator(); }
+        [CanBeNull]
+        public Curve this[int index]
+        {
+            get => this._paths[index];
+            set => this._paths[index] = value;
+        }
+        public int IndexOf(Curve item) => this._paths.IndexOf(item);
+        public void Insert(int index, Curve item) => this._paths.Insert(index, item);
+        public void RemoveAt(int index) => this._paths.RemoveAt(index);
+        public void Add(Curve item) => this._paths.Add(item);
+        [PublicAPI]
+        public void AddRange([NotNull] IEnumerable<Curve> items) => this._paths.AddRange(items);
+        public void Clear() => this._paths.Clear();
+        public bool Contains(Curve item) => this._paths.Contains(item);
+        public void CopyTo(Curve[] array, int arrayIndex) => this._paths.CopyTo(array, arrayIndex);
+        public bool Remove(Curve item) => ((IList<Curve>)this._paths).Remove(item);
+        public IEnumerator<Curve> GetEnumerator() => this._paths.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => this._paths.GetEnumerator();
+
         #endregion
     }
 
@@ -362,23 +363,26 @@ namespace CAMel.Types
             get
             {
                 BoundingBox bb = BoundingBox.Unset;
-                for (int i = 0; i < this.Value.Count; i++)
-                { bb.Union(this.Value[i].GetBoundingBox(false)); }
+                if (this.Value == null) { return bb;}
+                foreach (Curve c in this.Value) { bb.Union(c.GetBoundingBox(false)); }
                 return bb;
             }
         }
 
         // Default Constructor
+        [UsedImplicitly]
         public GH_SurfacePath() { this.Value = null; }
-        // Frome Unwrapped
-        public GH_SurfacePath(SurfacePath sP) { this.Value = sP; }
+        // From Unwrapped
+        public GH_SurfacePath([CanBeNull] SurfacePath sP) { this.Value = sP; }
         // Copy Constructor (just reference as SurfacePath is Immutable)
-        public GH_SurfacePath(GH_SurfacePath sP ) { this.Value = sP.Value; }
+        public GH_SurfacePath([CanBeNull] GH_SurfacePath sP ) { this.Value = sP?.Value; }
         // Duplicate
+        [NotNull]
         public override IGH_Goo Duplicate() { return new GH_SurfacePath(this); }
 
         public override bool CastTo<TQ>(ref TQ target)
         {
+            if (this.Value == null) { return false; }
             if (typeof(TQ).IsAssignableFrom(typeof(SurfacePath)))
             {
                 target = (TQ)(object)this.Value;
@@ -394,27 +398,26 @@ namespace CAMel.Types
                 target = (TQ)(object)new GH_Curve(this.Value.getCurve());
                 return true;
             }
-
-
             return false;
         }
-        public override bool CastFrom(object source)
+        public override bool CastFrom([CanBeNull] object source)
         {
-            if (source == null) { return false; }
-            // From unwrapped
-            if (typeof(SurfacePath).IsAssignableFrom(source.GetType()))
-            {
-                this.Value = (SurfacePath)source;
-                return true;
+            switch (source) {
+                case null: return false;
+                // From unwrapped
+                case SurfacePath sP:
+                    this.Value = sP;
+                    return true;
+                default: return false;
             }
-            return false;
         }
 
-        public void DrawViewportWires(GH_PreviewWireArgs args)
+        public void DrawViewportWires([CanBeNull] GH_PreviewWireArgs args)
         {
+            if (this.Value == null || args?.Pipeline == null) { return; }
             foreach (Curve l in this.Value) { args.Pipeline.DrawCurve(l, args.Color); }
         }
-        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+        public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
 
     }
 
@@ -423,29 +426,20 @@ namespace CAMel.Types
     {
         public GH_SurfacePathPar() :
             base("Surfacing Path", "SurfacePath", "Contains the information to project a path onto a surface", "CAMel", "  Params", GH_ParamAccess.item) { }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("FCB36AFC-195B-4DFA-825B-A986875A3A86"); }
-        }
+        public override Guid ComponentGuid => new Guid("FCB36AFC-195B-4DFA-825B-A986875A3A86");
 
         public bool Hidden { get; set; }
         public bool IsPreviewCapable => true;
         public BoundingBox ClippingBox => Preview_ComputeClippingBox();
-        public void DrawViewportWires(IGH_PreviewArgs args) => Preview_DrawWires(args);
-        public void DrawViewportMeshes(IGH_PreviewArgs args) => Preview_DrawMeshes(args);
+        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => Preview_DrawWires(args);
+        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => Preview_DrawMeshes(args);
 
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.surfacepath;
-            }
-        }
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.surfacepath;
     }
 
 }

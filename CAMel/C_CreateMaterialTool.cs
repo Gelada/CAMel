@@ -3,11 +3,14 @@
 using Grasshopper.Kernel;
 
 using CAMel.Types;
+using JetBrains.Annotations;
 
 namespace CAMel
 {
+    [UsedImplicitly]
     public class C_CreateMaterialTool : GH_Component
     {
+        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
@@ -18,11 +21,13 @@ namespace CAMel
         {
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
-        protected override void RegisterInputParams(GH_InputParamManager pManager)
+        protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
+            if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddTextParameter("Material Name", "MN", "Name of the material", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Tool Name", "TN", "Name of the tool", GH_ParamAccess.item, string.Empty);
             pManager.AddIntegerParameter("Tool Number", "T", "Number of the tool", GH_ParamAccess.item, 1);
@@ -40,20 +45,24 @@ namespace CAMel
             pManager.AddNumberParameter("Side Load", "SL", "Fraction of the tool to engage with the material when surfacing.", GH_ParamAccess.item, 1);
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
-        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
+        protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
+            if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTool", "MT", "Details of material and the tool cutting it", GH_ParamAccess.item);
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
         /// <param name="da">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess da)
+        protected override void SolveInstance([NotNull] IGH_DataAccess da)
         {
+            if (da == null) { throw new ArgumentNullException(); }
             string matName = string.Empty;
             string toolName = string.Empty;
 
@@ -104,25 +113,17 @@ namespace CAMel
             da.SetData(0, new GH_MaterialTool(mT));
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.creatematerialtool;
-            }
-        }
+        [CanBeNull]
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.creatematerialtool;
 
+        /// <inheritdoc />
         /// <summary>
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{C67DDF9A-A893-4393-B9C9-FC6CB5F304DA}"); }
-        }
+        public override Guid ComponentGuid => new Guid("{C67DDF9A-A893-4393-B9C9-FC6CB5F304DA}");
     }
 }

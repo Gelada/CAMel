@@ -6,6 +6,7 @@ using Rhino.Geometry;
 
 using CAMel.Types.MaterialForm;
 using CAMel.Types.Machine;
+using JetBrains.Annotations;
 
 namespace CAMel.Types
 {
@@ -17,74 +18,63 @@ namespace CAMel.Types
 
     public class CodeInfo
     {
-        private StringBuilder Code;
-        public Dictionary<string, double> machineState { get; set; } // Data version of last written instruction to use between write calls
-        private Dictionary<string, Interval> ranges; // Highest and lowest value for each coordinate
-        private Dictionary<string, List<int>> warnings; // Warning text and number of occurences
-        private Dictionary<string, List<int>> errors; // Error text and number of occurences
-        private readonly IMachine _m; // Machine for language handling.
+        [NotNull] private readonly StringBuilder _code;
+        [NotNull] public Dictionary<string, double> machineState { get; } // Data version of last written instruction to use between write calls
+        [NotNull] private readonly Dictionary<string, Interval> _ranges; // Highest and lowest value for each coordinate
+        [NotNull] private readonly Dictionary<string, List<int>> _warnings; // Warning text and number of occurrences
+        [NotNull] private readonly Dictionary<string, List<int>> _errors; // Error text and number of occurrences
+        [NotNull] private readonly IMachine _m; // Machine for language handling.
 
-        public MaterialTool currentMT { get; set; }
-        public IMaterialForm currentMF { get; set; }
+        [NotNull] public MaterialTool currentMT { get; set; }
+        [NotNull] public IMaterialForm currentMF { get; set; }
         private int _lines;
 
-        public CodeInfo()
+        public CodeInfo([NotNull] IMachine m, [NotNull] IMaterialForm mF, [NotNull] MaterialTool mT)
         {
-            this.Code = new StringBuilder();
-            this.ranges = new Dictionary<string,Interval>();
-            this.errors = new Dictionary<string,List<int>>();
-            this.warnings = new Dictionary<string, List<int>>();
-            this.machineState = new Dictionary<string, double>();
-            this._lines = 0;
-        }
-
-        public CodeInfo(IMachine m)
-        {
-            this.Code = new StringBuilder();
+            this._code = new StringBuilder();
             this._m = m;
-            this.ranges = new Dictionary<string, Interval>();
-            this.errors = new Dictionary<string, List<int>>();
-            this.warnings = new Dictionary<string, List<int>>();
+            this.currentMF = mF;
+            this.currentMT = mT;
+            this._ranges = new Dictionary<string, Interval>();
+            this._errors = new Dictionary<string, List<int>>();
+            this._warnings = new Dictionary<string, List<int>>();
             this.machineState = new Dictionary<string, double>();
             this._lines = 0;
         }
 
-        public void growRange(string key, double v)
+        public void growRange([NotNull] string key, double v)
         {
-            Interval temp;
-            if (!this.ranges.ContainsKey(key))
-            { this.ranges.Add(key, new Interval(v, v)); }
+            if (!this._ranges.ContainsKey(key))
+            { this._ranges.Add(key, new Interval(v, v)); }
             else
             {
-                temp = this.ranges[key];
+                Interval temp = this._ranges[key];
                 temp.Grow(v);
-                this.ranges[key] = temp;
+                this._ranges[key] = temp;
             }
         }
 
-        public Dictionary<string,Interval> getRanges() => this.ranges;
+        [NotNull] [PublicAPI] public Dictionary<string,Interval> getRanges() => this._ranges;
 
-        public bool addWarning(string warn)
+        public bool addWarning([NotNull] string warn)
         {
             bool newWarning = false;
-            if(this.warnings.ContainsKey(warn))
-            { this.warnings[warn].Add(this._lines); }
+            if (this._warnings.ContainsKey(warn) && this._warnings[warn] != null) { this._warnings[warn].Add(this._lines); }
             else
             {
-                this.warnings.Add(warn, new List<int>() { this._lines });
+                this._warnings.Add(warn, new List<int> { this._lines });
                 newWarning = true;
             }
             appendComment(warn);
             return newWarning;
         }
-        public bool addError(string err)
+        public bool addError([NotNull] string err)
         {
             bool newError = false;
-            if (this.errors.ContainsKey(err))
-            { this.errors[err].Add(this._lines); }
+            if (this._errors.ContainsKey(err) && this._errors[err] != null) { this._errors[err].Add(this._lines); }
             else
             {
-                this.errors.Add(err, new List<int>() { this._lines});
+                this._errors.Add(err, new List<int> { this._lines});
                 newError = true;
             }
             appendComment(err);
@@ -92,156 +82,150 @@ namespace CAMel.Types
         }
 
         // Checks to see if warnings were reported
-        public bool hasWarnings() => this.warnings.Count > 0;
+        [PublicAPI] public bool hasWarnings() => this._warnings.Count > 0;
 
         // Checks to see if warnings were reported, or errors on the ignore list
-        public bool hasWarnings(List<string> ignore)
+        public bool hasWarnings([CanBeNull] List<string> ignore)
         {
-            foreach (string k in this.errors.Keys)
-            { if (ignore.Contains(k)) { return true; } }
+            foreach (string k in this._errors.Keys)
+            { if (ignore != null && ignore.Contains(k)) { return true; } }
 
-            return this.warnings.Count > 0;
+            return this._warnings.Count > 0;
         }
 
         // Return string with all warnings
-        public string getWarnings() => getWarnings(new List<string>());
+        [NotNull] [PublicAPI] public string getWarnings() => getWarnings(new List<string>());
 
-        private string lineNumbers(List<int> data)
+        [NotNull]
+        private static string lineNumbers([CanBeNull] List<int> data)
         {
+            if (data == null) { return string.Empty; }
             string lN = string.Empty;
             bool first = true;
             foreach(int i in data)
             {
                 if (!first) { lN = lN + ", "; }
                 first = false;
-                lN = lN + i.ToString();
+                lN = lN + i;
             }
             return lN;
         }
 
         // Return string with warnings and ignored errors
-        public string getWarnings(List<string> ignore)
+        [NotNull]
+        public string getWarnings([CanBeNull] List<string> ignore)
         {
             StringBuilder outP = new StringBuilder();
-            if (this.warnings.Count > 0)
+            if (this._warnings.Count > 0)
             {
                 outP.AppendLine("Warnings: (on lines)");
-                foreach (string k in this.warnings.Keys)
-                { outP.AppendLine(k + ": " + this.warnings[k].Count + " (" + lineNumbers(this.warnings[k])+")"); }
+                foreach (string k in this._warnings.Keys)
+                { outP.AppendLine(k + ": " + this._warnings[k]?.Count + " (" + lineNumbers(this._warnings[k])+")"); }
             }
 
             // Add ignored errors
             bool first = true;
-            foreach (string k in this.errors.Keys)
+            foreach (string k in this._errors.Keys)
             {
-                if (ignore.Contains(k))
+                if (ignore == null || !ignore.Contains(k)) { continue; }
+                if (first)
                 {
-                    if (first)
-                    {
-                        first = false;
-                        outP.AppendLine("Ignored Errors: (on lines)");
-                    }
-                    outP.AppendLine(k + ": " + this.errors[k].Count + " (" + lineNumbers(this.errors[k])+")");
+                    first = false;
+                    outP.AppendLine("Ignored Errors: (on lines)");
                 }
+                outP.AppendLine(k + ": " + this._errors[k]?.Count + " (" + lineNumbers(this._errors[k])+")");
             }
             return outP.ToString();
         }
 
         // Checks to see if errors were reported
-        public bool hasErrors()
-        {
-            return this.errors.Count > 0;
-        }
+        [PublicAPI] public bool hasErrors() { return this._errors.Count > 0; }
 
         // Checks to see if there are errors, other than those in the ignore list were reported
-        public bool hasErrors(List<string> ignore)
+        public bool hasErrors([CanBeNull] List<string> ignore)
         {
-            foreach (string k in this.errors.Keys)
-            { if (!ignore.Contains(k)) { return true; } }
+            foreach (string k in this._errors.Keys)
+            { if (ignore!=null && !ignore.Contains(k)) { return true; } }
 
             return false;
         }
 
 
         // return string with all errors
-        public string getErrors() => getErrors(new List<string>());
+        [NotNull] [PublicAPI] public string getErrors() => getErrors(new List<string>());
 
         // return string listing errors that are not ignored
-        public string getErrors(List<string> ignore)
+        [NotNull]
+        public string getErrors([CanBeNull] List<string> ignore)
         {
             StringBuilder outP = new StringBuilder();
             bool first = true;
 
-            foreach (string k in this.errors.Keys)
+            foreach (string k in this._errors.Keys)
             {
-                if (!ignore.Contains(k))
+                if (ignore == null || ignore.Contains(k)) { continue; }
+
+                if (first)
                 {
-                    if (first)
-                    {
-                        first = false;
-                        outP.AppendLine("Errors: (on lines)");
-                    }
-                    outP.AppendLine(k + ": " + this.errors[k].Count + " (" + lineNumbers(this.errors[k]) + ")");
+                    first = false;
+                    outP.AppendLine("Errors: (on lines)");
                 }
+                outP.AppendLine(k + ": " + this._errors[k]?.Count + " (" + lineNumbers(this._errors[k]) + ")");
             }
 
             return outP.ToString();
         }
 
-        internal object getRangesString()
+        [NotNull]
+        internal string getRangesString()
         {
             string rOut = string.Empty;
-            foreach (string k in this.ranges.Keys)
+            foreach (string k in this._ranges.Keys)
             {
-                rOut = rOut + "\n" + k + ": " + this.ranges[k].T0.ToString("0.00") +
-                    " to " + this.ranges[k].T1.ToString("0.00");
+                rOut = rOut + "\n" + k + ": " + this._ranges[k].T0.ToString("0.00") +
+                    " to " + this._ranges[k].T1.ToString("0.00");
             }
             return rOut;
         }
 
-        public override string ToString()
-        {
-            return this.Code.ToString();
-        }
+        public override string ToString() { return this._code.ToString(); }
 
+        [NotNull]
         public string ToString(int start, int length)
         {
             int uLength;
-            if (start+length > this.Code.Length)  {  uLength = this.Code.Length - start;}
+            if (start+length > this._code.Length)  {  uLength = this._code.Length - start;}
             else { uLength = length; }
 
-            if( uLength > 0) { return this.Code.ToString(start, uLength); }
-            else{ return string.Empty; }
+            return uLength > 0 ? this._code.ToString(start, uLength) : string.Empty;
         }
 
         // ReSharper disable once InconsistentNaming
-        public int Length => this.Code.Length;
+        public int Length => this._code.Length;
 
-        public void appendLineNoNum(string l)
+        public void appendLineNoNum([NotNull] string l)
         {
             // Add \r\n manually to ensure consistency of
             // files between OSX and Windows.
-            if (l.Length > 0) { this.Code.Append(l+ "\r\n"); }
+            if (l.Length > 0) { this._code.Append(l+ "\r\n"); }
         }
-        public void appendLine(string l)
+        [PublicAPI] public void appendLine([NotNull] string l)
         {
-            if (l.Length > 0)
-            {
-                string line = "N" + this._lines.ToString("0000") + "0 " + l;
-                this._lines++;
-                appendLineNoNum(line);
-            }
-        }
-        public void appendComment(string l) => appendLineNoNum(this._m.comment(l));
-        public void append(string l)
-        {
-            if (l != string.Empty)
-            {
-                char[] seps = { '\n', '\r' };
-                String[] lines = l.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+            if (l.Length <= 0) { return; }
 
-                foreach (String line in lines) { appendLine(line); }
-            }
+            string line = "N" + this._lines.ToString("0000") + "0 " + l;
+            this._lines++;
+            appendLineNoNum(line);
+        }
+        public void appendComment([NotNull] string l) => appendLineNoNum(this._m.comment(l));
+        public void append([NotNull] string l)
+        {
+            if (l == string.Empty) { return; }
+
+            char[] seps = { '\n', '\r' };
+            string[] lines = l.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string line in lines) { appendLine(line); }
         }
 
     }
