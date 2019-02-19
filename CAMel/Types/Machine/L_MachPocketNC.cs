@@ -342,6 +342,7 @@ namespace CAMel.Types.Machine
         public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
+            if (fP.matTool == null) { Exceptions.matToolException(); }
 
             // check there is anything to transition from or to
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
@@ -393,7 +394,7 @@ namespace CAMel.Types.Machine
 
                 bool lng = false;
                 // work out how far angle needs to move
-                double angSpread = angDiff(fP.lastP, tP.firstP,fP.matTool, false);
+                double angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, false);
 
                 int steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                 if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0

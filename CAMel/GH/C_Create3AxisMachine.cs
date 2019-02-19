@@ -103,7 +103,7 @@ namespace CAMel.GH
             List<MaterialTool> mTs = new List<MaterialTool>();
             da.GetDataList(1, mTs);
 
-            IGCodeMachine m = new ThreeAxis(name, mTs, pj, false, head, foot, speed, tool, commentStart, commentEnd, sectionBreak, fileStart, fileEnd);
+            IGCodeMachine m = new ThreeAxis(name, mTs, pj, head, foot, speed, tool, commentStart, commentEnd, sectionBreak, fileStart, fileEnd);
 
             da.SetData(0, new GH_Machine(m));
 

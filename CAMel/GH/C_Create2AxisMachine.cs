@@ -69,12 +69,12 @@ namespace CAMel.GH
         {
             if (da == null) { throw new ArgumentNullException(); }
 
-            string name = string.Empty;
+            string uName = string.Empty;
             string head = string.Empty;
             string foot = string.Empty;
             double pj = 0;
 
-            if (!da.GetData(0, ref name)) { return; }
+            if (!da.GetData(0, ref uName)) { return; }
             if (!da.GetData(7, ref pj)) { return; }
             if (!da.GetData(2, ref head)) { return; }
             if (!da.GetData(3, ref foot)) { return; }
@@ -83,29 +83,46 @@ namespace CAMel.GH
             List<string> cc = new List<string>();
             da.GetDataList(4, cc);
 
-            string commentStart = cc.Count > 0 ? cc[0] : GCode.DefaultCommentStart;
-            string commentEnd = cc.Count > 1 ? cc[1] : GCode.DefaultCommentEnd;
-            string sectionBreak = cc.Count > 2 ? cc[2] : GCode.DefaultSectionBreak;
+            string uCommentStart = cc.Count > 0 ? cc[0] ?? string.Empty : GCode.DefaultCommentStart;
+            string uCommentEnd = cc.Count > 1 ? cc[1] ?? string.Empty : GCode.DefaultCommentEnd;
+            string uSectionBreak = cc.Count > 2 ? cc[2] ?? string.Empty : GCode.DefaultSectionBreak;
 
             List<string> sir = new List<string>();
             da.GetDataList(5, sir);
 
-            string speed = sir.Count > 0 ? sir[0] : GCode.DefaultSpeedChangeCommand;
-            string insert = sir.Count > 1 ? sir[1] : GCode.DefaultInsertCommand;
-            string retract = sir.Count > 2 ? sir[2] : GCode.DefaultRetractCommand;
-            string tool = sir.Count > 3 ? sir[3] : GCode.DefaultToolChangeCommand;
+            string speed = sir.Count > 0 ? sir[0] ?? string.Empty : GCode.DefaultSpeedChangeCommand;
+            string uInsert = sir.Count > 1 ? sir[1] ?? string.Empty : GCode.DefaultInsertCommand;
+            string uRetract = sir.Count > 2 ? sir[2] ?? string.Empty : GCode.DefaultRetractCommand;
+            string tool = sir.Count > 3 ? sir[3] ?? string.Empty : GCode.DefaultToolChangeCommand;
 
             List<string> se = new List<string>();
             da.GetDataList(6, se);
 
-            string fileStart = sir.Count > 0 ? se[0] : GCode.DefaultFileStart;
-            string fileEnd = sir.Count > 1 ? se[1] : GCode.DefaultFileEnd;
+            string uFileStart = se.Count > 0 ? se[0] ?? string.Empty : GCode.DefaultFileStart;
+            string uFileEnd = se.Count > 1 ? se[1] ?? string.Empty : GCode.DefaultFileEnd;
 
-            List<MaterialTool> mTs = new List<MaterialTool>();
-            da.GetDataList(1, mTs);
+            List<MaterialTool> uMTs = new List<MaterialTool>();
+            da.GetDataList(1, uMTs);
 
-            IGCodeMachine m = new TwoAxis(name, mTs, pj, head, foot, speed, insert, retract, tool,commentStart,commentEnd,sectionBreak, fileStart, fileEnd);
+            TwoAxisFactory twoAxis = new TwoAxisFactory()
+            {
+                name = uName,
+                mTs = uMTs,
+                header = head,
+                footer = foot,
+                pathJump = pj,
+                speedChangeCommand = speed,
+                insert = uInsert,
+                retract = uRetract,
+                toolChangeCommand = tool,
+                commentStart = uCommentStart,
+                commentEnd = uCommentEnd,
+                sectionBreak = uSectionBreak,
+                fileStart = uFileStart,
+                fileEnd = uFileEnd
+            };
 
+            IGCodeMachine m = new TwoAxis(twoAxis);
             da.SetData(0, m);
         }
 

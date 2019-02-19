@@ -5,6 +5,45 @@ using Rhino.Geometry;
 
 namespace CAMel.Types.Machine
 {
+    public class TwoAxisFactory
+    {
+        [NotNull] public string name { get; set; }
+        public double pathJump { get; set; }
+        public bool toolLengthCompensation { get; set; }
+        [NotNull] public string sectionBreak { get; set; }
+        [NotNull] public string speedChangeCommand { get; set; }
+        [NotNull] public string toolChangeCommand { get; set; }
+        [NotNull] public string fileStart { get; set; }
+        [NotNull] public string fileEnd { get; set; }
+        [NotNull] public string header { get; set; }
+        [NotNull] public string footer { get; set; }
+        [NotNull] public string commentStart { get; set; }
+        [NotNull] public string commentEnd { get; set; }
+        [NotNull] public List<MaterialTool> mTs { get; set; }
+        [NotNull] public string insert { get; set; }
+        [NotNull] public string retract { get; set; }
+
+        public TwoAxisFactory()
+        {
+            this.name = string.Empty;
+            this.header = string.Empty;
+            this.footer = string.Empty;
+            this.pathJump = 100;
+            this.toolLengthCompensation = false;
+            this.insert = GCode.DefaultInsertCommand;
+            this.retract = GCode.DefaultRetractCommand;
+            this.commentStart = GCode.DefaultCommentStart;
+            this.commentEnd = GCode.DefaultCommentEnd;
+            this.sectionBreak = "---------------------------------";
+            this.fileStart = GCode.DefaultFileStart;
+            this.fileEnd = GCode.DefaultFileEnd;
+            this.speedChangeCommand = GCode.DefaultSpeedChangeCommand;
+            this.toolChangeCommand = GCode.DefaultToolChangeCommand;
+            this.mTs = new List<MaterialTool>();
+        }
+
+    }
+
     public class TwoAxis : IGCodeMachine
     {
         public string name { get; }
@@ -21,32 +60,48 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         [NotNull] private readonly List<char> _terms;
         public List<MaterialTool> mTs { get; }
-
         [NotNull] private string insert { get; }
         [NotNull] private string retract { get; }
 
         [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.twoAxisDefault;
 
-        public TwoAxis(string name, List<MaterialTool>mTs, double pJ, string header, string footer,
-            string speed, string insert, string retract, string tool, string commentStart, string commentEnd,
-            string sectionBreak, string fileStart, string fileEnd)
+        public TwoAxis([NotNull] TwoAxisFactory ta)
         {
-            this.name = name;
-            this.header = header;
-            this.footer = footer;
-            this.pathJump = pJ;
-            this.toolLengthCompensation = false;
-            this.speedChangeCommand = speed;
-            this.insert = insert;
-            this.retract = retract;
-            this.commentStart = commentStart;
-            this.commentEnd = commentEnd;
-            this.sectionBreak = sectionBreak;
-            this.fileStart = fileStart;
-            this.fileEnd = fileEnd;
-            this.speedChangeCommand = speed;
-            this.toolChangeCommand = tool;
-            this.mTs = mTs;
+            this.name = ta.name;
+            this.header = ta.header;
+            this.footer = ta.footer;
+            this.pathJump = ta.pathJump;
+            this.toolLengthCompensation = ta.toolLengthCompensation;
+            this.speedChangeCommand = ta.speedChangeCommand;
+            this.insert = ta.insert;
+            this.retract = ta.retract;
+            this.commentStart = ta.commentStart;
+            this.commentEnd = ta.commentEnd;
+            this.sectionBreak = ta.sectionBreak;
+            this.fileStart = ta.fileStart;
+            this.fileEnd = ta.fileEnd;
+            this.toolChangeCommand = ta.toolChangeCommand;
+            this.mTs =ta.mTs;
+            this._terms = new List<char> { 'X', 'Y', 'S', 'F' };
+        }
+
+        [PublicAPI] private TwoAxis([NotNull] TwoAxis ta)
+        {
+            this.name = ta.name;
+            this.header = ta.header;
+            this.footer = ta.footer;
+            this.pathJump = ta.pathJump;
+            this.toolLengthCompensation = ta.toolLengthCompensation;
+            this.speedChangeCommand = ta.speedChangeCommand;
+            this.insert = ta.insert;
+            this.retract = ta.retract;
+            this.commentStart = ta.commentStart;
+            this.commentEnd = ta.commentEnd;
+            this.sectionBreak = ta.sectionBreak;
+            this.fileStart = ta.fileStart;
+            this.fileEnd = ta.fileEnd;
+            this.toolChangeCommand = ta.toolChangeCommand;
+            this.mTs = ta.mTs;
             this._terms = new List<char> { 'X', 'Y', 'S', 'F' };
         }
 
@@ -71,7 +126,7 @@ namespace CAMel.Types.Machine
 
         public Vector3d toolDir(ToolPoint tP) => Vector3d.ZAxis;
 
-        public void writeCode(ref CodeInfo co, ToolPath tP)
+        public void writeCode(ref CodeInfo co, [ItemNotNull] ToolPath tP)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
             // Double check tP does not have additions.

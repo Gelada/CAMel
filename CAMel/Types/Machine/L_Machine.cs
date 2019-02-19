@@ -303,7 +303,7 @@ namespace CAMel.Types.Machine
                                     if (tempTP.additions == null) { Exceptions.nullPanic(); }
 
                                     tempTP.additions.retract = true;
-                                    newPaths[newPaths.Count - 1].Add(tempTP); // add path and create a new one
+                                    newPaths[newPaths.Count - 1]?.Add(tempTP); // add path and create a new one
 
                                     tempTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                                     if (tempTP.additions == null) { Exceptions.nullPanic(); }
@@ -332,7 +332,7 @@ namespace CAMel.Types.Machine
                         }
                     }
                 }
-                newPaths[newPaths.Count - 1].Add(tempTP);
+                newPaths[newPaths.Count - 1]?.Add(tempTP);
             }
             return newPaths;
         }
@@ -423,7 +423,7 @@ namespace CAMel.Types.Machine
             {
                 PolylineCurve leadIn = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, true);
                 // If no suitable curve found throw an error
-                if (leadIn == null) { newTP.firstP.addWarning("No suitable curve for lead in found."); }
+                if (leadIn == null) { newTP.firstP?.addWarning("No suitable curve for lead in found."); }
                 else
                 {
                     leadIn.Reverse();
@@ -443,7 +443,7 @@ namespace CAMel.Types.Machine
             if (tP.additions.retract)
             {
                 PolylineCurve leadOut = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, false);
-                if (leadOut == null) { newTP.lastP.addWarning("No suitable curve for lead out found."); }
+                if (leadOut == null) { newTP.lastP?.addWarning("No suitable curve for lead out found."); }
                 // If no suitable curve found throw an error
                 else
                 {
@@ -578,9 +578,9 @@ namespace CAMel.Types.Machine
             retPath.additions.threeAxisHeightOffset = false;
 
             if (!retPath.additions.insert)
-            { retPath.firstP.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
+            { retPath.firstP?.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
             if (!retPath.additions.retract)
-            { retPath.lastP.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
+            { retPath.lastP?.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
 
             return retPath;
         }
@@ -793,7 +793,7 @@ namespace CAMel.Types.Machine
         }
         // TODO detect tool changes and new paths
         [NotNull]
-        public static ToolPath gcRead([NotNull] IGCodeMachine m, [NotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
+        public static ToolPath gcRead([NotNull] IGCodeMachine m, [NotNull][ItemNotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
         {
             ToolPath tP = new ToolPath();
             Dictionary<char, double> values = new Dictionary<char, double>();

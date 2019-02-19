@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using CAMel.Types;
 using GH_IO.Serialization;
 using Grasshopper;
@@ -111,7 +110,7 @@ namespace CAMel.GH
                 {
                     double aboveKey = this._curves[newPos - 1].getKey();
                     double belowKey = this._allKeys
-                        .GetViewBetween(Double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
+                        .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
                     newKey = (aboveKey-belowKey)/2.0;
                 }
 

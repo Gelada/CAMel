@@ -25,11 +25,22 @@ namespace CAMel.Types.Machine
 
         [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
-        public ThreeAxis([NotNull] string name, List<MaterialTool> mTs, double pJ, bool tLc, string head, string foot, string speed, string tool, string commentStart, string commentEnd, string sectionBreak, string fileStart, string fileEnd)
+        public ThreeAxis([NotNull] string name,
+            [NotNull] List<MaterialTool> mTs,
+            double pJ,
+            [NotNull] string head,
+            [NotNull] string foot,
+            [NotNull] string speed,
+            [NotNull] string tool,
+            [NotNull] string commentStart,
+            [NotNull] string commentEnd,
+            [NotNull] string sectionBreak,
+            [NotNull] string fileStart,
+            [NotNull] string fileEnd)
         {
             this.name = name;
             this.pathJump = pJ;
-            this.toolLengthCompensation = tLc;
+            this.toolLengthCompensation = false;
             this.header = head;
             this.footer = foot;
             this.speedChangeCommand = speed;
@@ -70,7 +81,7 @@ namespace CAMel.Types.Machine
 
         public Vector3d toolDir(ToolPoint tP) => Vector3d.ZAxis;
 
-        public void writeCode(ref CodeInfo co, ToolPath tP)
+        public void writeCode(ref CodeInfo co, [ItemNotNull] ToolPath tP)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
             // Double check tP does not have additions.
