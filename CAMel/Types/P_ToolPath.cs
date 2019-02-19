@@ -274,7 +274,7 @@ namespace CAMel.Types
         }
         // Get the list of speeds and feeds (a vector with speed in X and feed in Y)
         [NotNull, Pure]
-        public List<Vector3d> getSpeedFeed()
+        public IEnumerable<Vector3d> getSpeedFeed()
         {
             List<Vector3d> sF = new List<Vector3d>();
 
@@ -295,7 +295,7 @@ namespace CAMel.Types
 
         // Lines for each toolpoint
         [NotNull, Pure]
-        public List<Line> toolLines()
+        public IEnumerable<Line> toolLines()
         {
             List<Line> lines = new List<Line>();
             foreach (ToolPoint tP in this) { lines.Add(tP.toolLine()); }
@@ -312,8 +312,7 @@ namespace CAMel.Types
         public void InsertRange(int index, [NotNull] IEnumerable<ToolPoint> items) => this._pts.InsertRange(index, items.Where(x => x!=null) );
         public void RemoveAt(int index) => this._pts.RemoveAt(index);
         public void Add(ToolPoint item) { if (item != null) { this._pts.Add(item); } }
-        // ReSharper disable once MemberCanBePrivate.Global
-        public void Add(Point3d item) => this._pts.Add(new ToolPoint(item));
+        [PublicAPI] public void Add(Point3d item) => this._pts.Add(new ToolPoint(item));
         public void AddRange([NotNull] IEnumerable<ToolPoint> items) => this._pts.AddRange(items.Where(x => x != null));
         public void AddRange([NotNull] IEnumerable<Point3d> items)
         {
@@ -337,7 +336,6 @@ namespace CAMel.Types
         // Create from unwrapped version
         public GH_ToolPath([CanBeNull] ToolPath tP) { this.Value = tP; }
         // Copy Constructor
-        // ReSharper disable once MemberCanBePrivate.Global
         public GH_ToolPath([CanBeNull] GH_ToolPath tP) { this.Value = tP?.Value?.deepClone(); }
         // Duplicate
         [NotNull] public override IGH_Goo Duplicate() { return new GH_ToolPath(this); }
@@ -396,6 +394,7 @@ namespace CAMel.Types
                 target = (T)(object)this.Value.additions;
                 return true;
             }
+            // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_ToolPathAdditions)))
             {
                 target = (T)(object)new GH_ToolPathAdditions(this.Value.additions);

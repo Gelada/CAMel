@@ -54,29 +54,17 @@ namespace CAMel.Types
 
         [NotNull] [PublicAPI] public Dictionary<string,Interval> getRanges() => this._ranges;
 
-        public bool addWarning([NotNull] string warn)
+        public void addWarning([NotNull] string warn)
         {
-            bool newWarning = false;
             if (this._warnings.ContainsKey(warn) && this._warnings[warn] != null) { this._warnings[warn].Add(this._lines); }
-            else
-            {
-                this._warnings.Add(warn, new List<int> { this._lines });
-                newWarning = true;
-            }
+            else { this._warnings.Add(warn, new List<int> {this._lines}); }
             appendComment(warn);
-            return newWarning;
         }
-        public bool addError([NotNull] string err)
+        public void addError([NotNull] string err)
         {
-            bool newError = false;
             if (this._errors.ContainsKey(err) && this._errors[err] != null) { this._errors[err].Add(this._lines); }
-            else
-            {
-                this._errors.Add(err, new List<int> { this._lines});
-                newError = true;
-            }
+            else { this._errors.Add(err, new List<int> { this._lines}); }
             appendComment(err);
-            return newError;
         }
 
         // Checks to see if warnings were reported

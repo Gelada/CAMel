@@ -192,6 +192,7 @@ namespace CAMel.Types
                 target = (T)ptr;
                 return true;
             }
+            // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Vector)))
             {
                 object ptr =new GH_Vector(this.Value.dir);

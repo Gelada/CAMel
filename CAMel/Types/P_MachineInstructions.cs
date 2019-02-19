@@ -227,7 +227,7 @@ namespace CAMel.Types
         [NotNull] public PolylineCurve getLine() => getSinglePath().getLine();
         // Create polylines
         [NotNull]
-        public List<PolylineCurve> getLines()
+        public IEnumerable<PolylineCurve> getLines()
         {
             List<PolylineCurve> lines = new List<PolylineCurve>();
             foreach (MachineOperation mO in this) { lines.AddRange(mO.getLines()); }
@@ -235,7 +235,7 @@ namespace CAMel.Types
         }
         // Lines for each toolpoint
         [NotNull]
-        public List<Line> toolLines()
+        public IEnumerable<Line> toolLines()
         {
             List<Line> lines = new List<Line>();
             foreach (MachineOperation mO in this) { lines.AddRange(mO.toolLines()); }
@@ -311,6 +311,7 @@ namespace CAMel.Types
                 target = (T)ptr;
                 return true;
             }
+            // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Machine)))
             {
                 object ptr = new GH_Machine(this.Value.mach);

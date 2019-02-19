@@ -107,6 +107,7 @@ namespace CAMel.Types
         public string TypeName => "ToolPathAdditions";
 
         [NotNull]
+        // ReSharper disable once ReturnTypeCanBeEnumerable.Global
         public IOrderedEnumerable<double> sortOnion => this.onion.OrderByDescending(d => d);
 
         public override string ToString() => "Toolpath Additions";
@@ -183,6 +184,7 @@ namespace CAMel.Types
 
         public override bool CastTo<T>(ref T target)
         {
+            // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(ToolPathAdditions)))
             {
                 object ptr = this.Value;

@@ -208,6 +208,7 @@ namespace CAMel.Types
 
         public override bool CastTo<T>( ref T target)
         {
+            // ReSharper disable once InvertIf
             if(typeof(T).IsAssignableFrom(typeof(MaterialTool)))
             {
                 object ptr = this.Value;

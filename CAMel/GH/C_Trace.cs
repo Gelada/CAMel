@@ -151,7 +151,7 @@ namespace CAMel.GH
 
         // ReSharper disable once UnusedMember.Local
         [NotNull]
-        private NumericUpDown menuAppendNumber([NotNull] ToolStripDropDown menu, [CanBeNull] string name, int val, [CanBeNull] string desc)
+        private NumericUpDown menuAppendNumber([NotNull] ToolStrip menu, [CanBeNull] string name, int val, [CanBeNull] string desc)
         {
             Panel mI = new FlowLayoutPanel
             {

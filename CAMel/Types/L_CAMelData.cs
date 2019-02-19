@@ -16,20 +16,6 @@ namespace CAMel.Types
         private const string _KeyN = "95351F55-3489-40D1-BDBA-F49C0B84BDEA";
         private const string _GuidN = "95351F55-3489-40D1-BDBA-F49C0B84BDEF";
 
-        public static double getKey([CanBeNull] this RhinoObject ro, out Guid guid)
-        {
-            if (ro?.Attributes?.UserDictionary != null &&
-                ro.Attributes.UserDictionary.TryGetGuid(_GuidN, out Guid id) &&
-                id == ro.Id &&
-                ro.Attributes.UserDictionary.TryGetDouble(_KeyN, out double key))
-            {
-                guid = id;
-                return key;
-            }
-             guid = Guid.Empty;
-            return double.NaN;
-        }
-
         public static double getKey([CanBeNull] this RhinoObject ro)
         {
             if (ro?.Attributes?.UserDictionary != null &&
@@ -49,21 +35,14 @@ namespace CAMel.Types
             return double.NaN;
         }
 
-        public static bool setKey([CanBeNull] this RhinoObject ro, double key)
+        public static void setKey([CanBeNull] this RhinoObject ro, double key)
         {
-            if (ro?.Attributes?.UserDictionary == null) { return false; }
+            if (ro?.Attributes?.UserDictionary == null) { return; }
 
             ro.Attributes.UserDictionary.Set(_KeyN, key);
             ro.Attributes.UserDictionary.Set(_GuidN, ro.Id);
             ro.CommitChanges();
-            return true;
         }
-        public static bool setKey([CanBeNull] this CommonObject ro, double key)
-        {
-            if (ro?.UserDictionary == null) { return false; }
-
-            ro.UserDictionary.Set(_KeyN, key);
-            return true;
-        }
+        public static void setKey([CanBeNull] this CommonObject ro, double key) => ro?.UserDictionary?.Set(_KeyN, key);
     }
 }

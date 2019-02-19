@@ -77,6 +77,7 @@ namespace CAMel.Types
         }
 
         [NotNull]
+        // ReSharper disable once SuggestBaseTypeForParameter
         private static List<List<IntPoint>> pLtoInt([NotNull] PolylineCurve pc, double sc)
         {
             List<IntPoint> intP = new List<IntPoint>();
@@ -89,7 +90,7 @@ namespace CAMel.Types
         }
 
         [NotNull]
-        private static List<PolylineCurve> intToPl([NotNull] List<List<IntPoint>> iPs, double sc)
+        private static List<PolylineCurve> intToPl([NotNull] IEnumerable<List<IntPoint>> iPs, double sc)
         {
             List<PolylineCurve> pls = new List<PolylineCurve>();
 

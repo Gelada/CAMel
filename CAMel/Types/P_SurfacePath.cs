@@ -393,6 +393,7 @@ namespace CAMel.Types
                 target = (TQ)(object)this.Value.getCurve();
                 return true;
             }
+            // ReSharper disable once InvertIf
             if (typeof(TQ).IsAssignableFrom(typeof(GH_Curve)))
             {
                 target = (TQ)(object)new GH_Curve(this.Value.getCurve());

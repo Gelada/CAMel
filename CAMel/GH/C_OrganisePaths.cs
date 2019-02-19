@@ -25,8 +25,7 @@ namespace CAMel.GH
 
         internal bool clickQ() => this._enabled && this._inActiveDocument;
 
-        // ReSharper disable once NotAccessedField.Local
-        private readonly PathClick _click;
+        [UsedImplicitly] private readonly PathClick _click;
         private GH_Document _doc;
 
         [NotNull] private List<Curve> _curves;

@@ -57,8 +57,7 @@ namespace CAMel.Types.MaterialForm {
             }
         }
 
-        // ReSharper disable once MemberCanBePrivate.Global
-        public void add(MFintersection inter)
+        [PublicAPI] public void add(MFintersection inter)
         {
             this.inters.Add(inter);
 
@@ -281,16 +280,15 @@ namespace CAMel.Types.MaterialForm {
         [NotNull]
         private static IMaterialForm create([NotNull] Surface inputGeometry, double tolerance, double safeD)
         {
-            if (inputGeometry.TryGetCylinder(out Cylinder cy))
+            if (!inputGeometry.TryGetCylinder(out Cylinder cy))
             {
-                // Cope with rhinoBug in TryGetCylinder
-                BoundingBox bb = inputGeometry.GetBoundingBox(cy.CircleAt(0).Plane);
-                cy.Height1 = bb.Min.Z;
-                cy.Height2 = bb.Max.Z;
-                return create(cy, tolerance, safeD);
+                return create(inputGeometry.GetBoundingBox(false), tolerance, safeD);
             }
-
-            return create(inputGeometry.GetBoundingBox(false), tolerance, safeD);
+            // Cope with rhinoBug in TryGetCylinder
+            BoundingBox bb = inputGeometry.GetBoundingBox(cy.CircleAt(0).Plane);
+            cy.Height1 = bb.Min.Z;
+            cy.Height2 = bb.Max.Z;
+            return create(cy, tolerance, safeD);
         }
 
         [NotNull]
@@ -309,6 +307,7 @@ namespace CAMel.Types.MaterialForm {
         }
 
         [NotNull]
+        // ReSharper disable once SuggestBaseTypeForParameter
         private static IMaterialForm create([NotNull] Mesh inputGeometry, double tolerance, double safeD)
         {
             if (!inputGeometry.HasBrepForm) { return create(inputGeometry.GetBoundingBox(false), tolerance, safeD); }
@@ -361,6 +360,7 @@ namespace CAMel.Types.MaterialForm {
             }
 
             // Cast to a Mesh if that is asked for.
+            // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Mesh)))
             {
                 Mesh m = this.Value.getMesh();

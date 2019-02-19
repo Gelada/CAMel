@@ -9,7 +9,7 @@ namespace CAMel.GH
 {
 
     public class WriteCodeAttributes : GH_ComponentAttributes {
-        public WriteCodeAttributes([NotNull] C_WriteCode owner) :
+        public WriteCodeAttributes([NotNull] IGH_Component owner) :
             base(owner)
         {
             this._writeMessages = new Dictionary<WriteState, string>
