@@ -184,10 +184,13 @@ namespace CAMel.Types.Machine
                 string ptCode = GCode.gcTwoAxis(pt);
 
                 // Act if feed has changed
-                if (fChange && feed >= 0)
+                if (fChange)
                 {
-                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
-                    else { ptCode = "G01 " + ptCode + " F" + feed.ToString("0"); }
+                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; } else
+                    {
+                        ptCode = "G01 " + ptCode;
+                        if(feed> 0) { ptCode = ptCode +" F" + feed.ToString("0"); }
+                    }
                 }
                 fChange = false;
 
