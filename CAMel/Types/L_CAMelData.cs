@@ -16,14 +16,27 @@ namespace CAMel.Types
         private const string _KeyN = "95351F55-3489-40D1-BDBA-F49C0B84BDEA";
         private const string _GuidN = "95351F55-3489-40D1-BDBA-F49C0B84BDEF";
 
-        public static double getKey ([CanBeNull] this RhinoObject ro)
+        public static double getKey([CanBeNull] this RhinoObject ro, out Guid guid)
+        {
+            if (ro?.Attributes?.UserDictionary != null &&
+                ro.Attributes.UserDictionary.TryGetGuid(_GuidN, out Guid id) &&
+                id == ro.Id &&
+                ro.Attributes.UserDictionary.TryGetDouble(_KeyN, out double key))
+            {
+                guid = id;
+                return key;
+            }
+             guid = Guid.Empty;
+            return double.NaN;
+        }
+
+        public static double getKey([CanBeNull] this RhinoObject ro)
         {
             if (ro?.Attributes?.UserDictionary != null &&
                 ro.Attributes.UserDictionary.TryGetGuid(_GuidN, out Guid id) &&
                 id == ro.Id &&
                 ro.Attributes.UserDictionary.TryGetDouble(_KeyN, out double key))
             { return key; }
-
             return double.NaN;
         }
 

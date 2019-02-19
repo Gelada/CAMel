@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CAMel.Types;
 using GH_IO.Serialization;
 using Grasshopper;
@@ -30,6 +31,7 @@ namespace CAMel.GH
         private GH_Document _doc;
 
         [NotNull] private List<Curve> _curves;
+        [NotNull] private SortedSet<double> _allKeys;
         private List<GH_Curve> _latestPaths;
 
         /// <inheritdoc />
@@ -40,6 +42,7 @@ namespace CAMel.GH
         {
             this._click = new PathClick(this);
             this._curves = new List<Curve>();
+            this._allKeys = new SortedSet<double>();
             this._latestPaths = new List<GH_Curve>();
         }
 
@@ -103,13 +106,16 @@ namespace CAMel.GH
                 if (!int.TryParse(newP, out int newPos)) { return true; }
 
                 double newKey;
-                if (newPos <= 1)
-                { newKey = this._curves[0].getKey() - 1.0; }
-                else if (newPos >= this._curves.Count)
-                { newKey = this._curves[this._curves.Count-1].getKey() + 1.0; }
-                else
-                { newKey = (this._curves[newPos - 2].getKey() + this._curves[newPos - 1].getKey())/2.0;}
+                if (newPos <= 1) { newKey = this._allKeys.Min - 1.0; }
+                else if (newPos >= this._curves.Count) { newKey = this._allKeys.Max + 1.0; } else
+                {
+                    double aboveKey = this._curves[newPos - 1].getKey();
+                    double belowKey = this._allKeys
+                        .GetViewBetween(Double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
+                    newKey = (aboveKey-belowKey)/2.0;
+                }
 
+                this._allKeys.Add(newKey);
                 c.setKey(newKey);
                 return true;
             }
@@ -126,47 +132,51 @@ namespace CAMel.GH
             if (da == null) { throw new ArgumentNullException(); }
             this._enabled = true;
             List<GH_Curve> paths = new List<GH_Curve>();
-            if (!da.GetDataList("Paths", paths))
+            if (!da.GetDataList("Paths", paths) || paths.Count == 0)
             {
                 this._enabled = false;
                 return;
             }
+            RhinoDoc uDoc = RhinoDoc.ActiveDoc;
+            if (uDoc?.Objects == null) { return;}
 
-            double minK = double.PositiveInfinity;
-            double maxK = double.NegativeInfinity;
-
-            // Check for current keys, if missing use stored keys
-            foreach(GH_Curve p in paths)
+            // Check for current keys
+            this._allKeys = new SortedSet<double>();
+            foreach (RhinoObject ro in uDoc.Objects)
             {
-                if (p==null)
+                double key = ro.getKey();
+                if (double.IsNaN(key)) { continue; }
+                this._allKeys.Add(key);
+
+                foreach (GH_Curve p in paths)
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Null curve ignored.");
-                    continue;
+                    if(p == null) { continue; }
+                    if (p.IsReferencedGeometry && p.ReferenceID == ro.Id && double.IsNaN(p.Value.getKey()))
+                    { p.Value.setKey(key); }
                 }
-                if (double.IsNaN(p.Value.getKey()) && p.IsReferencedGeometry)
-                {
-                    if (RhinoDoc.ActiveDoc?.Objects != null)
-                    {
-                        RhinoObject ro = RhinoDoc.ActiveDoc.Objects.Find(p.ReferenceID);
-                        double key = ro.getKey();
-                        if(!double.IsNaN(key)) { p.Value.setKey(key); }
-                    }
-                }
-                double read = p.Value.getKey();
-                if (double.IsNaN(read)) { continue; }
-                if(read < minK) { minK = read; }
-                if (read > maxK) { maxK = read; }
             }
 
             // restore sanity if no values were found.
-            if (double.IsPositiveInfinity(minK)) { minK = 0; }
-            if (double.IsNegativeInfinity(maxK)) { maxK = 0; }
+            if (this._allKeys.Count == 0) { this._allKeys.Add(0); }
 
             // Add keys to new paths with open paths at the start and closed paths at the end
             foreach (GH_Curve p in paths)
             {
-                if(p?.Value == null) { continue; }
-                if (double.IsNaN(p.Value.getKey())) { p.Value.setKey(p.Value.IsClosed ? maxK++ : minK--); }
+                if (p?.Value == null)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Null curve ignored.");
+                    continue;
+                }
+                if (!double.IsNaN(p.Value.getKey())) { continue; }
+                if (p.Value.IsClosed)
+                {
+                    p.Value.setKey(this._allKeys.Max + 1);
+                    this._allKeys.Add(this._allKeys.Max + 1);
+                } else
+                {
+                    p.Value.setKey(this._allKeys.Min - 1);
+                    this._allKeys.Add(this._allKeys.Min - 1);
+                }
             }
 
             // Store keys and put the values into the referenced objects if they exist.
@@ -176,11 +186,8 @@ namespace CAMel.GH
                 if(p == null) { continue; }
                 if (p.IsReferencedGeometry)
                 {
-                    if (RhinoDoc.ActiveDoc?.Objects != null)
-                    {
-                        RhinoObject ro = RhinoDoc.ActiveDoc.Objects.Find(p.ReferenceID);
+                        RhinoObject ro = uDoc.Objects.Find(p.ReferenceID);
                         ro?.setKey(p.Value.getKey());
-                    }
                 }
                 this._curves.Add(p.Value);
             }
