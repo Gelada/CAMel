@@ -9,7 +9,6 @@ namespace CAMel.Types.Machine
     {
         [NotNull] public string name { get; set; }
         public double pathJump { get; set; }
-        public bool toolLengthCompensation { get; set; }
         [NotNull] public string sectionBreak { get; set; }
         [NotNull] public string speedChangeCommand { get; set; }
         [NotNull] public string toolChangeCommand { get; set; }
@@ -29,7 +28,6 @@ namespace CAMel.Types.Machine
             this.header = string.Empty;
             this.footer = string.Empty;
             this.pathJump = 100;
-            this.toolLengthCompensation = false;
             this.insert = GCode.DefaultInsertCommand;
             this.retract = GCode.DefaultRetractCommand;
             this.commentStart = GCode.DefaultCommentStart;
@@ -71,7 +69,7 @@ namespace CAMel.Types.Machine
             this.header = ta.header;
             this.footer = ta.footer;
             this.pathJump = ta.pathJump;
-            this.toolLengthCompensation = ta.toolLengthCompensation;
+            this.toolLengthCompensation = false;
             this.speedChangeCommand = ta.speedChangeCommand;
             this.insert = ta.insert;
             this.retract = ta.retract;

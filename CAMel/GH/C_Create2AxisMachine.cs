@@ -104,7 +104,7 @@ namespace CAMel.GH
             List<MaterialTool> uMTs = new List<MaterialTool>();
             da.GetDataList(1, uMTs);
 
-            TwoAxisFactory twoAxis = new TwoAxisFactory()
+            TwoAxisFactory twoAxis = new TwoAxisFactory
             {
                 name = uName,
                 mTs = uMTs,

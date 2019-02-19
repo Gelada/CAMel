@@ -338,6 +338,7 @@ namespace CAMel.Types.Machine
         }
 
         [CanBeNull]
+        // ReSharper disable once SuggestBaseTypeForParameter
         private static PolylineCurve findLead([NotNull] PolylineCurve toolL, double leadCurve, double insertWidth, int v, bool start)
         {
             // work out the rotation to get the desired normal
@@ -716,6 +717,7 @@ namespace CAMel.Types.Machine
             co.append(mO.preCode);
         }
 
+        // ReSharper disable once UnusedParameter.Global
         public static void gcOpEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO)
         => co.append(mO.postCode);
 
@@ -750,6 +752,7 @@ namespace CAMel.Types.Machine
 
             co.append(tP.preCode);
         }
+        // ReSharper disable once UnusedParameter.Global
         public static void gcPathEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) => co.append(tP.postCode);
 
         // Toolpoint writers
