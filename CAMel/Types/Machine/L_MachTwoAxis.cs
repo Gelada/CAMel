@@ -211,6 +211,7 @@ namespace CAMel.Types.Machine
             }
             // Pass machine state information
 
+            if (tP.lastP == null) { Exceptions.nullPanic(); }
             co.machineState.Clear();
             co.machineState.Add("X", tP.lastP.pt.X);
             co.machineState.Add("Y", tP.lastP.pt.Y);
@@ -224,6 +225,7 @@ namespace CAMel.Types.Machine
         {
             // Set up Machine State
 
+            if (startPath.firstP == null) { Exceptions.nullPanic(); }
             co.machineState.Clear();
             co.machineState.Add("X", startPath.firstP.pt.X);
             co.machineState.Add("Y", startPath.firstP.pt.Y);
@@ -241,6 +243,7 @@ namespace CAMel.Types.Machine
             // check there is anything to transition from
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
 
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
             List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());

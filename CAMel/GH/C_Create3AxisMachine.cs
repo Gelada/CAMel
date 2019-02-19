@@ -84,21 +84,21 @@ namespace CAMel.GH
             List<string> cc = new List<string>();
             da.GetDataList(4, cc);
 
-            string commentStart = cc.Count > 0 ? cc[0] : GCode.DefaultCommentStart;
-            string commentEnd = cc.Count > 1 ? cc[1] : GCode.DefaultCommentEnd;
-            string sectionBreak = cc.Count > 2 ? cc[2] : GCode.DefaultSectionBreak;
+            string commentStart = cc.Count > 0 ? cc[0] ?? string.Empty : GCode.DefaultCommentStart;
+            string commentEnd = cc.Count > 1 ? cc[1] ?? string.Empty : GCode.DefaultCommentEnd;
+            string sectionBreak = cc.Count > 2 ? cc[2] ?? string.Empty : GCode.DefaultSectionBreak;
 
             List<string> sir = new List<string>();
             da.GetDataList(5, sir);
 
-            string speed = sir.Count > 0 ? sir[0] : GCode.DefaultSpeedChangeCommand;
-            string tool = sir.Count > 1 ? sir[1] : GCode.DefaultToolChangeCommand;
+            string speed = sir.Count > 0 ? sir[0] ?? string.Empty : GCode.DefaultSpeedChangeCommand;
+            string tool = sir.Count > 1 ? sir[1] ?? string.Empty : GCode.DefaultToolChangeCommand;
 
             List<string> se = new List<string>();
             da.GetDataList(6, se);
 
-            string fileStart = sir.Count > 0 ? se[0] : GCode.DefaultFileStart;
-            string fileEnd = sir.Count > 1 ? se[1] : GCode.DefaultFileEnd;
+            string fileStart = sir.Count > 0 ? se[0] ?? string.Empty : GCode.DefaultFileStart;
+            string fileEnd = sir.Count > 1 ? se[1] ?? string.Empty : GCode.DefaultFileEnd;
 
             List<MaterialTool> mTs = new List<MaterialTool>();
             da.GetDataList(1, mTs);

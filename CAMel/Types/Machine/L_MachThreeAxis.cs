@@ -171,7 +171,7 @@ namespace CAMel.Types.Machine
                 co.growRange("Z", tPt.pt.Z);
             }
             // Pass machine state information
-
+            if(tP.lastP == null) { Exceptions.nullPanic(); }
             co.machineState.Clear();
             co.machineState.Add("X", tP.lastP.pt.X);
             co.machineState.Add("Y", tP.lastP.pt.Y);
@@ -209,6 +209,7 @@ namespace CAMel.Types.Machine
             // Check end of this path and start of TP
             // For each see if it is safe in one Material Form
             // As we pull back to safe distance we allow a little wiggle.
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
             if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)

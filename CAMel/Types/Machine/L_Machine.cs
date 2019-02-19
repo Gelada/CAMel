@@ -418,7 +418,6 @@ namespace CAMel.Types.Machine
 
             PolylineCurve toolL = tP.getLine();
 
-
             if(tP.additions.insert)
             {
                 PolylineCurve leadIn = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, true);
@@ -428,6 +427,7 @@ namespace CAMel.Types.Machine
                 {
                     leadIn.Reverse();
                     List<ToolPoint> tPts = new List<ToolPoint>();
+                    if(tP.firstP == null) { Exceptions.nullPanic(); }
                     for (int i = 1; i < leadIn.PointCount; i++)
                     {
                         ToolPoint tPt = tP.firstP.deepClone();
@@ -437,6 +437,7 @@ namespace CAMel.Types.Machine
                     newTP.InsertRange(0, tPts);
                 }
                 if (insert != string.Empty) { newTP.preCode = newTP.preCode + "\n" + insert; }
+                if (newTP.additions == null) { Exceptions.nullPanic(); }
                 newTP.additions.insert = false;
             }
 
@@ -449,12 +450,14 @@ namespace CAMel.Types.Machine
                 {
                     for (int i = 1; i < leadOut.PointCount; i++)
                     {
+                        if (tP.firstP == null) { Exceptions.nullPanic(); }
                         ToolPoint tPt = tP.firstP.deepClone();
                         tPt.pt = leadOut.Point(i);
                         newTP.Add(tPt);
                     }
                 }
                 if (retract != string.Empty) { newTP.postCode = newTP.postCode + "\n" + retract; }
+                if (newTP.additions == null) { Exceptions.nullPanic(); }
                 newTP.additions.retract = false;
             }
 
@@ -515,7 +518,9 @@ namespace CAMel.Types.Machine
                 // intersect the new line with the last line we used
                 Rhino.Geometry.Intersect.Intersection.LineLine(osLines[osLines.Count - 2], osLines[osLines.Count - 1], out double inter, out double nextInter);
                 // find the orientation of the new path
-                double orient = (osLines[osLines.Count - 2].PointAt(inter) - offsetPath[offsetPath.Count - 1].pt) * osLines[osLines.Count - 2].UnitTangent;
+                ToolPoint osP = offsetPath[offsetPath.Count - 1];
+                if(osP == null) { Exceptions.nullPanic(); }
+                double orient = (osLines[osLines.Count - 2].PointAt(inter) - osP.pt) * osLines[osLines.Count - 2].UnitTangent;
 
                 // loop until we find a suitable line, removing previous points that are now problematic
                 // checking the length of offsetPath should ensure we don't try to go past the start
@@ -528,7 +533,9 @@ namespace CAMel.Types.Machine
                     offsetPath.RemoveRange(offsetPath.Count - 1, 1);
                     // find the new intersection and orientation
                     Rhino.Geometry.Intersect.Intersection.LineLine(osLines[osLines.Count - 2], osLines[osLines.Count - 1], out inter, out nextInter);
-                    orient = (osLines[osLines.Count - 2].PointAt(inter) - offsetPath[offsetPath.Count - 1].pt) * osLines[osLines.Count - 2].UnitTangent;
+                    osP = offsetPath[offsetPath.Count - 1];
+                    if (osP == null) { Exceptions.nullPanic(); }
+                    orient = (osLines[osLines.Count - 2].PointAt(inter) - osP.pt) * osLines[osLines.Count - 2].UnitTangent;
                 }
 
                 // if we got to the start and things are still bad we have to deal with things differently
@@ -569,6 +576,7 @@ namespace CAMel.Types.Machine
 
             // add the final point.
 
+            if (tP.lastP == null) { Exceptions.nullPanic(); }
             orth = Vector3d.CrossProduct(travel, m.toolDir(tP.lastP));
             if (Math.Abs(orth.Length) > CAMel_Goo.Tolerance) { uOrth = orth; }
             offsetPath.Add(tP.matTool.threeAxisHeightOffset(m, tP.lastP, travel, uOrth));
@@ -607,7 +615,8 @@ namespace CAMel.Types.Machine
             foreach (double height in onionSort)
             {
                 ToolPath newTP = tP.deepClone(height, m);
-                if(newTP.name != string.Empty) { newTP.name = newTP.name + " "; }
+                if (newTP.additions == null) { Exceptions.nullPanic(); }
+                if (newTP.name != string.Empty) { newTP.name = newTP.name + " "; }
                 newTP.name = newTP.name + "(Finish at height " + height.ToString("0.###") + ")";
                 newTP.additions.stepDown = false;
                 newTP.additions.onion = new List<double> { 0 };
@@ -618,6 +627,7 @@ namespace CAMel.Types.Machine
             if (fP.Count != 0) { return fP; }
             {
                 ToolPath newTP = tP.deepClone();
+                if (newTP.additions == null) { Exceptions.nullPanic(); }
                 newTP.additions.stepDown = false;
                 newTP.additions.onion = new List<double> { 0 };
                 fP.Add(newTP);
@@ -631,6 +641,7 @@ namespace CAMel.Types.Machine
         {
             if (tP.additions == null) { Exceptions.additionsNullException(); }
             ToolPath newTP = tP.deepClone();
+            if (newTP.additions == null) { Exceptions.nullPanic(); }
             newTP.additions.stepDown = false;
             newTP.additions.onion = new List<double> { 0 };
             return new List<ToolPath> { newTP };

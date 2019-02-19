@@ -318,6 +318,8 @@ namespace CAMel.Types.Machine
             if (startPath.matTool == null) { Exceptions.matToolException(); }
 
             double toolLength = mI.mach.toolLengthCompensation ? 0 : startPath.matTool.toolLength;
+
+            if (mI.startPath.firstP == null) { Exceptions.nullPanic(); }
             Vector3d ab = Kinematics.ikFiveAxisABTable(mI.startPath.firstP, this.pivot, toolLength, out Point3d machPt);
 
             co.machineState.Clear();
@@ -350,6 +352,7 @@ namespace CAMel.Types.Machine
             // Check end of this path and start of TP
             // For each see if it is safe in one Material Form
             // As we pull back to safe distance we allow a little wiggle.
+            if(fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
             if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
