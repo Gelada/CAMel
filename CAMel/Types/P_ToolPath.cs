@@ -11,7 +11,6 @@ using Rhino.Geometry;
 
 namespace CAMel.Types
 {
-
     // One action of the machine, such as cutting a line
     public class ToolPath : IList<ToolPoint> ,IToolPointContainer
     {

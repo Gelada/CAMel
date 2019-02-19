@@ -210,6 +210,7 @@ namespace CAMel.Types
                             break;
                         case SurfToolDir.PathNormal:
                             // get normal to tangent on surface
+                            if (norms[j]?[i] == null) { break; }
                             Vector3d stNorm = Vector3d.CrossProduct(norms[j][i], tangent);
                             Vector3d pNplaneN = Vector3d.CrossProduct(newTPs[j][i].dir, stNorm);
                             // find vector normal to the surface in the line orthogonal to the tangent
@@ -223,12 +224,14 @@ namespace CAMel.Types
 
                             break;
                         case SurfToolDir.Normal: // set to Norm
+                            if (norms[j]?[i] == null) { break; }
                             newTPs[j][i].dir = norms[j][i];
                             break;
                     }
                     // Adjust the tool position based on the surface normal and the tool orientation
                     // so that the cutting surface not the tooltip is at the correct point
 
+                    if (norms[j]?[i] == null) { break; }
                     newTPs[j][i].pt = newTPs[j][i].pt + mT.cutOffset(newTPs[j][i].dir,norms[j][i]);
 
                     // Move to offset using normal
