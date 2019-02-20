@@ -85,6 +85,7 @@ namespace CAMel.Types.MaterialForm {
             if (irTP.additions == null) { Exceptions.additionsNullException(); }
             irTP.additions.insert = false;
             irTP.additions.retract = false;
+            irTP.additions.activate = false;
 
             MFintersection inter;
 

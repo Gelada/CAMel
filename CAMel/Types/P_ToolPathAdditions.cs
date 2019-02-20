@@ -15,6 +15,7 @@ namespace CAMel.Types
     {
         public bool insert { get; set; }
         public bool retract { get; set; }
+        public bool activate { get; set; }
         public bool stepDown { get; set; }
         public bool sdDropStart { get; set; }    // How stepdown will deal with
         public double sdDropMiddle { get; set; } // points that have reached
@@ -24,6 +25,7 @@ namespace CAMel.Types
         public bool threeAxisHeightOffset { get; set; }
         public bool tabbing { get; set; }        // add tabs if machine wants to.
         public double leadCurvature { get; set; }   // if leading in or out what factor of standard value to use
+
 
         // Adding anything here needs significant support:
         //  Add checker to .any
@@ -36,6 +38,7 @@ namespace CAMel.Types
         {
             this.insert = false;
             this.retract = false;
+            this.activate = false;
             this.stepDown = false;
             this.sdDropStart = false;
             this.sdDropMiddle = 0;
@@ -50,6 +53,7 @@ namespace CAMel.Types
         {
             this.insert = tPa.insert;
             this.retract = tPa.retract;
+            this.activate = tPa.activate;
             this.stepDown = tPa.stepDown;
             this.sdDropStart = tPa.sdDropStart;
             this.sdDropMiddle = tPa.sdDropMiddle;
@@ -69,6 +73,7 @@ namespace CAMel.Types
         {
             insert = true,
             retract = true,
+            activate = false,
             stepDown = true,
             sdDropStart = true,
             sdDropMiddle = -1,
@@ -84,6 +89,7 @@ namespace CAMel.Types
         {
             insert = true,
             retract = true,
+            activate = true,
             stepDown = false,
             sdDropStart = true,
             sdDropMiddle = -1,
@@ -97,6 +103,7 @@ namespace CAMel.Types
         public bool any =>
             this.insert ||
             this.retract ||
+            this.activate ||
             this.stepDown ||
             this.threeAxisHeightOffset ||
             this.tabbing ||
@@ -136,6 +143,7 @@ namespace CAMel.Types
 
             writer.SetBoolean("insert", this.Value.insert);
             writer.SetBoolean("retract", this.Value.retract);
+            writer.SetBoolean("activate", this.Value.activate);
             writer.SetBoolean("stepDown", this.Value.stepDown);
             writer.SetBoolean("sdDropStart", this.Value.sdDropStart);
             writer.SetDouble("sdDropMiddle", this.Value.sdDropMiddle);
@@ -159,6 +167,7 @@ namespace CAMel.Types
                 ToolPathAdditions tPa = new ToolPathAdditions();
                 if (reader.ItemExists("insert")) { tPa.insert = reader.GetBoolean("insert"); }
                 if (reader.ItemExists("retract")) { tPa.retract = reader.GetBoolean("retract"); }
+                if (reader.ItemExists("activate")) { tPa.retract = reader.GetBoolean("activate"); }
                 if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetBoolean("stepDown"); }
                 if (reader.ItemExists("sdDropStart")) { tPa.sdDropStart = reader.GetBoolean("sdDropStart"); }
                 if (reader.ItemExists("sdDropMiddle")) { tPa.sdDropMiddle = reader.GetDouble("sdDropMiddle"); }
@@ -295,6 +304,20 @@ namespace CAMel.Types
                 this.Owner.Value = tPa;
             }
         }
+        [Category(" General"), Description("Activate and deactivate the tool (e.g. plasma cutter or laser) at the start and end of the path."), DisplayName(" Activate"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
+        public bool activate
+        {
+            get => this.Owner?.Value?.activate ?? ToolPathAdditions.basicDefault.activate;
+            set
+            {
+                if (this.Owner == null) { return; }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.activate = value;
+                this.Owner.Value = tPa;
+            }
+        }
         [Category(" Step Down"), Description("Create a sequence of paths stepping down through the material."), DisplayName(" Step down"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
         public bool stepdown
@@ -395,7 +418,7 @@ namespace CAMel.Types
                 this.Owner.Value = tPa;
             }
         }
-        [Category(" General"), Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), DisplayName("Lead Length"), RefreshProperties(RefreshProperties.All)]
+        [Category(" General"), Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), DisplayName("Lead Curvature"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
         public double leadCurve
         {

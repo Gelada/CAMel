@@ -105,12 +105,15 @@ namespace CAMel.GH
 
                 double newKey;
                 if (newPos <= 1) { newKey = this._allKeys.Min - 1.0; }
-                else if (newPos >= this._curves.Count) { newKey = this._allKeys.Max + 1.0; } else
+                else if (newPos >= this._curves.Count) { newKey = this._allKeys.Max + 1.0; }
+                else
                 {
-                    double aboveKey = this._curves[newPos - 1].getKey();
+                    int uPos = newPos;
+                    if (newPos - 1 > i) { uPos++; }
+                    double aboveKey = this._curves[uPos-1].getKey();
                     double belowKey = this._allKeys
                         .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
-                    newKey = (aboveKey-belowKey)/2.0;
+                    newKey = (aboveKey+belowKey)/2.0;
                 }
 
                 this._allKeys.Add(newKey);
@@ -130,11 +133,8 @@ namespace CAMel.GH
             if (da == null) { throw new ArgumentNullException(); }
             this._enabled = true;
             List<GH_Curve> paths = new List<GH_Curve>();
-            if (!da.GetDataList("Paths", paths) || paths.Count == 0)
-            {
-                this._enabled = false;
-                return;
-            }
+            this._enabled = false;
+            if (!da.GetDataList("Paths", paths) || paths.Count == 0) { return; }
             RhinoDoc uDoc = RhinoDoc.ActiveDoc;
             if (uDoc?.Objects == null) { return;}
 
@@ -165,7 +165,12 @@ namespace CAMel.GH
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Null curve ignored.");
                     continue;
                 }
-                if (!double.IsNaN(p.Value.getKey())) { continue; }
+                this._enabled = true;
+                if (!double.IsNaN(p.Value.getKey()))
+                {
+                    this._allKeys.Add(p.Value.getKey());
+                    continue;
+                }
                 if (p.Value.IsClosed)
                 {
                     p.Value.setKey(this._allKeys.Max + 1);

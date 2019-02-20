@@ -94,6 +94,7 @@ namespace CAMel.GH
             }
 
             // Note multiplication will give negative only if one is positive and the other negative.
+            if (Math.Abs(os) < CAMel_Goo.Tolerance) { tPa.leadCurvature = 0;}
             if (os < 0) {tPa.leadCurvature = -tPa.leadCurvature; }
             MachineOperation mO = Operations.opIndex2DCut(c, dir, os, tPa, mT, mF);
 

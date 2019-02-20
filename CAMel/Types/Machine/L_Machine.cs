@@ -399,19 +399,20 @@ namespace CAMel.Types.Machine
         }
 
         [NotNull]
-        public static ToolPath leadInOut2D([NotNull] ToolPath tP, [NotNull] string insert, [NotNull] string retract)
+        public static ToolPath leadInOut2D([NotNull] ToolPath tP, [NotNull] string activate, [NotNull] string deActivate)
         {
             if(tP.matTool == null) { Exceptions.matToolException(); }
             if(tP.additions == null) { Exceptions.additionsNullException(); }
             double leadCurve = tP.additions.leadCurvature;
 
             ToolPath newTP = tP.deepClone();
-            if(newTP.additions==null) { Exceptions.nullPanic(); }
+            if(newTP.additions == null) { Exceptions.nullPanic(); }
 
             // Just add commands as there is no lead
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) {
-                if (tP.additions.insert && insert != string.Empty) { newTP.postCode = newTP.postCode + "\n" + retract; }
-                if (tP.additions.retract && retract != string.Empty) { newTP.postCode = newTP.postCode + "\n" + retract; }
+                if (tP.additions.activate && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode ; }
+                if (tP.additions.activate && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+                newTP.additions.activate = false;
                 newTP.additions.insert = false;
                 newTP.additions.retract = false;
                 return newTP;
@@ -437,7 +438,6 @@ namespace CAMel.Types.Machine
                     }
                     newTP.InsertRange(0, tPts);
                 }
-                if (insert != string.Empty) { newTP.preCode = newTP.preCode + "\n" + insert; }
                 if (newTP.additions == null) { Exceptions.nullPanic(); }
                 newTP.additions.insert = false;
             }
@@ -457,10 +457,13 @@ namespace CAMel.Types.Machine
                         newTP.Add(tPt);
                     }
                 }
-                if (retract != string.Empty) { newTP.postCode = newTP.postCode + "\n" + retract; }
                 if (newTP.additions == null) { Exceptions.nullPanic(); }
                 newTP.additions.retract = false;
             }
+
+            if (tP.additions.activate && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+            if (tP.additions.activate && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            newTP.additions.activate = false;
 
             newTP.additions.leadCurvature = 0;
             return newTP;
@@ -658,8 +661,8 @@ namespace CAMel.Types.Machine
         [NotNull] internal const string DefaultSectionBreak = "------------------------------------------";
         [NotNull] internal const string DefaultSpeedChangeCommand = "M03";
         [NotNull] internal const string DefaultToolChangeCommand = "G43H";
-        [NotNull] internal const string DefaultInsertCommand = "M61";
-        [NotNull] internal const string DefaultRetractCommand = "M62";
+        [NotNull] internal const string DefaultActivateCommand = "M61";
+        [NotNull] internal const string DefaultDeActivateCommand = "M62";
         [NotNull] internal const string DefaultFileStart = "";
         [NotNull] internal const string DefaultFileEnd = "";
 

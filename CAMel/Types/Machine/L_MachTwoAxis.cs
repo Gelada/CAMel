@@ -19,8 +19,8 @@ namespace CAMel.Types.Machine
         [NotNull] public string commentStart { get; set; }
         [NotNull] public string commentEnd { get; set; }
         [NotNull] public List<MaterialTool> mTs { get; set; }
-        [NotNull] public string insert { get; set; }
-        [NotNull] public string retract { get; set; }
+        [NotNull] public string toolActivate { get; set; }
+        [NotNull] public string toolDeActivate { get; set; }
 
         public TwoAxisFactory()
         {
@@ -28,8 +28,8 @@ namespace CAMel.Types.Machine
             this.header = string.Empty;
             this.footer = string.Empty;
             this.pathJump = 100;
-            this.insert = GCode.DefaultInsertCommand;
-            this.retract = GCode.DefaultRetractCommand;
+            this.toolActivate = GCode.DefaultActivateCommand;
+            this.toolDeActivate = GCode.DefaultDeActivateCommand;
             this.commentStart = GCode.DefaultCommentStart;
             this.commentEnd = GCode.DefaultCommentEnd;
             this.sectionBreak = "---------------------------------";
@@ -58,8 +58,8 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         [NotNull] private readonly List<char> _terms;
         public List<MaterialTool> mTs { get; }
-        [NotNull] private string insert { get; }
-        [NotNull] private string retract { get; }
+        [NotNull] private string toolActivate { get; }
+        [NotNull] private string toolDeActivate { get; }
 
         [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.twoAxisDefault;
 
@@ -71,8 +71,8 @@ namespace CAMel.Types.Machine
             this.pathJump = ta.pathJump;
             this.toolLengthCompensation = false;
             this.speedChangeCommand = ta.speedChangeCommand;
-            this.insert = ta.insert;
-            this.retract = ta.retract;
+            this.toolActivate = ta.toolActivate;
+            this.toolDeActivate = ta.toolDeActivate;
             this.commentStart = ta.commentStart;
             this.commentEnd = ta.commentEnd;
             this.sectionBreak = ta.sectionBreak;
@@ -91,8 +91,8 @@ namespace CAMel.Types.Machine
             this.pathJump = ta.pathJump;
             this.toolLengthCompensation = ta.toolLengthCompensation;
             this.speedChangeCommand = ta.speedChangeCommand;
-            this.insert = ta.insert;
-            this.retract = ta.retract;
+            this.toolActivate = ta.toolActivate;
+            this.toolDeActivate = ta.toolDeActivate;
             this.commentStart = ta.commentStart;
             this.commentEnd = ta.commentEnd;
             this.sectionBreak = ta.sectionBreak;
@@ -110,7 +110,7 @@ namespace CAMel.Types.Machine
 
         public string comment(string l) => GCode.comment(this, l);
 
-        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2D(tP, this.insert, this.retract);
+        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2D(tP, this.toolActivate, this.toolDeActivate);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);

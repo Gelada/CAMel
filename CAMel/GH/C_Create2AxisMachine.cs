@@ -40,7 +40,7 @@ namespace CAMel.GH
             pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list,ccDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[4].Optional = true;
-            List<string> irDefault = new List<string> { GCode.DefaultSpeedChangeCommand, GCode.DefaultInsertCommand, GCode.DefaultRetractCommand };
+            List<string> irDefault = new List<string> { GCode.DefaultSpeedChangeCommand, GCode.DefaultActivateCommand, GCode.DefaultDeActivateCommand };
             pManager.AddTextParameter("Speed/Insert/Retract/ToolChange", "SIRT", "Commands to change speed, insert and retract tool, and change tool", GH_ParamAccess.list, irDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[5].Optional = true;
@@ -91,8 +91,8 @@ namespace CAMel.GH
             da.GetDataList(5, sir);
 
             string speed = sir.Count > 0 ? sir[0] ?? string.Empty : GCode.DefaultSpeedChangeCommand;
-            string uInsert = sir.Count > 1 ? sir[1] ?? string.Empty : GCode.DefaultInsertCommand;
-            string uRetract = sir.Count > 2 ? sir[2] ?? string.Empty : GCode.DefaultRetractCommand;
+            string uInsert = sir.Count > 1 ? sir[1] ?? string.Empty : GCode.DefaultActivateCommand;
+            string uRetract = sir.Count > 2 ? sir[2] ?? string.Empty : GCode.DefaultDeActivateCommand;
             string tool = sir.Count > 3 ? sir[3] ?? string.Empty : GCode.DefaultToolChangeCommand;
 
             List<string> se = new List<string>();
@@ -112,8 +112,8 @@ namespace CAMel.GH
                 footer = foot,
                 pathJump = pj,
                 speedChangeCommand = speed,
-                insert = uInsert,
-                retract = uRetract,
+                toolActivate = uInsert,
+                toolDeActivate = uRetract,
                 toolChangeCommand = tool,
                 commentStart = uCommentStart,
                 commentEnd = uCommentEnd,

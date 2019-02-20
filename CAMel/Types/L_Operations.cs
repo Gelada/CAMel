@@ -36,7 +36,7 @@ namespace CAMel.Types
             if (Math.Abs(oS) < CAMel_Goo.Tolerance) { osC.Add(pl); }
             else { osC = Offsetting.offset(pl, oS * mT.toolWidth / 2.0); }
 
-            if (!reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
+            if (Math.Abs(oS) > CAMel_Goo.Tolerance && !reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
 
             // create Operation
 
