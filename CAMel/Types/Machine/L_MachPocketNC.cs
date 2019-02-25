@@ -144,8 +144,7 @@ namespace CAMel.Types.Machine
             {
                 ToolPoint tPt = tP[i];
 
-                foreach (string err in tPt.error) { co.addError(err); }
-                foreach (string warn in tPt.warning) { co.addWarning(warn); }
+                tPt.writeErrorAndWarnings(ref co);
 
                 // Establish new feed value
                 if (Math.Abs(tPt.feed - feed) > CAMel_Goo.Tolerance)

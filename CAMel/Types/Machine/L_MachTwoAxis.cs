@@ -142,26 +142,17 @@ namespace CAMel.Types.Machine
             if (feed < 0) { feed = tP.matTool.feedCut; fChange = true; }
             if (speed < 0) { speed = tP.matTool.speed; sChange = true; }
 
-            foreach (ToolPoint pt in tP)
+            foreach (ToolPoint tPt in tP)
             {
-                foreach (string err in pt.error)
-                {
-                    co.addError(err);
-                    co.appendComment(err);
-                }
-                foreach (string warn in pt.warning)
-                {
-                    co.addWarning(warn);
-                    co.appendComment(warn);
-                }
+                tPt.writeErrorAndWarnings(ref co);
 
                 // Establish new feed value
-                if (Math.Abs(pt.feed - feed) > CAMel_Goo.Tolerance)
+                if (Math.Abs(tPt.feed - feed) > CAMel_Goo.Tolerance)
                 {
-                    if (pt.feed >= 0)
+                    if (tPt.feed >= 0)
                     {
                         fChange = true;
-                        feed = pt.feed;
+                        feed = tPt.feed;
                     }
                     else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
                     {
@@ -171,17 +162,17 @@ namespace CAMel.Types.Machine
                 }
 
                 // Establish new speed value
-                if (Math.Abs(pt.speed - speed) > CAMel_Goo.Tolerance)
+                if (Math.Abs(tPt.speed - speed) > CAMel_Goo.Tolerance)
                 {
-                    if (pt.speed > 0)
+                    if (tPt.speed > 0)
                     {
                         sChange = true;
-                        speed = pt.speed;
+                        speed = tPt.speed;
                     }
                 }
 
                 // Add the position information
-                string ptCode = GCode.gcTwoAxis(pt);
+                string ptCode = GCode.gcTwoAxis(tPt);
 
                 // Act if feed has changed
                 if (fChange)
@@ -199,16 +190,16 @@ namespace CAMel.Types.Machine
                 { ptCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + ptCode; }
                 sChange = false;
 
-                if (pt.name != string.Empty) { ptCode = ptCode + " " + comment(pt.name); }
+                if (tPt.name != string.Empty) { ptCode = ptCode + " " + comment(tPt.name); }
 
-                ptCode = pt.preCode + ptCode + pt.postCode;
+                ptCode = tPt.preCode + ptCode + tPt.postCode;
 
                 co.append(ptCode);
 
                 // Adjust ranges
 
-                co.growRange("X", pt.pt.X);
-                co.growRange("Y", pt.pt.Y);
+                co.growRange("X", tPt.pt.X);
+                co.growRange("Y", tPt.pt.Y);
             }
             // Pass machine state information
 

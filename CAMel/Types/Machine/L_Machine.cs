@@ -502,7 +502,7 @@ namespace CAMel.Types.Machine
                 // Keep track of tool point direction to warn if it changes (but only once)
                 if (m.toolDir(tP[i - 1]) != m.toolDir(tP[i]) && !changeDirection)
                 {
-                    tP[i].warning.Add("Height offsetting is not designed for 5-Axis motion, it may be unpredictable.");
+                    tP[i].addWarning("Height offsetting is not designed for 5-Axis motion, it may be unpredictable.");
                     changeDirection = true;
                 }
                 // Find the next offset line
@@ -590,9 +590,9 @@ namespace CAMel.Types.Machine
             retPath.additions.threeAxisHeightOffset = false;
 
             if (!retPath.additions.insert)
-            { retPath.firstP?.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
+            { retPath.firstP?.addWarning("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
             if (!retPath.additions.retract)
-            { retPath.lastP?.warning.Add("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
+            { retPath.lastP?.addWarning("Height Offsetting does not work between ToolPaths. This might cause unexpected behaviour."); }
 
             return retPath;
         }

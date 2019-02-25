@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using GH_IO.Serialization;
+using GH_IO.Types;
+using Grasshopper.Getters;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
+using Grasshopper.Kernel.Utility;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 
@@ -27,11 +32,16 @@ namespace CAMel.Types
 
         public double speed { get; set; }    // Considered unset for negative values
         public double feed { get; set; }     // Considered unset for negative values
-        [NotNull] public List<string> error { get; }
-        [NotNull] public List<string> warning { get; }
+        [NotNull] private List<string> error { get; }
+        [NotNull] private List<string> warning { get; }
         public string name { get; set; }
         public string preCode { get; set; }
         public string postCode { get; set; }
+
+        // Adding anything here needs significant support:
+        //  Add serialization and deserialization
+        //  Add to the proxy editor
+        //  Add to Constructors
 
         // Default Constructor, set up at the origin with direction set to 0 vector.
         public ToolPoint()
@@ -119,13 +129,15 @@ namespace CAMel.Types
 
         [PublicAPI]
         public void addError([CanBeNull] string err)
-        {
-            if(err!=null) { this.error.Add(err); }
-        }
+        { if(err!=null) { this.error.Add(err); } }
 
         public void addWarning([CanBeNull] string warn)
+        { if (warn != null) { this.warning.Add(warn);  } }
+
+        public void writeErrorAndWarnings([NotNull] ref CodeInfo co)
         {
-            if (warn != null) { this.warning.Add(warn);  }
+            foreach (string err in this.error) { co.addError(err); }
+            foreach (string warn in this.warning) { co.addWarning(warn); }
         }
 
         public string TypeDescription => "Information about a position of the machine";
@@ -164,6 +176,58 @@ namespace CAMel.Types
         // Duplicate
         [NotNull]
         public override IGH_Goo Duplicate() {return new GH_ToolPoint(this); }
+
+        [NotNull]
+        public override IGH_GooProxy EmitProxy() => new GH_ToolPointProxy(this);
+
+        public override bool Write([CanBeNull] GH_IWriter writer)
+        {
+            if (this.Value == null || writer == null) { return base.Write(writer); }
+
+            writer.SetString("name", this.Value.name);
+            Point3d pt = this.Value.pt;
+            writer.SetPoint3D("pt",new GH_Point3D(pt.X,pt.Y,pt.Z));
+            Vector3d dir = this.Value.dir;
+            writer.SetPoint3D("dir", new GH_Point3D(dir.X, dir.Y, dir.Z));
+            writer.SetDouble("speed",this.Value.speed);
+            writer.SetDouble("feed", this.Value.feed);
+            writer.SetString("preCode", this.Value.preCode);
+            writer.SetString("postCode", this.Value.postCode);
+
+            return base.Write(writer);
+        }
+
+        // Deserialize this instance from a Grasshopper reader object.
+        public override bool Read([CanBeNull] GH_IReader reader)
+        {
+            if (reader == null) { return false; }
+            try
+            {
+                ToolPoint tPt = new ToolPoint();
+                if (reader.ItemExists("name")) { tPt.name = reader.GetString("name") ?? string.Empty;}
+                if (reader.ItemExists("pt"))
+                {
+                    GH_Point3D pt = reader.GetPoint3D("pt");
+                    tPt.pt = new Point3d(pt.x,pt.y,pt.z);
+                }
+                if (reader.ItemExists("dir"))
+                {
+                    GH_Point3D pt = reader.GetPoint3D("dir");
+                    tPt.dir = new Vector3d(pt.x, pt.y, pt.z);
+                }
+                if (reader.ItemExists("feed")) { tPt.feed = reader.GetDouble("feed"); }
+                if (reader.ItemExists("speed")) { tPt.speed = reader.GetDouble("speed"); }
+                if (reader.ItemExists("preCode")) { tPt.name = reader.GetString("preCode") ?? string.Empty; }
+                if (reader.ItemExists("postCode")) { tPt.name = reader.GetString("postCode") ?? string.Empty; }
+
+                this.Value = tPt;
+                return base.Read(reader);
+            }
+            catch (Exception ex) when (ex is OverflowException || ex is InvalidCastException || ex is NullReferenceException)
+            {
+                return false;
+            }
+        }
 
         public override bool CastTo<T>(ref T target)
         {
@@ -229,10 +293,10 @@ namespace CAMel.Types
     }
 
     // Grasshopper Parameter Wrapper
-    public class GH_ToolPointPar : GH_Param<GH_ToolPoint>, IGH_PreviewObject
+    public class GH_ToolPointPar : GH_PersistentParam<GH_ToolPoint>, IGH_PreviewObject
     {
         public GH_ToolPointPar() :
-            base("ToolPoint", "ToolPt", "Contains a collection of Tool Points", "CAMel", "  Params", GH_ParamAccess.item) { }
+            base("ToolPoint", "ToolPt", "Contains a collection of Tool Points", "CAMel", "  Params") { }
         public override Guid ComponentGuid => new Guid("0bbed7c1-88a9-4d61-b7cb-e0dfe82b1b86");
 
         public bool Hidden { get; set; }
@@ -247,5 +311,138 @@ namespace CAMel.Types
         /// </summary>
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpoint;
+
+        protected override GH_GetterResult Prompt_Plural(ref List<GH_ToolPoint> values)
+        {
+            return GH_GetterResult.success;
+        }
+
+        // ReSharper disable once RedundantAssignment
+        protected override GH_GetterResult Prompt_Singular([CanBeNull] ref GH_ToolPoint value)
+        {
+            Rhino.Input.RhinoGet.GetPoint("Tooltip Position", true, out Point3d point);
+            Vector3d dir = GH_VectorGetter.GetVector()?.Value ?? Vector3d.ZAxis;
+            value = new GH_ToolPoint(new ToolPoint(point,dir));
+            return GH_GetterResult.success;
+        }
     }
+
+
+    public class GH_ToolPointProxy : GH_GooProxy<GH_ToolPoint>
+    {
+        public GH_ToolPointProxy([CanBeNull] GH_ToolPoint obj) : base(obj)
+        { }
+
+        [CanBeNull]
+        [Category(" General"), Description("Optional Name attached to point."), DisplayName(" Name"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
+        public string name
+        {
+            get => this.Owner?.Value?.name ?? string.Empty;
+            set
+            {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+                this.Owner.Value.name = value ?? string.Empty;
+            }
+        }
+
+        [CanBeNull]
+        [Category(" General"), Description("Position of tool tip."), DisplayName("Point"),
+         RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
+        public GH_Point3d_Wrapper pt
+        {
+            get
+            {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+                Point3d rPt = this.Owner.Value.pt;
+                GH_Point3d_Wrapper ghPoint3DWrapper = new GH_Point3d_Wrapper(ref rPt, pointChanged);
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                this.Owner.Value.pt = rPt;
+                return ghPoint3DWrapper;
+            }
+        }
+        private void pointChanged([CanBeNull] GH_Point3d_Wrapper sender, Point3d point)
+        {
+            if (this.Owner == null) { throw new NullReferenceException(); }
+            if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+            this.Owner.Value.pt = point;
+        }
+        [CanBeNull]
+        [Category(" General"), Description("Direction of tool (for rotary and 5-axis) (from tip down shaft)."), DisplayName("Direction"),
+         RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
+        public GH_Vector3d_Wrapper dir
+        {
+            get
+            {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+                Vector3d rDir = this.Owner.Value.dir;
+                GH_Vector3d_Wrapper ghVector3DWrapper = new GH_Vector3d_Wrapper(ref rDir, dirChanged);
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                this.Owner.Value.dir = rDir;
+                return ghVector3DWrapper;
+            }
+        }
+        private void dirChanged([CanBeNull] GH_Vector3d_Wrapper sender, Vector3d rDir)
+        {
+            if (this.Owner == null) { throw new NullReferenceException(); }
+            if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+            this.Owner.Value.dir = rDir;
+        }
+        [Category(" Settings"), Description("Spindle Speed (some machines will ignore)"), DisplayName("Speed"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
+        public double speed
+        {
+            get => this.Owner?.Value?.speed ?? -1;
+            set
+            {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+                this.Owner.Value.speed = value;
+            }
+        }
+        [Category(" Settings"), Description("Feed Rate"), DisplayName("Feed"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
+        public double feed
+        {
+            get => this.Owner?.Value?.feed ?? -1;
+            set
+            {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+                this.Owner.Value.feed = value;
+            }
+        }
+        [CanBeNull]
+        [Category("Code"), Description("Code to run before point"), DisplayName("preCode"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
+        public string preCode
+        {
+            get => this.Owner?.Value?.preCode ?? string.Empty;
+            set
+            {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+                this.Owner.Value.preCode = value ?? string.Empty;
+            }
+        }
+        [CanBeNull]
+        [Category("Code"), Description("Code to run after point"), DisplayName("postCode"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly]
+        public string postCode
+        {
+            get => this.Owner?.Value?.postCode ?? string.Empty;
+            set
+            {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
+                this.Owner.Value.postCode = value ?? string.Empty;
+            }
+        }
+    }
+
 }
