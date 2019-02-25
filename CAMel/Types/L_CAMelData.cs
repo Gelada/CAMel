@@ -15,6 +15,8 @@ namespace CAMel.Types
     {
         private const string _KeyN = "95351F55-3489-40D1-BDBA-F49C0B84BDEA";
         private const string _GuidN = "95351F55-3489-40D1-BDBA-F49C0B84BDEF";
+        private const string _SideN = "95351F55-3489-40D1-BDBA-F49C0B84BDEG";
+        private const string _SeamN = "95351F55-3489-40D1-BDBA-F49C0B84BDEH";
 
         public static double getKey([CanBeNull] this RhinoObject ro)
         {
@@ -44,5 +46,27 @@ namespace CAMel.Types
             ro.CommitChanges();
         }
         public static void setKey([CanBeNull] this CommonObject ro, double key) => ro?.UserDictionary?.Set(_KeyN, key);
+
+        public static bool getSide([CanBeNull] this CommonObject ro)
+        {
+            if (ro?.UserDictionary != null &&
+                ro.UserDictionary.TryGetBool(_SideN, out bool inSide))
+            { return inSide; }
+            return true;
+        }
+
+        public static void setSide([CanBeNull] this CommonObject ro, bool value) =>
+            ro?.UserDictionary?.Set(_SideN, value);
+
+        public static double getNewSeam([CanBeNull] this CommonObject ro)
+        {
+            if (ro?.UserDictionary != null &&
+                ro.UserDictionary.TryGetDouble(_SeamN, out double seam))
+            { return seam; }
+            return double.NaN;
+        }
+
+        public static void setNewSeam([CanBeNull] this CommonObject ro,double value) =>
+            ro?.UserDictionary?.Set(_SeamN, value);
     }
 }

@@ -259,13 +259,13 @@
     <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
 Copy "$(TargetPath)" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
 Copy "$(TargetPath)" "\\tsclient\Onto windows\CAMel\$(ProjectName).gha"
-Copy "$(TargetPath)" "C:\Users\eharriss\Google Drive\CAMel\$(ProjectName).gha"
+Copy "$(TargetPath)" "C:\Users\eharriss\Google Drive\CAMel\CAMel Install\$(ProjectName).gha"
 Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\Emgu.CV.World.dll"
 Copy "$(TargetDir)Emgu.CV.World.dll" "\\tsclient\Onto windows\CAMel\Emgu.CV.World.dll"
-Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\Google Drive\CAMel\Emgu.CV.World.dll"
+Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eharriss\Google Drive\CAMe\CAMel Installl\Emgu.CV.World.dll"
 Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eharriss\AppData\Roaming\Grasshopper\Libraries\CsvHelper.dll"
 Copy "$(TargetDir)CsvHelper.dll" "\\tsclient\Onto windows\CAMel\CsvHelper.dll"
-Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eharriss\Google Drive\CsvHelper.dll"</PostBuildEvent>
+Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eharriss\Google Drive\CAMel\CAMel Install\CsvHelper.dll"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <StartArguments>

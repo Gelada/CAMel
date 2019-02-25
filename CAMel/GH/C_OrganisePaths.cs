@@ -2,10 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CAMel.Types;
 using GH_IO.Serialization;
 using Grasshopper;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using JetBrains.Annotations;
@@ -13,7 +15,8 @@ using Rhino;
 using Rhino.Display;
 using Rhino.DocObjects;
 using Rhino.Geometry;
-using Rhino.UI;
+using Rhino.Input;
+using Rhino.Input.Custom;
 
 namespace CAMel.GH
 {
@@ -62,6 +65,7 @@ namespace CAMel.GH
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddCurveParameter("Reordered", "R", "Reordered Paths", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Offsets", "O", "Offsets for individual curves.", GH_ParamAccess.list);
         }
 
         protected override void BeforeSolveInstance()
@@ -99,9 +103,57 @@ namespace CAMel.GH
                 if (!(l.DistanceTo(c.PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, false) * pixelsPerUnit <
                       _DotSize)) { continue; }
 
-                Dialogs.ShowEditBox("Reposition", "New position", (i+1).ToString(), false, out string newP);
+                GetInteger gi = new GetInteger();
+                gi.SetCommandPrompt("Reorder path");
+                gi.SetDefaultNumber(i+1);
+                gi.AcceptNothing(true);
+                gi.SetCommandPromptDefault((i+1).ToString());
 
-                if (!int.TryParse(newP, out int newPos)) { return true; }
+                if (c.IsClosed)
+                {
+                    bool cC = c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise;
+                    OptionToggle cutInside = new OptionToggle(c.getSide(), "Inside", "Outside");
+                    OptionToggle counterClock = new OptionToggle(cC, "Clockwise", "CounterClockwise");
+                    OptionToggle moveSeam = new OptionToggle(false, "No", "Yes");
+                    gi.AddOptionToggle("Direction", ref counterClock);
+                    gi.AddOptionToggle("Side", ref cutInside);
+                    gi.AddOptionToggle("ChangeSeam", ref moveSeam);
+                    while (true)
+                    {
+                        double t = double.NaN;
+                        GetResult getR = gi.Get();
+                        if (getR == GetResult.Option)
+                        {
+                            if (moveSeam.CurrentValue)
+                            {
+                                GetPoint gp = new GetPoint();
+                                gp.SetCommandPrompt("Set new seam");
+                                gp.Constrain(c, false);
+                                gp.AcceptNothing(true);
+                                gp.Get();
+                                if (gp.PointOnCurve(out t) == null) { t = double.NaN; }
+                                c.setNewSeam(t);
+                                if(cC != counterClock.CurrentValue){ c.Reverse(); }
+                                c.setSide(cutInside.CurrentValue);
+                                return true;
+                            }
+                            continue;
+                        }
+
+                        c.setNewSeam(t);
+                        if (cC != counterClock.CurrentValue) { c.Reverse(); }
+                        c.setSide(cutInside.CurrentValue);
+
+                        break;
+                    }
+                } else
+                {
+                    gi.Get();
+                }
+
+                // Check new order and work on reordering
+                int newPos = gi.Number();
+                if (newPos == i+1) { return true;}
 
                 double newKey;
                 if (newPos <= 1) { newKey = this._allKeys.Min - 1.0; }
@@ -121,6 +173,47 @@ namespace CAMel.GH
                 return true;
             }
             return false;
+        }
+
+        internal void changeRefCurves()
+        {
+            IGH_StructureEnumerator cs = this.Params?.Input?[0]?.VolatileData?.AllData(true);
+            if (cs == null) { return;}
+            RhinoDoc uDoc = RhinoDoc.ActiveDoc;
+            if (uDoc?.Objects == null) { return; }
+
+            foreach (GH_Curve p in cs.OfType<GH_Curve>())
+            {
+                if (p.IsReferencedGeometry)
+                {
+                    RhinoObject ro = uDoc.Objects.Find(p.ReferenceID);
+                    ro?.Attributes.setSide(p.Value.getSide()); // For closed curves change seams and direction
+                    if (ro is CurveObject co && p.Value != null && co.CurveGeometry != null &&
+                        p.Value.IsClosed && co.CurveGeometry.IsClosed)
+                    {
+                        // reverse source curve
+                        if (co.CurveGeometry.ClosedCurveOrientation(-Vector3d.ZAxis) !=
+                            p.Value.ClosedCurveOrientation(-Vector3d.ZAxis)) { co.CurveGeometry.Reverse(); }
+                        double t = p.Value.getNewSeam();
+                        if (!double.IsNaN(t))
+                        {
+                            p.Value.ChangeClosedCurveSeam(t);
+                            co.CurveGeometry.ChangeClosedCurveSeam(t);
+                            p.Value.setNewSeam(double.NaN);
+                        }
+                    }
+                    ro?.CommitChanges();
+                }
+                else
+                {
+                    // For closed curves change seam
+                    if (p.Value == null || !p.Value.IsClosed) { continue; }
+                    double t = p.Value.getNewSeam();
+                    if (double.IsNaN(t)) { continue; }
+                    p.Value.ChangeClosedCurveSeam(t);
+                    p.Value.setNewSeam(double.NaN);
+                }
+            }
         }
 
         /// <inheritdoc />
@@ -149,8 +242,12 @@ namespace CAMel.GH
                 foreach (GH_Curve p in paths)
                 {
                     if(p == null) { continue; }
-                    if (p.IsReferencedGeometry && p.ReferenceID == ro.Id && double.IsNaN(p.Value.getKey()))
-                    { p.Value.setKey(key); }
+                    if (!p.IsReferencedGeometry || p.ReferenceID != ro.Id || !double.IsNaN(p.Value.getKey()))
+                    {
+                        continue;
+                    }
+                    p.Value.setKey(key);
+                    p.Value.setSide(ro.Attributes.getSide());
                 }
             }
 
@@ -189,8 +286,8 @@ namespace CAMel.GH
                 if(p == null) { continue; }
                 if (p.IsReferencedGeometry)
                 {
-                        RhinoObject ro = uDoc.Objects.Find(p.ReferenceID);
-                        ro?.setKey(p.Value.getKey());
+                    RhinoObject ro = uDoc.Objects.Find(p.ReferenceID);
+                    ro?.setKey(p.Value.getKey());
                 }
                 this._curves.Add(p.Value);
             }
@@ -203,6 +300,18 @@ namespace CAMel.GH
                 this._latestPaths = paths;
             }
             da.SetDataList(0, this._curves);
+
+            List<double> offSets = new List<double>();
+            foreach (Curve c in this._curves)
+            {
+                double os = 0;
+                if(c.IsClosed)
+                {
+                    if (c.getSide()) { os = 1; } else { os = -1; }
+                }
+                offSets.Add(os);
+            }
+            da.SetDataList(1, offSets);
         }
 
         private class CurveComp : IComparer<Curve>

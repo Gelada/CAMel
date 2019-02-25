@@ -30,8 +30,8 @@ namespace CAMel.GH
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddCurveParameter("Cut Path", "C", "Outline of object to cut out.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Offset", "O", "Offset Curve, 0 for none, -1 for interior, 1 for exterior. Actually uses half tool thickness scaled by this value, so variation by toolpath is possible.", GH_ParamAccess.item, 0);
             pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
-            pManager.AddNumberParameter("Offset", "O", "Offset Curve, 0 for none, -1 for interior, 1 for exterior. Actually uses half tool thickness scaled by this value, so variation by toolpath is possible.", GH_ParamAccess.item,0);
             GH_ToolPathAdditionsPar tPaPar = new GH_ToolPathAdditionsPar();
             tPaPar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
             pManager.AddParameter(tPaPar,"Additions","TPA", "Additional Processing for the path, note some options like step down might be ignored by some machines.",GH_ParamAccess.item);
@@ -72,8 +72,8 @@ namespace CAMel.GH
             IMaterialForm mF = null;
 
             if (!da.GetData(0, ref c)) { return; }
-            if (!da.GetData(1, ref dir)) { return; }
-            if (!da.GetData(2, ref os)) { return; }
+            if (!da.GetData(2, ref dir)) { return; }
+            if (!da.GetData(1, ref os)) { return; }
             if (!da.GetData(3, ref tPa) || tPa == null) { return; }
             if (!da.GetData(4, ref mT)) { return; }
             da.GetData(5, ref mF);

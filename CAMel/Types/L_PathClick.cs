@@ -4,7 +4,9 @@ using System;
 using System.Windows.Forms;
 using CAMel.GH;
 using JetBrains.Annotations;
+//using Rhino;
 using Rhino.Geometry;
+//using Rhino.Input;
 using Rhino.UI;
 
 namespace CAMel.Types
@@ -24,10 +26,16 @@ namespace CAMel.Types
             if( e.View?.ActiveViewport == null) { throw new ArgumentNullException();}
             if (e.Button == MouseButtons.Left && this._op != null && this._op.clickQ())
             {
+                // Ignore if a  getter is active
+                if (Rhino.Input.RhinoGet.InGet(Rhino.RhinoDoc.ActiveDoc)) { return; }
+
+                // Ignore if nothing is found
                 Line mouseLine = e.View.ActiveViewport.ClientToWorld(e.ViewportPoint);
                 if (!this._op.found(mouseLine, e.View.ActiveViewport)) { return; }
 
+                // Clear the click and expire solution
                 e.Cancel = true;
+                this._op.changeRefCurves();
                 this._op.ExpireSolution(true);
             }
             else
