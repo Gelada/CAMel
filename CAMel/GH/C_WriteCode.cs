@@ -272,7 +272,9 @@ namespace CAMel.GH
         {
             this.ws = WriteState.Finished;
             this.writeProgress = 1;
-            long fileSize = new FileInfo(this._filePath).Length;
+            long fileSize = 0;
+            FileInfo file = new FileInfo(this._filePath);
+            if (file.Exists) { fileSize = file.Length; }
             ((WriteCodeAttributes) this.Attributes)?.setFileSize(fileSize);
             //this.OnDisplayExpired(true);
         }
