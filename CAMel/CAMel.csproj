@@ -218,6 +218,7 @@
     <None Include="Resources\toolpoint.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\organisepaths.png" />
     <None Include="Resources\selectmaterialtool.png" />
     <None Include="Resources\totoolpoints.png" />
     <None Include="Resources\readmaterialtool.png" />

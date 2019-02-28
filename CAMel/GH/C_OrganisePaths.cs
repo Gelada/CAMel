@@ -39,7 +39,7 @@ namespace CAMel.GH
         /// <summary>
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
-        public C_OrganisePaths() : base("Organise Paths", "OrgPth", "Reorder a collection of curves", "CAMel", "Test")
+        public C_OrganisePaths() : base("Organise Paths", "OrgPth", "Reorder a collection of curves", "CAMel", " ToolPaths")
         {
             this._click = new PathClick(this);
             this._curves = new List<Curve>();
@@ -378,7 +378,7 @@ namespace CAMel.GH
         /// Provides an Icon for the component.
         /// </summary>
         [CanBeNull]
-        protected override System.Drawing.Bitmap Icon => Properties.Resources.create2axis;
+        protected override System.Drawing.Bitmap Icon => Properties.Resources.organisepaths;
 
         /// <inheritdoc />
         /// <summary>
