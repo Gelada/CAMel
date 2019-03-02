@@ -9,6 +9,7 @@ using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Utility;
 using JetBrains.Annotations;
 using Rhino.Geometry;
+using Rhino.Input.Custom;
 
 namespace CAMel.Types
 {
@@ -320,6 +321,7 @@ namespace CAMel.Types
         // ReSharper disable once RedundantAssignment
         protected override GH_GetterResult Prompt_Singular([CanBeNull] ref GH_ToolPoint value)
         {
+
             Rhino.Input.RhinoGet.GetPoint("Tooltip Position", true, out Point3d point);
             Vector3d dir = GH_VectorGetter.GetVector()?.Value ?? Vector3d.ZAxis;
             value = new GH_ToolPoint(new ToolPoint(point,dir));
@@ -348,7 +350,7 @@ namespace CAMel.Types
         }
 
         [CanBeNull]
-        [Category(" General"), Description("Position of tool tip."), DisplayName("Point"),
+        [Category(" General"), Description("Position of tool tip."), DisplayName(" Point"),
          RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
         public GH_Point3d_Wrapper pt
@@ -393,7 +395,7 @@ namespace CAMel.Types
             if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
             this.Owner.Value.dir = rDir;
         }
-        [Category(" Settings"), Description("Spindle Speed (some machines will ignore)"), DisplayName("Speed"), RefreshProperties(RefreshProperties.All)]
+        [Category(" Settings"), Description("Spindle rotation Speed (if machine needs it)."), DisplayName("Speed"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
         public double speed
         {
@@ -405,7 +407,7 @@ namespace CAMel.Types
                 this.Owner.Value.speed = value;
             }
         }
-        [Category(" Settings"), Description("Feed Rate"), DisplayName("Feed"), RefreshProperties(RefreshProperties.All)]
+        [Category(" Settings"), Description("Feed Rate (if machine needs it)."), DisplayName("Feed"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
         public double feed
         {
@@ -418,7 +420,7 @@ namespace CAMel.Types
             }
         }
         [CanBeNull]
-        [Category("Code"), Description("Code to run before point"), DisplayName("preCode"), RefreshProperties(RefreshProperties.All)]
+        [Category("Code"), Description("Extra Code to run before point"), DisplayName("preCode"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
         public string preCode
         {
@@ -431,7 +433,7 @@ namespace CAMel.Types
             }
         }
         [CanBeNull]
-        [Category("Code"), Description("Code to run after point"), DisplayName("postCode"), RefreshProperties(RefreshProperties.All)]
+        [Category("Code"), Description("Extra Code to run after point"), DisplayName("postCode"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
         public string postCode
         {
