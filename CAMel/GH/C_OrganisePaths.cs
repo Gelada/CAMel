@@ -117,14 +117,14 @@ namespace CAMel.GH
                     OptionToggle moveSeam = new OptionToggle(false, "No", "Yes");
                     gi.AddOptionToggle("Direction", ref counterClock);
                     gi.AddOptionToggle("Side", ref cutInside);
-                    gi.AddOptionToggle("ChangeSeam", ref moveSeam);
+                    gi.AddOption("MoveSeam");
                     while (true)
                     {
                         double t = double.NaN;
                         GetResult getR = gi.Get();
                         if (getR == GetResult.Option)
                         {
-                            if (moveSeam.CurrentValue)
+                            if (gi.Option()?.EnglishName == "MoveSeam")
                             {
                                 GetPoint gp = new GetPoint();
                                 gp.SetCommandPrompt("Set new seam");
