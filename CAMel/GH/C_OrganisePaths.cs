@@ -114,7 +114,6 @@ namespace CAMel.GH
                     bool cC = c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise;
                     OptionToggle cutInside = new OptionToggle(c.getSide(), "Inside", "Outside");
                     OptionToggle counterClock = new OptionToggle(cC, "Clockwise", "CounterClockwise");
-                    OptionToggle moveSeam = new OptionToggle(false, "No", "Yes");
                     gi.AddOptionToggle("Direction", ref counterClock);
                     gi.AddOptionToggle("Side", ref cutInside);
                     gi.AddOption("MoveSeam");
