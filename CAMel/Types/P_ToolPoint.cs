@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using GH_IO.Serialization;
 using GH_IO.Types;
+using Grasshopper;
 using Grasshopper.Getters;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Utility;
 using JetBrains.Annotations;
+using Rhino.Commands;
 using Rhino.Geometry;
+using Rhino.Input;
 using Rhino.Input.Custom;
 
 namespace CAMel.Types
@@ -156,7 +160,7 @@ namespace CAMel.Types
             return outP;
         }
 
-        private const double _PreviewLength = 0.2;
+        private const double _PreviewLength = .5;
         internal Line toolLine() => new Line(this.pt, this.pt + this.dir* _PreviewLength);
         public ToolPath getSinglePath() => new ToolPath { this };
 
@@ -313,22 +317,129 @@ namespace CAMel.Types
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpoint;
 
-        protected override GH_GetterResult Prompt_Plural(ref List<GH_ToolPoint> values)
-        {
-            return GH_GetterResult.success;
-        }
-
-        // ReSharper disable once RedundantAssignment
         protected override GH_GetterResult Prompt_Singular([CanBeNull] ref GH_ToolPoint value)
         {
-
-            Rhino.Input.RhinoGet.GetPoint("Tooltip Position", true, out Point3d point);
-            Vector3d dir = GH_VectorGetter.GetVector()?.Value ?? Vector3d.ZAxis;
-            value = new GH_ToolPoint(new ToolPoint(point,dir));
+            bool notUsed = false;
+            ToolPoint tPt = getToolPoint(false, ref notUsed);
+            if (tPt == null) { return GH_GetterResult.cancel; }
+            value = new GH_ToolPoint(tPt);
             return GH_GetterResult.success;
         }
-    }
+        protected override GH_GetterResult Prompt_Plural([NotNull] ref List<GH_ToolPoint> values)
+        {
+            if(values == null) { values = new List<GH_ToolPoint>(); }
+            bool useForRemainder = false;
+            Vector3d dir = Vector3d.ZAxis;
 
+            using (GH_PreviewUtil preView = new GH_PreviewUtil(true))
+            {
+                foreach (GH_ToolPoint gHtPt in values)
+                {
+                    preView.AddPoint(gHtPt.Value?.pt ?? Point3d.Unset);
+                    preView.AddVector(gHtPt.Value?.toolLine() ?? Line.Unset);
+                }
+
+                while (true)
+                {
+                    ToolPoint tPt;
+                    preView.Redraw();
+                    if (useForRemainder)
+                    {
+                        if (RhinoGet.GetPoint("Tooltip Position", true, out Point3d point) != Result.Success)
+                        {
+                            return GH_GetterResult.success;
+                        }
+                        tPt = new ToolPoint(point, dir);
+                        values.Add(new GH_ToolPoint(tPt));
+                        preView.AddPoint(tPt.pt);
+                        preView.AddVector(tPt.toolLine());
+                        continue;
+                    }
+                    tPt = getToolPoint(true, ref useForRemainder);
+                    if (tPt == null) { return GH_GetterResult.success; }
+                    preView.AddPoint(tPt.pt);
+                    preView.AddVector(tPt.toolLine());
+                    dir = tPt.dir;
+                    values.Add(new GH_ToolPoint(tPt));
+                }
+            }
+        }
+
+        [CanBeNull]
+        private ToolPoint getToolPoint(bool multiple, ref bool useForRemainder)
+        {
+            if (RhinoGet.GetPoint("Tooltip Position", true, out Point3d point) != Result.Success) { return null; }
+
+            GetToolDir gTd = new GetToolDir(point, multiple);
+            Vector3d dir = Vector3d.ZAxis;
+            useForRemainder = false;
+            while (true)
+            {
+                switch (gTd.Get())
+                {
+                    case GetResult.Option:
+                        string name = gTd.Option()?.EnglishName;
+                        if (name == "X") { dir = Vector3d.XAxis; }
+                        else if (name == "Y") { dir = Vector3d.YAxis; }
+                        else if (name == "Z") { dir = Vector3d.ZAxis; }
+                        else if (name == "-X") { dir = -Vector3d.XAxis; }
+                        else if (name == "-Y") { dir = -Vector3d.YAxis; }
+                        else if (name == "-Z") { dir = -Vector3d.ZAxis; }
+                        else if (name == "Use") { continue; }
+                        break;
+                    case GetResult.Point:
+                        dir = gTd.Point() - point;
+                        break;
+                    default:
+                        useForRemainder = gTd.useForRemainder;
+                        return null;
+                }
+                useForRemainder = gTd.useForRemainder;
+                return new ToolPoint(point, dir);
+            }
+        }
+
+        private class GetToolDir : GetPoint
+        {
+            private readonly Point3d _start;
+            private Line _dir;
+            private readonly OptionToggle _useToggle;
+
+            public bool useForRemainder => this._useToggle?.CurrentValue ?? false;
+
+            public GetToolDir(Point3d startP, bool multiple)
+            {
+                SetCommandPrompt("Tool Direction");
+                AcceptNothing(true);
+                this._start = !startP.IsValid ? Point3d.Origin : startP;
+                SetBasePoint(startP, true);
+                if (multiple)
+                {
+                    this._useToggle = new OptionToggle(false, "Once", "ForRemainder");
+                    AddOptionToggle("Use", ref this._useToggle);
+                }
+                AddOption("X");
+                AddOption("Y");
+                AddOption("Z");
+                AddOption("-X");
+                AddOption("-Y");
+                AddOption("-Z");
+                MouseMove += moveMouse;
+                DynamicDraw += draw;
+            }
+
+            private void moveMouse([CanBeNull] object sender, [CanBeNull] GetPointMouseEventArgs e)
+            {
+                if (e != null) { this._dir = new Line(this._start, e.Point); }
+            }
+
+            private void draw([CanBeNull] object sender, [CanBeNull] GetPointDrawEventArgs e)
+            {
+                e?.Display?.DrawPoint(this._start, CentralSettings.PreviewPointStyle, 3, System.Drawing.Color.Black);
+                if (this._dir.IsValid) { e?.Display?.DrawArrow(this._dir, System.Drawing.Color.Black); }
+            }
+        }
+    }
 
     public class GH_ToolPointProxy : GH_GooProxy<GH_ToolPoint>
     {
