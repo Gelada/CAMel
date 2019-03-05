@@ -364,7 +364,7 @@ namespace CAMel.Types
         }
 
         [CanBeNull]
-        private ToolPoint getToolPoint(bool multiple, ref bool useForRemainder)
+        private static ToolPoint getToolPoint(bool multiple, ref bool useForRemainder)
         {
             if (RhinoGet.GetPoint("Tooltip Position", true, out Point3d point) != Result.Success) { return null; }
 
