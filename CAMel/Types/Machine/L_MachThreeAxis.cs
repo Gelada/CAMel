@@ -6,6 +6,59 @@ using Rhino.Geometry;
 
 namespace CAMel.Types.Machine
 {
+    public class ThreeAxisFactory
+    {
+        [NotNull] public string name { get; set; }
+        public double pathJump { get; set; }
+        [PublicAPI] public bool toolLengthCompensation { get; set; }
+        [NotNull] public string sectionBreak { get; set; }
+        [NotNull] public string speedChangeCommand { get; set; }
+        [NotNull] public string toolChangeCommand { get; set; }
+        [NotNull] public string fileStart { get; set; }
+        [NotNull] public string fileEnd { get; set; }
+        [NotNull] public string header { get; set; }
+        [NotNull] public string footer { get; set; }
+        [NotNull] public string commentStart { get; set; }
+        [NotNull] public string commentEnd { get; set; }
+        [NotNull] public List<MaterialTool> mTs { get; set; }
+
+        public ThreeAxisFactory()
+        {
+            this.name = string.Empty;
+            this.header = string.Empty;
+            this.footer = string.Empty;
+            this.pathJump = 100;
+            this.toolLengthCompensation = false;
+            this.commentStart = GCode.DefaultCommentStart;
+            this.commentEnd = GCode.DefaultCommentEnd;
+            this.sectionBreak = "---------------------------------";
+            this.fileStart = GCode.DefaultFileStart;
+            this.fileEnd = GCode.DefaultFileEnd;
+            this.speedChangeCommand = GCode.DefaultSpeedChangeCommand;
+            this.toolChangeCommand = GCode.DefaultToolChangeCommand;
+            this.mTs = new List<MaterialTool>();
+        }
+        [PublicAPI]
+        // ReSharper disable once SuggestBaseTypeForParameter
+        public ThreeAxisFactory([NotNull] ThreeAxis ta)
+        {
+            this.name = ta.name;
+            this.pathJump = ta.pathJump;
+            this.toolLengthCompensation = ta.toolLengthCompensation;
+            this.header = ta.header;
+            this.footer = ta.footer;
+            this.speedChangeCommand = ta.speedChangeCommand;
+            this.toolChangeCommand = ta.toolChangeCommand;
+            this.commentStart = ta.commentStart;
+            this.commentEnd = ta.commentEnd;
+            this.sectionBreak = ta.sectionBreak;
+            this.fileStart = ta.fileStart;
+            this.fileEnd = ta.fileEnd;
+            this.mTs = new List<MaterialTool>();
+            this.mTs.AddRange(ta.mTs);
+        }
+    }
+
     public class ThreeAxis : IGCodeMachine
     {
         public string name { get; }
@@ -25,32 +78,21 @@ namespace CAMel.Types.Machine
 
         [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
-        public ThreeAxis([NotNull] string name,
-            [NotNull] List<MaterialTool> mTs,
-            double pJ,
-            [NotNull] string head,
-            [NotNull] string foot,
-            [NotNull] string speed,
-            [NotNull] string tool,
-            [NotNull] string commentStart,
-            [NotNull] string commentEnd,
-            [NotNull] string sectionBreak,
-            [NotNull] string fileStart,
-            [NotNull] string fileEnd)
+        public ThreeAxis([NotNull] ThreeAxisFactory ta)
         {
-            this.name = name;
-            this.pathJump = pJ;
-            this.toolLengthCompensation = false;
-            this.header = head;
-            this.footer = foot;
-            this.speedChangeCommand = speed;
-            this.toolChangeCommand = tool;
-            this.commentStart = commentStart;
-            this.commentEnd = commentEnd;
-            this.sectionBreak = sectionBreak;
-            this.fileStart = fileStart;
-            this.fileEnd = fileEnd;
-            this.mTs = mTs;
+            this.name = ta.name;
+            this.pathJump = ta.pathJump;
+            this.toolLengthCompensation = ta.toolLengthCompensation;
+            this.header = ta.header;
+            this.footer = ta.footer;
+            this.speedChangeCommand = ta.speedChangeCommand;
+            this.toolChangeCommand = ta.toolChangeCommand;
+            this.commentStart = ta.commentStart;
+            this.commentEnd = ta.commentEnd;
+            this.sectionBreak = ta.sectionBreak;
+            this.fileStart = ta.fileStart;
+            this.fileEnd = ta.fileEnd;
+            this.mTs = ta.mTs;
             this._terms = new List<char> { 'X', 'Y', 'Z', 'S', 'F' };
         }
 

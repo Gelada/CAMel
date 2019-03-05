@@ -39,7 +39,25 @@ namespace CAMel.Types.Machine
             this.toolChangeCommand = GCode.DefaultToolChangeCommand;
             this.mTs = new List<MaterialTool>();
         }
-
+        [PublicAPI]
+        public TwoAxisFactory([NotNull] TwoAxis ta)
+        {
+            this.name = ta.name;
+            this.header = ta.header;
+            this.footer = ta.footer;
+            this.pathJump = ta.pathJump;
+            this.speedChangeCommand = ta.speedChangeCommand;
+            this.toolActivate = ta.toolActivate;
+            this.toolDeActivate = ta.toolDeActivate;
+            this.commentStart = ta.commentStart;
+            this.commentEnd = ta.commentEnd;
+            this.sectionBreak = ta.sectionBreak;
+            this.fileStart = ta.fileStart;
+            this.fileEnd = ta.fileEnd;
+            this.toolChangeCommand = ta.toolChangeCommand;
+            this.mTs = new List<MaterialTool>();
+            this.mTs.AddRange(ta.mTs);
+        }
     }
 
     public class TwoAxis : IGCodeMachine
@@ -58,8 +76,8 @@ namespace CAMel.Types.Machine
         public string commentEnd { get; }
         [NotNull] private readonly List<char> _terms;
         public List<MaterialTool> mTs { get; }
-        [NotNull] private string toolActivate { get; }
-        [NotNull] private string toolDeActivate { get; }
+        [NotNull] internal string toolActivate { get; }
+        [NotNull] internal string toolDeActivate { get; }
 
         [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.twoAxisDefault;
 
@@ -70,26 +88,6 @@ namespace CAMel.Types.Machine
             this.footer = ta.footer;
             this.pathJump = ta.pathJump;
             this.toolLengthCompensation = false;
-            this.speedChangeCommand = ta.speedChangeCommand;
-            this.toolActivate = ta.toolActivate;
-            this.toolDeActivate = ta.toolDeActivate;
-            this.commentStart = ta.commentStart;
-            this.commentEnd = ta.commentEnd;
-            this.sectionBreak = ta.sectionBreak;
-            this.fileStart = ta.fileStart;
-            this.fileEnd = ta.fileEnd;
-            this.toolChangeCommand = ta.toolChangeCommand;
-            this.mTs =ta.mTs;
-            this._terms = new List<char> { 'X', 'Y', 'S', 'F' };
-        }
-
-        [PublicAPI] private TwoAxis([NotNull] TwoAxis ta)
-        {
-            this.name = ta.name;
-            this.header = ta.header;
-            this.footer = ta.footer;
-            this.pathJump = ta.pathJump;
-            this.toolLengthCompensation = ta.toolLengthCompensation;
             this.speedChangeCommand = ta.speedChangeCommand;
             this.toolActivate = ta.toolActivate;
             this.toolDeActivate = ta.toolDeActivate;
