@@ -31,8 +31,6 @@ namespace CAMel.Types.MaterialForm
                 + "to ("+ this.box.X.Max.ToString("0.00") + ", " + this.box.Y.Max.ToString("0.00") + ", " + this.box.Z.Max.ToString("0.00")+")";
         }
 
-        public ToolPath insertRetract(ToolPath tP) => MFDefault.insertRetract(this, tP);
-
         public MFintersects intersect(ToolPoint tP, double tolerance) => intersect(tP.pt,tP.dir, tolerance);
 
         public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter)

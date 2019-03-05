@@ -76,102 +76,6 @@ namespace CAMel.Types.MaterialForm {
 
     internal static class MFDefault
     {
-        [NotNull]
-        internal static ToolPath insertRetract([NotNull] IMaterialForm mF, [NotNull] ToolPath tP)
-        {
-            ToolPath irTP = tP.deepClone();
-            if (tP.matTool == null) { Exceptions.matToolException(); }
-            if (tP.additions == null) { Exceptions.additionsNullException(); }
-            if (irTP.additions == null) { Exceptions.additionsNullException(); }
-            irTP.additions.insert = false;
-            irTP.additions.retract = false;
-            irTP.additions.activate = false;
-
-            MFintersection inter;
-
-            double uTol = mF.safeDistance * 1.05;
-            ToolPoint tempTP;
-
-            // check if we have something to do
-            if (tP.additions.insert && irTP.Count > 0) // add insert
-            {
-                //note we do this backwards adding points to the start of the path.
-
-                // get distance to surface and insert direction
-                if(irTP.firstP == null) { Exceptions.nullPanic(); }
-                inter = mF.intersect(irTP.firstP, 0).through;
-
-                // check to see if there was an intersection
-                if (inter.isSet)
-                {
-                    // point on material surface
-
-                    tempTP = irTP.firstP.deepClone();
-                    tempTP.pt = inter.point;
-                    tempTP.feed = tP.matTool.feedPlunge;
-                    irTP.Insert(0, tempTP);
-
-                    // point out at safe distance
-                    if (irTP.firstP == null) { Exceptions.nullPanic(); }
-                    tempTP = irTP.firstP.deepClone();
-                    tempTP.pt = tempTP.pt + inter.away * uTol;
-                    tempTP.feed = 0; // we can use a rapid move
-                    irTP.Insert(0, tempTP);
-                } else
-                {
-                    // check intersection with material extended to safe distance
-                    inter = mF.intersect(irTP.firstP,uTol).through;
-                    if(inter.isSet)
-                    {
-                        // point out at safe distance
-                        tempTP = irTP.firstP.deepClone();
-                        tempTP.pt = inter.point;
-                        tempTP.feed = 0; // we can use a rapid move
-                        irTP.Insert(0, tempTP);
-                    } //  otherwise nothing needs to be added as we do not interact with material
-                }
-            }
-
-            if (!tP.additions.retract || irTP.Count <= 0) { return irTP; }
-            if (irTP.lastP == null) { Exceptions.nullPanic(); }
-
-            // get distance to surface and retract direction
-            inter = mF.intersect(irTP.lastP, 0).through;
-            if (inter.isSet)
-            {
-                tempTP = irTP.lastP.deepClone();
-
-                // set speed to the plunge feed rate.
-                tempTP.feed = tP.matTool.feedPlunge;
-
-                // Pull back to surface
-                tempTP.pt = inter.point;
-
-                irTP.Add(tempTP);
-
-                // Pull away to safe distance
-
-                if (irTP.lastP == null) { Exceptions.nullPanic(); }
-
-                tempTP = irTP.lastP.deepClone();
-                tempTP.pt = tempTP.pt + inter.away * uTol;
-                tempTP.feed = 0; // we can use a rapid move
-                irTP.Add(tempTP);
-            } else
-            {
-                // check intersection with material extended to safe distance
-                inter = mF.intersect(irTP.lastP, uTol).through;
-                if (!inter.isSet) { return irTP; }
-
-                // point out at safe distance
-                tempTP = irTP.lastP.deepClone();
-                tempTP.pt = inter.point;
-                tempTP.feed = 0; // we can use a rapid move
-                irTP.Add(tempTP);
-            }
-            return irTP;
-        }
-
         // Does the line intersect the surface of the material?
         internal static bool lineIntersect([NotNull] IMaterialForm mF,Point3d start, Point3d end, double tolerance, [CanBeNull] out MFintersects inters)
         {
@@ -238,7 +142,6 @@ namespace CAMel.Types.MaterialForm {
         bool intersect(Point3d start, Point3d end, double tolerance, [NotNull] out MFintersects inters);
 
         [NotNull] ToolPath refine([NotNull] ToolPath tP,[NotNull] IMachine m);
-        [NotNull] ToolPath insertRetract([NotNull] ToolPath tP);
 
         [NotNull] Mesh getMesh();
         BoundingBox getBoundingBox();

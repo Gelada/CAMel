@@ -61,12 +61,7 @@ namespace CAMel.Types.Machine
 
         public string comment(string l) => GCode.comment(this, l);
 
-        public ToolPath insertRetract(ToolPath tP)
-        {
-            if (tP.matForm == null) { Exceptions.matFormException(); }
-            return tP.matForm.insertRetract(tP);
-        }
-
+        public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP, string.Empty, string.Empty);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);

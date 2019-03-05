@@ -35,8 +35,6 @@ namespace CAMel.Types.MaterialForm
             return "Cylinder Material r:" + this.radius + " s:" + this.plane.Origin + " e:" + end;
         }
 
-        public ToolPath insertRetract(ToolPath tP) => MFDefault.insertRetract(this, tP);
-
         public MFintersects intersect(ToolPoint tP, double tolerance) => intersect(tP.pt, tP.dir, tolerance);
 
         public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter)

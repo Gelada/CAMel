@@ -407,16 +407,15 @@ namespace CAMel.Types.Machine
 
             ToolPath newTP = tP.deepClone();
             if(newTP.additions == null) { Exceptions.nullPanic(); }
+            newTP.additions.activate = false;
+            newTP.additions.insert = false;
+            newTP.additions.retract = false;
 
-            // Just add commands as there is no lead
-            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) {
-                if (tP.additions.activate && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode ; }
-                if (tP.additions.activate && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
-                newTP.additions.activate = false;
-                newTP.additions.insert = false;
-                newTP.additions.retract = false;
-                return newTP;
-            }
+            if (tP.additions.activate && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+            if (tP.additions.activate && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+
+            // If leadCurve == 0 can now return
+            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return newTP; }
 
             PolylineCurve toolL = tP.getLine();
 
@@ -439,7 +438,6 @@ namespace CAMel.Types.Machine
                     newTP.InsertRange(0, tPts);
                 }
                 if (newTP.additions == null) { Exceptions.nullPanic(); }
-                newTP.additions.insert = false;
             }
 
             if (tP.additions.retract)
@@ -458,16 +456,115 @@ namespace CAMel.Types.Machine
                     }
                 }
                 if (newTP.additions == null) { Exceptions.nullPanic(); }
-                newTP.additions.retract = false;
             }
-
-            if (tP.additions.activate && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-            if (tP.additions.activate && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
-            newTP.additions.activate = false;
 
             newTP.additions.leadCurvature = 0;
             return newTP;
         }
+
+        [NotNull]
+        internal static ToolPath insertRetract([NotNull] ToolPath tP, [NotNull] string activate, [NotNull] string deActivate)
+        {
+            ToolPath newTP = tP.deepClone();
+            if (tP.matTool == null) { Exceptions.matToolException(); }
+            if (tP.matForm == null) { Exceptions.matFormException(); }
+            if (tP.additions == null) { Exceptions.additionsNullException(); }
+            if (newTP.additions == null) { Exceptions.additionsNullException(); }
+            newTP.additions.insert = false;
+            newTP.additions.retract = false;
+            newTP.additions.activate = false;
+
+            MFintersection inter;
+
+            double uTol = tP.matForm.safeDistance * 1.05;
+            ToolPoint tempTP;
+
+            if (tP.additions.activate && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+            if (tP.additions.activate && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+
+            // check if we have something to do
+            if (tP.additions.insert && newTP.Count > 0) // add insert
+            {
+                //note we do this backwards adding points to the start of the path.
+
+                // get distance to surface and insert direction
+                if (newTP.firstP == null) { Exceptions.nullPanic(); }
+                inter = tP.matForm.intersect(newTP.firstP, 0).through;
+
+                // check to see if there was an intersection
+                if (inter.isSet)
+                {
+                    // point on material surface
+
+                    tempTP = newTP.firstP.deepClone();
+                    tempTP.pt = inter.point;
+                    tempTP.feed = tP.matTool.feedPlunge;
+                    newTP.Insert(0, tempTP);
+
+                    // point out at safe distance
+                    if (newTP.firstP == null) { Exceptions.nullPanic(); }
+                    tempTP = newTP.firstP.deepClone();
+                    tempTP.pt = tempTP.pt + inter.away * uTol;
+                    tempTP.feed = 0; // we can use a rapid move
+                    newTP.Insert(0, tempTP);
+                }
+                else
+                {
+                    // check intersection with material extended to safe distance
+                    inter = tP.matForm.intersect(newTP.firstP, uTol).through;
+                    if (inter.isSet)
+                    {
+                        // point out at safe distance
+                        tempTP = newTP.firstP.deepClone();
+                        tempTP.pt = inter.point;
+                        tempTP.feed = 0; // we can use a rapid move
+                        newTP.Insert(0, tempTP);
+                    } //  otherwise nothing needs to be added as we do not interact with material
+                }
+            }
+
+            if (!tP.additions.retract || newTP.Count <= 0) { return newTP; }
+            if (newTP.lastP == null) { Exceptions.nullPanic(); }
+
+            // get distance to surface and retract direction
+            inter = tP.matForm.intersect(newTP.lastP, 0).through;
+            if (inter.isSet)
+            {
+                tempTP = newTP.lastP.deepClone();
+
+                // set speed to the plunge feed rate.
+                tempTP.feed = tP.matTool.feedPlunge;
+
+                // Pull back to surface
+                tempTP.pt = inter.point;
+
+                newTP.Add(tempTP);
+
+                // Pull away to safe distance
+
+                if (newTP.lastP == null) { Exceptions.nullPanic(); }
+
+                tempTP = newTP.lastP.deepClone();
+                tempTP.pt = tempTP.pt + inter.away * uTol;
+                tempTP.feed = 0; // we can use a rapid move
+                newTP.Add(tempTP);
+            }
+            else
+            {
+                // check intersection with material extended to safe distance
+                inter = tP.matForm.intersect(newTP.lastP, uTol).through;
+                if (!inter.isSet) { return newTP; }
+
+                // point out at safe distance
+                tempTP = newTP.lastP.deepClone();
+                tempTP.pt = inter.point;
+                tempTP.feed = 0; // we can use a rapid move
+                newTP.Add(tempTP);
+            }
+            return newTP;
+        }
+
+
 
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
         // TODO make this guarantee that it does not gouge locally. There is a problem
