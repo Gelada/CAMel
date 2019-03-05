@@ -167,7 +167,7 @@ namespace CAMel.Types
                 ToolPathAdditions tPa = new ToolPathAdditions();
                 if (reader.ItemExists("insert")) { tPa.insert = reader.GetBoolean("insert"); }
                 if (reader.ItemExists("retract")) { tPa.retract = reader.GetBoolean("retract"); }
-                if (reader.ItemExists("activate")) { tPa.retract = reader.GetBoolean("activate"); }
+                if (reader.ItemExists("activate")) { tPa.activate = reader.GetBoolean("activate"); }
                 if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetBoolean("stepDown"); }
                 if (reader.ItemExists("sdDropStart")) { tPa.sdDropStart = reader.GetBoolean("sdDropStart"); }
                 if (reader.ItemExists("sdDropMiddle")) { tPa.sdDropMiddle = reader.GetDouble("sdDropMiddle"); }
