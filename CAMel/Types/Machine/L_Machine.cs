@@ -155,7 +155,6 @@ namespace CAMel.Types.Machine
         {
             if(tP.matForm == null) { Exceptions.matFormException(); }
             if (tP.matTool == null) { Exceptions.matToolException(); }
-            if (tP.additions == null) { Exceptions.additionsNullException(); }
             // Give default value for negative DropMiddle
             if (tP.additions.sdDropMiddle < 0) { tP.additions.sdDropMiddle = 8.0 * tP.matForm.safeDistance; }
 
@@ -206,7 +205,6 @@ namespace CAMel.Types.Machine
                 newPaths.Add(new List<ToolPath>());
                 ToolPath tempTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 tempTP.name = tP.name + " Pass " + (i + 1);
-                if (tempTP.additions == null) { Exceptions.nullPanic();}
                 tempTP.additions.stepDown = false;
                 tempTP.additions.onion = new List<double> { 0 };
 
@@ -300,13 +298,10 @@ namespace CAMel.Types.Machine
                                     // leap forward cut path and start a new one
                                     // giving settings to add inserts and retracts
 
-                                    if (tempTP.additions == null) { Exceptions.nullPanic(); }
-
                                     tempTP.additions.retract = true;
                                     newPaths[newPaths.Count - 1]?.Add(tempTP); // add path and create a new one
 
                                     tempTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                                    if (tempTP.additions == null) { Exceptions.nullPanic(); }
                                     tempTP.name = tP.name + " Continuing Pass " + i;
                                     tempTP.additions.insert = true;
                                     tempTP.additions.stepDown = false;
@@ -402,11 +397,9 @@ namespace CAMel.Types.Machine
         public static ToolPath leadInOut2D([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
         {
             if(tP.matTool == null) { Exceptions.matToolException(); }
-            if(tP.additions == null) { Exceptions.additionsNullException(); }
             double leadCurve = tP.additions.leadCurvature;
 
             ToolPath newTP = tP.deepClone();
-            if(newTP.additions == null) { Exceptions.nullPanic(); }
             if(!keepActivate) { newTP.additions.activate = 0; }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
@@ -437,7 +430,6 @@ namespace CAMel.Types.Machine
                     }
                     newTP.InsertRange(0, tPts);
                 }
-                if (newTP.additions == null) { Exceptions.nullPanic(); }
             }
 
             if (tP.additions.retract)
@@ -455,7 +447,6 @@ namespace CAMel.Types.Machine
                         newTP.Add(tPt);
                     }
                 }
-                if (newTP.additions == null) { Exceptions.nullPanic(); }
             }
 
             newTP.additions.leadCurvature = 0;
@@ -468,8 +459,6 @@ namespace CAMel.Types.Machine
             ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
             if (tP.matForm == null) { Exceptions.matFormException(); }
-            if (tP.additions == null) { Exceptions.additionsNullException(); }
-            if (newTP.additions == null) { Exceptions.additionsNullException(); }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
             if(!keepActivate) {newTP.additions.activate = 0;}
@@ -683,7 +672,6 @@ namespace CAMel.Types.Machine
             offsetPath.Add(tP.matTool.threeAxisHeightOffset(m, tP.lastP, travel, uOrth));
 
             ToolPath retPath = tP.deepCloneWithNewPoints(offsetPath);
-            if(retPath.additions == null) { Exceptions.nullPanic(); }
             retPath.additions.threeAxisHeightOffset = false;
 
             if (!retPath.additions.insert)
@@ -699,7 +687,6 @@ namespace CAMel.Types.Machine
         public static ToolPath clearThreeAxisHeightOffset([NotNull] ToolPath tP)
         {
             ToolPath newTP = tP.deepClone();
-            if (newTP.additions == null) { Exceptions.additionsNullException(); }
             newTP.additions.threeAxisHeightOffset = false;
             return newTP;
         }
@@ -708,7 +695,6 @@ namespace CAMel.Types.Machine
         [NotNull]
         public static List<ToolPath> finishPaths([NotNull] ToolPath tP, [NotNull] IMachine m)
         {
-            if(tP.additions == null) { Exceptions.additionsNullException(); }
             List<ToolPath> fP = new List<ToolPath>();
             // get the sorted list of onion cuts
             IOrderedEnumerable<double> onionSort = tP.additions.sortOnion;
@@ -716,7 +702,6 @@ namespace CAMel.Types.Machine
             foreach (double height in onionSort)
             {
                 ToolPath newTP = tP.deepClone(height, m);
-                if (newTP.additions == null) { Exceptions.nullPanic(); }
                 if (newTP.name != string.Empty) { newTP.name = newTP.name + " "; }
                 newTP.name = newTP.name + "(Finish at height " + height.ToString("0.###") + ")";
                 newTP.additions.stepDown = false;
@@ -728,7 +713,6 @@ namespace CAMel.Types.Machine
             if (fP.Count != 0) { return fP; }
             {
                 ToolPath newTP = tP.deepClone();
-                if (newTP.additions == null) { Exceptions.nullPanic(); }
                 newTP.additions.stepDown = false;
                 newTP.additions.onion = new List<double> { 0 };
                 fP.Add(newTP);
@@ -740,9 +724,7 @@ namespace CAMel.Types.Machine
         [NotNull]
         internal static List<ToolPath> oneFinishPath([NotNull] ToolPath tP)
         {
-            if (tP.additions == null) { Exceptions.additionsNullException(); }
             ToolPath newTP = tP.deepClone();
-            if (newTP.additions == null) { Exceptions.nullPanic(); }
             newTP.additions.stepDown = false;
             newTP.additions.onion = new List<double> { 0 };
             return new List<ToolPath> { newTP };

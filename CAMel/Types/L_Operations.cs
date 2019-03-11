@@ -10,7 +10,7 @@ namespace CAMel.Types
     public static class Operations
     {
         [NotNull]
-        public static MachineOperation opIndex2DCut([NotNull] Curve c, Vector3d d, double oS, [CanBeNull] ToolPathAdditions tPa, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
+        public static MachineOperation opIndex2DCut([NotNull] Curve c, Vector3d d, double oS, [NotNull] ToolPathAdditions tPa, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
             // Shift curve to XY plane
 
@@ -64,7 +64,7 @@ namespace CAMel.Types
         }
 
         [NotNull]
-        public static MachineOperation opIndex3Axis([NotNull] List<Curve> cs, Vector3d dir, [CanBeNull] ToolPathAdditions tPa, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, out int invalidCurves)
+        public static MachineOperation opIndex3Axis([NotNull] List<Curve> cs, Vector3d dir, [NotNull] ToolPathAdditions tPa, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, out int invalidCurves)
         {
             MachineOperation mO = new MachineOperation
             { name = "Index 3-Axis Cutting with " + cs.Count + " path" };

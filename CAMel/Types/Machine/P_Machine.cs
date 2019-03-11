@@ -22,7 +22,7 @@ namespace CAMel.Types.Machine
         [PublicAPI] double pathJump { get; } // Maximum jump between toolpaths in material
         bool toolLengthCompensation { get; } // Tool Length Compensation
         // ReSharper disable once InconsistentNaming
-        ToolPathAdditions defaultTPA { get; }
+        [NotNull] ToolPathAdditions defaultTPA { get; }
         [NotNull] List<MaterialTool> mTs { get; } // list of Material Tools used by machine
 
         // Writing and reading code

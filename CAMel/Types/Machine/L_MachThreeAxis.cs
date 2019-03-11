@@ -76,7 +76,7 @@ namespace CAMel.Types.Machine
         [NotNull] private readonly List<char> _terms;
         public List<MaterialTool> mTs { get; }
 
-        [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
+        public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
         public ThreeAxis([NotNull] ThreeAxisFactory ta)
         {
@@ -123,7 +123,7 @@ namespace CAMel.Types.Machine
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
             // Double check tP does not have additions.
-            if (tP.additions != null && tP.additions.any) { Exceptions.additionsException(); }
+            if (tP.additions.any) { Exceptions.additionsException(); }
 
             if (tP.Count <= 0) { return; }
 

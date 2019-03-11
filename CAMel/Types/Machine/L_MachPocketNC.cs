@@ -29,7 +29,7 @@ namespace CAMel.Types.Machine
 
         private Vector3d pivot { get; } // Position of machine origin in design space.
 
-        [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
+        public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
         public PocketNC([NotNull] string name, [NotNull] string header, [NotNull] string footer, Vector3d pivot, double aMin, double aMax, double bMax, bool tLc, double pathJump, [NotNull] List<MaterialTool> mTs)
         {
@@ -105,7 +105,7 @@ namespace CAMel.Types.Machine
         public void writeCode(ref CodeInfo co, ToolPath tP)
         {
             // Double check tP does not have additions.
-            if (tP.additions != null && tP.additions.any) { Exceptions.additionsException(); }
+            if (tP.additions.any) { Exceptions.additionsException(); }
 
             if (tP.Count <= 0) { return; }
             if (tP.matTool == null) { Exceptions.matToolException(); }

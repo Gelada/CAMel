@@ -79,7 +79,7 @@ namespace CAMel.GH
             MaterialTool mT = null;
             IMaterialForm mF = null;
             string co = string.Empty;
-            ToolPathAdditions tPa = new ToolPathAdditions();
+            ToolPathAdditions tPa = ToolPathAdditions.replaceable;
 
             if (!da.GetDataList(0, pts)) { return; }
             if (!da.GetDataList(1, dirs)) { return; }

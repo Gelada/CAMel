@@ -17,7 +17,7 @@ namespace CAMel.Types
         [ItemNotNull] [NotNull] private List<ToolPoint> _pts;     // Positions of the machine
         public MaterialTool matTool { get; set; }   // Material and tool to cut it with
         public IMaterialForm matForm { get; set; }    // Shape of the material
-        public ToolPathAdditions additions;       // Features we might add to the path
+        [NotNull] public ToolPathAdditions additions;       // Features we might add to the path
 
         public ToolPoint firstP => this.Count > 0 ? this[0] : null;
 
@@ -30,7 +30,7 @@ namespace CAMel.Types
             this._pts = new List<ToolPoint>();
             this.matTool = null;
             this.matForm = null;
-            this.additions = new ToolPathAdditions();
+            this.additions = ToolPathAdditions.replaceable;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
@@ -41,7 +41,7 @@ namespace CAMel.Types
             this._pts = new List<ToolPoint>();
             this.matTool = mT;
             this.matForm = null;
-            this.additions = null;
+            this.additions = ToolPathAdditions.replaceable;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
@@ -52,7 +52,7 @@ namespace CAMel.Types
             this._pts = new List<ToolPoint>();
             this.matTool = null;
             this.matForm = mf;
-            this.additions = null;
+            this.additions = ToolPathAdditions.replaceable;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
@@ -63,12 +63,12 @@ namespace CAMel.Types
             this._pts = new List<ToolPoint>();
             this.matTool = mT;
             this.matForm = mF;
-            this.additions = new ToolPathAdditions();
+            this.additions = ToolPathAdditions.replaceable;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
         // MaterialTool, Form and features
-        public ToolPath([NotNull] string name, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [CanBeNull] ToolPathAdditions tpa)
+        public ToolPath([NotNull] string name, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tpa)
         {
             this.name = name;
             this._pts = new List<ToolPoint>();
@@ -88,7 +88,7 @@ namespace CAMel.Types
             this.matForm = tP.matForm;
             this.preCode = string.Copy(tP.preCode);
             this.postCode = string.Copy(tP.postCode);
-            this.additions = tP.additions?.deepClone();
+            this.additions = tP.additions.deepClone();
         }
 
         [NotNull, Pure] public ToolPath deepClone() => new ToolPath(this);
@@ -117,17 +117,18 @@ namespace CAMel.Types
                 matForm = this.matForm,
                 preCode = string.Copy(this.preCode),
                 postCode = string.Copy(this.postCode),
-                additions = this.additions?.deepClone(),
+                additions = this.additions.deepClone(),
                 _pts = pts ?? new List<ToolPoint>()
             };
             return newTP;
         }
         // Copy in features from the valid ToolPath if this does not yet have its own.
+        // TODO create an additions.Unset;
         public void validate([NotNull] ToolPath valid, [NotNull] IMachine m)
         {
             this.matTool = this.matTool ?? valid.matTool;
             this.matForm = this.matForm ?? valid.matForm;
-            this.additions = this.additions ?? m.defaultTPA;
+            this.additions.replace(m.defaultTPA);
         }
 
         public string TypeDescription => "An action of the machine, for example cutting a single line";
@@ -149,11 +150,9 @@ namespace CAMel.Types
         {
             if (this.matTool == null) { Exceptions.matToolException(); }
             if (this.matForm == null) { Exceptions.matFormException(); }
-            if (this.additions == null) { Exceptions.additionsNullException(); }
 
             // adjust path for three axis (or index three axis)
             ToolPath useTP = this.additions.threeAxisHeightOffset ? m.threeAxisHeightOffset(this) : this;
-            if (useTP.additions == null) { Exceptions.nullPanic(); }
 
             // add steps into material
             List<List<ToolPath>> roughPaths = new List<List<ToolPath>>();

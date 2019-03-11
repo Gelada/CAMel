@@ -79,7 +79,7 @@ namespace CAMel.Types.Machine
         [NotNull] internal string toolActivate { get; }
         [NotNull] internal string toolDeActivate { get; }
 
-        [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.twoAxisDefault;
+        public ToolPathAdditions defaultTPA => ToolPathAdditions.twoAxisDefault;
 
         public TwoAxis([NotNull] TwoAxisFactory ta)
         {
@@ -126,7 +126,7 @@ namespace CAMel.Types.Machine
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
             // Double check tP does not have additions.
-            if (tP.additions != null && tP.additions.any) { Exceptions.additionsException(); }
+            if (tP.additions.any) { Exceptions.additionsException(); }
 
             if (tP.Count <= 0) { return; }
 

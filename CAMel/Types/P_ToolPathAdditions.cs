@@ -13,6 +13,7 @@ namespace CAMel.Types
     // Features we might add to the path
     public class ToolPathAdditions : ICAMelBase
     {
+        private bool _replaceable;
         public bool insert { get; set; }
         public bool retract { get; set; }
         public int activate { get; set; }
@@ -26,16 +27,17 @@ namespace CAMel.Types
         public bool tabbing { get; set; }        // add tabs if machine wants to.
         public double leadCurvature { get; set; }   // if leading in or out what factor of standard value to use
 
-
         // Adding anything here needs significant support:
         //  Add checker to .any
         //  Add serialization and deserialization
         //  Add to the proxy editor
         //  Add to Constructors
+        //  Add to replace
         //  Add to default.
 
         public ToolPathAdditions() // create the empty addition
         {
+            this._replaceable = false;
             this.insert = false;
             this.retract = false;
             this.activate = 0;
@@ -51,6 +53,7 @@ namespace CAMel.Types
 
         private ToolPathAdditions([NotNull] ToolPathAdditions tPa)
         {
+            this._replaceable = tPa._replaceable;
             this.insert = tPa.insert;
             this.retract = tPa.retract;
             this.activate = tPa.activate;
@@ -71,6 +74,7 @@ namespace CAMel.Types
         [NotNull]
         public static ToolPathAdditions basicDefault => new ToolPathAdditions
         {
+            _replaceable = false,
             insert = true,
             retract = true,
             activate = 0,
@@ -87,6 +91,7 @@ namespace CAMel.Types
         [NotNull]
         public static ToolPathAdditions twoAxisDefault => new ToolPathAdditions
         {
+            _replaceable = false,
             insert = true,
             retract = true,
             activate = 1,
@@ -98,6 +103,23 @@ namespace CAMel.Types
             threeAxisHeightOffset = false,
             tabbing = false,
             leadCurvature = 1
+        };
+
+        [NotNull]
+        public static ToolPathAdditions replaceable => new ToolPathAdditions
+        {
+            _replaceable = true,
+            insert = false,
+            retract = false,
+            activate = 0,
+            stepDown = false,
+            sdDropStart = true,
+            sdDropMiddle = -1,
+            sdDropEnd = true,
+            onion = new List<double> { 0 },
+            threeAxisHeightOffset = false,
+            tabbing = false,
+            leadCurvature = 0
         };
 
         public bool any =>
@@ -113,11 +135,30 @@ namespace CAMel.Types
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
         public string TypeName => "ToolPathAdditions";
 
+        public override string ToString() => "Toolpath Additions";
+
         [NotNull]
         // ReSharper disable once ReturnTypeCanBeEnumerable.Global
         public IOrderedEnumerable<double> sortOnion => this.onion.OrderByDescending(d => d);
 
-        public override string ToString() => "Toolpath Additions";
+        public void replace([NotNull]  ToolPathAdditions tPa)
+        {
+            if (!this._replaceable) { return; }
+            this._replaceable = tPa._replaceable;
+            this.insert = tPa.insert;
+            this.retract = tPa.retract;
+            this.activate = tPa.activate;
+            this.stepDown = tPa.stepDown;
+            this.sdDropStart = tPa.sdDropStart;
+            this.sdDropMiddle = tPa.sdDropMiddle;
+            this.sdDropEnd = tPa.sdDropEnd;
+            this.onion = new List<double>();
+            this.onion.AddRange(tPa.onion);
+            this.threeAxisHeightOffset = tPa.threeAxisHeightOffset;
+            this.tabbing = tPa.tabbing;
+            this.leadCurvature = tPa.leadCurvature;
+
+        }
     }
 
     // Grasshopper Type Wrapper
@@ -125,7 +166,7 @@ namespace CAMel.Types
     {
         // Default Constructor
         [UsedImplicitly]
-        public GH_ToolPathAdditions() { this.Value = new ToolPathAdditions(); }
+        public GH_ToolPathAdditions() { this.Value = ToolPathAdditions.replaceable; }
         // Create from unwrapped version
         public GH_ToolPathAdditions([CanBeNull] ToolPathAdditions tP) { this.Value = tP; }
         // Copy Constructor

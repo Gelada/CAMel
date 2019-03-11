@@ -12,8 +12,6 @@ namespace CAMel.Types
         [ContractAnnotation("=> halt")]
         public static void additionsException() => throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.");
         [ContractAnnotation("=> halt")]
-        public static void additionsNullException() => throw new InvalidOperationException("Attempting to use ToolPath with no ToolPathAdditions information.");
-        [ContractAnnotation("=> halt")]
         public static void noToolException() => throw new InvalidOperationException("Tool not found, the list of Material Tools in your machine is either missing the named tool or simply empty.");
         [ContractAnnotation("=> halt")]
         public static void noToolPathException() => throw new InvalidOperationException("No ToolPaths found in Machine Operation.");

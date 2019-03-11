@@ -18,8 +18,8 @@ namespace CAMel.Types.Machine
 
         private double tiltMax { get; }
         public bool toolLengthCompensation { get; }
-
-        [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
+        //TODO
+        public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
         public Omax5([NotNull] string name, double pathJump, [NotNull] List<MaterialTool> mTs, double tiltMax)
         {
@@ -49,8 +49,7 @@ namespace CAMel.Types.Machine
         // Use spherical interpolation (as the range of angles is rather small)
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
         {
-            ToolPoint iPt = new ToolPoint();
-            iPt.pt = (1 - par) * fP.pt + par * tP.pt;
+            ToolPoint iPt = new ToolPoint {pt = (1 - par) * fP.pt + par * tP.pt};
             Vector3d cr = Vector3d.CrossProduct(fP.dir, tP.dir);
             double an = Vector3d.VectorAngle(fP.dir, tP.dir);
             iPt.dir = fP.dir;
@@ -154,7 +153,7 @@ namespace CAMel.Types.Machine
 
             OMXCode.omxPathStart(this, ref co, tP);
 
-            int pathQuality = tP.additions?.activate ?? 0;
+            int pathQuality = tP.additions.activate;
 
             Point3d lastPt = new Point3d(co.machineState["X"], co.machineState["Y"], co.machineState["Z"]);
             Vector3d lastDir = new Vector3d(co.machineState["dX"], co.machineState["dY"], co.machineState["dZ"]);
@@ -218,7 +217,7 @@ namespace CAMel.Types.Machine
             co.machineState.Add("dX", fPt.dir.X);
             co.machineState.Add("dY", fPt.dir.Y);
             co.machineState.Add("dZ", fPt.dir.Z);
-            co.machineState.Add("Q", startPath.additions?.activate ?? 0);
+            co.machineState.Add("Q", startPath.additions.activate);
 
             OMXCode.omxInstStart(this, ref co, mI, startPath);
         }
@@ -287,7 +286,7 @@ namespace CAMel.Types.Machine
             }
 
             [NotNull]
-            public static string omxTiltPt(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality)
+            private static string omxTiltPt(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality)
             {
                 StringBuilder gPtBd = new StringBuilder("[0],");
                 gPtBd.Append(machPt.X.ToString("0.0000") + ", ");
