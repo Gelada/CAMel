@@ -119,6 +119,7 @@
     <Compile Include="Types\Machine\L_MachPocketNC.cs" />
     <Compile Include="Types\Machine\L_MachTwoAxis.cs" />
     <Compile Include="Types\Machine\L_MachThreeAxis.cs" />
+    <Compile Include="Types\Machine\L_OMAX5.cs" />
     <Compile Include="Types\MaterialForm\L_MFBox.cs" />
     <Compile Include="Types\MaterialForm\L_MFCylinder.cs" />
     <Compile Include="Types\L_CodeInfo.cs" />

@@ -1,307 +1,205 @@
 ﻿using System;
 using System.Collections.Generic;
-using CAMel.Types.MaterialForm;
+using System.IO;
+using System.Text;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 
 namespace CAMel.Types.Machine
 {
-    public class Omax5 : IGCodeMachine
+    public class Omax5 : IMachine
     {
         public double pathJump { get; }
         public string sectionBreak { get; }
-        public string speedChangeCommand { get; }
-        public string toolChangeCommand { get; }
-        public string fileStart { get; }
-        public string fileEnd { get; }
-        public string header { get; }
-        public string footer { get; }
         public string name { get; }
         public string commentStart { get; }
         public string commentEnd { get; }
-        [NotNull] private readonly List<char> _terms;
         public List<MaterialTool> mTs { get; }
 
-        private double aMin { get; }
-        private double aMax { get; }
-        private double bMax { get; }
+        private double tiltMax { get; }
         public bool toolLengthCompensation { get; }
-
-        private Vector3d pivot { get; } // Position of machine origin in design space.
 
         [NotNull] public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
-        public Omax5([NotNull] string name, [NotNull] string header, [NotNull] string footer, Vector3d pivot, double aMin, double aMax, double bMax, bool tLc, double pathJump, [NotNull] List<MaterialTool> mTs)
+        public Omax5([NotNull] string name, double pathJump, [NotNull] List<MaterialTool> mTs, double tiltMax)
         {
             this.name = name;
-            this.toolLengthCompensation = tLc;
-            this.header = header;
-            this.footer = footer;
-            this.fileStart = string.Empty;
-            this.fileEnd = string.Empty;
+            this.toolLengthCompensation = false;
             this.commentStart = GCode.DefaultCommentStart;
             this.commentEnd = GCode.DefaultCommentEnd;
             this.sectionBreak = GCode.DefaultSectionBreak;
-            this.speedChangeCommand = GCode.DefaultSpeedChangeCommand;
-            this.toolChangeCommand = GCode.DefaultToolChangeCommand;
             this.pathJump = pathJump;
+            this.tiltMax = tiltMax;
             this.mTs = mTs;
-            this.pivot = pivot;
-            this.aMin = aMin;
-            this.aMax = aMax;
-            this.bMax = bMax;
         }
 
-        public string TypeDescription => "Instructions for a Omax 5-axis waterjet";
+        public string TypeDescription => "Instructions for a OMax 5-axis waterjet";
 
-        public string TypeName => "CAMelOmax5";
+        public string TypeName => "CAMelOMax5";
 
         public override string ToString() => this.name;
 
-        public string comment(string l) => GCode.comment(this, l);
+        public string comment(string l) => string.Empty;
 
-        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2D(tP, this.toolActivate, this.toolDeActivate);
+        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2D(tP, string.Empty, string.Empty, true);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
 
+        // Use spherical interpolation (as the range of angles is rather small)
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
         {
-            double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
-            return Kinematics.interpolateFiveAxisABTable(this.pivot, toolLength, fP, tP, par, lng);
-        }
-        public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng)
-        {
-            double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
-            return Kinematics.angDiffFiveAxisABTable(this.pivot, toolLength, tP1, tP2, lng);
+            ToolPoint iPt = new ToolPoint();
+            iPt.pt = (1 - par) * fP.pt + par * tP.pt;
+            Vector3d cr = Vector3d.CrossProduct(fP.dir, tP.dir);
+            double an = Vector3d.VectorAngle(fP.dir, tP.dir);
+            iPt.dir = fP.dir;
+            iPt.dir.Rotate(an * par, cr);
+
+            iPt.feed = fP.feed;
+            iPt.speed = fP.speed;
+
+            return new ToolPoint();
         }
 
-        public ToolPath readCode(string code)
-        {
-            if(this.mTs.Count == 0) { Exceptions.noToolException(); }
-            return GCode.gcRead(this, this.mTs, code, this._terms);
-        }
-        public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT)
-        {
-            Point3d machPt = new Point3d(values['X'], values['Y'], values['Z']);
-            Vector3d ab = new Vector3d(values['A']*Math.PI/180.0, values['B'] * Math.PI/180.0, 0);
+        // Use spherical interpolation
+        public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) =>
+            Vector3d.VectorAngle(tP1.dir, tP2.dir);
 
-            ToolPoint tP = new ToolPoint
+        public MachineInstruction readCode(string code)
+        {
+            MachineInstruction mI = new MachineInstruction(this);
+
+            ToolPath tP = new ToolPath();
+
+            ToolPoint oldEndPt = null;
+
+            using (StringReader reader = new StringReader(code))
             {
-                speed = values['S'],
-                feed = values['F']
-            };
+                // Loop over the lines in the string.
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    ToolPoint tPt = readTP(line, out ToolPoint endPt, out int quality);
+                    if (quality != 0)
+                    {
+                        if (tP.additions.activate == 0) { tP.additions.activate = quality; } else
+                        {
+                            mI.Add(new MachineOperation(tP));
+                            tP = new ToolPath {additions = {activate = quality}};
+                        }
+                    }
 
-            double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
+                    // add an extra point if the tilts do not line up.
+                    if (oldEndPt != null && tPt.dir != oldEndPt.dir)
+                    {
+                        oldEndPt.pt = tPt.pt;
+                        tP.Add(oldEndPt);
+                    }
 
-            return Kinematics.kFiveAxisABTable(tP, this.pivot, toolLength, machPt, ab);
+                    tP.Add(tPt);
+                    oldEndPt = endPt;
+                }
+            }
+            mI.Add(new MachineOperation(tP));
+            return mI;
+        }
+        // Try to read a line of omx code. Add an error to the toolpoint if there are problems
+        [NotNull]
+        private static ToolPoint readTP([NotNull] string l, [NotNull] out ToolPoint endPt, out int quality)
+        {
+            string[] items = l.Split(',');
+            ToolPoint tPt = new ToolPoint();
+            endPt = new ToolPoint();
+            quality = 0;
+            int fm = 0;
+            bool badRead = false;
+            // Read position
+            if (items.Length > 4 && double.TryParse(items[1], out double x) &&
+                double.TryParse(items[2], out double y) &&
+                double.TryParse(items[3], out double z)) { tPt.pt = new Point3d(x, y, z); } else { badRead = true; }
+            // read quality
+            if (items.Length < 8 || !int.TryParse(items[7], out quality)) { badRead = true; }
+            // check format of XData
+            if (items.Length > 15 && int.TryParse(items[14], out fm) && fm == 27)
+            {
+                if (items.Length > 17 && items[16] != null)
+                {
+                    string[] dirs = items[16].Split('|');
+                    List<double> dirVals = new List<double>();
+                    foreach (string dir in dirs)
+                    { if(double.TryParse(dir, out double v)) { dirVals.Add(v);} }
+                    if (dirVals.Count == 6)
+                    {
+                        tPt.dir = new Vector3d(dirVals[0], dirVals[1],dirVals[2]);
+                        endPt.dir = new Vector3d(dirVals[3],dirVals[4],dirVals[5]);
+                    } else { badRead = true; }
+
+                } else { badRead = true; }
+            } else if(fm != 0) { badRead = true; }
+
+            if (badRead) { tPt.addError("Unreadable code: " + l); }
+
+            return tPt;
         }
 
         public Vector3d toolDir(ToolPoint tP) => tP.dir;
 
-        private const double _AngleAcc = 0.0001; // accuracy of angles to assume we lie on the cusp.
-
         public void writeCode(ref CodeInfo co, ToolPath tP)
         {
             // Double check tP does not have additions.
-            if (tP.additions != null && tP.additions.any) { Exceptions.additionsException(); }
 
             if (tP.Count <= 0) { return; }
             if (tP.matTool == null) { Exceptions.matToolException(); }
 
-            GCode.gcPathStart(this, ref co, tP);
+            OMXCode.omxPathStart(this, ref co, tP);
 
-            // We will watch for speed and feed changes.
-            // We will adjust A and B as best as possible and otherwise throw errors.
-            // Manual unwinding Grrrr!
+            int pathQuality = tP.additions?.activate ?? 0;
 
-            // work out initial values of feed.
+            Point3d lastPt = new Point3d(co.machineState["X"], co.machineState["Y"], co.machineState["Z"]);
+            Vector3d lastDir = new Vector3d(co.machineState["dX"], co.machineState["dY"], co.machineState["dZ"]);
+            int lastQ = (int) co.machineState["Q"];
 
-            bool fChange = false;
-            bool sChange = false;
+            // as each instruction has a end tilt as well as a start tilt
+            // if the position does not change can  ignore one point
 
-            double feed = co.machineState["F"];
-            double speed = co.machineState["S"];
-            if (feed < 0) { feed = tP.matTool.feedCut; fChange = true; }
-            if (speed < 0) { speed = tP.matTool.speed; sChange = true; }
+            bool justEnd = true;
 
-            Vector3d ab = new Vector3d(co.machineState["A"], co.machineState["B"], 0);
-
-            double bTo = 0;  // Allow for smooth adjustment through the cusp with A at 90.
-            int bSteps = 0;  //
-
-            Point3d machPt = new Point3d();
-
-            double toolLength = this.toolLengthCompensation ? 0 : tP.matTool.toolLength;
-
-            for (int i = 0; i < tP.Count; i++)
+            foreach (ToolPoint tPt in tP)
             {
-                ToolPoint tPt = tP[i];
-
+                if (tPt == null) { continue; }
                 tPt.writeErrorAndWarnings(ref co);
-
-                // Establish new feed value
-                if (Math.Abs(tPt.feed - feed) > CAMel_Goo.Tolerance)
+                if (tPt.pt == lastPt && justEnd)
                 {
-                    if (tPt.feed >= 0)
-                    {
-                        fChange = true;
-                        feed = tPt.feed;
-                    }
-                    else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
-                    {
-                        fChange = true;
-                        feed = tP.matTool.feedCut;
-                    }
+                    justEnd = false;
+                    lastDir = tPt.dir;
+                    continue;
                 }
+                justEnd = true;
 
-                // Establish new speed value
-                if (Math.Abs(tPt.speed - speed) > CAMel_Goo.Tolerance)
-                {
-                    if (tPt.speed > 0)
-                    {
-                        sChange = true;
-                        speed = tPt.speed;
-                    }
-                }
-
-                // Work on tool orientation
-
-                // get naive orientation and Machine XYZ position
-                Vector3d newAB = Kinematics.ikFiveAxisABTable(tPt, this.pivot, toolLength, out machPt);
-
-                // adjust B to correct period
-                newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((ab.Y - newAB.Y) / (2.0 * Math.PI));
-
-                // set A to 90 if it is close (to avoid a lot of messing with B for no real reason)
-
-                if (Math.Abs(newAB.X - Math.PI / 2.0) < _AngleAcc) { newAB.X = Math.PI / 2.0; }
-
-                // adjust through cusp
-
-                if (Math.Abs(newAB.X - Math.PI / 2.0) < CAMel_Goo.Tolerance) // already set if nearly there.
-                {
-                    // detect that we are already moving
-                    if (bSteps > 0)
-                    {
-                        newAB.Y = ab.Y + (bTo - ab.Y) / bSteps;
-                        bSteps--;
-                    }
-                    else // head forward to next non-vertical point or the end.
-                    {
-                        int j = i + 1;
-
-                        while (j < tP.Count - 1 &&
-                               Math.Abs(
-                                   Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X
-                                   - Math.PI / 2.0) < _AngleAcc)
-                        { j++; }
-
-                        // If we are at the start of a path and vertical then we can just use the first non-vertical
-                        // position for the whole run.
-                        if (Math.Abs(ab.X - Math.PI / 2.0) < _AngleAcc)
-                        {
-                            bTo = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
-                            bSteps = j - i;
-                            newAB.Y = bTo;
-                        }
-                        // if we get to the end and it is still vertical we do not need to rotate.
-                        else if (Math.Abs(Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X) < _AngleAcc)
-                        {
-                            bTo = ab.X;
-                            bSteps = j - i;
-                            newAB.Y = bTo;
-                        }
-                        else
-                        {
-                            bTo = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
-                            bSteps = j - i;
-                            newAB.Y = ab.Y;
-                        }
-                    }
-                }
-
-                // take advantage of the double stance for A,
-                // up until now, A is between -90 and 90, all paths start in
-                // that region, but can rotate out of it if necessary.
-                // This will mean some cutable paths become impossible.
-                // This assumes only a double stance in positive position.
-
-                if (newAB.X > Math.PI - this.aMax) // check if double stance is possible
-                {
-                    if (newAB.Y - ab.Y > Math.PI) // check for big rotation in B
-                    {
-                        newAB.X = Math.PI - newAB.X;
-                        newAB.Y = newAB.Y - Math.PI;
-                    }
-                    else if (newAB.Y - ab.Y < -Math.PI) // check for big rotation in B
-                    {
-                        newAB.X = Math.PI - newAB.X;
-                        newAB.Y = newAB.Y + Math.PI;
-                    }
-                }
-
-                // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
-
-
-                if (Math.Abs(newAB.Y) > this.bMax)
-                {
-                    co.addError("Out of bounds on B");
-                }
-                if (newAB.X > this.aMax || newAB.X < this.aMin)
-                {
-                    co.addError("Out of bounds on A");
-                }
-
-                // update AB value
-
-                ab = newAB;
-
-                // Add the position information
-
-                string ptCode = GCode.gcFiveAxisAB(machPt, ab);
-
-                // Act if feed has changed
-                if (fChange && feed >= 0)
-                {
-                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
-                    else { ptCode = "G01 " + ptCode + " F" + feed.ToString("0.00"); }
-                }
-                fChange = false;
-
-                // Act if speed has changed
-                if (sChange && speed >= 0)
-                {
-                    ptCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + ptCode;
-                }
-                sChange = false;
-
-                if (tPt.name != string.Empty) { ptCode = ptCode + " " + comment(tPt.name); }
+                string ptCode = OMXCode.omxTiltPt(co, lastPt, lastDir, tPt, lastQ, this.tiltMax);
 
                 ptCode = tPt.preCode + ptCode + tPt.postCode;
 
                 co.append(ptCode);
-                // Adjust ranges
 
-                co.growRange("X", machPt.X);
-                co.growRange("Y", machPt.Y);
-                co.growRange("Z", machPt.Z);
-                co.growRange("A", ab.X);
-                co.growRange("B", ab.Y);
+                lastPt = tPt.pt;
+                lastDir = tPt.dir;
+                lastQ = Math.Abs(tPt.feed) < CAMel_Goo.Tolerance ? 0 : pathQuality;
             }
 
             // Pass machine state information
 
             co.machineState.Clear();
-            co.machineState.Add("X", machPt.X);
-            co.machineState.Add("Y", machPt.Y);
-            co.machineState.Add("Z", machPt.Z);
-            co.machineState.Add("A", ab.X);
-            co.machineState.Add("B", ab.Y);
-            co.machineState.Add("F", feed);
-            co.machineState.Add("S", speed);
+            co.machineState.Add("X", lastPt.X);
+            co.machineState.Add("Y", lastPt.Y);
+            co.machineState.Add("Z", lastPt.Z);
+            co.machineState.Add("dX", lastDir.X);
+            co.machineState.Add("dY", lastDir.Y);
+            co.machineState.Add("dZ", lastDir.Z);
+            co.machineState.Add("Q", lastQ);
 
-            GCode.gcPathEnd(this, ref co, tP);
+            OMXCode.omxPathEnd(this, ref co, tP);
         }
 
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
@@ -310,25 +208,31 @@ namespace CAMel.Types.Machine
 
             if (startPath.matTool == null) { Exceptions.matToolException(); }
 
-            double toolLength = mI.mach.toolLengthCompensation ? 0 : startPath.matTool.toolLength;
-
-            if (mI.startPath.firstP == null) { Exceptions.nullPanic(); }
-            Vector3d ab = Kinematics.ikFiveAxisABTable(mI.startPath.firstP, this.pivot, toolLength, out Point3d machPt);
+            ToolPoint fPt = mI.startPath.firstP;
+            if (fPt == null) { Exceptions.nullPanic(); }
 
             co.machineState.Clear();
-            co.machineState.Add("X", machPt.X);
-            co.machineState.Add("Y", machPt.Y);
-            co.machineState.Add("Z", machPt.Z);
-            co.machineState.Add("A", ab.X);
-            co.machineState.Add("B", ab.Y);
-            co.machineState.Add("F", -1);
-            co.machineState.Add("S", -1);
+            co.machineState.Add("X", fPt.pt.X);
+            co.machineState.Add("Y", fPt.pt.Y);
+            co.machineState.Add("Z", fPt.pt.Z);
+            co.machineState.Add("dX", fPt.dir.X);
+            co.machineState.Add("dY", fPt.dir.Y);
+            co.machineState.Add("dZ", fPt.dir.Z);
+            co.machineState.Add("Q", startPath.additions?.activate ?? 0);
 
-            GCode.gcInstStart(this, ref co, mI, startPath);
+            OMXCode.omxInstStart(this, ref co, mI, startPath);
         }
-        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref co, mI, finalPath, endPath);
-        public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
-        public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
+        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath)
+        {
+            // Add copy of last point to ensure everything is written
+
+            ToolPath uEndPath = endPath.deepClone();
+            uEndPath.Add(uEndPath.lastP);
+
+            OMXCode.omxInstEnd(this, ref co, mI, finalPath, uEndPath);
+        }
+        public void writeOpStart(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpStart(this, ref co, mO);
+        public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpEnd(this, ref co, mO);
 
         // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
@@ -336,106 +240,139 @@ namespace CAMel.Types.Machine
 
         public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
         {
-            if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
-            if (fP.matTool == null) { Exceptions.matToolException(); }
-
-            // check there is anything to transition from or to
+            // check there is anything to transition from
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
-            // See if we lie in the material
-            // Check end of this path and start of TP
-            // For each see if it is safe in one Material Form
-            // As we pull back to safe distance we allow a little wiggle.
-            if(fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
-            if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
-                && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
-                && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
+
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
+
+            List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
+
+            ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+            move.name = string.Empty;
+            move.preCode = string.Empty;
+            move.postCode = string.Empty;
+            foreach (Point3d pt in route)
             {
-                // If in material we probably need to throw an error
-                // first path in an operation
-                double length = fP.lastP.pt.DistanceTo(tP.firstP.pt);
-                if (first) { co.addError("Transition between operations might be in material."); }
-                else if (length > this.pathJump) // changing between paths in material
-                {
-                    co.addError("Long Transition between paths in material. \n"
-                                + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
-                                + this.pathJump + " to at least: " + length);
-                }
+                // add new point at speed 0 to describe rapid move.
+                move.Add(new ToolPoint(pt, new Vector3d(), -1, 0));
             }
-            else // Safely move from one safe point to another.
-            {
-                ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                move.name = string.Empty;
-
-                List<Point3d> route = new List<Point3d>();
-                int i;
-
-                route.Add(fP.lastP.pt);
-                route.Add(tP.firstP.pt);
-
-                // loop through intersecting with safe bubble and adding points
-                for (i = 0; i < route.Count - 1 && route.Count < 1000;)
-                {
-                    if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out MFintersects inters))
-                    {
-                        MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
-                        route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-                    }
-                    else
-                    {
-                        i++;
-                    }
-                }
-
-                // add extra points if the angle change between steps is too large (pi/30)
-
-                bool lng = false;
-                // work out how far angle needs to move
-                double angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, false);
-
-                int steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
-                if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0
-
-                // Try to build a path with angles.
-                // If a tool line hits the material
-                // switch to the longer rotate and try again
-
-                for (i = 0; i < route.Count - 1; i++)
-                {
-                    // add new points at speed 0 to describe rapid move.
-                    for (int j = 0; j < steps; j++)
-                    {
-                        double shift = (steps * i + j) / (double)(steps * (route.Count - 1));
-                        Vector3d mixDir = interpolate(fP.lastP, tP.firstP, fP.matTool, shift,lng).dir;
-
-                        ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
-                        if (fP.matForm.intersect(newTP, 0).thrDist > 0
-                            || tP.matForm.intersect(newTP, 0).thrDist > 0)
-                        {
-                            if (lng)
-                            {   // something has gone horribly wrong and
-                                // both angle change directions will hit the material
-
-                                throw new Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
-                            }
-                            // start again with the longer angle change
-
-                            lng = true;
-                            i = 0;
-                            j = 0;
-                            angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, true);
-                            steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
-                            move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                        }
-                        else
-                        {
-                            move.Add(newTP);
-                        }
-                    }
-                }
-                // get rid of start point that was already in the paths
-                move.RemoveAt(0);
-                writeCode(ref co, move);
-            }
+            writeCode(ref co, move);
         }
     }
-}
+
+    // ReSharper disable once InconsistentNaming
+        internal static class OMXCode
+        {
+            [NotNull]
+            public static string omxTiltPt([NotNull] CodeInfo co, Point3d lastPt, Vector3d lastDir,
+                [NotNull] ToolPoint tPt, int lastQ, double tiltMax)
+            {
+                // Work on tilts
+
+                double tiltStart = Vector3d.VectorAngle(Vector3d.ZAxis, lastDir);
+                double tiltEnd = Vector3d.VectorAngle(Vector3d.ZAxis, tPt.dir);
+
+                // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
+
+                if (Math.Abs(tiltStart) > tiltMax || Math.Abs(tiltEnd) > tiltMax) { co.addError("Tilt too large"); }
+
+                // Adjust ranges
+
+                co.growRange("X", lastPt.X);
+                co.growRange("Y", lastPt.Y);
+                co.growRange("Z", lastPt.Z);
+                co.growRange("T", Math.Max(tiltStart, tiltEnd));
+
+                return omxTiltPt(lastPt, lastDir, tPt.dir, 0, lastQ);
+            }
+
+            [NotNull]
+            public static string omxTiltPt(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality)
+            {
+                StringBuilder gPtBd = new StringBuilder("[0],");
+                gPtBd.Append(machPt.X.ToString("0.0000") + ", ");
+                gPtBd.Append(machPt.Y.ToString("0.0000") + ", ");
+                gPtBd.Append(machPt.Z.ToString("0.0000") + ", ");
+                gPtBd.Append("0, "); // tiltStart
+                gPtBd.Append("0, "); // tiltEnd
+                gPtBd.Append(bow.ToString("0.0000") + ", ");
+                gPtBd.Append(quality + ", ");
+
+                int offset;
+                switch (quality)
+                {
+                    case -11:
+                    case -9:
+                    case -8:
+                    case -5:
+                    case -4:
+                    case -3:
+                    case -2:
+                    case -1:
+                        offset = 1;
+                        break;
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 8:
+                    case 9:
+                    case 11:
+                        offset = 2;
+                        break;
+                    default:
+                        offset = 0;
+                        break;
+                }
+                gPtBd.Append(offset + ", ");
+                gPtBd.Append("R, R, R, R, R, 27, "); // Reserved items and XType
+
+                // flip tool directions
+
+                Vector3d uS = -tiltS;
+                Vector3d uE = -tiltE;
+
+                gPtBd.Append(uS.X.ToString("0.0000") + "|" + uS.Y.ToString("0.0000") + "|" + uS.Z.ToString("0.0000") + "|"); // start tool direction
+                gPtBd.Append(uE.X.ToString("0.0000") + "|" + uE.Y.ToString("0.0000") + "|" + uE.Z.ToString("0.0000")); // end tool direction
+
+                gPtBd.Append(",[END]");
+
+            return gPtBd.ToString();
+            }
+
+
+            public static void omxInstStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
+                [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath)
+            {
+                if (mI[0].Count == 0) { Exceptions.noToolPathException(); }
+                if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
+                if (mI[0][0].matForm == null) { Exceptions.matFormException(); }
+
+                co.currentMT = mI[0][0].matTool;
+                co.currentMF = mI[0][0].matForm;
+
+                co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
+                m.writeCode(ref co, startPath);
+            }
+            public static void omxInstEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co,
+                [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath)
+            {
+                m.writeTransition(ref co, finalPath, endPath, true);
+                m.writeCode(ref co, endPath);
+            }
+
+            public static void omxOpStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
+                [NotNull] MachineOperation mO) => co.append(mO.preCode);
+
+            public static void
+                omxOpEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO) =>
+                co.append(mO.postCode);
+
+            public static void omxPathStart([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
+                co.append(tP.preCode);
+
+            public static void omxPathEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
+                co.append(tP.postCode);
+        }
+    }
