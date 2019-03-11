@@ -399,7 +399,7 @@ namespace CAMel.Types.Machine
         }
 
         [NotNull]
-        public static ToolPath leadInOut2D([NotNull] ToolPath tP, [NotNull] string activate, [NotNull] string deActivate)
+        public static ToolPath leadInOut2D([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
         {
             if(tP.matTool == null) { Exceptions.matToolException(); }
             if(tP.additions == null) { Exceptions.additionsNullException(); }
@@ -407,12 +407,12 @@ namespace CAMel.Types.Machine
 
             ToolPath newTP = tP.deepClone();
             if(newTP.additions == null) { Exceptions.nullPanic(); }
-            newTP.additions.activate = false;
+            if(!keepActivate) { newTP.additions.activate = 0; }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
 
-            if (tP.additions.activate && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-            if (tP.additions.activate && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            if (tP.additions.activate != 0 && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+            if (tP.additions.activate != 0 && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
 
             // If leadCurve == 0 can now return
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return newTP; }
@@ -463,7 +463,7 @@ namespace CAMel.Types.Machine
         }
 
         [NotNull]
-        internal static ToolPath insertRetract([NotNull] ToolPath tP, [NotNull] string activate, [NotNull] string deActivate)
+        internal static ToolPath insertRetract([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
         {
             ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
@@ -472,15 +472,15 @@ namespace CAMel.Types.Machine
             if (newTP.additions == null) { Exceptions.additionsNullException(); }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
-            newTP.additions.activate = false;
+            if(!keepActivate) {newTP.additions.activate = 0;}
 
             MFintersection inter;
 
             double uTol = tP.matForm.safeDistance * 1.05;
             ToolPoint tempTP;
 
-            if (tP.additions.activate && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-            if (tP.additions.activate && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            if (tP.additions.activate != 0 && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+            if (tP.additions.activate != 0 && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
 
             // check if we have something to do
             if (tP.additions.insert && newTP.Count > 0) // add insert
@@ -907,7 +907,7 @@ namespace CAMel.Types.Machine
         }
         // TODO detect tool changes and new paths
         [NotNull]
-        public static ToolPath gcRead([NotNull] IGCodeMachine m, [NotNull][ItemNotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
+        public static MachineInstruction gcRead([NotNull] IGCodeMachine m, [NotNull][ItemNotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
         {
             ToolPath tP = new ToolPath();
             Dictionary<char, double> values = new Dictionary<char, double>();
@@ -937,8 +937,10 @@ namespace CAMel.Types.Machine
                     if (changed) { tP.Add(m.readTP(values, uMT)); }
                 }
             }
-            return tP;
+            return new MachineInstruction(m) {new MachineOperation(tP)};
         }
+
+
 
         [NotNull]
         public static string comment([NotNull] IGCodeMachine m, [NotNull] string l)

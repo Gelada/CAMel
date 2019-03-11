@@ -15,7 +15,7 @@ namespace CAMel.Types
     {
         public bool insert { get; set; }
         public bool retract { get; set; }
-        public bool activate { get; set; }
+        public int activate { get; set; }
         public bool stepDown { get; set; }
         public bool sdDropStart { get; set; }    // How stepdown will deal with
         public double sdDropMiddle { get; set; } // points that have reached
@@ -38,7 +38,7 @@ namespace CAMel.Types
         {
             this.insert = false;
             this.retract = false;
-            this.activate = false;
+            this.activate = 0;
             this.stepDown = false;
             this.sdDropStart = false;
             this.sdDropMiddle = 0;
@@ -73,7 +73,7 @@ namespace CAMel.Types
         {
             insert = true,
             retract = true,
-            activate = false,
+            activate = 0,
             stepDown = true,
             sdDropStart = true,
             sdDropMiddle = -1,
@@ -89,7 +89,7 @@ namespace CAMel.Types
         {
             insert = true,
             retract = true,
-            activate = true,
+            activate = 1,
             stepDown = false,
             sdDropStart = true,
             sdDropMiddle = -1,
@@ -103,7 +103,7 @@ namespace CAMel.Types
         public bool any =>
             this.insert ||
             this.retract ||
-            this.activate ||
+            this.activate != 0 ||
             this.stepDown ||
             this.threeAxisHeightOffset ||
             this.tabbing ||
@@ -143,7 +143,7 @@ namespace CAMel.Types
 
             writer.SetBoolean("insert", this.Value.insert);
             writer.SetBoolean("retract", this.Value.retract);
-            writer.SetBoolean("activate", this.Value.activate);
+            writer.SetInt32("activate", this.Value.activate);
             writer.SetBoolean("stepDown", this.Value.stepDown);
             writer.SetBoolean("sdDropStart", this.Value.sdDropStart);
             writer.SetDouble("sdDropMiddle", this.Value.sdDropMiddle);
@@ -167,7 +167,7 @@ namespace CAMel.Types
                 ToolPathAdditions tPa = new ToolPathAdditions();
                 if (reader.ItemExists("insert")) { tPa.insert = reader.GetBoolean("insert"); }
                 if (reader.ItemExists("retract")) { tPa.retract = reader.GetBoolean("retract"); }
-                if (reader.ItemExists("activate")) { tPa.activate = reader.GetBoolean("activate"); }
+                if (reader.ItemExists("activate")) { tPa.activate = reader.GetInt32("activate"); }
                 if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetBoolean("stepDown"); }
                 if (reader.ItemExists("sdDropStart")) { tPa.sdDropStart = reader.GetBoolean("sdDropStart"); }
                 if (reader.ItemExists("sdDropMiddle")) { tPa.sdDropMiddle = reader.GetDouble("sdDropMiddle"); }
@@ -304,9 +304,9 @@ namespace CAMel.Types
                 this.Owner.Value = tPa;
             }
         }
-        [Category(" General"), Description("Activate and deactivate the tool (e.g. plasma cutter or laser) at the start and end of the path."), DisplayName(" Activate"), RefreshProperties(RefreshProperties.All)]
+        [Category(" General"), Description("Activate the tool, at the start of end of the path (0 off !0 on) or specify the quality of cutting (machine dependant)."), DisplayName(" Activate/Quality"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
-        public bool activate
+        public int activate
         {
             get => this.Owner?.Value?.activate ?? ToolPathAdditions.basicDefault.activate;
             set

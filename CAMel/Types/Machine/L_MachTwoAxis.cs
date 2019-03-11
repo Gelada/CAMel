@@ -117,7 +117,7 @@ namespace CAMel.Types.Machine
         => Kinematics.interpolateLinear(fP, tP, par);
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) => 0;
 
-        public ToolPath readCode(string code) => GCode.gcRead(this,this.mTs,code, this._terms);
+        public MachineInstruction readCode(string code) => GCode.gcRead(this,this.mTs,code, this._terms);
         public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT) => new ToolPoint(new Point3d(values['X'], values['Y'],0), new Vector3d(0, 0, 0), values['S'], values['F']);
 
         public Vector3d toolDir(ToolPoint tP) => Vector3d.ZAxis;

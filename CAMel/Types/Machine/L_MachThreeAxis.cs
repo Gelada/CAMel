@@ -104,7 +104,7 @@ namespace CAMel.Types.Machine
 
         public string comment(string l) => GCode.comment(this, l);
 
-        public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP, string.Empty, string.Empty);
+        public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
@@ -114,7 +114,7 @@ namespace CAMel.Types.Machine
 
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) => 0;
 
-        public ToolPath readCode(string code) => GCode.gcRead(this, this.mTs, code, this._terms);
+        public MachineInstruction readCode(string code) => GCode.gcRead(this, this.mTs, code, this._terms);
         public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT) => new ToolPoint(new Point3d(values['X'], values['Y'], values['Z']), new Vector3d(0, 0, 0), values['S'], values['F']);
 
         public Vector3d toolDir(ToolPoint tP) => Vector3d.ZAxis;

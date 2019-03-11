@@ -61,21 +61,21 @@ namespace CAMel.GH
             if (!da.GetData(0, ref code)) { return; }
             if (!da.GetData(1, ref m)) { return; }
 
-            ToolPath tP = m.readCode(code);
+            MachineInstruction mI = m.readCode(code);
 
             List<Point3d> selPt = new List<Point3d>();
             List<Vector3d> selDir = new List<Vector3d>();
 
-            foreach(ToolPoint tp in tP)
+            foreach(ToolPoint tp in mI.getSinglePath())
             {
                     selPt.Add(tp.pt);
                     selDir.Add(tp.dir);
             }
 
-            da.SetData(0,new GH_ToolPath(tP));
+            da.SetData(0,new GH_MachineInstruction(mI));
             da.SetDataList(1, selPt);
             da.SetDataList(2, selDir);
-            da.SetDataList(3, tP.getSpeedFeed());
+            da.SetDataList(3, mI.getSinglePath().getSpeedFeed());
 
         }
 

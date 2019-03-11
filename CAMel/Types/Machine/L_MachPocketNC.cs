@@ -61,7 +61,7 @@ namespace CAMel.Types.Machine
 
         public string comment(string l) => GCode.comment(this, l);
 
-        public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP, string.Empty, string.Empty);
+        public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
@@ -77,7 +77,7 @@ namespace CAMel.Types.Machine
             return Kinematics.angDiffFiveAxisABTable(this.pivot, toolLength, tP1, tP2, lng);
         }
 
-        public ToolPath readCode(string code)
+        public MachineInstruction readCode(string code)
         {
             if(this.mTs.Count == 0) { Exceptions.noToolException(); }
             return GCode.gcRead(this, this.mTs, code, this._terms);

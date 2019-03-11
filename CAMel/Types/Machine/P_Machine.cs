@@ -35,7 +35,7 @@ namespace CAMel.Types.Machine
         void writeCode([NotNull] ref CodeInfo co, [NotNull] ToolPath tP);
         void writeTransition([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool first);
 
-        [NotNull] ToolPath readCode([NotNull] string code);
+        [NotNull] MachineInstruction readCode([NotNull] string code);
 
         // Functions needed to process additions
 
