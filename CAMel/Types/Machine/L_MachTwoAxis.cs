@@ -105,6 +105,7 @@ namespace CAMel.Types.Machine
         public string TypeName => @"CAMelTwoAxis";
 
         public override string ToString() => "2Axis: " + this.name;
+        public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
         public string comment(string l) => GCode.comment(this, l);
 

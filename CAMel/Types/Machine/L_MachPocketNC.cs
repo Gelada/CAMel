@@ -60,6 +60,7 @@ namespace CAMel.Types.Machine
         public override string ToString() => this.name;
 
         public string comment(string l) => GCode.comment(this, l);
+        public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
         public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);

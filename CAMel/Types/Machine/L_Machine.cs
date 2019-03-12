@@ -747,6 +747,9 @@ namespace CAMel.Types.Machine
 
         // Formatting structure for GCode
 
+        [NotNull]
+        public static string gcLineNumber([NotNull] string l, int line) =>"N" + line.ToString("0000") + "0 " + l;
+
         public static void gcInstStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath)
         {
             if (mI[0].Count == 0) { Exceptions.noToolPathException(); }

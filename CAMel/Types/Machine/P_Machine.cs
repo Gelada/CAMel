@@ -27,6 +27,7 @@ namespace CAMel.Types.Machine
 
         // Writing and reading code
         [NotNull] string comment([NotNull] string l);
+        [NotNull] string lineNumber([NotNull] string l, int line);
 
         void writeFileStart([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath);
         void writeFileEnd([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath,[NotNull] ToolPath endPath);

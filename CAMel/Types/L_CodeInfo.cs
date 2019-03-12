@@ -25,6 +25,7 @@ namespace CAMel.Types
 
         [NotNull] public MaterialTool currentMT { get; set; }
         [NotNull] public IMaterialForm currentMF { get; set; }
+
         private int _lines;
 
         public CodeInfo([NotNull] IMachine m, [NotNull] IMaterialForm mF, [NotNull] MaterialTool mT)
@@ -195,11 +196,11 @@ namespace CAMel.Types
             // files between OSX and Windows.
             if (l.Length > 0) { this._code.Append(l+ "\r\n"); }
         }
-        [PublicAPI] public void appendLine([NotNull] string l)
+        private void appendLine([NotNull] string l)
         {
             if (l.Length <= 0) { return; }
 
-            string line = "N" + this._lines.ToString("0000") + "0 " + l;
+            string line = this._m.lineNumber(l, this._lines);
             this._lines++;
             appendLineNoNum(line);
         }
