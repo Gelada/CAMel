@@ -9,12 +9,14 @@ namespace CAMel.Types
     // Functions to generate operations
     public static class Operations
     {
+        private const double _PlaneTolerance = 0.5;
         [NotNull]
         public static MachineOperation opIndex2DCut([NotNull] Curve c, Vector3d d, double oS, [NotNull] ToolPathAdditions tPa, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
             // Shift curve to XY plane
 
             Plane p = new Plane(Point3d.Origin, d);
+            if(c.IsPlanar(_PlaneTolerance)) {  c.TryGetPlane(out p, _PlaneTolerance);}
             c.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
             bool reversed = false;
             // ensure the curve is anticlockwise
