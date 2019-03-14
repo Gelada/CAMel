@@ -10,10 +10,10 @@ namespace CAMel.Types.Machine
     public class Omax5 : IMachine
     {
         public double pathJump { get; }
-        public string sectionBreak { get; }
+        //public string sectionBreak { get; }
         public string name { get; }
-        public string commentStart { get; }
-        public string commentEnd { get; }
+        //public string commentStart { get; }
+        //public string commentEnd { get; }
         public List<MaterialTool> mTs { get; }
 
         private double tiltMax { get; }
@@ -25,9 +25,9 @@ namespace CAMel.Types.Machine
         {
             this.name = name;
             this.toolLengthCompensation = false;
-            this.commentStart = GCode.DefaultCommentStart;
-            this.commentEnd = GCode.DefaultCommentEnd;
-            this.sectionBreak = GCode.DefaultSectionBreak;
+            //this.commentStart = GCode.DefaultCommentStart;
+            //this.commentEnd = GCode.DefaultCommentEnd;
+            //this.sectionBreak = GCode.DefaultSectionBreak;
             this.pathJump = pathJump;
             this.tiltMax = tiltMax;
             this.mTs = mTs;
@@ -39,7 +39,9 @@ namespace CAMel.Types.Machine
 
         public override string ToString() => this.name;
 
+        // TODO?
         public string comment(string l) => string.Empty;
+        public string lineNumber(string l, int line) => l;
 
         public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2D(tP, string.Empty, string.Empty, true);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
@@ -80,6 +82,7 @@ namespace CAMel.Types.Machine
                 while ((line = reader.ReadLine()) != null)
                 {
                     ToolPoint tPt = readTP(line, out ToolPoint endPt, out int quality);
+                    if (tPt == null) { continue;}
                     if (quality != 0)
                     {
                         if (tP.additions.activate == 0) { tP.additions.activate = quality; } else
@@ -107,6 +110,9 @@ namespace CAMel.Types.Machine
         [NotNull]
         private static ToolPoint readTP([NotNull] string l, [NotNull] out ToolPoint endPt, out int quality)
         {
+            endPt = new ToolPoint();
+            quality = 0;
+            if (!l.StartsWith("[0]")) { return null;}
             string[] items = l.Split(',');
             ToolPoint tPt = new ToolPoint();
             endPt = new ToolPoint();
@@ -114,7 +120,8 @@ namespace CAMel.Types.Machine
             int fm = 0;
             bool badRead = false;
             // Read position
-            if (items.Length > 4 && double.TryParse(items[1], out double x) &&
+            if (items.Length < 4) { return null;}
+            if (double.TryParse(items[1], out double x) &&
                 double.TryParse(items[2], out double y) &&
                 double.TryParse(items[3], out double z)) { tPt.pt = new Point3d(x, y, z); } else { badRead = true; }
             // read quality
@@ -122,16 +129,16 @@ namespace CAMel.Types.Machine
             // check format of XData
             if (items.Length > 15 && int.TryParse(items[14], out fm) && fm == 27)
             {
-                if (items.Length > 17 && items[16] != null)
+                if (items.Length > 16 && items[15] != null)
                 {
-                    string[] dirs = items[16].Split('|');
+                    string[] dirs = items[15].Split('|');
                     List<double> dirVals = new List<double>();
                     foreach (string dir in dirs)
                     { if(double.TryParse(dir, out double v)) { dirVals.Add(v);} }
                     if (dirVals.Count == 6)
                     {
-                        tPt.dir = new Vector3d(dirVals[0], dirVals[1],dirVals[2]);
-                        endPt.dir = new Vector3d(dirVals[3],dirVals[4],dirVals[5]);
+                        tPt.dir = -new Vector3d(dirVals[0], dirVals[1],dirVals[2]);
+                        endPt.dir = -new Vector3d(dirVals[3],dirVals[4],dirVals[5]);
                     } else { badRead = true; }
 
                 } else { badRead = true; }
@@ -160,7 +167,7 @@ namespace CAMel.Types.Machine
             int lastQ = (int) co.machineState["Q"];
 
             // as each instruction has a end tilt as well as a start tilt
-            // if the position does not change can  ignore one point
+            // if the position does not change can ignore one point
 
             bool justEnd = true;
 
@@ -243,135 +250,162 @@ namespace CAMel.Types.Machine
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
 
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
-
-            List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
+            
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = string.Empty;
             move.preCode = string.Empty;
             move.postCode = string.Empty;
-            foreach (Point3d pt in route)
-            {
-                // add new point at speed 0 to describe rapid move.
-                move.Add(new ToolPoint(pt, new Vector3d(), -1, 0));
-            }
+
+            // add new point at speed 0 to describe rapid move.
+            move.Add(new ToolPoint((2*fP.lastP.pt+tP.firstP.pt)/3, new Vector3d(0,0,1), -1, 0));
+            move.Add(new ToolPoint((fP.lastP.pt + 2* tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
+
+
             writeCode(ref co, move);
         }
     }
 
     // ReSharper disable once InconsistentNaming
-        internal static class OMXCode
+    internal static class OMXCode
+    {
+        [NotNull]
+        public static string omxTiltPt([NotNull] CodeInfo co, Point3d lastPt, Vector3d lastDir,
+            [NotNull] ToolPoint tPt, int lastQ, double tiltMax)
         {
-            [NotNull]
-            public static string omxTiltPt([NotNull] CodeInfo co, Point3d lastPt, Vector3d lastDir,
-                [NotNull] ToolPoint tPt, int lastQ, double tiltMax)
+            // Work on tilts
+
+            double tiltStart = Vector3d.VectorAngle(Vector3d.ZAxis, lastDir);
+            double tiltEnd = Vector3d.VectorAngle(Vector3d.ZAxis, tPt.dir);
+
+            // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
+
+            if (Math.Abs(tiltStart) > tiltMax || Math.Abs(tiltEnd) > tiltMax)
             {
-                // Work on tilts
-
-                double tiltStart = Vector3d.VectorAngle(Vector3d.ZAxis, lastDir);
-                double tiltEnd = Vector3d.VectorAngle(Vector3d.ZAxis, tPt.dir);
-
-                // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
-
-                if (Math.Abs(tiltStart) > tiltMax || Math.Abs(tiltEnd) > tiltMax) { co.addError("Tilt too large"); }
-
-                // Adjust ranges
-
-                co.growRange("X", lastPt.X);
-                co.growRange("Y", lastPt.Y);
-                co.growRange("Z", lastPt.Z);
-                co.growRange("T", Math.Max(tiltStart, tiltEnd));
-
-                return omxTiltPt(lastPt, lastDir, tPt.dir, 0, lastQ);
+                co.addError("Tilt too large");
             }
 
-            [NotNull]
-            private static string omxTiltPt(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality)
+            // Adjust ranges
+
+            co.growRange("X", lastPt.X);
+            co.growRange("Y", lastPt.Y);
+            co.growRange("Z", lastPt.Z);
+            co.growRange("T", Math.Max(tiltStart, tiltEnd));
+
+            return omxTiltPt(lastPt, lastDir, tPt.dir, 0, lastQ);
+        }
+
+        [NotNull]
+        private static string omxTiltPt(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality)
+        {
+            StringBuilder gPtBd = new StringBuilder("[0],");
+            gPtBd.Append(machPt.X.ToString("0.0000") + ", ");
+            gPtBd.Append(machPt.Y.ToString("0.0000") + ", ");
+            gPtBd.Append(machPt.Z.ToString("0.0000") + ", ");
+            gPtBd.Append("0, "); // tiltStart
+            gPtBd.Append("0, "); // tiltEnd
+            gPtBd.Append(bow.ToString("0.0000") + ", ");
+            gPtBd.Append(quality + ", ");
+
+            int offset;
+            switch (quality)
             {
-                StringBuilder gPtBd = new StringBuilder("[0],");
-                gPtBd.Append(machPt.X.ToString("0.0000") + ", ");
-                gPtBd.Append(machPt.Y.ToString("0.0000") + ", ");
-                gPtBd.Append(machPt.Z.ToString("0.0000") + ", ");
-                gPtBd.Append("0, "); // tiltStart
-                gPtBd.Append("0, "); // tiltEnd
-                gPtBd.Append(bow.ToString("0.0000") + ", ");
-                gPtBd.Append(quality + ", ");
+                case -11:
+                case -9:
+                case -8:
+                case -5:
+                case -4:
+                case -3:
+                case -2:
+                case -1:
+                    offset = 1;
+                    break;
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 8:
+                case 9:
+                case 11:
+                    offset = 2;
+                    break;
+                default:
+                    offset = 0;
+                    break;
+            }
+            gPtBd.Append(offset + ", ");
+            gPtBd.Append("R, R, R, R, R, 27, "); // Reserved items and XType
 
-                int offset;
-                switch (quality)
-                {
-                    case -11:
-                    case -9:
-                    case -8:
-                    case -5:
-                    case -4:
-                    case -3:
-                    case -2:
-                    case -1:
-                        offset = 1;
-                        break;
-                    case 1:
-                    case 2:
-                    case 3:
-                    case 4:
-                    case 5:
-                    case 8:
-                    case 9:
-                    case 11:
-                        offset = 2;
-                        break;
-                    default:
-                        offset = 0;
-                        break;
-                }
-                gPtBd.Append(offset + ", ");
-                gPtBd.Append("R, R, R, R, R, 27, "); // Reserved items and XType
+            // flip tool directions
 
-                // flip tool directions
+            Vector3d uS = -tiltS;
+            Vector3d uE = -tiltE;
 
-                Vector3d uS = -tiltS;
-                Vector3d uE = -tiltE;
+            gPtBd.Append(uS.X.ToString("0.0000") + "|" + uS.Y.ToString("0.0000") + "|" + uS.Z.ToString("0.0000") +
+                         "|"); // start tool direction
+            gPtBd.Append(uE.X.ToString("0.0000") + "|" + uE.Y.ToString("0.0000") + "|" +
+                         uE.Z.ToString("0.0000")); // end tool direction
 
-                gPtBd.Append(uS.X.ToString("0.0000") + "|" + uS.Y.ToString("0.0000") + "|" + uS.Z.ToString("0.0000") + "|"); // start tool direction
-                gPtBd.Append(uE.X.ToString("0.0000") + "|" + uE.Y.ToString("0.0000") + "|" + uE.Z.ToString("0.0000")); // end tool direction
-
-                gPtBd.Append(",[END]");
+            gPtBd.Append(",[END]");
 
             return gPtBd.ToString();
-            }
-
-
-            public static void omxInstStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-                [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath)
-            {
-                if (mI[0].Count == 0) { Exceptions.noToolPathException(); }
-                if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
-                if (mI[0][0].matForm == null) { Exceptions.matFormException(); }
-
-                co.currentMT = mI[0][0].matTool;
-                co.currentMF = mI[0][0].matForm;
-
-                co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
-                m.writeCode(ref co, startPath);
-            }
-            public static void omxInstEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-                [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath)
-            {
-                m.writeTransition(ref co, finalPath, endPath, true);
-                m.writeCode(ref co, endPath);
-            }
-
-            public static void omxOpStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-                [NotNull] MachineOperation mO) => co.append(mO.preCode);
-
-            public static void
-                omxOpEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO) =>
-                co.append(mO.postCode);
-
-            public static void omxPathStart([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
-                co.append(tP.preCode);
-
-            public static void omxPathEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
-                co.append(tP.postCode);
         }
+
+
+        public static void omxInstStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
+            [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath)
+        {
+            if (mI[0].Count == 0) { Exceptions.noToolPathException(); }
+            if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
+            if (mI[0][0].matForm == null) { Exceptions.matFormException(); }
+
+            co.currentMT = mI[0][0].matTool;
+            co.currentMF = mI[0][0].matForm;
+            DateTime thisDay = DateTime.Now;
+
+            // start OMAX file
+            co.append(
+                "This is an OMAX (.OMX) file.  Do not modify the first 2 lines of this file. For information on this file format contact softwareengineering@omax.com or visit http://www.omax.com.");
+            co.append("2"); // file format
+            co.append("3"); // format version
+            co.append(thisDay.ToOADate().ToString()); // date
+            co.append("[Reserved]");
+            co.append("[Reserved]");
+            co.append("[Reserved]");
+            co.append("[Reserved]");
+            co.append("[Reserved]");
+            co.append("[COMMENT]");
+            co.append(" Machine Instructions Created " + thisDay.ToString("f"));
+            co.append("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
+                      + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
+            co.append("[END]");
+
+            co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
+            m.writeCode(ref co, startPath);
+        }
+        // ReSharper disable once UnusedParameter.Global
+        public static void omxInstEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co,
+            [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath)
+        {
+            m.writeTransition(ref co, finalPath, endPath, true);
+            m.writeCode(ref co, endPath);
+        }
+
+        // ReSharper disable once UnusedParameter.Global
+        public static void omxOpStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
+            [NotNull] MachineOperation mO) => co.append(mO.preCode);
+
+        // ReSharper disable once UnusedParameter.Global
+        public static void
+            omxOpEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO) =>
+            co.append(mO.postCode);
+        // ReSharper disable once UnusedParameter.Global
+        public static void omxPathStart([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
+            co.append(tP.preCode);
+        // ReSharper disable once UnusedParameter.Global
+        public static void omxPathEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
+            co.append(tP.postCode);
     }
+}
