@@ -165,8 +165,9 @@ namespace CAMel.Types
     public sealed class GH_ToolPathAdditions : CAMel_Goo<ToolPathAdditions>
     {
         // Default Constructor
+        // TODO change back to replaceable, but remove replacebale flag when any value is changed.
         [UsedImplicitly]
-        public GH_ToolPathAdditions() { this.Value = ToolPathAdditions.replaceable; }
+        public GH_ToolPathAdditions() { this.Value = new ToolPathAdditions(); }
         // Create from unwrapped version
         public GH_ToolPathAdditions([CanBeNull] ToolPathAdditions tP) { this.Value = tP; }
         // Copy Constructor
