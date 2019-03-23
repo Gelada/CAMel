@@ -31,9 +31,8 @@ namespace CAMel.GH
         [UsedImplicitly] private readonly PathClick _click;
         private GH_Document _doc;
 
-        [NotNull] private List<Curve> _curves;
+        [NotNull] private List<GH_Curve> _curves;
         [NotNull] private SortedSet<double> _allKeys;
-        private List<GH_Curve> _latestPaths;
 
         /// <inheritdoc />
         /// <summary>
@@ -42,9 +41,8 @@ namespace CAMel.GH
         public C_OrganisePaths() : base("Organise Paths", "OrgPth", "Reorder a collection of curves", "CAMel", " ToolPaths")
         {
             this._click = new PathClick(this);
-            this._curves = new List<Curve>();
+            this._curves = new List<GH_Curve>();
             this._allKeys = new SortedSet<double>();
-            this._latestPaths = new List<GH_Curve>();
         }
 
         /// <inheritdoc />
@@ -91,87 +89,188 @@ namespace CAMel.GH
 
         private const int _DotSize = 11;
         private readonly Vector3d _dotShift = new Vector3d(1, 1, 1);
-        internal bool found(Line l, [NotNull] RhinoViewport vP)
+        internal bool find(Line l, [NotNull] RhinoViewport vP)
         {
             if (vP == null) { throw new ArgumentNullException(); }
-            for (int i = 0;i< this._curves.Count; i++)
+            RhinoDoc uDoc = RhinoDoc.ActiveDoc;
+            if (uDoc?.Objects == null) { return false; }
+
+            int clicked = -1;
+
+            List<int> sel = new List<int>();
+            for (int i = 0; i < this._curves.Count; i++)
             {
-                Curve c = this._curves[i];
+                if (this._curves[i]?.IsReferencedGeometry ?? false)
+                {
+                    RhinoObject ro = uDoc.Objects.Find(this._curves[i].ReferenceID);
+                    if ((ro?.IsSelected(true) ?? 0) > 0) { sel.Add(i); }
+                }
+
+                Curve c = this._curves[i]?.Value;
                 if (c == null) { continue; }
                 vP.GetWorldToScreenScale(c.PointAtStart, out double pixelsPerUnit);
+                double dist = l.DistanceTo(c.PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, false);
+                if (dist * pixelsPerUnit < _DotSize) { clicked = i; }
+            }
 
-                if (!(l.DistanceTo(c.PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, false) * pixelsPerUnit <
-                      _DotSize)) { continue; }
+            // return if click did not attach to a path
+            if (clicked < 0) { return false; }
 
-                GetInteger gi = new GetInteger();
-                gi.SetCommandPrompt("Reorder path");
-                gi.SetDefaultNumber(i+1);
-                gi.AcceptNothing(true);
-                gi.SetCommandPromptDefault((i+1).ToString());
-
+            GetInteger gi;
+            // if the clicked path is not selected or is the only thing selected, just deal with that.
+            if (sel.Count <= 1 || !sel.Contains(clicked))
+            {
+                Curve c = this._curves[clicked]?.Value;
+                if (c == null) { return false; }
                 if (c.IsClosed)
                 {
                     bool cC = c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise;
-                    OptionToggle cutInside = new OptionToggle(c.getSide(), "Inside", "Outside");
-                    OptionToggle counterClock = new OptionToggle(cC, "Clockwise", "CounterClockwise");
-                    gi.AddOptionToggle("Direction", ref counterClock);
-                    gi.AddOptionToggle("Side", ref cutInside);
-                    gi.AddOption("MoveSeam");
+                    gi = getClosed(clicked, cC, c.getSide(), out OptionToggle cutInside, out OptionToggle counterClock);
                     while (true)
                     {
-                        double t = double.NaN;
                         GetResult getR = gi.Get();
                         if (getR == GetResult.Option)
                         {
                             if (gi.Option()?.EnglishName == "MoveSeam")
                             {
-                                GetPoint gp = new GetPoint();
-                                gp.SetCommandPrompt("Set new seam");
-                                gp.Constrain(c, false);
-                                gp.AcceptNothing(true);
-                                gp.Get();
-                                if (gp.PointOnCurve(out t) == null) { t = double.NaN; }
+                                double t = getSeam(c);
                                 c.setNewSeam(t);
-                                if(cC != counterClock.CurrentValue){ c.Reverse(); }
+                                if (cC != counterClock.CurrentValue) { c.Reverse(); }
                                 c.setSide(cutInside.CurrentValue);
+                                reOrder(c, clicked, gi.Number());
                                 return true;
                             }
                             continue;
                         }
 
-                        c.setNewSeam(t);
                         if (cC != counterClock.CurrentValue) { c.Reverse(); }
                         c.setSide(cutInside.CurrentValue);
-
-                        break;
+                        reOrder(c, clicked, gi.Number());
+                        return true;
                     }
-                } else
-                {
-                    gi.Get();
                 }
+                // the path is not closed
 
-                // Check new order and work on reordering
-                int newPos = gi.Number();
-                if (newPos == i+1) { return true;}
-
-                double newKey;
-                if (newPos <= 1) { newKey = this._allKeys.Min - 1.0; }
-                else if (newPos >= this._curves.Count) { newKey = this._allKeys.Max + 1.0; }
-                else
+                gi = getOpen(clicked, out OptionToggle flip);
+                while (true)
                 {
-                    int uPos = newPos;
-                    if (newPos - 1 > i) { uPos++; }
-                    double aboveKey = this._curves[uPos-1].getKey();
-                    double belowKey = this._allKeys
-                        .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
-                    newKey = (aboveKey+belowKey)/2.0;
+                    GetResult getR = gi.Get();
+                    if (getR == GetResult.Option) { continue; }
+                    break;
                 }
-
-                this._allKeys.Add(newKey);
-                c.setKey(newKey);
+                if (flip.CurrentValue) { c.Reverse(); }
+                reOrder(c, clicked, gi.Number());
                 return true;
             }
-            return false;
+            // Now deal with a larger selection
+
+            gi = getMultiple(clicked);
+            while (true)
+            {
+                GetResult getR = gi.Get();
+                int allInOut = 0;
+                if (getR == GetResult.Option && gi.Option()?.EnglishName == "Side")
+                { allInOut = gi.Option()?.CurrentListOptionIndex ?? 0; continue;}
+                break;
+            }
+            return true;
+        }
+
+        private void reOrder([NotNull] Curve c, int i, int newPos)
+        {
+            if (newPos == i + 1) { return; }
+            double newKey;
+            if (newPos <= 1) { newKey = this._allKeys.Min - 1.0; }
+            else if (newPos >= this._curves.Count) { newKey = this._allKeys.Max + 1.0; }
+            else
+            {
+                int uPos = newPos;
+                if (newPos - 1 > i) { uPos++; }
+                double aboveKey = this._curves[uPos - 1]?.Value.getKey() ?? double.NaN;
+                double belowKey = this._allKeys
+                    .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
+                newKey = (aboveKey + belowKey) / 2.0;
+            }
+
+            this._allKeys.Add(newKey);
+            c.setKey(newKey);
+        }
+
+        private void reOrder([NotNull] List<int> sel, int newPos)
+        {
+            if (sel.Count == 1 && sel[0] == newPos) { return; }
+            Interval newKeys;
+            if (newPos <= 0) { newKeys = new Interval(this._allKeys.Min-sel.Count-1,this._allKeys.Min);}
+            else if (newPos >= this._curves.Count) { newKeys = new Interval(this._allKeys.Max, this._allKeys.Max + sel.Count + 1); }
+            else
+            {
+                int uPos = newPos - 1 + sel.Count(x => x < newPos);
+                double aboveKey = this._curves[uPos - 1]?.Value.getKey() ?? double.NaN;
+                double belowKey = this._allKeys
+                    .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
+                newKeys = new Interval(belowKey,aboveKey);
+            }
+            for (int i = 0; i < sel.Count; i++)
+            {
+                double newKey = newKeys.ParameterAt((i + 1) / (double)(sel.Count + 1));
+                this._curves[sel[i]]?.Value.setKey(newKey);
+                this._allKeys.Add(newKey);
+            }
+        }
+
+        private double getSeam([NotNull] Curve c)
+        {
+            GetPoint gp = new GetPoint();
+            gp.SetCommandPrompt("Set new seam");
+            gp.Constrain(c, false);
+            gp.AcceptNothing(true);
+            gp.Get();
+            if (gp.PointOnCurve(out double t) == null) { t = double.NaN; }
+            return t;
+        }
+
+    [NotNull]
+        private GetInteger setUp(int i)
+        {
+            GetInteger gi = new GetInteger();
+            gi.SetCommandPrompt("Reorder path");
+            gi.SetDefaultNumber(i + 1);
+            gi.AcceptNothing(true);
+            gi.SetCommandPromptDefault((i + 1).ToString());
+            return gi;
+        }
+
+        [NotNull]
+        private GetInteger getClosed(int i, bool cC, bool inSide, out OptionToggle cutInside, out OptionToggle counterClock)
+        {
+            GetInteger gi = setUp(i);
+            cutInside = new OptionToggle(inSide, "Outside", "Inside");
+            counterClock = new OptionToggle(cC, "Clockwise", "CounterClockwise");
+            gi.AddOptionToggle("Direction", ref counterClock);
+            gi.AddOptionToggle("Side", ref cutInside);
+            gi.AddOption("MoveSeam");
+
+            return gi;
+        }
+
+        [NotNull]
+        private GetInteger getOpen(int i, out OptionToggle flip)
+        {
+            GetInteger gi = setUp(i);
+            flip = new OptionToggle(false, "Leave", "Flip");
+            gi.AddOptionToggle("Direction", ref flip);
+
+            return gi;
+        }
+
+        [NotNull]
+        private GetInteger getMultiple(int i)
+        {
+            GetInteger gi = setUp(i);
+            List<string> side = new List<string> {"Leave", "AllInside", "AllOutside"};
+            gi.AddOptionList("Side", side,0);
+
+            return gi;
         }
 
         internal void changeRefCurves()
@@ -223,14 +322,27 @@ namespace CAMel.GH
         protected override void SolveInstance([NotNull] IGH_DataAccess da)
         {
             if (da == null) { throw new ArgumentNullException(); }
-            this._enabled = true;
+
             List<GH_Curve> paths = new List<GH_Curve>();
             this._enabled = false;
             if (!da.GetDataList("Paths", paths) || paths.Count == 0) { return; }
             RhinoDoc uDoc = RhinoDoc.ActiveDoc;
             if (uDoc?.Objects == null) { return;}
 
-            // Check for current keys
+            // Insist on reference curves or persistent data
+            if (this.Params?.Input?[0]?.SourceCount > 0)
+            {
+                foreach (GH_Curve p in paths)
+                {
+                    if (p == null || p.IsReferencedGeometry) { continue; }
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error,
+                        "Only referenced curves or persistent data can be organised with this component. If you wish to organise other first internalise or bake.");
+                    return;
+                }
+            }
+
+            // Check for current keys stored in the rhino file
+            // set the keys for the curves read in
             this._allKeys = new SortedSet<double>();
             foreach (RhinoObject ro in uDoc.Objects)
             {
@@ -240,11 +352,8 @@ namespace CAMel.GH
 
                 foreach (GH_Curve p in paths)
                 {
-                    if(p == null) { continue; }
-                    if (!p.IsReferencedGeometry || p.ReferenceID != ro.Id || !double.IsNaN(p.Value.getKey()))
-                    {
-                        continue;
-                    }
+                    if (p == null || !p.IsReferencedGeometry || p.ReferenceID != ro.Id || !double.IsNaN(p.Value.getKey()))
+                    { continue; }
                     p.Value.setKey(key);
                     p.Value.setSide(ro.Attributes.getSide());
                 }
@@ -262,62 +371,46 @@ namespace CAMel.GH
                     continue;
                 }
                 this._enabled = true;
-                if (!double.IsNaN(p.Value.getKey()))
-                {
-                    this._allKeys.Add(p.Value.getKey());
-                    continue;
-                }
+
                 if (p.Value.IsClosed)
                 {
                     p.Value.setKey(this._allKeys.Max + 1);
                     this._allKeys.Add(this._allKeys.Max + 1);
+                    if (!p.IsReferencedGeometry) { continue; }
+                    RhinoObject ro = uDoc.Objects.Find(p.ReferenceID);
+                    ro?.setKey(p.Value.getKey());
                 } else
                 {
                     p.Value.setKey(this._allKeys.Min - 1);
                     this._allKeys.Add(this._allKeys.Min - 1);
-                }
-            }
-
-            // Store keys and put the values into the referenced objects if they exist.
-            this._curves = new List<Curve>();
-            foreach(GH_Curve p in paths)
-            {
-                if(p == null) { continue; }
-                if (p.IsReferencedGeometry)
-                {
+                    if (!p.IsReferencedGeometry) { continue; }
                     RhinoObject ro = uDoc.Objects.Find(p.ReferenceID);
                     ro?.setKey(p.Value.getKey());
                 }
-                this._curves.Add(p.Value);
             }
+
+            // store paths list internally
+            this._curves = paths;
 
             this._curves.Sort(_CurveC);
 
-            // Store the processed data
-            if (this.Params?.Input?[0] != null && this.Params.Input[0].SourceCount == 0)
-            {
-                this._latestPaths = paths;
-            }
             da.SetDataList(0, this._curves);
 
             List<double> offSets = new List<double>();
-            foreach (Curve c in this._curves)
+            foreach (GH_Curve c in this._curves)
             {
                 double os = 0;
-                if(c.IsClosed)
-                {
-                    if (c.getSide()) { os = 1; } else { os = -1; }
-                }
+                if(c?.Value != null && c.Value.IsClosed) { os = c.Value.getSide() ? 1 : -1; }
                 offSets.Add(os);
             }
             da.SetDataList(1, offSets);
         }
 
-        private class CurveComp : IComparer<Curve>
+        private class CurveComp : IComparer<GH_Curve>
         {
-            public int Compare(Curve x, Curve y)
+            public int Compare(GH_Curve x, GH_Curve y)
             {
-                return x.getKey().CompareTo(y.getKey());
+                return x?.Value?.getKey().CompareTo(y?.Value?.getKey()) ?? 0;
             }
         }
 
@@ -339,16 +432,16 @@ namespace CAMel.GH
 
             for (int i = 0; i < this._curves.Count; i++)
             {
-                if (this._curves[i] == null) { continue;}
-                args.Viewport.GetWorldToScreenScale(this._curves[i].PointAtStart, out double pixelsPerUnit);
+                if (this._curves[i]?.Value == null) { continue;}
+                args.Viewport.GetWorldToScreenScale(this._curves[i].Value.PointAtStart, out double pixelsPerUnit);
 
                 System.Drawing.Color lineC = args.WireColour;
                 if (this.Attributes != null && this.Attributes.Selected) { lineC = args.WireColour_Selected; }
-                args.Display.DrawCurve(this._curves[i], lineC);
+                args.Display.DrawCurve(this._curves[i].Value, lineC);
 
-                args.Display.DrawDot(this._curves[i].PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, (i + 1).ToString());
+                args.Display.DrawDot(this._curves[i].Value.PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, (i + 1).ToString());
 
-                Line dir = new Line(this._curves[i].PointAtStart, this._curves[i].TangentAtStart * 50.0 / pixelsPerUnit);
+                Line dir = new Line(this._curves[i].Value.PointAtStart, this._curves[i].Value.TangentAtStart * 50.0 / pixelsPerUnit);
                 args.Display.DrawArrow(dir, System.Drawing.Color.AntiqueWhite);
             }
         }
@@ -361,7 +454,7 @@ namespace CAMel.GH
             if (p?.PersistentData == null || this.Params.Input[0].SourceCount != 0) { return base.Write(writer); }
 
             p.PersistentData.ClearData();
-            p.SetPersistentData( this._latestPaths);
+            p.SetPersistentData( this._curves);
             return base.Write(writer);
         }
 
