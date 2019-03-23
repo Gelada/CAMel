@@ -394,7 +394,7 @@ namespace CAMel.Types.Machine
         }
 
         [NotNull]
-        public static ToolPath leadInOut2D([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
+        public static ToolPath leadInOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
         {
             if(tP.matTool == null) { Exceptions.matToolException(); }
             double leadCurve = tP.additions.leadCurvature;
@@ -447,6 +447,50 @@ namespace CAMel.Types.Machine
                         newTP.Add(tPt);
                     }
                 }
+            }
+
+            newTP.additions.leadCurvature = 0;
+            return newTP;
+        }
+        [NotNull]
+        public static ToolPath leadInOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
+        {
+            if (tP.matTool == null) { Exceptions.matToolException(); }
+            double leadCurve = tP.additions.leadCurvature;
+
+            ToolPath newTP = tP.deepClone();
+            if (!keepActivate) { newTP.additions.activate = 0; }
+            newTP.additions.insert = false;
+            newTP.additions.retract = false;
+
+            if (tP.additions.activate != 0 && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+            if (tP.additions.activate != 0 && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+
+            // If leadCurve == 0 can now return
+            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return newTP; }
+
+            PolylineCurve toolL = tP.getLine();
+            double wiggle = .1;
+            if (tP.additions.insert)
+            {
+                double r = Math.PI / 2.0-wiggle;
+                if (tP.additions.activate > 0) { r = -Math.PI / 2.0 + wiggle; } // cut to the right
+                Vector3d tan = toolL.TangentAtStart;
+                tan.Rotate(r, Vector3d.ZAxis);
+                ToolPoint tPt = tP.firstP.deepClone();
+                tPt.pt = tPt.pt + tan * tP.matTool.insertWidth;
+                newTP.Insert(0,tPt);
+            }
+
+            if (tP.additions.retract)
+            {
+                double r = Math.PI / 2.0 + wiggle;
+                if (tP.additions.activate > 0) { r = -Math.PI / 2.0 - wiggle; } // cut to the right
+                Vector3d tan = toolL.TangentAtEnd;
+                tan.Rotate(r, Vector3d.ZAxis);
+                ToolPoint tPt = tP.lastP.deepClone();
+                tPt.pt = tPt.pt + tan * tP.matTool.insertWidth;
+                newTP.Add(tPt);
             }
 
             newTP.additions.leadCurvature = 0;
