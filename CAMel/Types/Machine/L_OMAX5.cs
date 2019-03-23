@@ -43,7 +43,7 @@ namespace CAMel.Types.Machine
         public string comment(string l) => string.Empty;
         public string lineNumber(string l, int line) => l;
 
-        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOutV(tP, string.Empty, string.Empty, true);
+        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2D(tP, string.Empty, string.Empty, true);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
@@ -83,7 +83,7 @@ namespace CAMel.Types.Machine
                 {
                     ToolPoint tPt = readTP(line, out ToolPoint endPt, out int quality);
                     if (tPt == null) { continue;}
-                    if (quality != 0 && quality != 10)
+                    if (quality != 0)
                     {
                         if (tP.additions.activate == 0) { tP.additions.activate = quality; } else
                         {
@@ -107,7 +107,7 @@ namespace CAMel.Types.Machine
             return mI;
         }
         // Try to read a line of omx code. Add an error to the toolpoint if there are problems
-        [CanBeNull]
+        [NotNull]
         private static ToolPoint readTP([NotNull] string l, [NotNull] out ToolPoint endPt, out int quality)
         {
             endPt = new ToolPoint();
@@ -116,6 +116,7 @@ namespace CAMel.Types.Machine
             string[] items = l.Split(',');
             ToolPoint tPt = new ToolPoint();
             endPt = new ToolPoint();
+            quality = 0;
             int fm = 0;
             bool badRead = false;
             // Read position
@@ -160,7 +161,6 @@ namespace CAMel.Types.Machine
             OMXCode.omxPathStart(this, ref co, tP);
 
             int pathQuality = tP.additions.activate;
-            if (pathQuality == 0) { pathQuality = 10;}
 
             Point3d lastPt = new Point3d(co.machineState["X"], co.machineState["Y"], co.machineState["Z"]);
             Vector3d lastDir = new Vector3d(co.machineState["dX"], co.machineState["dY"], co.machineState["dZ"]);
@@ -175,7 +175,7 @@ namespace CAMel.Types.Machine
             {
                 if (tPt == null) { continue; }
                 tPt.writeErrorAndWarnings(ref co);
-                if (tPt.feed > 0 && tPt.pt == lastPt && justEnd)
+                if (tPt.pt == lastPt && justEnd)
                 {
                     justEnd = false;
                     lastDir = tPt.dir;
@@ -191,7 +191,7 @@ namespace CAMel.Types.Machine
 
                 lastPt = tPt.pt;
                 lastDir = tPt.dir;
-                lastQ = Math.Abs(tPt.feed) < CAMel_Goo.Tolerance ? 10 : pathQuality;
+                lastQ = Math.Abs(tPt.feed) < CAMel_Goo.Tolerance ? 0 : pathQuality;
             }
 
             // Pass machine state information
@@ -225,7 +225,6 @@ namespace CAMel.Types.Machine
             co.machineState.Add("dY", fPt.dir.Y);
             co.machineState.Add("dZ", fPt.dir.Z);
             co.machineState.Add("Q", startPath.additions.activate);
-            if (co.machineState["Q"] == 0) { co.machineState["Q"] = 10;}
 
             OMXCode.omxInstStart(this, ref co, mI, startPath);
         }
@@ -251,18 +250,14 @@ namespace CAMel.Types.Machine
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
 
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
+            
 
-            ToolPath move = fP.deepCloneWithNewPoints(new List<ToolPoint>());
+            ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = string.Empty;
             move.preCode = string.Empty;
             move.postCode = string.Empty;
-            move.additions.activate = 0;
 
             // add new point at speed 0 to describe rapid move.
-            move.Add(fP.lastP.deepClone());
-            Vector3d dir = tP.firstP.pt - fP.lastP.pt;
-            dir.Unitize();
-            move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0));
             move.Add(new ToolPoint((2*fP.lastP.pt+tP.firstP.pt)/3, new Vector3d(0,0,1), -1, 0));
             move.Add(new ToolPoint((fP.lastP.pt + 2* tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
 
@@ -310,13 +305,7 @@ namespace CAMel.Types.Machine
             gPtBd.Append("0, "); // tiltStart
             gPtBd.Append("0, "); // tiltEnd
             gPtBd.Append(bow.ToString("0.0000") + ", ");
-            int uQual = Math.Abs(quality);
-            if (quality == 21) { uQual = 1; }
-            if (quality == 22) { uQual = 2; }
-            if (quality == 23) { uQual = 3; }
-            if (quality == 24) { uQual = 4; }
-            if (quality == 25) { uQual = 5; }
-            gPtBd.Append(Math.Abs(uQual) + ", ");
+            gPtBd.Append(quality + ", ");
 
             int offset;
             switch (quality)
@@ -401,9 +390,7 @@ namespace CAMel.Types.Machine
             [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath)
         {
             m.writeTransition(ref co, finalPath, endPath, true);
-            ToolPath uEndPath = endPath.deepClone();
-            uEndPath.Add(uEndPath.lastP.deepClone());
-            m.writeCode(ref co, uEndPath);
+            m.writeCode(ref co, endPath);
         }
 
         // ReSharper disable once UnusedParameter.Global
