@@ -154,8 +154,7 @@ namespace CAMel.GH
             da.GetDataList(1, ignore);
 
             MachineInstruction procMI;
-            try { procMI = mI.processAdditions(); }
-            catch (InvalidOperationException e)
+            try { procMI = mI.processAdditions(); } catch (InvalidOperationException e)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
                 da.SetData(2, e.Message);
@@ -185,11 +184,24 @@ namespace CAMel.GH
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warn);
                 da.SetData(2, warn);
             }
-
+            string fPath = string.Empty;
             // Write Code to file
-            if (da.GetData(2, ref this._filePath) && this._filePath != string.Empty)
+            if (da.GetData(2, ref fPath) && fPath != string.Empty)
             {
-                this._filePath = Path.GetDirectoryName(this._filePath) ?? string.Empty;
+                fPath = Path.GetDirectoryName(fPath) ?? string.Empty;
+                string filePath = fPath;
+                if (filePath != null)
+                { fPath = Path.Combine(filePath, mI.name + "." + this.extension); }
+                if (File.Exists(fPath)) { File.Delete(fPath); }
+                using (StreamWriter sW = new StreamWriter(fPath))
+                {
+                    for (int i = 0; i < this._saveCode.Length; i += 40000)
+                    {
+                        sW.Write(this._saveCode.ToString(i, 40000));
+                    }
+                }
+                // Turn off backgrounder until it can be fired for multiple file writes
+                /*this._filePath = Path.GetDirectoryName(this._filePath) ?? string.Empty;
                 string filePath = this._filePath;
                 if (filePath != null)
                 { this._filePath = Path.Combine(filePath, mI.name + "." + this.extension); }
@@ -203,6 +215,7 @@ namespace CAMel.GH
                 {
                     this.setOffWriting = true;
                 }
+                */
             }
             else
             {
@@ -210,8 +223,8 @@ namespace CAMel.GH
                 this.writeProgress = 0;
                 OnDisplayExpired(true);
             }
-        }
 
+            }
         private void bwWriteFile([NotNull] object sender, [NotNull] DoWorkEventArgs e)
         {
             if (sender == null || e == null) { throw new ArgumentNullException(); }
