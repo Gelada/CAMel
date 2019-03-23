@@ -4,7 +4,6 @@ using CAMel.Types;
 using CAMel.Types.Machine;
 using Grasshopper.Kernel;
 using JetBrains.Annotations;
-using Rhino.Geometry;
 
 namespace CAMel.GH
 {
@@ -32,7 +31,7 @@ namespace CAMel.GH
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddNumberParameter("Tilt Max", "TMax", "Maximum value (+ or -) that the tool can tilt from vertical", GH_ParamAccess.item, 60);
+            pManager.AddNumberParameter("Tilt Max", "TMax", "Maximum value (+ or -) that the tool can tilt from vertical", GH_ParamAccess.item, 59);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
             // ReSharper disable once PossibleNullReferenceException
             pManager[1].WireDisplay = GH_ParamWireDisplay.faint;
@@ -58,14 +57,12 @@ namespace CAMel.GH
         {
             if (da == null) { throw new ArgumentNullException(); }
             double tiltMax = 0;
-            int v = 0;
             List<MaterialTool> mTs = new List<MaterialTool>();
 
             if (!da.GetData("Tilt Max", ref tiltMax)) { return; }
             da.GetDataList("Material Tools", mTs);
-            Vector3d pivot = new Vector3d();
 
-            Omax5 m = new Omax5("OMAX machine", 0,mTs,tiltMax);
+            Omax5 m = new Omax5("OMAX machine", 0,mTs,tiltMax * Math.PI / 180.0);
 
             da.SetData(0, new GH_Machine(m));
         }
