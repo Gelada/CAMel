@@ -109,7 +109,7 @@ namespace CAMel.Types.Machine
 
         public string comment(string l) => GCode.comment(this, l);
 
-        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOut2D(tP, this.toolActivate, this.toolDeActivate);
+        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
