@@ -31,7 +31,7 @@ namespace CAMel.Types
 
                 // Ignore if nothing is found
                 Line mouseLine = e.View.ActiveViewport.ClientToWorld(e.ViewportPoint);
-                if (!this._op.found(mouseLine, e.View.ActiveViewport)) { return; }
+                if (!this._op.find(mouseLine, e.View.ActiveViewport)) { return; }
 
                 // Clear the click and expire solution
                 e.Cancel = true;
