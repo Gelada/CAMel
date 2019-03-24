@@ -51,6 +51,14 @@ namespace CAMel.GH
             pManager.AddParameter(new GH_MachineInstructionPar(),"Instructions", "I", "Machine Instructions", GH_ParamAccess.item);
         }
 
+        private double _nameCount;
+
+        protected override void BeforeSolveInstance()
+        {
+            this._nameCount = 1;
+            base.BeforeSolveInstance();
+        }
+
         /// <inheritdoc />
         /// <summary>
         /// This is the method that actually does the work.
@@ -80,21 +88,43 @@ namespace CAMel.GH
             {
                 object cleanSP = CAMel_Goo.cleanGooList(sP);
                 object cleanEP = CAMel_Goo.cleanGooList(eP);
-                // The start and end paths should be G0.
+                // The start and end paths should be rapid moves
                 ToolPath startP = ToolPath.toPath(cleanSP);
                 foreach(ToolPoint tPt in startP) { tPt.feed = 0; }
                 ToolPath endP = ToolPath.toPath(cleanEP);
                 foreach (ToolPoint tPt in endP) { tPt.feed = 0; }
-                mi = new MachineInstruction(name, m, mo, startP, endP);
+
+                string uName = makeName(name, da);
+
+                mi = new MachineInstruction(uName, m, mo, startP, endP);
                 if (ignores > 1)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores + " invalid elements (probably nulls) were ignored."); }
                 else if (ignores == 1)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored."); }
             }
             else
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations"); }
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations");
+                return;
+            }
 
             da.SetData(0, new GH_MachineInstruction(mi));
+        }
+
+        [NotNullAttribute]
+        private string makeName([NotNull] string name, [NotNull] IGH_DataAccess da)
+        {
+            string path = "";
+
+            // Deal with tree coming in if there is one name
+            // otherwise assume something sensible is happening
+            if (this.Params?.Input?[1]?.VolatileData?.PathCount > 1 &&
+                this.Params?.Input?[0]?.VolatileDataCount == 1)
+            {
+                path = " " + this._nameCount;
+                this._nameCount++;
+            }
+            return name + path;
         }
 
         /// <inheritdoc />
