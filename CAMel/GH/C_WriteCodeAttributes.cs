@@ -12,23 +12,14 @@ namespace CAMel.GH
         public WriteCodeAttributes([NotNull] IGH_Component owner) :
             base(owner)
         {
-            this._writeMessages = new Dictionary<WriteState, string>
-            {
-                { WriteState.Cancelled, @"Cancelled" },
-                { WriteState.Finished, @"File Written" },
-                { WriteState.NoPath, @"No Path" },
-                { WriteState.Writing, @"Writing..." },
-                { WriteState.Waiting, @"Waiting" }
-            };
         }
 
-        [NotNull] private readonly Dictionary<WriteState, string> _writeMessages;
-
-        public void setFileSize(long l)
+        [NotNull] public string totalFiles(long l)
         {
             double lMB = l / 1000000.0; // Use smallest MB possibility so numbers are not larger.
-            if (lMB > .99) { this._writeMessages[WriteState.Finished] = lMB.ToString(".0") + " MB Written"; }
-            else { this._writeMessages[WriteState.Finished] = (1000*lMB).ToString("0") + " KB Written"; }
+            if (l == 0) { return "Nothing Written";}
+            if (lMB > .99) { return lMB.ToString(".0") + " MB Written"; }
+             return (1000*lMB).ToString("0") + " KB Written";
         }
 
         protected override void Layout()
@@ -56,14 +47,8 @@ namespace CAMel.GH
 
             Rectangle progressPercent = this.progressBounds;
             if(this.Owner == null) { return;}
-            progressPercent.Width =
-                (int)(this.progressBounds.Width * ((C_WriteCode)this.Owner).writeProgress);
 
-            string message = this._writeMessages[((C_WriteCode)this.Owner).ws];
-            if(((C_WriteCode)this.Owner).ws == WriteState.Writing)
-            {
-                message = message + " " + (int)(((C_WriteCode)this.Owner).writeProgress*100) + "%";
-            }
+            string message = totalFiles(((C_WriteCode)this.Owner).bytesWritten);
 
             GH_Capsule textCap = GH_Capsule.CreateTextCapsule(
                 this.progressBounds,
@@ -74,22 +59,14 @@ namespace CAMel.GH
 
             GH_Capsule progressOl = GH_Capsule.CreateCapsule(
                 this.progressBounds,
-                GH_Palette.Blue,
-                0, 1);
-
-            GH_Capsule progress = GH_Capsule.CreateCapsule(
-                progressPercent,
                 GH_Palette.Brown,
                 0, 1);
 
-            if (progressOl == null || progress == null || textCap == null) { return; }
+            if (progressOl == null || textCap == null) { return; }
 
             progressOl.Render(graphics, this.Selected, this.Owner.Locked, false);
-            if (((C_WriteCode)this.Owner).writeProgress > 0)
-            { progress.Render(graphics, this.Selected, this.Owner.Locked, false); }
             textCap.Render(graphics, this.Selected, this.Owner.Locked, false);
             progressOl.Dispose();
-            progress.Dispose();
             textCap.Dispose();
         }
     }

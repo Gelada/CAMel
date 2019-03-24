@@ -1,41 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Windows.Forms;
 using CAMel.Types;
 using Grasshopper.Kernel;
 using JetBrains.Annotations;
-//using System.Windows.Forms.VisualStyles;
 
 namespace CAMel.GH
 {
-    public enum WriteState
-    {
-        NoPath, Writing, Finished, Cancelled, Waiting
-    }
 
     [UsedImplicitly]
     public class C_WriteCode : GH_Component
     {
-        [NotNull] private BackgroundWorker writeFileThread { get; }
-        private CodeInfo _saveCode;
-        [NotNull] private string _filePath;
-        private string _extension;
-        [NotNull]
-        private string extension
-        {
-            get => this._extension ?? string.Empty;
-            set
-            {
-                this._extension = value;
-                this.Message = "." + this._extension;
-            }
-        }
-        private bool setOffWriting { get; set; }
-
-        public WriteState ws;
-        public double writeProgress { get; private set; }
+        internal long bytesWritten;
 
         /// <inheritdoc />
         /// <summary>
@@ -46,17 +22,7 @@ namespace CAMel.GH
                 "Write CNC Code",
                 "CAMel", "CNC Code")
         {
-            this._filePath = string.Empty;
-            this.extension = "ngc";
-            this.ws = WriteState.NoPath;
-            this.writeProgress = 0;
-
-            this.writeFileThread = new BackgroundWorker();
-            this.writeFileThread.DoWork += bwWriteFile;
-            this.writeFileThread.RunWorkerCompleted += bwCompletedFileWrite;
-            this.writeFileThread.ProgressChanged += bwProgressWithFile;
-            this.writeFileThread.WorkerReportsProgress = true;
-            this.writeFileThread.WorkerSupportsCancellation = true;
+            this.bytesWritten = 0;
         }
 
         public override void CreateAttributes()
@@ -89,54 +55,10 @@ namespace CAMel.GH
             pManager.AddTextParameter("Warnings and Errors", "E", "Warnings and Errors reported by the code", GH_ParamAccess.item);
         }
 
-        // Need to save and recover the extension
-        public override bool Write([CanBeNull] GH_IO.Serialization.GH_IWriter writer)
-        {
-            if (writer == null) { return base.Write(null); }
-            // First add our own field.
-            writer.SetString("Extension", this.extension);
-            // Then call the base class implementation.
-            return base.Write(writer);
-        }
-        public override bool Read([CanBeNull] GH_IO.Serialization.GH_IReader reader)
-        {
-            if (reader == null) { return false; }
-            // First read our own field.
-            if (reader.ItemExists("Extension")) { this.extension = reader.GetString("Extension") ?? string.Empty; }
-
-            // Then call the base class implementation.
-            return base.Read(reader);
-        }
-
-        protected override void AppendAdditionalComponentMenuItems([NotNull] ToolStripDropDown menu)
-        {
-            if (menu == null) { throw new ArgumentNullException(); }
-            Menu_AppendItem(menu, "File Extension");
-            Menu_AppendTextItem(menu, this.extension, menuExtensionClick, menuExtensionChange, true);
-        }
-
-        private static void menuExtensionClick([NotNull] object sender, [NotNull] EventArgs e)
-        {
-            if (sender == null || e == null) { throw new ArgumentNullException(); }
-        }
-
-        private void menuExtensionChange([NotNull] object sender, [CanBeNull] string text)
-        {
-            if (sender == null) { throw new ArgumentNullException(); }
-            RecordUndoEvent("Extension");
-            this.extension = text ?? string.Empty;
-            OnDisplayExpired(true);
-        }
-
         protected override void BeforeSolveInstance()
         {
             base.BeforeSolveInstance();
-
-            // Cancel a write thread if it is running
-            if (!this.writeFileThread.IsBusy) { return; }
-
-            this.writeFileThread.CancelAsync();
-            this.setOffWriting = false;
+            this.bytesWritten = 0;
         }
 
         /// <inheritdoc />
@@ -161,147 +83,46 @@ namespace CAMel.GH
                 return;
             }
 
-            this._saveCode = procMI.writeCode();
+            CodeInfo saveCode = procMI.writeCode();
 
             // Detect Errors and warnings
             da.SetData(2, "");
             string warn = "";
 
-            if (this._saveCode.hasErrors(ignore))
+            if (saveCode.hasErrors(ignore))
             {
-                string error = this._saveCode.getErrors(ignore);
+                string error = saveCode.getErrors(ignore);
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error);
                 da.SetData(2, error + warn);
                 return;
             }
 
-            da.SetData(0, this._saveCode.ToString());
-            da.SetData(1, this._saveCode.getRangesString());
+            da.SetData(0, saveCode.ToString());
+            da.SetData(1, saveCode.getRangesString());
 
-            if (this._saveCode.hasWarnings(ignore))
+            if (saveCode.hasWarnings(ignore))
             {
-                warn = this._saveCode.getWarnings(ignore);
+                warn = saveCode.getWarnings(ignore);
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warn);
                 da.SetData(2, warn);
             }
             string fPath = string.Empty;
+
             // Write Code to file
-            if (da.GetData(2, ref fPath) && fPath != string.Empty)
+            if (da.GetData(2, ref fPath) && !string.IsNullOrEmpty(fPath))
             {
                 fPath = Path.GetDirectoryName(fPath) ?? string.Empty;
                 string filePath = fPath;
-                if (filePath != null)
-                { fPath = Path.Combine(filePath, mI.name + "." + this.extension); }
+                fPath = Path.Combine(filePath, mI.name + "." + mI.mach.extension);
                 if (File.Exists(fPath)) { File.Delete(fPath); }
                 using (StreamWriter sW = new StreamWriter(fPath))
                 {
-                    for (int i = 0; i < this._saveCode.Length; i += 40000)
-                    {
-                        sW.Write(this._saveCode.ToString(i, 40000));
-                    }
+                    for (int i = 0; i < saveCode.Length; i += 40000)
+                    { sW.Write(saveCode.ToString(i, 40000)); }
                 }
-                // Turn off backgrounder until it can be fired for multiple file writes
-                /*this._filePath = Path.GetDirectoryName(this._filePath) ?? string.Empty;
-                string filePath = this._filePath;
-                if (filePath != null)
-                { this._filePath = Path.Combine(filePath, mI.name + "." + this.extension); }
-
-                // queue up file write
-                if (!this.writeFileThread.IsBusy)
-                {
-                    this.writeFileThread.RunWorkerAsync();
-                }
-                else
-                {
-                    this.setOffWriting = true;
-                }
-                */
-            }
-            else
-            {
-                this.ws = WriteState.NoPath;
-                this.writeProgress = 0;
-                OnDisplayExpired(true);
-            }
-
-            }
-        private void bwWriteFile([NotNull] object sender, [NotNull] DoWorkEventArgs e)
-        {
-            if (sender == null || e == null) { throw new ArgumentNullException(); }
-            BackgroundWorker bW = (BackgroundWorker)sender;
-
-            const int saveBlockSize = 40000;
-            if (this._saveCode == null) { return;}
-            lock (this._saveCode)
-            {
-                this.ws = WriteState.Writing;
-
-                if(File.Exists(this._filePath)) { File.Delete(this._filePath); }
-
-                bW.ReportProgress(0);
-
-                using (StreamWriter sW = new StreamWriter(this._filePath))
-                {
-                    for (int i = 0; i < this._saveCode.Length; i += saveBlockSize)
-                    {
-                        if (bW.CancellationPending)
-                        {
-                            e.Cancel = true;
-                            break;
-                        }
-                        sW.Write(this._saveCode.ToString(i, saveBlockSize));
-                        bW.ReportProgress((int)Math.Floor(100.0 * i / this._saveCode.Length));
-                    }
-                }
-            }
-        }
-
-        private void bwCompletedFileWrite([NotNull] object sender, [NotNull] RunWorkerCompletedEventArgs e)
-        {
-            if (sender == null || e == null) { throw new ArgumentNullException(); }
-            if (e.Cancelled)
-            {
-                cancelWrite();
-            } else
-            {
-                finishWrite();
-            }
-            // Restart writing if asked.
-            if (!this.setOffWriting) { return; }
-
-            this.setOffWriting = false;
-            this.writeFileThread.RunWorkerAsync();
-        }
-
-        private void cancelWrite()
-        {
-            File.Delete(this._filePath);
-            this.ws = WriteState.Cancelled;
-            this.writeProgress = 0;
-            OnDisplayExpired(true);
-        }
-
-        private void finishWrite()
-        {
-            this.ws = WriteState.Finished;
-            this.writeProgress = 1;
-            long fileSize = 0;
-            FileInfo file = new FileInfo(this._filePath);
-            if (file.Exists) { fileSize = file.Length; }
-            ((WriteCodeAttributes) this.Attributes)?.setFileSize(fileSize);
-            //this.OnDisplayExpired(true);
-        }
-
-        private void bwProgressWithFile([NotNull] object sender, [NotNull] ProgressChangedEventArgs e)
-        {
-            if (sender == null || e == null) { throw new ArgumentNullException(); }
-            updateWriteProgress(e.ProgressPercentage / 100.0);
-        }
-
-        private void updateWriteProgress(double progress)
-        {
-            this.writeProgress = progress;
-            //this.OnDisplayExpired(true);
+                FileInfo file = new FileInfo(fPath);
+                if (file.Exists) { this.bytesWritten += file.Length; }
+            } else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No path given. ");}
         }
 
         /// <inheritdoc />
