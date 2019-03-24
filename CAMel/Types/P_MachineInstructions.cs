@@ -113,6 +113,8 @@ namespace CAMel.Types
             // process and validate all Operations
             foreach (MachineOperation mO in this) { valid.Add(mO.processAdditions(this.mach, ref validTP)); }
 
+            valid.startPath.additions = new ToolPathAdditions();
+
             // If the start path has no points add the first point of the processed points
             if (valid.startPath.Count == 0)
             {
@@ -122,6 +124,7 @@ namespace CAMel.Types
 
             // validate endPath, validTP will have the most recent information
              valid.endPath.validate(validTP, this.mach);
+             valid.endPath.additions = new ToolPathAdditions();
             // if we need a point add the last point of the processed paths.
             if (valid.endPath.Count != 0) { return valid; }
 
