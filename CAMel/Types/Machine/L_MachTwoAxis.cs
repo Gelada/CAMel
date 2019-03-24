@@ -8,6 +8,7 @@ namespace CAMel.Types.Machine
     public class TwoAxisFactory
     {
         [NotNull] public string name { get; set; }
+        [NotNull] public string extension { get; set; }
         public double pathJump { get; set; }
         [NotNull] public string sectionBreak { get; set; }
         [NotNull] public string speedChangeCommand { get; set; }
@@ -25,6 +26,7 @@ namespace CAMel.Types.Machine
         public TwoAxisFactory()
         {
             this.name = string.Empty;
+            this.extension = GCode.DefaultExtension;
             this.header = string.Empty;
             this.footer = string.Empty;
             this.pathJump = 100;
@@ -43,6 +45,7 @@ namespace CAMel.Types.Machine
         public TwoAxisFactory([NotNull] TwoAxis ta)
         {
             this.name = ta.name;
+            this.extension = ta.extension;
             this.header = ta.header;
             this.footer = ta.footer;
             this.pathJump = ta.pathJump;
@@ -63,6 +66,7 @@ namespace CAMel.Types.Machine
     public class TwoAxis : IGCodeMachine
     {
         public string name { get; }
+        public string extension { get; }
         public double pathJump { get;}
         public bool toolLengthCompensation { get; }
         public string sectionBreak { get; }
@@ -84,6 +88,7 @@ namespace CAMel.Types.Machine
         public TwoAxis([NotNull] TwoAxisFactory ta)
         {
             this.name = ta.name;
+            this.extension = ta.extension;
             this.header = ta.header;
             this.footer = ta.footer;
             this.pathJump = ta.pathJump;

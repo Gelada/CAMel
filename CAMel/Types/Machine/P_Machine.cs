@@ -26,6 +26,8 @@ namespace CAMel.Types.Machine
         [NotNull] List<MaterialTool> mTs { get; } // list of Material Tools used by machine
 
         // Writing and reading code
+        [NotNull] string extension { get;  }
+
         [NotNull] string comment([NotNull] string l);
         [NotNull] string lineNumber([NotNull] string l, int line);
 

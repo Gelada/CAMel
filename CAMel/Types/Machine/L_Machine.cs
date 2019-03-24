@@ -788,6 +788,7 @@ namespace CAMel.Types.Machine
         [NotNull] internal const string DefaultDeActivateCommand = "M62";
         [NotNull] internal const string DefaultFileStart = "";
         [NotNull] internal const string DefaultFileEnd = "";
+        [NotNull] internal const string DefaultExtension = "nc";
 
         // Formatting structure for GCode
 

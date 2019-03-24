@@ -16,6 +16,8 @@ namespace CAMel.Types.Machine
         //public string commentEnd { get; }
         public List<MaterialTool> mTs { get; }
 
+        public string extension => "omx";
+
         private double tiltMax { get; }
         public bool toolLengthCompensation { get; }
         //TODO

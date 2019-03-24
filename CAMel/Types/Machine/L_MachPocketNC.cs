@@ -31,6 +31,8 @@ namespace CAMel.Types.Machine
 
         public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
+        public string extension => "ngc";
+
         public PocketNC([NotNull] string name, [NotNull] string header, [NotNull] string footer, Vector3d pivot, double aMin, double aMax, double bMax, bool tLc, double pathJump, [NotNull] List<MaterialTool> mTs)
         {
             this.name = name;

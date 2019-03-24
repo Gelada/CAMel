@@ -49,6 +49,7 @@ namespace CAMel.GH
             // ReSharper disable once PossibleNullReferenceException
             pManager[6].Optional = true;
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
+            pManager.AddTextParameter("Extension", "E", "Filename extension", GH_ParamAccess.item, GCode.DefaultExtension);
         }
 
         /// <inheritdoc />
@@ -70,11 +71,13 @@ namespace CAMel.GH
             if (da == null) { throw new ArgumentNullException(); }
 
             string uName = string.Empty;
+            string ext = String.Empty;
             string head = string.Empty;
             string foot = string.Empty;
             double pj = 0;
 
             if (!da.GetData(0, ref uName)) { return; }
+            if (!da.GetData(8, ref ext)) { return; }
             if (!da.GetData(7, ref pj)) { return; }
             if (!da.GetData(2, ref head)) { return; }
             if (!da.GetData(3, ref foot)) { return; }
@@ -107,6 +110,7 @@ namespace CAMel.GH
             TwoAxisFactory twoAxis = new TwoAxisFactory
             {
                 name = uName,
+                extension = ext,
                 mTs = uMTs,
                 header = head,
                 footer = foot,
