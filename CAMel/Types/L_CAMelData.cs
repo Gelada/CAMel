@@ -47,15 +47,15 @@ namespace CAMel.Types
         }
         public static void setKey([CanBeNull] this CommonObject ro, double key) => ro?.UserDictionary?.Set(_KeyN, key);
 
-        public static bool getSide([CanBeNull] this CommonObject ro)
+        public static double getSide([CanBeNull] this CommonObject ro)
         {
             if (ro?.UserDictionary != null &&
-                ro.UserDictionary.TryGetBool(_SideN, out bool inSide))
-            { return inSide; }
-            return true;
+                ro.UserDictionary.TryGetDouble(_SideN, out double side))
+            { return side; }
+            return 0;
         }
 
-        public static void setSide([CanBeNull] this CommonObject ro, bool value) =>
+        public static void setSide([CanBeNull] this CommonObject ro, double value) =>
             ro?.UserDictionary?.Set(_SideN, value);
 
         public static double getNewSeam([CanBeNull] this CommonObject ro)
