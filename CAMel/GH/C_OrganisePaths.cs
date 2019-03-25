@@ -7,7 +7,6 @@ using CAMel.Types;
 using GH_IO.Serialization;
 using Grasshopper;
 using Grasshopper.Kernel;
-using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using JetBrains.Annotations;
@@ -25,9 +24,9 @@ namespace CAMel.GH
     {
         private class AugCurve
         {
-            internal Curve c { get; set; }
+            [NotNull] internal Curve c { get; }
             internal double key { get; set; }
-            internal Guid id { get; set; }
+            internal Guid id { get; }
             internal double side { get; set; }
 
             internal AugCurve([NotNull] Curve c, Guid id)
@@ -257,11 +256,9 @@ namespace CAMel.GH
                                     double t = getSeam(c.c);
                                     c.c.setNewSeam(t);
                                     c.side = side;
-                                    if (cC != counterClock.CurrentValue)
-                                    {
-                                        c.c.Reverse();
-                                        c.side = -c.side;
-                                    }
+                                    if (cC == counterClock.CurrentValue) { return true; }
+                                    c.c.Reverse();
+                                    c.side = -c.side;
                                     return true;
                                 case "Side":
                                     switch (gi.Option()?.CurrentListOptionIndex)
@@ -280,16 +277,14 @@ namespace CAMel.GH
                             }
                             continue;
                         }
-                        if (getR == GetResult.Number || getR == GetResult.Nothing)
+                        if (getR != GetResult.Number && getR != GetResult.Nothing) { return true; }
+                        c.side = side;
+                        if (cC != counterClock.CurrentValue)
                         {
-                            c.side = side;
-                            if (cC != counterClock.CurrentValue)
-                            {
-                                c.c.Reverse();
-                                c.side = -c.side;
-                            }
-                            reOrder(c, clicked, gi.Number());
+                            c.c.Reverse();
+                            c.side = -c.side;
                         }
+                        reOrder(c, clicked, gi.Number());
                         return true;
                     }
                 }
@@ -320,16 +315,14 @@ namespace CAMel.GH
                         }
                         continue;
                     }
-                    if (getR == GetResult.Number || getR == GetResult.Nothing)
+                    if (getR != GetResult.Number && getR != GetResult.Nothing) { return true; }
+                    c.side = side;
+                    if (flip.CurrentValue)
                     {
-                        c.side = side;
-                        if (flip.CurrentValue)
-                        {
-                            c.c.Reverse();
-                            c.side = -c.side;
-                        }
-                        reOrder(c, clicked, gi.Number());
+                        c.c.Reverse();
+                        c.side = -c.side;
                     }
+                    reOrder(c, clicked, gi.Number());
                     return true;
                 }
             }
@@ -346,10 +339,10 @@ namespace CAMel.GH
                     switch (gi.Option()?.EnglishName)
                     {
                         case "Side":
-                            side = gi.Option().CurrentListOptionIndex;
+                            side = gi.Option()?.CurrentListOptionIndex ?? 0;
                             break;
                         case "Direction":
-                            direction = gi.Option().CurrentListOptionIndex;
+                            direction = gi.Option()?.CurrentListOptionIndex ?? 0;
                             break;
                     }
                     continue;
@@ -359,6 +352,7 @@ namespace CAMel.GH
                     foreach (int i in sel)
                     {
                         AugCurve c = this._curves[i];
+                        if (c == null) { break;}
                         switch (side)
                         {
                             case 1:
@@ -430,7 +424,7 @@ namespace CAMel.GH
             c.key = newKey;
         }
 
-        private void reOrder([NotNull] List<int> sel, int newPos)
+        private void reOrder([NotNull] IList<int> sel, int newPos)
         {
             if (sel.Count == 1 && sel[0] == newPos) { return; }
             Interval newKeys;
@@ -453,7 +447,7 @@ namespace CAMel.GH
             }
         }
 
-        private double getSeam([NotNull] Curve c)
+        private static double getSeam([NotNull] Curve c)
         {
             GetPoint gp = new GetPoint();
             gp.SetCommandPrompt("Set new seam");
@@ -465,7 +459,7 @@ namespace CAMel.GH
         }
 
         [NotNull]
-        private GetInteger setUp(int i)
+        private static GetInteger setUp(int i)
         {
             GetInteger gi = new GetInteger();
             gi.SetCommandPrompt("Reorder path");
@@ -476,7 +470,7 @@ namespace CAMel.GH
         }
 
         [NotNull]
-        private GetInteger getClosed(int i, bool cC, double side, out OptionToggle counterClock)
+        private static GetInteger getClosed(int i, bool cC, double side, out OptionToggle counterClock)
         {
             GetInteger gi = setUp(i);
             counterClock = new OptionToggle(cC, "Clockwise", "CounterClockwise");
@@ -492,7 +486,7 @@ namespace CAMel.GH
         }
 
         [NotNull]
-        private GetInteger getOpen(int i, double side, out OptionToggle flip)
+        private static GetInteger getOpen(int i, double side, out OptionToggle flip)
         {
             GetInteger gi = setUp(i);
             flip = new OptionToggle(false, "Leave", "Flip");
@@ -507,7 +501,7 @@ namespace CAMel.GH
         }
 
         [NotNull]
-        private GetInteger getMultiple(int i)
+        private static GetInteger getMultiple(int i)
         {
             GetInteger gi = setUp(i);
             gi.ClearDefault();
@@ -531,10 +525,10 @@ namespace CAMel.GH
 
                 // Save side and key information
                 ro?.Attributes.setSide(c.side);
-                ro?.Attributes.setKey(c.key);
+                ro.setKey(c.key);
 
                 // Check for curve direction and seam
-                if (ro is CurveObject co && c != null && co.CurveGeometry != null)
+                if (ro is CurveObject co && co.CurveGeometry != null)
                 {
                     if (co.CurveGeometry.IsClosed && c.c.IsClosed)
                     {

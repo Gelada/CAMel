@@ -456,6 +456,7 @@ namespace CAMel.Types.Machine
         public static ToolPath leadInOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
+            if (tP.firstP == null || tP.lastP == null) { return tP;}
             double leadCurve = tP.additions.leadCurvature;
 
             ToolPath newTP = tP.deepClone();
@@ -470,7 +471,7 @@ namespace CAMel.Types.Machine
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return newTP; }
 
             PolylineCurve toolL = tP.getLine();
-            double wiggle = .1;
+            const double wiggle = .1;
             if (tP.additions.insert)
             {
                 double r = Math.PI / 2.0-wiggle;

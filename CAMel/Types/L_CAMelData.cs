@@ -28,15 +28,6 @@ namespace CAMel.Types
             return double.NaN;
         }
 
-        public static double getKey([CanBeNull] this CommonObject ro)
-        {
-            if (ro?.UserDictionary != null &&
-                ro.UserDictionary.TryGetDouble(_KeyN, out double key))
-            { return key; }
-
-            return double.NaN;
-        }
-
         public static void setKey([CanBeNull] this RhinoObject ro, double key)
         {
             if (ro?.Attributes?.UserDictionary == null) { return; }
@@ -45,8 +36,6 @@ namespace CAMel.Types
             ro.Attributes.UserDictionary.Set(_GuidN, ro.Id);
             ro.CommitChanges();
         }
-        public static void setKey([CanBeNull] this CommonObject ro, double key) => ro?.UserDictionary?.Set(_KeyN, key);
-
         public static double getSide([CanBeNull] this CommonObject ro)
         {
             if (ro?.UserDictionary != null &&

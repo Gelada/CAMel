@@ -82,7 +82,7 @@ namespace CAMel.GH
 
             List<MachineOperation> mo = MachineOperation.toOperations(CAMel_Goo.cleanGooList(tempMo), out int ignores);
 
-            MachineInstruction mi = null;
+            MachineInstruction mi;
 
             if (mo.Count > 0)
             {
@@ -94,7 +94,7 @@ namespace CAMel.GH
                 ToolPath endP = ToolPath.toPath(cleanEP);
                 foreach (ToolPoint tPt in endP) { tPt.feed = 0; }
 
-                string uName = makeName(name, da);
+                string uName = makeName(name);
 
                 mi = new MachineInstruction(uName, m, mo, startP, endP);
                 if (ignores > 1)
@@ -112,18 +112,15 @@ namespace CAMel.GH
         }
 
         [NotNullAttribute]
-        private string makeName([NotNull] string name, [NotNull] IGH_DataAccess da)
+        private string makeName([NotNull] string name)
         {
-            string path = "";
 
             // Deal with tree coming in if there is one name
             // otherwise assume something sensible is happening
-            if (this.Params?.Input?[1]?.VolatileData?.PathCount > 1 &&
-                this.Params?.Input?[0]?.VolatileDataCount == 1)
-            {
-                path = " " + this._nameCount;
-                this._nameCount++;
-            }
+            if (!(this.Params?.Input?[1]?.VolatileData?.PathCount > 1) || this.Params?.Input?[0]?.VolatileDataCount != 1
+            ) { return name; }
+            string path = " " + this._nameCount;
+            this._nameCount++;
             return name + path;
         }
 

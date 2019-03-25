@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using JetBrains.Annotations;
@@ -159,8 +160,6 @@ namespace CAMel.Types.Machine
 
         public void writeCode(ref CodeInfo co, ToolPath tP)
         {
-            // Double check tP does not have additions.
-
             if (tP.Count <= 0) { return; }
             if (tP.matTool == null) { Exceptions.matToolException(); }
 
@@ -265,14 +264,12 @@ namespace CAMel.Types.Machine
             move.postCode = string.Empty;
             move.additions.activate = 0;
 
-            // add new point at speed 0 to describe rapid move.
-            move.Add(fP.lastP.deepClone());
-            Vector3d dir = tP.firstP.pt - fP.lastP.pt;
-            dir.Unitize();
-            move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0));
+            // if needed add new point at speed 0 to describe rapid move.
+            if(co.machineState["Q"] != 0 && co.machineState["Q"] != 10)
+            { move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0)); }
+
             move.Add(new ToolPoint((2 * fP.lastP.pt + tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
             move.Add(new ToolPoint((fP.lastP.pt + 2 * tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
-
 
             writeCode(ref co, move);
         }
@@ -317,13 +314,13 @@ namespace CAMel.Types.Machine
             gPtBd.Append("0, "); // tiltStart
             gPtBd.Append("0, "); // tiltEnd
             gPtBd.Append(bow.ToString("0.0000") + ", ");
-            int uQual = Math.Abs(quality);
-            if (quality == 21) { uQual = 1; }
-            if (quality == 22) { uQual = 2; }
-            if (quality == 23) { uQual = 3; }
-            if (quality == 24) { uQual = 4; }
-            if (quality == 25) { uQual = 5; }
-            gPtBd.Append(Math.Abs(uQual) + ", ");
+            int uQuality = Math.Abs(quality);
+            if (quality == 21) { uQuality = 1; }
+            if (quality == 22) { uQuality = 2; }
+            if (quality == 23) { uQuality = 3; }
+            if (quality == 24) { uQuality = 4; }
+            if (quality == 25) { uQuality = 5; }
+            gPtBd.Append(Math.Abs(uQuality) + ", ");
 
             int offset;
             switch (quality)
@@ -387,7 +384,7 @@ namespace CAMel.Types.Machine
                 "This is an OMAX (.OMX) file.  Do not modify the first 2 lines of this file. For information on this file format contact softwareengineering@omax.com or visit http://www.omax.com.");
             co.append("2"); // file format
             co.append("3"); // format version
-            co.append(thisDay.ToOADate().ToString()); // date
+            co.append(thisDay.ToOADate().ToString(CultureInfo.InvariantCulture)); // date
             co.append("[Reserved]");
             co.append("[Reserved]");
             co.append("[Reserved]");
@@ -409,6 +406,7 @@ namespace CAMel.Types.Machine
         {
             m.writeTransition(ref co, finalPath, endPath, true);
             ToolPath uEndPath = endPath.deepClone();
+            if (uEndPath.lastP == null) { return; }
             uEndPath.Add(uEndPath.lastP.deepClone());
             m.writeCode(ref co, uEndPath);
         }

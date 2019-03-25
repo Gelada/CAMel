@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Drawing;
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Attributes;
@@ -14,7 +13,8 @@ namespace CAMel.GH
         {
         }
 
-        [NotNull] public string totalFiles(long l)
+        [NotNull]
+        private static string totalFiles(long l)
         {
             double lMB = l / 1000000.0; // Use smallest MB possibility so numbers are not larger.
             if (l == 0) { return "Nothing Written";}
@@ -45,7 +45,6 @@ namespace CAMel.GH
 
             if (channel != GH_CanvasChannel.Objects) { return; }
 
-            Rectangle progressPercent = this.progressBounds;
             if(this.Owner == null) { return;}
 
             string message = totalFiles(((C_WriteCode)this.Owner).bytesWritten);

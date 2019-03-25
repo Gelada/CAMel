@@ -71,7 +71,7 @@ namespace CAMel.GH
             if (da == null) { throw new ArgumentNullException(); }
 
             string uName = string.Empty;
-            string ext = String.Empty;
+            string ext = string.Empty;
             string head = string.Empty;
             string foot = string.Empty;
             double pj = 0;
