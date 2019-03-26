@@ -18,12 +18,16 @@ namespace CAMel.Types
             Plane p = new Plane(Point3d.Origin, d);
             if(c.IsPlanar(_PlaneTolerance)) {  c.TryGetPlane(out p, _PlaneTolerance);}
             c.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
+            double uOS = oS;
             bool reversed = false;
             // ensure the curve is anticlockwise
-            if (Math.Abs(oS) > CAMel_Goo.Tolerance)
+            if (Math.Abs(uOS) > CAMel_Goo.Tolerance)
             {
                 if (c.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
-                { c.Reverse(); reversed = true; }
+                {
+                    c.Reverse(); reversed = true;
+                    uOS = -uOS;
+                }
             }
 
             // record the average Z location of the curve
@@ -35,10 +39,10 @@ namespace CAMel.Types
 
             // offSet
             List<PolylineCurve> osC = new List<PolylineCurve>();
-            if (Math.Abs(oS) < CAMel_Goo.Tolerance) { osC.Add(pl); }
-            else { osC = Offsetting.offset(pl, oS * mT.toolWidth / 2.0); }
+            if (Math.Abs(uOS) < CAMel_Goo.Tolerance) { osC.Add(pl); }
+            else { osC = Offsetting.offset(pl, uOS * mT.toolWidth / 2.0); }
 
-            if (Math.Abs(oS) > CAMel_Goo.Tolerance && !reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
+            if (Math.Abs(uOS) > CAMel_Goo.Tolerance && !reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
 
             // create Operation
 
