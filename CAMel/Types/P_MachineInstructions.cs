@@ -15,14 +15,14 @@ namespace CAMel.Types
     public class MachineInstruction : IList<MachineOperation>, IToolPointContainer
     {
         [ItemNotNull] [NotNull] private List<MachineOperation> _mOs;
-        [NotNull] public ToolPath startPath { get; set; }
-        [NotNull] public ToolPath endPath { get; set; }
+        [PublicAPI] [NotNull] public ToolPath startPath { get; set; }
+        [PublicAPI] [NotNull] public ToolPath endPath { get; set; }
 
         public string name { get; set; }
         public string preCode { get; set; }
         public string postCode { get; set; }
 
-        [NotNull] public IMachine mach { get; set; }
+        [PublicAPI] [NotNull] public IMachine mach { get; set; }
 
         public ToolPoint firstP => this.First(a => a?.firstP != null)?.firstP;
         public ToolPoint lastP => this.Last(a => a?.lastP != null)?.lastP;

@@ -46,7 +46,7 @@ namespace CAMel.GH
         [UsedImplicitly] private readonly PathClick _click;
         private GH_Document _doc;
 
-        [NotNull] private List<AugCurve> _curves;
+        [ItemNotNull] [NotNull] private List<AugCurve> _curves;
         [NotNull] private SortedSet<double> _allKeys;
 
         /// <inheritdoc />
@@ -218,7 +218,6 @@ namespace CAMel.GH
             for (int i = 0; i < this._curves.Count; i++)
             {
                 AugCurve c = this._curves[i];
-                if (c == null) { continue; }
                 RhinoObject ro = uDoc.Objects.Find(c.id);
                 if ((ro?.IsSelected(true) ?? 0) > 0) { sel.Add(i); }
 
@@ -239,7 +238,6 @@ namespace CAMel.GH
             if (sel.Count <= 1 || !sel.Contains(clicked))
             {
                 AugCurve c = this._curves[clicked];
-                if (c == null) { return false; }
                 side = c.side;
                 if (c.c.IsClosed)
                 {
@@ -352,7 +350,6 @@ namespace CAMel.GH
                     foreach (int i in sel)
                     {
                         AugCurve c = this._curves[i];
-                        if (c == null) { break;}
                         switch (side)
                         {
                             case 1:
@@ -414,7 +411,7 @@ namespace CAMel.GH
             {
                 int uPos = newPos;
                 if (newPos - 1 > i) { uPos++; }
-                double aboveKey = this._curves[uPos - 1]?.key ?? double.NaN;
+                double aboveKey = this._curves[uPos - 1].key;
                 double belowKey = this._allKeys
                     .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
                 newKey = (aboveKey + belowKey) / 2.0;
@@ -434,7 +431,7 @@ namespace CAMel.GH
             else if (uPos > this._curves.Count) { newKeys = new Interval(this._allKeys.Max, this._allKeys.Max + sel.Count + 1); }
             else
             {
-                double aboveKey = this._curves[uPos]?.key ?? double.NaN;
+                double aboveKey = this._curves[uPos].key;
                 double belowKey = this._allKeys
                     .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
                 newKeys = new Interval(belowKey, aboveKey);

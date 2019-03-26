@@ -231,7 +231,7 @@ namespace CAMel.Types.Machine
             co.machineState.Add("dY", fPt.dir.Y);
             co.machineState.Add("dZ", fPt.dir.Z);
             co.machineState.Add("Q", startPath.additions.activate);
-            if (co.machineState["Q"] == 0) { co.machineState["Q"] = 10; }
+            if ((int)co.machineState["Q"] == 0) { co.machineState["Q"] = 10; }
 
             OMXCode.omxInstStart(this, ref co, mI, startPath);
         }
@@ -265,7 +265,7 @@ namespace CAMel.Types.Machine
             move.additions.activate = 0;
 
             // if needed add new point at speed 0 to describe rapid move.
-            if(co.machineState["Q"] != 0 && co.machineState["Q"] != 10)
+            if((int)co.machineState["Q"] != 0 && (int)co.machineState["Q"] != 10)
             { move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0)); }
 
             move.Add(new ToolPoint((2 * fP.lastP.pt + tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
