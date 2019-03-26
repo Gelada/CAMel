@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 using GH_IO.Serialization;
+using GH_IO.Types;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using JetBrains.Annotations;
+using Rhino.Geometry;
 
 namespace CAMel.Types
 {
@@ -17,6 +20,7 @@ namespace CAMel.Types
         public bool insert { get; set; }
         public bool retract { get; set; }
         public int activate { get; set; }
+        public Vector3d offset { get; set; } // offset plane(normal to vector and amount on the right when turning clockwise.
         public bool stepDown { get; set; }
         public bool sdDropStart { get; set; }    // How stepdown will deal with
         public double sdDropMiddle { get; set; } // points that have reached
@@ -28,18 +32,19 @@ namespace CAMel.Types
         public double leadCurvature { get; set; }   // if leading in or out what factor of standard value to use
 
         // Adding anything here needs significant support:
+        //  Add to Constructors
+        //  Add to defaults
         //  Add checker to .any
+        //  Add to replace
         //  Add serialization and deserialization
         //  Add to the proxy editor
-        //  Add to Constructors
-        //  Add to replace
-        //  Add to default.
 
         public ToolPathAdditions() // create the empty addition
         {
             this._replaceable = false;
             this.insert = false;
             this.retract = false;
+            this.offset = new Vector3d(0,0,0);
             this.activate = 0;
             this.stepDown = false;
             this.sdDropStart = false;
@@ -56,6 +61,7 @@ namespace CAMel.Types
             this._replaceable = tPa._replaceable;
             this.insert = tPa.insert;
             this.retract = tPa.retract;
+            this.offset = new Vector3d(0, 0, 0);
             this.activate = tPa.activate;
             this.stepDown = tPa.stepDown;
             this.sdDropStart = tPa.sdDropStart;
@@ -77,6 +83,7 @@ namespace CAMel.Types
             _replaceable = false,
             insert = true,
             retract = true,
+            offset = new Vector3d(0, 0, 0),
             activate = 0,
             stepDown = true,
             sdDropStart = true,
@@ -94,6 +101,7 @@ namespace CAMel.Types
             _replaceable = false,
             insert = true,
             retract = true,
+            offset = new Vector3d(0, 0, 0),
             activate = 1,
             stepDown = false,
             sdDropStart = true,
@@ -111,6 +119,7 @@ namespace CAMel.Types
             _replaceable = true,
             insert = false,
             retract = false,
+            offset = new Vector3d(0, 0, 0),
             activate = 0,
             stepDown = false,
             sdDropStart = true,
@@ -125,6 +134,7 @@ namespace CAMel.Types
         public bool any =>
             this.insert ||
             this.retract ||
+            this.offset.Length > 0 ||
             this.activate != 0 ||
             this.stepDown ||
             this.threeAxisHeightOffset ||
@@ -147,6 +157,7 @@ namespace CAMel.Types
             this._replaceable = tPa._replaceable;
             this.insert = tPa.insert;
             this.retract = tPa.retract;
+            this.offset = tPa.offset;
             this.activate = tPa.activate;
             this.stepDown = tPa.stepDown;
             this.sdDropStart = tPa.sdDropStart;
@@ -186,6 +197,7 @@ namespace CAMel.Types
             writer.SetBoolean("insert", this.Value.insert);
             writer.SetBoolean("retract", this.Value.retract);
             writer.SetInt32("activate", this.Value.activate);
+            writer.SetPoint3D("offset", new GH_Point3D(this.Value.offset.X, this.Value.offset.Y, this.Value.offset.Z));
             writer.SetBoolean("stepDown", this.Value.stepDown);
             writer.SetBoolean("sdDropStart", this.Value.sdDropStart);
             writer.SetDouble("sdDropMiddle", this.Value.sdDropMiddle);
@@ -209,6 +221,11 @@ namespace CAMel.Types
                 ToolPathAdditions tPa = new ToolPathAdditions();
                 if (reader.ItemExists("insert")) { tPa.insert = reader.GetBoolean("insert"); }
                 if (reader.ItemExists("retract")) { tPa.retract = reader.GetBoolean("retract"); }
+                if (reader.ItemExists("offset"))
+                {
+                    GH_Point3D pt = reader.GetPoint3D("offset");
+                    tPa.offset = new Vector3d(pt.x,pt.y,pt.z);
+                }
                 if (reader.ItemExists("activate")) { tPa.activate = reader.GetInt32("activate"); }
                 if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetBoolean("stepDown"); }
                 if (reader.ItemExists("sdDropStart")) { tPa.sdDropStart = reader.GetBoolean("sdDropStart"); }
@@ -357,6 +374,29 @@ namespace CAMel.Types
                 if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.activate = value;
+                this.Owner.Value = tPa;
+            }
+        }
+        [Category(" General"), Description("Offset, number or vector as x, y, z. The number offsets right or left on XY plane. For vector, length gives the amount on right,going anticlockwise on the perpendicular plane. "), DisplayName(" Activate/Quality"), RefreshProperties(RefreshProperties.All)]
+        [UsedImplicitly, NotNull]
+        public string offset
+        {
+            get
+            {
+                Vector3d os = this.Owner?.Value?.offset ?? ToolPathAdditions.basicDefault.offset;
+                if (os.IsParallelTo(Vector3d.ZAxis, 0.0001)!= 0) { return (os * Vector3d.ZAxis).ToString(CultureInfo.InvariantCulture); }
+                return os.X + ", "  + os.Y +", "+  os.Z;
+            }
+            set
+            {
+                if (this.Owner == null) { return; }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
+                ToolPathAdditions tPa = this.Owner.Value;
+                Vector3d os = tPa.offset;
+                string[] split = value.Split(',');
+                if(split.Length == 1 && double.TryParse(split[0], out double val)) { os = val*Vector3d.ZAxis;}
+                else if (split.Length == 3 && double.TryParse(split[0], out double x) && double.TryParse(split[1], out double y) && double.TryParse(split[2], out double z)) { os = new Vector3d(x,y,z);}
+                tPa.offset = os;
                 this.Owner.Value = tPa;
             }
         }
