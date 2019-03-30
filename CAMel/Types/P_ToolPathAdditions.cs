@@ -335,8 +335,8 @@ namespace CAMel.Types
         public GH_ToolPathAdditionsProxy([CanBeNull] GH_ToolPathAdditions obj) : base(obj)
         { }
 
-        [Category(" General"), Description("Add an insert to the start of the toolpath to beging cutting. "),DisplayName(" Insert"), RefreshProperties(RefreshProperties.All)]
-        [UsedImplicitly]
+        [Category(" General"), Description("Add an insert to the start of the toolpath to beging cutting. "),
+         DisplayName(" Insert"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public bool insert
         {
             get => this.Owner?.Value?.insert ?? ToolPathAdditions.basicDefault.insert;
@@ -349,6 +349,7 @@ namespace CAMel.Types
                 this.Owner.Value = tPa;
             }
         }
+
         [Category(" General"), Description("Add a retract to the end of the toolpath to finish cutting. "), DisplayName(" Retract"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly]
         public bool retract
