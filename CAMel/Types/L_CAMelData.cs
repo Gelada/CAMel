@@ -2,12 +2,6 @@
 using JetBrains.Annotations;
 using Rhino.DocObjects;
 using Rhino.Runtime;
-//using System.Runtime.InteropServices;
-
-//using Rhino.DocObjects.Custom;
-
-//using Rhino.Collections;
-//using Rhino.FileIO;
 
 namespace CAMel.Types
 {
@@ -55,7 +49,7 @@ namespace CAMel.Types
             return double.NaN;
         }
 
-        public static void setNewSeam([CanBeNull] this CommonObject ro,double value) =>
+        public static void setNewSeam([CanBeNull] this CommonObject ro, double value) =>
             ro?.UserDictionary?.Set(_SeamN, value);
     }
 }

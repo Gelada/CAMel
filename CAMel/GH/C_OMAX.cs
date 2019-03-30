@@ -17,9 +17,7 @@ namespace CAMel.GH
         public C_OMAX()
             : base("PocketNC Machine", "PocketNC",
                 "PocketNC 5 Axis Machine",
-                "CAMel", " Hardware")
-        {
-        }
+                "CAMel", " Hardware") { }
 
         // put this item in the second batch (Machines)
         public override GH_Exposure Exposure => GH_Exposure.secondary;
@@ -62,7 +60,7 @@ namespace CAMel.GH
             if (!da.GetData("Tilt Max", ref tiltMax)) { return; }
             da.GetDataList("Material Tools", mTs);
 
-            Omax5 m = new Omax5("OMAX machine", 0,mTs,tiltMax * Math.PI / 180.0);
+            Omax5 m = new Omax5("OMAX machine", 0, mTs, tiltMax * Math.PI / 180.0);
 
             da.SetData(0, new GH_Machine(m));
         }
@@ -73,7 +71,6 @@ namespace CAMel.GH
         /// </summary>
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.create5axis;
-
 
         /// <inheritdoc />
         /// <summary>

@@ -92,10 +92,9 @@ namespace CAMel.GH
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Curves that are not closed will not be offset.");
                 os = 0;
             }
-
-            // Note multiplication will give negative only if one is positive and the other negative.
+            
             if (Math.Abs(os) < CAMel_Goo.Tolerance) { tPa.leadCurvature = 0;}
-            if (os < 0) {tPa.leadCurvature = -tPa.leadCurvature; }
+            if (os < 0) { tPa.leadCurvature = -tPa.leadCurvature; }
             MachineOperation mO = Operations.opIndex2DCut(c, dir, os, tPa, mT, mF);
 
             da.SetData(0, new GH_MachineOperation(mO));

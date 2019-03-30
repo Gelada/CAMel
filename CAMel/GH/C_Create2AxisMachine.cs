@@ -17,9 +17,7 @@ namespace CAMel.GH
         public C_Create2AxisMachine()
             : base("Create 2 Axis Machine", "2Axis",
                 "Create 2 Axis Machine",
-                "CAMel", " Hardware")
-        {
-        }
+                "CAMel", " Hardware") { }
 
         // put this item in the second batch (Machines)
         public override GH_Exposure Exposure => GH_Exposure.secondary;
@@ -30,21 +28,22 @@ namespace CAMel.GH
         /// </summary>
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item,string.Empty);
+            pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item, string.Empty);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material Tools", "MTs", "Material Tool pairs used by the machine", GH_ParamAccess.list);
             // ReSharper disable once PossibleNullReferenceException
             pManager[1].WireDisplay = GH_ParamWireDisplay.faint;
             pManager[1].Optional = true;
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
-            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty); List<string> ccDefault = new List<string> { GCode.DefaultCommentStart, GCode.DefaultCommentEnd, GCode.DefaultSectionBreak };
-            pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list,ccDefault);
+            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
+            List<string> ccDefault = new List<string> {GCode.DefaultCommentStart, GCode.DefaultCommentEnd, GCode.DefaultSectionBreak};
+            pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list, ccDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[4].Optional = true;
-            List<string> irDefault = new List<string> { GCode.DefaultSpeedChangeCommand, GCode.DefaultActivateCommand, GCode.DefaultDeActivateCommand };
+            List<string> irDefault = new List<string> {GCode.DefaultSpeedChangeCommand, GCode.DefaultActivateCommand, GCode.DefaultDeActivateCommand};
             pManager.AddTextParameter("Speed/Insert/Retract/ToolChange", "SIRT", "Commands to change speed, insert and retract tool, and change tool", GH_ParamAccess.list, irDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[5].Optional = true;
-            List<string> fileDefault = new List<string> { GCode.DefaultFileStart, GCode.DefaultFileEnd };
+            List<string> fileDefault = new List<string> {GCode.DefaultFileStart, GCode.DefaultFileEnd};
             pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[6].Optional = true;
@@ -81,7 +80,6 @@ namespace CAMel.GH
             if (!da.GetData(7, ref pj)) { return; }
             if (!da.GetData(2, ref head)) { return; }
             if (!da.GetData(3, ref foot)) { return; }
-
 
             List<string> cc = new List<string>();
             da.GetDataList(4, cc);

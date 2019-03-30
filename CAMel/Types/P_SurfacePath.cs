@@ -17,7 +17,8 @@ namespace CAMel.Types
     // Cylindrical points towards a path along a direction
     // Spherical points towards a point
 
-    public enum SurfProj {
+    public enum SurfProj
+    {
         Parallel,
         Cylindrical,
         Spherical
@@ -30,7 +31,8 @@ namespace CAMel.Types
     // Path Tangent gives the normal to the path in the plane given by the path tangent and projection direction
     // Path Normal gives the normal to the path in the plane given by the surface tangent normal to the path and projection direction
     // Normal is surface normal
-    public enum SurfToolDir {
+    public enum SurfToolDir
+    {
         Projection,
         PathTangent,
         PathNormal,
@@ -43,8 +45,8 @@ namespace CAMel.Types
     {
         [NotNull] private readonly List<Curve> _paths; // Curves to project
         private SurfProj surfProj { get; } // Type of projection
-        private Curve cylOnto { get; }// centre line for Cylindrical projection
-        private Vector3d dir { get; }// direction for parallel projection, or line direction for cylindrical
+        private Curve cylOnto { get; } // centre line for Cylindrical projection
+        private Vector3d dir { get; } // direction for parallel projection, or line direction for cylindrical
         private Point3d cen { get; } // centre for spherical projection
         private SurfToolDir surfToolDir { get; } // method to calculate tool direction
 
@@ -78,12 +80,12 @@ namespace CAMel.Types
             this.surfToolDir = surfToolDir;
         }
 
-        public string TypeDescription =>"Path and projection information to generate a surfacing path";
+        public string TypeDescription => "Path and projection information to generate a surfacing path";
         public string TypeName => "SurfacePath";
 
         public override string ToString()
         {
-            string op= "Surfacing:";
+            string op = "Surfacing:";
             switch (this.surfProj)
             {
                 case SurfProj.Parallel:
@@ -102,7 +104,7 @@ namespace CAMel.Types
         // Different calls to Generate a Machine Operation from different surfaces
 
         [NotNull]
-        public MachineOperation generateOperation([NotNull] Brep b, double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [CanBeNull] ToolPathAdditions tPa)
+        public MachineOperation generateOperation([NotNull] Brep b, double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
             // Just convert to Mesh
             MeshingParameters mP = MeshingParameters.Smooth;
@@ -111,9 +113,9 @@ namespace CAMel.Types
             return generateOperation_(offset, mT, mF, tPa);
         }
         [NotNull]
-        public MachineOperation generateOperation([NotNull] Mesh m, double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [CanBeNull] ToolPathAdditions tPa)
+        public MachineOperation generateOperation([NotNull] Mesh m, double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
-            if(m.FaceNormals == null) { throw new ArgumentNullException(); }
+            if (m.FaceNormals == null) { throw new ArgumentNullException(); }
             m.FaceNormals.ComputeFaceNormals();
             this._m = m;
 
@@ -121,16 +123,17 @@ namespace CAMel.Types
         }
         // actual code to generate the operation
         [NotNull]
-        private MachineOperation generateOperation_(double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [CanBeNull] ToolPathAdditions tPa)
+        private MachineOperation generateOperation_(double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
-            if(this._m == null) { throw new NullReferenceException("Trying to generate a surfacing path with no mesh set. ");}
+            if (this._m == null) { throw new NullReferenceException("Trying to generate a surfacing path with no mesh set. ");
+            }
             // create unprojected toolpath (mainly to convert the curve into a list of points)
             List<ToolPath> tPs = new List<ToolPath>();
 
-            foreach(Curve p in this._paths)
+            foreach (Curve p in this._paths)
             {
                 tPs.Add(new ToolPath(string.Empty, mT, mF, tPa));
-                tPs[tPs.Count - 1]?.convertCurve(p,new Vector3d(0,0,1));
+                tPs[tPs.Count - 1]?.convertCurve(p, new Vector3d(0, 0, 1));
             }
 
             // move points onto surface storing projection direction
@@ -138,8 +141,7 @@ namespace CAMel.Types
             List<ToolPath> newTPs = new List<ToolPath>();
             List<List<Vector3d>> norms = new List<List<Vector3d>>();
 
-
-            foreach(ToolPath tP in tPs)
+            foreach (ToolPath tP in tPs)
             {
                 ConcurrentDictionary<ToolPoint, FirstIntersectResponse> intersectInfo = new ConcurrentDictionary<ToolPoint, FirstIntersectResponse>(Environment.ProcessorCount, tP.Count);
 
@@ -155,15 +157,14 @@ namespace CAMel.Types
                 ToolPath tempTP = new ToolPath(string.Empty, mT, mF, tPa);
                 List<Vector3d> tempN = new List<Vector3d>();
 
-                foreach( ToolPoint tPt in tP)
+                foreach (ToolPoint tPt in tP)
                 {
                     FirstIntersectResponse fIr = intersectInfo[tPt];
                     if (fIr.hit)
                     {
                         tempTP.Add(fIr.tP);
                         tempN.Add(fIr.norm);
-                    }
-                    else if(tempTP.Count > 0 )
+                    } else if (tempTP.Count > 0)
                     {
                         if (tempTP.Count > 1)
                         {
@@ -179,7 +180,7 @@ namespace CAMel.Types
                 norms.Add(tempN);
             }
 
-            for(int j=0;j<newTPs.Count;j++)
+            for (int j = 0; j < newTPs.Count; j++)
             {
                 for (int i = 0; i < newTPs[j]?.Count; i++)
                 {
@@ -193,17 +194,16 @@ namespace CAMel.Types
                     if (i == newTPs[j].Count - 1)
                     {
                         lookBack = 3;
-                        if( i < lookBack) { lookBack = newTPs[j].Count - 1; }
+                        if (i < lookBack) { lookBack = newTPs[j].Count - 1; }
                         lookForward = 0;
-                    }
-                    else
+                    } else
                     {
                         lookBack = Math.Min(i, 2);
-                        lookForward = 3-lookBack;
-                        if(lookForward + i >= newTPs[j].Count) { lookForward = newTPs[j].Count - i - 1; }
+                        lookForward = 3 - lookBack;
+                        if (lookForward + i >= newTPs[j].Count) { lookForward = newTPs[j].Count - i - 1; }
                     }
 
-                    Vector3d tangent = newTPs[j][i+lookForward].pt - newTPs[j][i - lookBack].pt;
+                    Vector3d tangent = newTPs[j][i + lookForward].pt - newTPs[j][i - lookBack].pt;
                     switch (this.surfToolDir)
                     {
                         case SurfToolDir.Projection: // already set
@@ -236,7 +236,7 @@ namespace CAMel.Types
 
                     // Move to offset using normal
 
-                    newTPs[j][i].pt = newTPs[j][i].pt + offset*norms[j][i];
+                    newTPs[j][i].pt = newTPs[j][i].pt + offset * norms[j][i];
                 }
             }
 
@@ -280,7 +280,8 @@ namespace CAMel.Types
             return fIr;
         }
         // Give the direction of projection for a specific point based on the projection type.
-        [Pure] private Vector3d projDir(Point3d pt)
+        [Pure]
+        private Vector3d projDir(Point3d pt)
         {
             Vector3d pd = new Vector3d();
             switch (this.surfProj)
@@ -308,7 +309,7 @@ namespace CAMel.Types
                         {
                             throw new InvalidOperationException("Short Cylinder:  The cylinder centre curve is shorter than the model.");
                         }
-                        if(ci.Count >1 || ci[0] == null || ci[0].IsOverlap)
+                        if(ci.Count >1 || ci[0]?.IsOverlap != false)
                         {
                             throw new InvalidOperationException("Cylinder double cut: The cylinder centre curve has multiple intersections with a projection plane.");
                         }
