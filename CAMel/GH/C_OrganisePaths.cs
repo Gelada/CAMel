@@ -362,9 +362,8 @@ namespace CAMel.GH
                             case 2:
                                 if (c.c.IsClosed)
                                 {
-                                    if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise)
-                                    { c.side = 1; }
-                                    else { c.side = -1; }
+                                    if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis) != CurveOrientation.CounterClockwise
+                                    ) { c.side = -1; } else { c.side = 1; }
                                 }
                                 break;
                             case 3:
@@ -396,7 +395,7 @@ namespace CAMel.GH
                     }
                 }
 
-                if (getR == GetResult.Number) { reOrder(sel, gi.Number()-1); }
+                if (getR == GetResult.Number) { reOrder(sel, gi.Number() - 1); }
                 return true;
             }
         }
@@ -428,8 +427,7 @@ namespace CAMel.GH
             int count = sel.Count;
             int uPos = newPos + count - sel.Count(x => x >= newPos + count);
             if (uPos <= count) { newKeys = new Interval(this._allKeys.Min - sel.Count - 1, this._allKeys.Min); }
-            else if (uPos > this._curves.Count) { newKeys = new Interval(this._allKeys.Max, this._allKeys.Max + sel.Count + 1); }
-            else
+            else if (uPos >= this._curves.Count) { newKeys = new Interval(this._allKeys.Max, this._allKeys.Max + sel.Count + 1); } else
             {
                 double aboveKey = this._curves[uPos].key;
                 double belowKey = this._allKeys

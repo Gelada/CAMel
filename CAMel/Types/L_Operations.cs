@@ -16,26 +16,32 @@ namespace CAMel.Types
             // Shift curve to XY plane
 
             Plane p = new Plane(Point3d.Origin, d);
-            if(c.IsPlanar(_PlaneTolerance)) {  c.TryGetPlane(out p, _PlaneTolerance);}
-            c.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
+            if (c.IsPlanar(_PlaneTolerance))
+            {
+                c.TryGetPlane(out p, _PlaneTolerance);
+            }
+            Curve uC = c.DuplicateCurve();
+            uC.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
             double uOS = oS;
+            if (d * p.ZAxis > 0) { uOS = -uOS;}
             bool reversed = false;
             // ensure the curve is anticlockwise
             if (Math.Abs(uOS) > CAMel_Goo.Tolerance)
             {
-                if (c.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
+                if (uC.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
                 {
-                    c.Reverse(); reversed = true;
+                    uC.Reverse();
+                    reversed = true;
                     uOS = -uOS;
                 }
             }
 
             // record the average Z location of the curve
-            BoundingBox bb = c.GetBoundingBox(true);
+            BoundingBox bb = uC.GetBoundingBox(true);
             double useZ = (bb.Max.Z + bb.Min.Z) / 2.0;
 
             // turn the curve into a Polyline
-            PolylineCurve pl = ToolPath.convertAccurate(c);
+            PolylineCurve pl = ToolPath.convertAccurate(uC);
 
             // offSet
             List<PolylineCurve> osC = new List<PolylineCurve>();
@@ -47,7 +53,7 @@ namespace CAMel.Types
             // create Operation
 
             MachineOperation mO = new MachineOperation
-            { name = "2d Cut Path" };
+            {name = "2d Cut Path"};
 
             int i = 1;
             foreach (PolylineCurve osPl in osC)
