@@ -127,8 +127,16 @@ namespace CAMel.Types.Machine
 
             double feed = co.machineState["F"];
             double speed = co.machineState["S"];
-            if (feed < 0) { feed = tP.matTool.feedCut; fChange = true; }
-            if (speed < 0) { speed = tP.matTool.speed; sChange = true; }
+            if (feed < 0)
+            {
+                feed = tP.matTool.feedCut;
+                fChange = true;
+            }
+            if (speed < 0)
+            {
+                speed = tP.matTool.speed;
+                sChange = true;
+            }
 
             Vector3d ab = new Vector3d(co.machineState["A"], co.machineState["B"], 0);
 
@@ -152,7 +160,8 @@ namespace CAMel.Types.Machine
                     {
                         fChange = true;
                         feed = tPt.feed;
-                    } else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
+                    }
+                    else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
                     {
                         fChange = true;
                         feed = tP.matTool.feedCut;
@@ -190,7 +199,8 @@ namespace CAMel.Types.Machine
                     {
                         newAB.Y = ab.Y + (bTo - ab.Y) / bSteps;
                         bSteps--;
-                    } else // head forward to next non-vertical point or the end.
+                    }
+                    else // head forward to next non-vertical point or the end.
                     {
                         int j = i + 1;
 
@@ -214,7 +224,8 @@ namespace CAMel.Types.Machine
                             bTo = ab.X;
                             bSteps = j - i;
                             newAB.Y = bTo;
-                        } else
+                        }
+                        else
                         {
                             bTo = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
                             bSteps = j - i;
@@ -235,7 +246,8 @@ namespace CAMel.Types.Machine
                     {
                         newAB.X = Math.PI - newAB.X;
                         newAB.Y = newAB.Y - Math.PI;
-                    } else if (newAB.Y - ab.Y < -Math.PI) // check for big rotation in B
+                    }
+                    else if (newAB.Y - ab.Y < -Math.PI) // check for big rotation in B
                     {
                         newAB.X = Math.PI - newAB.X;
                         newAB.Y = newAB.Y + Math.PI;
@@ -360,7 +372,8 @@ namespace CAMel.Types.Machine
                                 + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
                                 + this.pathJump + " to at least: " + length);
                 }
-            } else // Safely move from one safe point to another.
+            }
+            else // Safely move from one safe point to another.
             {
                 ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 move.name = string.Empty;
@@ -378,7 +391,8 @@ namespace CAMel.Types.Machine
                     {
                         MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
                         route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-                    } else { i++; }
+                    }
+                    else { i++; }
                 }
 
                 // add extra points if the angle change between steps is too large (pi/30)
@@ -421,10 +435,8 @@ namespace CAMel.Types.Machine
                             angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, true);
                             steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                             move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                        } else
-                        {
-                            move.Add(newTP);
                         }
+                        else { move.Add(newTP); }
                     }
                 }
                 // get rid of start point that was already in the paths

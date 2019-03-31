@@ -23,8 +23,8 @@ namespace CAMel.Types
 
         protected override void OnMouseDown([NotNull] MouseCallbackEventArgs e)
         {
-            if( e.View?.ActiveViewport == null) { throw new ArgumentNullException();}
-            if (e.Button == MouseButtons.Left && this._op != null && this._op.clickQ())
+            if (e.View?.ActiveViewport == null) { throw new ArgumentNullException(); }
+            if (e.Button == MouseButtons.Left && this._op?.clickQ() == true)
             {
                 // Ignore if a  getter is active
                 if (Rhino.Input.RhinoGet.InGet(Rhino.RhinoDoc.ActiveDoc)) { return; }

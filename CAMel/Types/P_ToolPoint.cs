@@ -18,9 +18,10 @@ namespace CAMel.Types
     // One position of the machine
     public class ToolPoint : IToolPointContainer
     {
-        public Point3d pt { get; set; }      // Tool Tip position
+        public Point3d pt { get; set; } // Tool Tip position
         private Vector3d _dir;
-        public Vector3d dir     // Tool Direction (away from position)
+
+        public Vector3d dir // Tool Direction (away from position)
         {
             get => this._dir;
             set
@@ -33,8 +34,8 @@ namespace CAMel.Types
         [NotNull] public ToolPoint firstP => this;
         [NotNull] public ToolPoint lastP => this;
 
-        public double speed { get; set; }    // Considered unset for negative values
-        public double feed { get; set; }     // Considered unset for negative values
+        public double speed { get; set; } // Considered unset for negative values
+        public double feed { get; set; } // Considered unset for negative values
         [NotNull] private List<string> error { get; }
         [NotNull] private List<string> warning { get; }
         public string name { get; set; }
@@ -122,7 +123,7 @@ namespace CAMel.Types
             this.feed = tP.feed;
             this.name = string.Copy(tP.name);
             this.error = new List<string>();
-            foreach( string s in tP.error) { this.error.Add(string.Copy(s)); }
+            foreach (string s in tP.error) { this.error.Add(string.Copy(s)); }
             this.warning = new List<string>();
             foreach (string s in tP.warning) { this.warning.Add(string.Copy(s)); }
         }
@@ -132,10 +133,14 @@ namespace CAMel.Types
 
         [PublicAPI]
         public void addError([CanBeNull] string err)
-        { if(err!=null) { this.error.Add(err); } }
+        {
+            if (err != null) { this.error.Add(err); }
+        }
 
         public void addWarning([CanBeNull] string warn)
-        { if (warn != null) { this.warning.Add(warn);  } }
+        {
+            if (warn != null) { this.warning.Add(warn); }
+        }
 
         public void writeErrorAndWarnings([NotNull] ref CodeInfo co)
         {
@@ -149,21 +154,22 @@ namespace CAMel.Types
         public override string ToString()
         {
             string outP = this.name;
-            if(outP != string.Empty) { outP = outP + " "; }
+            if (outP != string.Empty) { outP = outP + " "; }
             outP = outP + "Pt: (" +
-                this.pt.X.ToString("0.000") + ", " + this.pt.Y.ToString("0.000") + ", " + this.pt.Z.ToString("0.000") +
-                ") Dir: (" +
-                this.dir.X.ToString("0.000") + ", " + this.dir.Y.ToString("0.000") + ", " + this.dir.Z.ToString("0.000") +
-                ")";
+                   this.pt.X.ToString("0.000") + ", " + this.pt.Y.ToString("0.000") + ", " +
+                   this.pt.Z.ToString("0.000") +
+                   ") Dir: (" +
+                   this.dir.X.ToString("0.000") + ", " + this.dir.Y.ToString("0.000") + ", " +
+                   this.dir.Z.ToString("0.000") +
+                   ")";
             return outP;
         }
 
         private const double _PreviewLength = .5;
-        internal Line toolLine() => new Line(this.pt, this.pt + this.dir* _PreviewLength);
-        public ToolPath getSinglePath() => new ToolPath { this };
+        internal Line toolLine() => new Line(this.pt, this.pt + this.dir * _PreviewLength);
+        public ToolPath getSinglePath() => new ToolPath {this};
 
-        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * _PreviewLength });
-
+        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> {this.pt, this.pt + this.dir * _PreviewLength});
     }
 
     // Grasshopper Type Wrapper
@@ -178,7 +184,7 @@ namespace CAMel.Types
         public GH_ToolPoint([CanBeNull] GH_ToolPoint tP) { this.Value = tP?.Value?.deepClone(); }
         // Duplicate
         [NotNull]
-        public override IGH_Goo Duplicate() {return new GH_ToolPoint(this); }
+        public override IGH_Goo Duplicate() => new GH_ToolPoint(this);
 
         [NotNull]
         public override IGH_GooProxy EmitProxy() => new GH_ToolPointProxy(this);
@@ -189,10 +195,10 @@ namespace CAMel.Types
 
             writer.SetString("name", this.Value.name);
             Point3d pt = this.Value.pt;
-            writer.SetPoint3D("pt",new GH_Point3D(pt.X,pt.Y,pt.Z));
+            writer.SetPoint3D("pt", new GH_Point3D(pt.X, pt.Y, pt.Z));
             Vector3d dir = this.Value.dir;
             writer.SetPoint3D("dir", new GH_Point3D(dir.X, dir.Y, dir.Z));
-            writer.SetDouble("speed",this.Value.speed);
+            writer.SetDouble("speed", this.Value.speed);
             writer.SetDouble("feed", this.Value.feed);
             writer.SetString("preCode", this.Value.preCode);
             writer.SetString("postCode", this.Value.postCode);
@@ -207,11 +213,11 @@ namespace CAMel.Types
             try
             {
                 ToolPoint tPt = new ToolPoint();
-                if (reader.ItemExists("name")) { tPt.name = reader.GetString("name") ?? string.Empty;}
+                if (reader.ItemExists("name")) { tPt.name = reader.GetString("name") ?? string.Empty; }
                 if (reader.ItemExists("pt"))
                 {
                     GH_Point3D pt = reader.GetPoint3D("pt");
-                    tPt.pt = new Point3d(pt.x,pt.y,pt.z);
+                    tPt.pt = new Point3d(pt.x, pt.y, pt.z);
                 }
                 if (reader.ItemExists("dir"))
                 {
@@ -234,36 +240,36 @@ namespace CAMel.Types
 
         public override bool CastTo<T>(ref T target)
         {
-            if (this.Value == null) { return false;}
+            if (this.Value == null) { return false; }
             if (typeof(T).IsAssignableFrom(typeof(ToolPoint)))
             {
                 object ptr = this.Value;
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(Point3d)))
             {
                 object ptr = this.Value.pt;
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(GH_Point)))
             {
                 object ptr = new GH_Point(this.Value.pt);
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(Vector3d)))
             {
                 object ptr = this.Value.dir;
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Vector)))
             {
-                object ptr =new GH_Vector(this.Value.dir);
-                target = (T)ptr;
+                object ptr = new GH_Vector(this.Value.dir);
+                target = (T) ptr;
                 return true;
             }
             return false;
@@ -325,7 +331,7 @@ namespace CAMel.Types
         }
         protected override GH_GetterResult Prompt_Plural([NotNull] ref List<GH_ToolPoint> values)
         {
-            if(values == null) { values = new List<GH_ToolPoint>(); }
+            if (values == null) { values = new List<GH_ToolPoint>(); }
             bool useForRemainder = false;
             Vector3d dir = Vector3d.ZAxis;
 
@@ -441,12 +447,9 @@ namespace CAMel.Types
 
     public class GH_ToolPointProxy : GH_GooProxy<GH_ToolPoint>
     {
-        public GH_ToolPointProxy([CanBeNull] GH_ToolPoint obj) : base(obj)
-        { }
+        public GH_ToolPointProxy([CanBeNull] GH_ToolPoint obj) : base(obj) { }
 
-        [CanBeNull]
-        [Category(" General"), Description("Optional Name attached to point."), DisplayName(" Name"), RefreshProperties(RefreshProperties.All)]
-        [UsedImplicitly]
+        [CanBeNull, Category(" General"), Description("Optional Name attached to point."), DisplayName(" Name"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string name
         {
             get => this.Owner?.Value?.name ?? string.Empty;
@@ -458,10 +461,7 @@ namespace CAMel.Types
             }
         }
 
-        [CanBeNull]
-        [Category(" General"), Description("Position of tool tip."), DisplayName(" Point"),
-         RefreshProperties(RefreshProperties.All)]
-        [UsedImplicitly]
+        [CanBeNull, Category(" General"), Description("Position of tool tip."), DisplayName(" Point"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public GH_Point3d_Wrapper pt
         {
             get
@@ -475,16 +475,15 @@ namespace CAMel.Types
                 return ghPoint3DWrapper;
             }
         }
+
         private void pointChanged([CanBeNull] GH_Point3d_Wrapper sender, Point3d point)
         {
             if (this.Owner == null) { throw new NullReferenceException(); }
             if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
             this.Owner.Value.pt = point;
         }
-        [CanBeNull]
-        [Category(" General"), Description("Direction of tool (for rotary and 5-axis) (from tip down shaft)."), DisplayName("Direction"),
-         RefreshProperties(RefreshProperties.All)]
-        [UsedImplicitly]
+
+        [CanBeNull, Category(" General"), Description("Direction of tool (for rotary and 5-axis) (from tip down shaft)."), DisplayName("Direction"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public GH_Vector3d_Wrapper dir
         {
             get
@@ -498,14 +497,15 @@ namespace CAMel.Types
                 return ghVector3DWrapper;
             }
         }
+
         private void dirChanged([CanBeNull] GH_Vector3d_Wrapper sender, Vector3d rDir)
         {
             if (this.Owner == null) { throw new NullReferenceException(); }
             if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
             this.Owner.Value.dir = rDir;
         }
-        [Category(" Settings"), Description("Spindle rotation Speed (if machine needs it)."), DisplayName("Speed"), RefreshProperties(RefreshProperties.All)]
-        [UsedImplicitly]
+
+        [Category(" Settings"), Description("Spindle rotation Speed (if machine needs it)."), DisplayName("Speed"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public double speed
         {
             get => this.Owner?.Value?.speed ?? -1;
@@ -516,8 +516,8 @@ namespace CAMel.Types
                 this.Owner.Value.speed = value;
             }
         }
-        [Category(" Settings"), Description("Feed Rate (if machine needs it)."), DisplayName("Feed"), RefreshProperties(RefreshProperties.All)]
-        [UsedImplicitly]
+
+        [Category(" Settings"), Description("Feed Rate (if machine needs it)."), DisplayName("Feed"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public double feed
         {
             get => this.Owner?.Value?.feed ?? -1;
@@ -528,9 +528,8 @@ namespace CAMel.Types
                 this.Owner.Value.feed = value;
             }
         }
-        [CanBeNull]
-        [Category("Code"), Description("Extra Code to run before point"), DisplayName("preCode"), RefreshProperties(RefreshProperties.All)]
-        [UsedImplicitly]
+
+        [CanBeNull, Category("Code"), Description("Extra Code to run before point"), DisplayName("preCode"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string preCode
         {
             get => this.Owner?.Value?.preCode ?? string.Empty;
@@ -541,9 +540,8 @@ namespace CAMel.Types
                 this.Owner.Value.preCode = value ?? string.Empty;
             }
         }
-        [CanBeNull]
-        [Category("Code"), Description("Extra Code to run after point"), DisplayName("postCode"), RefreshProperties(RefreshProperties.All)]
-        [UsedImplicitly]
+
+        [CanBeNull, Category("Code"), Description("Extra Code to run after point"), DisplayName("postCode"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string postCode
         {
             get => this.Owner?.Value?.postCode ?? string.Empty;
@@ -555,5 +553,4 @@ namespace CAMel.Types
             }
         }
     }
-
 }

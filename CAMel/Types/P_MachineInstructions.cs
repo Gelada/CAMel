@@ -14,15 +14,15 @@ namespace CAMel.Types
     // for the machine
     public class MachineInstruction : IList<MachineOperation>, IToolPointContainer
     {
-        [ItemNotNull] [NotNull] private List<MachineOperation> _mOs;
-        [PublicAPI] [NotNull] public ToolPath startPath { get; set; }
-        [PublicAPI] [NotNull] public ToolPath endPath { get; set; }
+        [ItemNotNull, NotNull] private List<MachineOperation> _mOs;
+        [PublicAPI, NotNull] public ToolPath startPath { get; set; }
+        [PublicAPI, NotNull] public ToolPath endPath { get; set; }
 
         public string name { get; set; }
         public string preCode { get; set; }
         public string postCode { get; set; }
 
-        [PublicAPI] [NotNull] public IMachine mach { get; set; }
+        [PublicAPI, NotNull] public IMachine mach { get; set; }
 
         public ToolPoint firstP => this.First(a => a?.firstP != null)?.firstP;
         public ToolPoint lastP => this.Last(a => a?.lastP != null)?.lastP;
@@ -60,14 +60,13 @@ namespace CAMel.Types
             this.startPath = mI.startPath.deepClone();
             this.endPath = mI.endPath.deepClone();
             this._mOs = new List<MachineOperation>();
-            foreach(MachineOperation mO in mI) { this._mOs.Add(mO?.deepClone()); }
+            foreach (MachineOperation mO in mI) { this._mOs.Add(mO?.deepClone()); }
         }
 
         [NotNull] public MachineInstruction deepClone() => new MachineInstruction(this);
 
         // Copy basic information but add new paths
-        [NotNull]
-        [PublicAPI]
+        [NotNull, PublicAPI]
         public MachineInstruction deepCloneWithNewPaths([NotNull] List<MachineOperation> mOs)
         {
             MachineInstruction outInst = new MachineInstruction(this.mach)
@@ -90,7 +89,7 @@ namespace CAMel.Types
         public override string ToString()
         {
             int totalTP = 0;
-            foreach(MachineOperation mO in this) {  foreach (ToolPath tP in mO) { totalTP += tP.Count; } }
+            foreach (MachineOperation mO in this) {  foreach (ToolPath tP in mO) { totalTP += tP.Count; } }
             return "Machine Instruction: " + this.name + ", " + this.Count + " operations, " + totalTP + " total points.";
         }
 
@@ -119,17 +118,17 @@ namespace CAMel.Types
             if (valid.startPath.Count == 0)
             {
                 valid.startPath.Add(valid.firstP?.deepClone());
-                if(valid.startPath.firstP != null) { valid.startPath.firstP.feed = 0; }
+                if (valid.startPath.firstP != null) { valid.startPath.firstP.feed = 0; }
             }
 
             // validate endPath, validTP will have the most recent information
-             valid.endPath.validate(validTP, this.mach);
-             valid.endPath.additions = new ToolPathAdditions();
+            valid.endPath.validate(validTP, this.mach);
+            valid.endPath.additions = new ToolPathAdditions();
             // if we need a point add the last point of the processed paths.
             if (valid.endPath.Count != 0) { return valid; }
 
             valid.endPath.Add(valid.lastP?.deepClone());
-            if(valid.endPath.firstP != null) { valid.endPath.firstP.feed = 0; }
+            if (valid.endPath.firstP != null) { valid.endPath.firstP.feed = 0; }
 
             return valid;
         }
@@ -141,7 +140,7 @@ namespace CAMel.Types
             if (uStartPath.matForm == null) { Exceptions.matFormException(); }
             if (uStartPath.matTool == null) { Exceptions.matToolException(); }
 
-            CodeInfo co = new CodeInfo(this.mach,uStartPath.matForm,uStartPath.matTool);
+            CodeInfo co = new CodeInfo(this.mach, uStartPath.matForm, uStartPath.matTool);
 
             this.mach.writeFileStart(ref co, this, uStartPath);
 
@@ -155,7 +154,6 @@ namespace CAMel.Types
 
             return co;
         }
-
 
         // Hunt through the ToolPaths until we find all we need
         [NotNull]
@@ -171,8 +169,16 @@ namespace CAMel.Types
             {
                 foreach (ToolPath tP in mO)
                 {
-                    if (!mTFound && tP.matTool != null) { mTFound = true; valid.matTool = tP.matTool; }
-                    if (!mFFound && tP.matForm != null) { mFFound = true; valid.matForm = tP.matForm; }
+                    if (!mTFound && tP.matTool != null)
+                    {
+                        mTFound = true;
+                        valid.matTool = tP.matTool;
+                    }
+                    if (!mFFound && tP.matForm != null)
+                    {
+                        mFFound = true;
+                        valid.matForm = tP.matForm;
+                    }
                     if (mTFound && mFFound) { return valid; }
                 }
             }
@@ -182,11 +188,12 @@ namespace CAMel.Types
                 throw new InvalidOperationException(
                     "Cannot validate Machine Instructions, there are either no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
             }
-            valid.matTool = this.mach.mTs[0]; return valid;
-            // if we go through the whole thing without finding all the valid pieces
+            valid.matTool = this.mach.mTs[0];
+            return valid; // if we go through the whole thing without finding all the valid pieces
         }
 
         #region Point extraction and previews
+
         public ToolPath getSinglePath()
         {
             ToolPath oP = this[0].getSinglePath();
@@ -210,8 +217,7 @@ namespace CAMel.Types
             return dirs;
         }
         // Create a path with the points
-        [NotNull]
-        [PublicAPI]
+        [NotNull, PublicAPI]
         public List<List<List<Point3d>>> getPointsAndDirs([NotNull] out List<List<List<Vector3d>>> dirs)
         {
             dirs = getDirs();
@@ -244,16 +250,24 @@ namespace CAMel.Types
             foreach (MachineOperation mO in this) { lines.AddRange(mO.toolLines()); }
             return lines;
         }
+
         #endregion
 
         #region List Functions 
+
         public int Count => this._mOs.Count;
-        public bool IsReadOnly => ((IList<MachineOperation>)this._mOs).IsReadOnly;
+        public bool IsReadOnly => ((IList<MachineOperation>) this._mOs).IsReadOnly;
         [NotNull] public MachineOperation this[int index] { get => this._mOs[index]; set => this._mOs[index] = value; }
         public int IndexOf(MachineOperation item) => this._mOs.IndexOf(item);
-        public void Insert(int index, MachineOperation item) { if (item != null) { this._mOs.Insert(index, item); } }
+        public void Insert(int index, MachineOperation item)
+        {
+            if (item != null) { this._mOs.Insert(index, item); }
+        }
         public void RemoveAt(int index) => this._mOs.RemoveAt(index);
-        public void Add(MachineOperation item) { if (item != null) { this._mOs.Add(item); } }
+        public void Add(MachineOperation item)
+        {
+            if (item != null) { this._mOs.Add(item); }
+        }
         [PublicAPI] public void AddRange([NotNull] IEnumerable<MachineOperation> items) => this._mOs.AddRange(items.Where(x => x != null));
         public void Clear() => this._mOs.Clear();
         public bool Contains(MachineOperation item) => this._mOs.Contains(item);
@@ -283,42 +297,42 @@ namespace CAMel.Types
             if (typeof(T).IsAssignableFrom(typeof(MachineInstruction)))
             {
                 object ptr = this.Value;
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(ToolPath)))
             {
                 object ptr = this.Value.getSinglePath();
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(GH_ToolPath)))
             {
                 object ptr = new GH_ToolPath(this.Value.getSinglePath());
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(Curve)))
             {
-                target = (T)(object)this.Value.getLine();
+                target = (T) (object) this.Value.getLine();
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(GH_Curve)))
             {
-                target = (T)(object)new GH_Curve(this.Value.getLine());
+                target = (T) (object) new GH_Curve(this.Value.getLine());
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(IMachine)))
             {
                 object ptr = this.Value.mach;
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Machine)))
             {
                 object ptr = new GH_Machine(this.Value.mach);
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
 
@@ -348,7 +362,6 @@ namespace CAMel.Types
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
-
     }
 
     // Grasshopper Parameter Wrapper
@@ -371,5 +384,4 @@ namespace CAMel.Types
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.machineinstructions;
     }
-
 }

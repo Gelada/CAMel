@@ -66,7 +66,7 @@ namespace CAMel.Types.Machine
         public GH_Machine([CanBeNull] GH_Machine m) { this.Value = m?.Value; }
         // Duplicate
         [NotNull]
-        public override IGH_Goo Duplicate() { return new GH_Machine(this); }
+        public override IGH_Goo Duplicate() => new GH_Machine(this);
 
         public override bool CastTo<T>(ref T target)
         {

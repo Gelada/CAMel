@@ -7,7 +7,6 @@ using JetBrains.Annotations;
 
 namespace CAMel.GH
 {
-
     [UsedImplicitly]
     public class C_WriteCode : GH_Component
     {
@@ -37,9 +36,9 @@ namespace CAMel.GH
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            List<string> ig = new List<string> { "Nothing to Ignore." };
+            List<string> ig = new List<string> {"Nothing to Ignore."};
             pManager.AddParameter(new GH_MachineInstructionPar(), "Machine Instructions", "MI", "Complete set of machine instructions to convert to Code for the machine", GH_ParamAccess.item);
-            pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list,ig);
+            pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list, ig);
             pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, string.Empty);
         }
 
@@ -76,7 +75,8 @@ namespace CAMel.GH
             da.GetDataList(1, ignore);
 
             MachineInstruction procMI;
-            try { procMI = mI.processAdditions(); } catch (InvalidOperationException e)
+            try { procMI = mI.processAdditions(); }
+            catch (InvalidOperationException e)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
                 da.SetData(2, e.Message);
@@ -122,7 +122,8 @@ namespace CAMel.GH
                 }
                 FileInfo file = new FileInfo(fPath);
                 if (file.Exists) { this.bytesWritten += file.Length; }
-            } else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No path given. ");}
+            }
+            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No path given. "); }
         }
 
         /// <inheritdoc />

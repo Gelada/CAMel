@@ -144,9 +144,12 @@ namespace CAMel.Types.Machine
                     {
                         tPt.dir = -new Vector3d(dirVals[0], dirVals[1], dirVals[2]);
                         endPt.dir = -new Vector3d(dirVals[3], dirVals[4], dirVals[5]);
-                    } else { badRead = true; }
-                } else { badRead = true; }
-            } else if (fm != 0) { badRead = true; }
+                    }
+                    else { badRead = true; }
+                }
+                else { badRead = true; }
+            }
+            else if (fm != 0) { badRead = true; }
 
             if (badRead) { tPt.addError("Unreadable code: " + l); }
 
@@ -301,9 +304,9 @@ namespace CAMel.Types.Machine
             return omxTiltPt(lastPt, lastDir, tPt.dir, 0, lastQ, os);
         }
 
-        private static int vToSide(Vector3d V)
+        private static int vToSide(Vector3d v)
         {
-            double d = V * -Vector3d.ZAxis;
+            double d = v * -Vector3d.ZAxis;
             if (d > CAMel_Goo.Tolerance) { return 1; }
             return d < -CAMel_Goo.Tolerance ? 2 : 0;
         }

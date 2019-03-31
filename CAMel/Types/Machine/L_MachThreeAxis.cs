@@ -98,7 +98,7 @@ namespace CAMel.Types.Machine
             this.fileStart = ta.fileStart;
             this.fileEnd = ta.fileEnd;
             this.mTs = ta.mTs;
-            this._terms = new List<char> { 'X', 'Y', 'Z', 'S', 'F' };
+            this._terms = new List<char> {'X', 'Y', 'Z', 'S', 'F'};
         }
 
         public string TypeDescription => @"Instructions for a 3-Axis machine";
@@ -141,8 +141,16 @@ namespace CAMel.Types.Machine
 
             double feed = co.machineState["F"];
             double speed = co.machineState["S"];
-            if (feed < 0) { feed = tP.matTool.feedCut; fChange = true; }
-            if (speed < 0) { speed = tP.matTool.speed; sChange = true; }
+            if (feed < 0)
+            {
+                feed = tP.matTool.feedCut;
+                fChange = true;
+            }
+            if (speed < 0)
+            {
+                speed = tP.matTool.speed;
+                sChange = true;
+            }
 
             foreach (ToolPoint tPt in tP)
             {
@@ -155,7 +163,8 @@ namespace CAMel.Types.Machine
                     {
                         fChange = true;
                         feed = tPt.feed;
-                    } else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance
+                    }
+                    else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance
                     ) // Default to the cut feed rate.
                     {
                         fChange = true;
@@ -179,10 +188,8 @@ namespace CAMel.Types.Machine
                 // Act if feed has changed
                 if (fChange && feed >= 0)
                 {
-                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; } else
-                    {
-                        ptCode = "G01 " + ptCode + " F" + feed.ToString("0");
-                    }
+                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
+                    else { ptCode = "G01 " + ptCode + " F" + feed.ToString("0"); }
                 }
                 fChange = false;
 
@@ -259,7 +266,8 @@ namespace CAMel.Types.Machine
                                 + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
                                 + this.pathJump + " to at least: " + length);
                 }
-            } else // Safely move from one safe point to another.
+            }
+            else // Safely move from one safe point to another.
             {
                 // Start with a straight line, see how close it
                 // comes to danger. If its too close add a new
@@ -276,7 +284,8 @@ namespace CAMel.Types.Machine
                     {
                         MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
                         route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-                    } else { i++; }
+                    }
+                    else { i++; }
                 }
 
                 // get rid of start and end points that are already in the paths

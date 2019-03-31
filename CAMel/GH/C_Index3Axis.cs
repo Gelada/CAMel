@@ -18,9 +18,7 @@ namespace CAMel.GH
         public C_Index3Axis()
             : base("Index 3 Axis", "Index",
                 "Create a machine operation from a collection of paths, with 3 Axis operation with the tool in a single orientation.",
-                "CAMel", " Operations")
-        {
-        }
+                "CAMel", " Operations") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -30,11 +28,11 @@ namespace CAMel.GH
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddCurveParameter("Curves", "C", "The curves for the tip of the tool to follow", GH_ParamAccess.list);
-            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0,0,1));
+            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
             GH_ToolPathAdditionsPar tPaPar = new GH_ToolPathAdditionsPar();
             tPaPar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
-            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" +
-                "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
+            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n"
+                                                              + "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[2].Optional = true; // ToolPathAdditions
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
@@ -70,16 +68,15 @@ namespace CAMel.GH
             MaterialTool mT = null;
             IMaterialForm mF = null;
 
-
-            if (!da.GetDataList(0, c)) { return;}
-            if (!da.GetData(1, ref dir)) { return;}
+            if (!da.GetDataList(0, c)) { return; }
+            if (!da.GetData(1, ref dir)) { return; }
             da.GetData(2, ref tPa);
             if (!da.GetData(3, ref mT)) { return; }
             da.GetData(4, ref mF);
 
             MachineOperation mO = Operations.opIndex3Axis(c, dir, tPa, mT, mF, out int invalidCurves);
 
-            if( invalidCurves > 1)
+            if (invalidCurves > 1)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + invalidCurves + " invalid curves (probably nulls) were ignored."); }
             else if (invalidCurves > 0)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored."); }

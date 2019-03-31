@@ -164,7 +164,8 @@ namespace CAMel.Types
                     {
                         tempTP.Add(fIr.tP);
                         tempN.Add(fIr.norm);
-                    } else if (tempTP.Count > 0)
+                    }
+                    else if (tempTP.Count > 0)
                     {
                         if (tempTP.Count > 1)
                         {
@@ -196,7 +197,8 @@ namespace CAMel.Types
                         lookBack = 3;
                         if (i < lookBack) { lookBack = newTPs[j].Count - 1; }
                         lookForward = 0;
-                    } else
+                    }
+                    else
                     {
                         lookBack = Math.Min(i, 2);
                         lookForward = 3 - lookBack;
@@ -214,11 +216,11 @@ namespace CAMel.Types
                             Vector3d stNorm = Vector3d.CrossProduct(norms[j][i], tangent);
                             Vector3d pNplaneN = Vector3d.CrossProduct(newTPs[j][i].dir, stNorm);
                             // find vector normal to the surface in the line orthogonal to the tangent
-                            newTPs[j][i].dir = Vector3d.CrossProduct(stNorm,pNplaneN);
+                            newTPs[j][i].dir = Vector3d.CrossProduct(stNorm, pNplaneN);
                             break;
                         case SurfToolDir.PathTangent:
                             // get normal to proj and tangent
-                            Vector3d pTplaneN = Vector3d.CrossProduct(tangent,newTPs[j][i].dir);
+                            Vector3d pTplaneN = Vector3d.CrossProduct(tangent, newTPs[j][i].dir);
                             // find vector normal to tangent and in the plane of tangent and projection
                             newTPs[j][i].dir = Vector3d.CrossProduct(pTplaneN, tangent);
 
@@ -232,7 +234,7 @@ namespace CAMel.Types
                     // so that the cutting surface not the tooltip is at the correct point
 
                     if (norms[j]?[i] == null) { break; }
-                    newTPs[j][i].pt = newTPs[j][i].pt + mT.cutOffset(newTPs[j][i].dir,norms[j][i]);
+                    newTPs[j][i].pt = newTPs[j][i].pt + mT.cutOffset(newTPs[j][i].dir, norms[j][i]);
 
                     // Move to offset using normal
 
@@ -251,10 +253,7 @@ namespace CAMel.Types
             public Vector3d norm { get; set; }
             public bool hit { get; set; }
 
-            public override string ToString()
-            {
-                return this.hit.ToString();
-            }
+            public override string ToString() => this.hit.ToString();
         }
 
         private FirstIntersectResponse firstIntersect([NotNull] ToolPoint tP)
@@ -290,26 +289,28 @@ namespace CAMel.Types
                     pd = this.dir;
                     break;
                 case SurfProj.Cylindrical:
-                    Plane pl = new Plane(pt,this.dir);
-                    if(this.cylOnto == null) { throw new NullReferenceException("Trying a cylindrical but the path to project to is not set.");}
-                    if(this.cylOnto.IsLinear()) // if centre is a line treat it as infinite
+                    Plane pl = new Plane(pt, this.dir);
+                    if (this.cylOnto == null) { throw new NullReferenceException("Trying a cylindrical but the path to project to is not set."); }
+                    if (this.cylOnto.IsLinear()) // if centre is a line treat it as infinite
                     {
                         Line cyLine = new Line(this.cylOnto.PointAtStart, this.cylOnto.PointAtEnd);
-                        if(Intersection.LinePlane(cyLine, pl, out double lp))
+                        if (Intersection.LinePlane(cyLine, pl, out double lp))
                         {
-                            pd = cyLine.PointAt(lp)-pt;
-                        } else
+                            pd = cyLine.PointAt(lp) - pt;
+                        }
+                        else
                         {
                             throw new InvalidOperationException("Cylinder Parallel: The projection direction is parallel to cylinder centre.");
                         }
-                    } else // Use curve and warn if no intersection
+                    }
+                    else // Use curve and warn if no intersection
                     {
-                        CurveIntersections ci = Intersection.CurvePlane(this.cylOnto,pl,0.0000001);
-                        if(ci == null || ci.Count == 0)
+                        CurveIntersections ci = Intersection.CurvePlane(this.cylOnto, pl, 0.0000001);
+                        if (ci == null || ci.Count == 0)
                         {
                             throw new InvalidOperationException("Short Cylinder:  The cylinder centre curve is shorter than the model.");
                         }
-                        if(ci.Count >1 || ci[0]?.IsOverlap != false)
+                        if (ci.Count > 1 || ci[0]?.IsOverlap != false)
                         {
                             throw new InvalidOperationException("Cylinder double cut: The cylinder centre curve has multiple intersections with a projection plane.");
                         }
@@ -317,7 +318,7 @@ namespace CAMel.Types
                     }
                     break;
                 case SurfProj.Spherical:
-                    pd = this.cen-pt;
+                    pd = this.cen - pt;
                     break;
             }
             return pd;
@@ -327,19 +328,22 @@ namespace CAMel.Types
         public Curve getCurve()
         {
             Curve[] jc = Curve.JoinCurves(this, 1000000, true);
-            if(jc != null && jc.Length > 0) { return jc[0]; }
+            if (jc != null && jc.Length > 0) { return jc[0]; }
             return null;
         }
 
         #region List Functions
-        public int Count => ((IList<Curve>)this._paths).Count;
-        public bool IsReadOnly => ((IList<Curve>)this._paths).IsReadOnly;
+
+        public int Count => ((IList<Curve>) this._paths).Count;
+        public bool IsReadOnly => ((IList<Curve>) this._paths).IsReadOnly;
+
         [CanBeNull]
         public Curve this[int index]
         {
             get => this._paths[index];
             set => this._paths[index] = value;
         }
+
         public int IndexOf(Curve item) => this._paths.IndexOf(item);
         public void Insert(int index, Curve item) => this._paths.Insert(index, item);
         public void RemoveAt(int index) => this._paths.RemoveAt(index);
@@ -349,7 +353,7 @@ namespace CAMel.Types
         public void Clear() => this._paths.Clear();
         public bool Contains(Curve item) => this._paths.Contains(item);
         public void CopyTo(Curve[] array, int arrayIndex) => this._paths.CopyTo(array, arrayIndex);
-        public bool Remove(Curve item) => ((IList<Curve>)this._paths).Remove(item);
+        public bool Remove(Curve item) => ((IList<Curve>) this._paths).Remove(item);
         public IEnumerator<Curve> GetEnumerator() => this._paths.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => this._paths.GetEnumerator();
 
@@ -364,7 +368,7 @@ namespace CAMel.Types
             get
             {
                 BoundingBox bb = BoundingBox.Unset;
-                if (this.Value == null) { return bb;}
+                if (this.Value == null) { return bb; }
                 foreach (Curve c in this.Value) { bb.Union(c.GetBoundingBox(false)); }
                 return bb;
             }
@@ -376,28 +380,28 @@ namespace CAMel.Types
         // From Unwrapped
         public GH_SurfacePath([CanBeNull] SurfacePath sP) { this.Value = sP; }
         // Copy Constructor (just reference as SurfacePath is Immutable)
-        public GH_SurfacePath([CanBeNull] GH_SurfacePath sP ) { this.Value = sP?.Value; }
+        public GH_SurfacePath([CanBeNull] GH_SurfacePath sP) { this.Value = sP?.Value; }
         // Duplicate
         [NotNull]
-        public override IGH_Goo Duplicate() { return new GH_SurfacePath(this); }
+        public override IGH_Goo Duplicate() => new GH_SurfacePath(this);
 
         public override bool CastTo<TQ>(ref TQ target)
         {
             if (this.Value == null) { return false; }
             if (typeof(TQ).IsAssignableFrom(typeof(SurfacePath)))
             {
-                target = (TQ)(object)this.Value;
+                target = (TQ) (object) this.Value;
                 return true;
             }
             if (typeof(TQ).IsAssignableFrom(typeof(Curve)))
             {
-                target = (TQ)(object)this.Value.getCurve();
+                target = (TQ) (object) this.Value.getCurve();
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(TQ).IsAssignableFrom(typeof(GH_Curve)))
             {
-                target = (TQ)(object)new GH_Curve(this.Value.getCurve());
+                target = (TQ) (object) new GH_Curve(this.Value.getCurve());
                 return true;
             }
             return false;
@@ -420,7 +424,6 @@ namespace CAMel.Types
             foreach (Curve l in this.Value) { args.Pipeline.DrawCurve(l, args.Color); }
         }
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
-
     }
 
     // Grasshopper Parameter Wrapper
@@ -443,5 +446,4 @@ namespace CAMel.Types
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.surfacepath;
     }
-
 }

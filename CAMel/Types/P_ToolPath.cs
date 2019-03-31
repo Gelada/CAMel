@@ -14,7 +14,7 @@ namespace CAMel.Types
     // One action of the machine, such as cutting a line
     public class ToolPath : IList<ToolPoint>, IToolPointContainer
     {
-        [ItemNotNull] [NotNull] private List<ToolPoint> _pts; // Positions of the machine
+        [ItemNotNull, NotNull] private List<ToolPoint> _pts; // Positions of the machine
         public MaterialTool matTool { get; set; } // Material and tool to cut it with
         public IMaterialForm matForm { get; set; } // Shape of the material
         [NotNull] public ToolPathAdditions additions; // Features we might add to the path
@@ -156,7 +156,10 @@ namespace CAMel.Types
 
             // adjust path for three axis (or index three axis)
             for (int i = 0; i < useTP.Count; i++)
-            { useTP[i] = this.additions.threeAxisHeightOffset ? m.threeAxisHeightOffset(useTP[i]) : useTP[i];}
+            {
+                if (useTP[i] == null) { Exceptions.nullPanic(); }
+                useTP[i] = this.additions.threeAxisHeightOffset ? m.threeAxisHeightOffset(useTP[i]) : useTP[i];
+            }
 
             // add steps into material
             List<List<ToolPath>> roughPaths = new List<List<ToolPath>>();
@@ -168,7 +171,7 @@ namespace CAMel.Types
                     for (int i = 0; i < rPs.Count; i++)
                     {
                         if (roughPaths.Count < i) { roughPaths.Add(new List<ToolPath>()); }
-                        roughPaths[i].AddRange(rPs[i]);
+                        if (roughPaths[i] != null && rPs[i] != null) { roughPaths[i].AddRange(rPs[i]); }
                     }
                 }
             }
@@ -220,7 +223,7 @@ namespace CAMel.Types
             return true;
         }
         private const double _AccTol = 0.0001;
-        [NotNull]
+        [NotNull, PublicAPI]
         public static PolylineCurve convertAccurate([NotNull] Curve c)
         {
             // Check if already a polyline, otherwise make one
@@ -236,15 +239,23 @@ namespace CAMel.Types
         {
             ToolPath oP = new ToolPath();
             switch (scraps) {
-                case IToolPointContainer container: oP.AddRange(container.getSinglePath()); break;
-                case Point3d pt: oP.Add(pt); break;
+                case IToolPointContainer container:
+                    oP.AddRange(container.getSinglePath());
+                    break;
+                case Point3d pt:
+                    oP.Add(pt);
+                    break;
                 case IEnumerable li:
                 {
                     foreach (object oB in li)
                     {
                         switch (oB) {
-                            case IToolPointContainer tPc: oP.AddRange(tPc.getSinglePath()); break;
-                            case Point3d pti: oP.Add(pti); break;
+                            case IToolPointContainer tPc:
+                                oP.AddRange(tPc.getSinglePath());
+                                break;
+                            case Point3d pti:
+                                oP.Add(pti);
+                                break;
                         }
                     }
                     break;
@@ -348,7 +359,7 @@ namespace CAMel.Types
         {
             if (item != null) { this._pts.Insert(index, item); }
         }
-        public void InsertRange(int index, [NotNull] IEnumerable<ToolPoint> items) => this._pts.InsertRange(index, items.Where(x => x!=null) );
+        public void InsertRange(int index, [NotNull] IEnumerable<ToolPoint> items) => this._pts.InsertRange(index, items.Where(x => x != null));
         public void RemoveAt(int index) => this._pts.RemoveAt(index);
         public void Add(ToolPoint item)
         {
@@ -380,7 +391,7 @@ namespace CAMel.Types
         // Copy Constructor
         public GH_ToolPath([CanBeNull] GH_ToolPath tP) { this.Value = tP?.Value?.deepClone(); }
         // Duplicate
-        [NotNull] public override IGH_Goo Duplicate() { return new GH_ToolPath(this); }
+        [NotNull] public override IGH_Goo Duplicate() => new GH_ToolPath(this);
 
         public override bool CastTo<T>(ref T target)
         {

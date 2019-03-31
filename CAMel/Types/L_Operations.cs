@@ -58,7 +58,8 @@ namespace CAMel.Types
 
                 // Turn Curve into path
 
-                if (tP.convertCurve(c, dir)) { mO.Add(tP); } else { invalidCurves++; }
+                if (tP.convertCurve(c, dir)) { mO.Add(tP); }
+                else { invalidCurves++; }
                 i++;
             }
             return mO;
@@ -94,7 +95,8 @@ namespace CAMel.Types
             // calculate the number of pecks we need to do
 
             int steps;
-            if (peck > 0) { steps = (int) Math.Ceiling(d.Radius / peck); } else { steps = 1; }
+            if (peck > 0) { steps = (int) Math.Ceiling(d.Radius / peck); }
+            else { steps = 1; }
 
             for (int j = 1; j <= steps; j++)
             {

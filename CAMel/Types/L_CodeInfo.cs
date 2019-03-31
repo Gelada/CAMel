@@ -43,8 +43,7 @@ namespace CAMel.Types
 
         public void growRange([NotNull] string key, double v)
         {
-            if (!this._ranges.ContainsKey(key))
-            { this._ranges.Add(key, new Interval(v, v)); }
+            if (!this._ranges.ContainsKey(key)) { this._ranges.Add(key, new Interval(v, v)); }
             else
             {
                 Interval temp = this._ranges[key];
@@ -53,7 +52,7 @@ namespace CAMel.Types
             }
         }
 
-        [NotNull] [PublicAPI] public Dictionary<string,Interval> getRanges() => this._ranges;
+        [NotNull, PublicAPI] public Dictionary<string, Interval> getRanges() => this._ranges;
 
         public void addWarning([NotNull] string warn)
         {
@@ -64,7 +63,7 @@ namespace CAMel.Types
         public void addError([NotNull] string err)
         {
             if (this._errors.ContainsKey(err) && this._errors[err] != null) { this._errors[err].Add(this._lines); }
-            else { this._errors.Add(err, new List<int> { this._lines}); }
+            else { this._errors.Add(err, new List<int> {this._lines}); }
             appendComment(err);
         }
 
@@ -75,13 +74,13 @@ namespace CAMel.Types
         public bool hasWarnings([CanBeNull] List<string> ignore)
         {
             foreach (string k in this._errors.Keys)
-            { if (ignore != null && ignore.Contains(k)) { return true; } }
+            { if (ignore?.Contains(k) == true) { return true; } }
 
             return this._warnings.Count > 0;
         }
 
         // Return string with all warnings
-        [NotNull] [PublicAPI] public string getWarnings() => getWarnings(new List<string>());
+        [NotNull, PublicAPI] public string getWarnings() => getWarnings(new List<string>());
 
         [NotNull]
         private static string lineNumbers([CanBeNull] List<int> data)
@@ -89,7 +88,7 @@ namespace CAMel.Types
             if (data == null) { return string.Empty; }
             string lN = string.Empty;
             bool first = true;
-            foreach(int i in data)
+            foreach (int i in data)
             {
                 if (!first) { lN = lN + ", "; }
                 first = false;
@@ -107,39 +106,38 @@ namespace CAMel.Types
             {
                 outP.AppendLine("Warnings: (on lines)");
                 foreach (string k in this._warnings.Keys)
-                { outP.AppendLine(k + ": " + this._warnings[k]?.Count + " (" + lineNumbers(this._warnings[k])+")"); }
+                { outP.AppendLine(k + ": " + this._warnings[k]?.Count + " (" + lineNumbers(this._warnings[k]) + ")"); }
             }
 
             // Add ignored errors
             bool first = true;
             foreach (string k in this._errors.Keys)
             {
-                if (ignore == null || !ignore.Contains(k)) { continue; }
+                if (ignore?.Contains(k) != true) { continue; }
                 if (first)
                 {
                     first = false;
                     outP.AppendLine("Ignored Errors: (on lines)");
                 }
-                outP.AppendLine(k + ": " + this._errors[k]?.Count + " (" + lineNumbers(this._errors[k])+")");
+                outP.AppendLine(k + ": " + this._errors[k]?.Count + " (" + lineNumbers(this._errors[k]) + ")");
             }
             return outP.ToString();
         }
 
         // Checks to see if errors were reported
-        [PublicAPI] public bool hasErrors() { return this._errors.Count > 0; }
+        [PublicAPI] public bool hasErrors() => this._errors.Count > 0;
 
         // Checks to see if there are errors, other than those in the ignore list were reported
         public bool hasErrors([CanBeNull] List<string> ignore)
         {
             foreach (string k in this._errors.Keys)
-            { if (ignore!=null && !ignore.Contains(k)) { return true; } }
+            { if (ignore?.Contains(k) == false) { return true; } }
 
             return false;
         }
 
-
         // return string with all errors
-        [NotNull] [PublicAPI] public string getErrors() => getErrors(new List<string>());
+        [NotNull, PublicAPI] public string getErrors() => getErrors(new List<string>());
 
         // return string listing errors that are not ignored
         [NotNull]
@@ -150,7 +148,7 @@ namespace CAMel.Types
 
             foreach (string k in this._errors.Keys)
             {
-                if (ignore == null || ignore.Contains(k)) { continue; }
+                if (ignore?.Contains(k) != false) { continue; }
 
                 if (first)
                 {
@@ -170,18 +168,18 @@ namespace CAMel.Types
             foreach (string k in this._ranges.Keys)
             {
                 rOut = rOut + "\n" + k + ": " + this._ranges[k].T0.ToString("0.00") +
-                    " to " + this._ranges[k].T1.ToString("0.00");
+                       " to " + this._ranges[k].T1.ToString("0.00");
             }
             return rOut;
         }
 
-        public override string ToString() { return this._code.ToString(); }
+        public override string ToString() => this._code.ToString();
 
         [NotNull]
         public string ToString(int start, int length)
         {
             int uLength;
-            if (start+length > this._code.Length)  {  uLength = this._code.Length - start;}
+            if (start + length > this._code.Length) { uLength = this._code.Length - start; }
             else { uLength = length; }
 
             return uLength > 0 ? this._code.ToString(start, uLength) : string.Empty;
@@ -194,7 +192,7 @@ namespace CAMel.Types
         {
             // Add \r\n manually to ensure consistency of
             // files between OSX and Windows.
-            if (l.Length > 0) { this._code.Append(l+ "\r\n"); }
+            if (l.Length > 0) { this._code.Append(l + "\r\n"); }
         }
         private void appendLine([NotNull] string l)
         {
@@ -209,11 +207,10 @@ namespace CAMel.Types
         {
             if (l == string.Empty) { return; }
 
-            char[] seps = { '\n', '\r' };
+            char[] seps = {'\n', '\r'};
             string[] lines = l.Split(seps, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (string line in lines) { appendLine(line); }
         }
-
     }
 }

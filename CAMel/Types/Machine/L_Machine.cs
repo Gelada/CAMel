@@ -136,7 +136,8 @@ namespace CAMel.Types.Machine
             {
                 diff.X = Math.Abs(ang1.X - ang2.X);
                 diff.Y = 2 * Math.PI - Math.Abs(ang1.Y - ang2.Y);
-            } else
+            }
+            else
             {
                 diff.X = Math.Abs(ang1.X - ang2.X);
                 diff.Y = Math.Min(Math.Min(Math.Abs(ang1.Y - ang2.Y), Math.Abs(2 * Math.PI + ang1.Y - ang2.Y)), Math.Abs(2 * Math.PI - ang1.Y + ang2.Y));
@@ -214,10 +215,7 @@ namespace CAMel.Types.Machine
         }
 
         [NotNull]
-        public static List<ToolPath> localOffset([NotNull] ToolPath tP)
-        {
-            return new List<ToolPath> {tP};
-        }
+        public static List<ToolPath> localOffset([NotNull] ToolPath tP) => new List<ToolPath> {tP};
 
         // Step down into material
         [NotNull]
@@ -306,7 +304,8 @@ namespace CAMel.Types.Machine
                         tempTP.Add(tPt);
                         start = false;
                         dropLength = 0;
-                    } else if (start) // We have not hit any cutting yet;
+                    }
+                    else if (start) // We have not hit any cutting yet;
                     {
                         if (tP.additions.sdDropStart) { continue; }
                         tPt = refPath[j].deepClone();
@@ -314,7 +313,8 @@ namespace CAMel.Types.Machine
                         if (height > matDist[j]) { height = 0; }
                         tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                         tempTP.Add(tPt);
-                    } else // We need to look ahead
+                    }
+                    else // We need to look ahead
                     {
                         int k;
                         for (k = j; k < refPath.Count && i >= numSteps[k]; k++) { } // Look ahead to the next cut
@@ -330,14 +330,16 @@ namespace CAMel.Types.Machine
                                 tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                 tempTP.Add(tPt);
                                 end = true;
-                            } else // add point
+                            }
+                            else // add point
                             {
                                 tPt = refPath[j].deepClone();
                                 height = finishDepth;
                                 tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                 tempTP.Add(tPt);
                             }
-                        } else // into the middle
+                        }
+                        else // into the middle
                         {
                             if (tP.additions.sdDropMiddle < 0 || k - j < 3) // we are not dropping middle or there are not enough points to justify it
                             {
@@ -345,7 +347,8 @@ namespace CAMel.Types.Machine
                                 height = finishDepth;
                                 tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                 tempTP.Add(tPt);
-                            } else //check length of drop
+                            }
+                            else //check length of drop
                             {
                                 if (Math.Abs(dropLength) < CAMel_Goo.Tolerance) // If we are at the start of a possible drop Add the length until we hit the end or go over
                                 {
@@ -379,7 +382,8 @@ namespace CAMel.Types.Machine
                                     tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                     tempTP.Add(tPt);
                                     j = k - 1; //set j to k-1 so it deals with the k point next
-                                } else // after all that we still need to add the point
+                                }
+                                else // after all that we still need to add the point
                                 {
                                     tPt = refPath[j].deepClone();
                                     height = finishDepth;
@@ -422,8 +426,16 @@ namespace CAMel.Types.Machine
 
             Vector3d uTan, uNorm;
 
-            if (start) { uTan = -endTan; uNorm = endNorm; }
-            else { uTan = startTan; uNorm = startNorm; }
+            if (start)
+            {
+                uTan = -endTan;
+                uNorm = endNorm;
+            }
+            else
+            {
+                uTan = startTan;
+                uNorm = startNorm;
+            }
             // Start by using the end version, we will choose the start version
 
             ArcCurve leadCirc = new ArcCurve(new Arc(startPt, uTan, startPt + uLeadCurve * (uNorm + uTan)));
@@ -606,7 +618,8 @@ namespace CAMel.Types.Machine
                     tempTP.pt = tempTP.pt + inter.away * uTol;
                     tempTP.feed = 0; // we can use a rapid move
                     newTP.Insert(0, tempTP);
-                } else
+                }
+                else
                 {
                     // check intersection with material extended to safe distance
                     inter = tP.matForm.intersect(newTP.firstP, uTol).through;
@@ -646,7 +659,8 @@ namespace CAMel.Types.Machine
                 tempTP.pt = tempTP.pt + inter.away * uTol;
                 tempTP.feed = 0; // we can use a rapid move
                 newTP.Add(tempTP);
-            } else
+            }
+            else
             {
                 // check intersection with material extended to safe distance
                 inter = tP.matForm.intersect(newTP.lastP, uTol).through;
@@ -749,7 +763,8 @@ namespace CAMel.Types.Machine
                     startCp = tP[i].deepClone();
                     startCp.pt = osLines[osLines.Count - 1].PointAt(nextInter);
                     offsetPath.Add(startCp);
-                } else
+                }
+                else
                 {
                     // Add the new intersection we like using the closest points on the two lines (the points on each line closest to the other line)
                     // note that we keep the information from the toolpoint before the line we are going to be cutting
@@ -970,10 +985,10 @@ namespace CAMel.Types.Machine
         {
             StringBuilder gPtBd = new StringBuilder(@"X", 34);
             gPtBd.Append(machPt.X.ToString("0.000"));
-            gPtBd.Append(@" Y"); gPtBd.Append(machPt.Y.ToString("0.000"));
-            gPtBd.Append(@" Z"); gPtBd.Append(machPt.Z.ToString("0.000"));
-            gPtBd.Append(@" A"); gPtBd.Append((180.0 * ab.X / Math.PI).ToString("0.000"));
-            gPtBd.Append(@" B"); gPtBd.Append((180.0 * ab.Y / Math.PI).ToString("0.000"));
+            gPtBd.Append(@" Y" + machPt.Y.ToString("0.000"));
+            gPtBd.Append(@" Z" + machPt.Z.ToString("0.000"));
+            gPtBd.Append(@" A" + (180.0 * ab.X / Math.PI).ToString("0.000"));
+            gPtBd.Append(@" B" + (180.0 * ab.Y / Math.PI).ToString("0.000"));
 
             return gPtBd.ToString();
         }

@@ -16,9 +16,9 @@ namespace CAMel.Types
     // creating a surface, drilling a whole, cutting out an object...
     // When paths within an operation have a stepdown then all first
     // step downs with be completed, then the second and so on.
-    public class MachineOperation : IList<ToolPath>,IToolPointContainer
+    public class MachineOperation : IList<ToolPath>, IToolPointContainer
     {
-        [ItemNotNull] [NotNull] private List<ToolPath> _tPs;
+        [ItemNotNull, NotNull] private List<ToolPath> _tPs;
 
         public ToolPoint firstP => this.First(a => a?.firstP != null)?.firstP;
         public ToolPoint lastP => this.Last(a => a?.lastP != null)?.lastP;
@@ -34,7 +34,7 @@ namespace CAMel.Types
         // From list of toolpaths
         public MachineOperation([NotNull] List<ToolPath> tPs)
         {
-            this._tPs =tPs;
+            this._tPs = tPs;
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
@@ -42,7 +42,7 @@ namespace CAMel.Types
         // From toolpath
         public MachineOperation([NotNull] ToolPath tP)
         {
-            this._tPs = new List<ToolPath> { tP };
+            this._tPs = new List<ToolPath> {tP};
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
@@ -188,11 +188,10 @@ namespace CAMel.Types
                 first = false;
             }
 
-            m.writeOpEnd(ref co,this);
+            m.writeOpEnd(ref co, this);
 
             eP = oldPath;
         }
-
 
         // Process a collage of bits and pieces into a list of Operations
         [NotNull]
@@ -203,17 +202,21 @@ namespace CAMel.Types
 
             switch (scraps) {
                 case null: return oMOs;
-                case MachineOperation item: oMOs.Add(item);
+                case MachineOperation item:
+                    oMOs.Add(item);
                     break;
-                case List<ToolPath> ps: oMOs.Add(new MachineOperation(ps));
+                case List<ToolPath> ps:
+                    oMOs.Add(new MachineOperation(ps));
                     break;
-                case IMaterialForm mF: oMOs.Add(new MachineOperation(new ToolPath(mF)));
+                case IMaterialForm mF:
+                    oMOs.Add(new MachineOperation(new ToolPath(mF)));
                     break;
             }
 
             switch (scraps) {
                 // Otherwise process mixed up any other sort of list by term.
-                case MaterialTool mT: oMOs.Add(new MachineOperation(new ToolPath(mT)));
+                case MaterialTool mT:
+                    oMOs.Add(new MachineOperation(new ToolPath(mT)));
                     break;
                 case IEnumerable sc: {
                     bool tpPath = false;
@@ -232,22 +235,28 @@ namespace CAMel.Types
                             default: {
                                 if (tpPath)
                                 {
-                                    oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP }));
+                                    oMOs.Add(new MachineOperation(new List<ToolPath> {tempTP}));
                                     tpPath = false;
                                     tempTP = new ToolPath();
                                 }
                                 switch (oB) {
-                                    case ToolPath tP: oMOs.Add(new MachineOperation(new List<ToolPath> { tP }));
+                                    case ToolPath tP:
+                                        oMOs.Add(new MachineOperation(new List<ToolPath> {tP}));
                                         break;
-                                    case MachineOperation mO: oMOs.Add(mO);
+                                    case MachineOperation mO:
+                                        oMOs.Add(mO);
                                         break;
-                                    case MachineInstruction mI: oMOs.AddRange(mI);
+                                    case MachineInstruction mI:
+                                        oMOs.AddRange(mI);
                                         break;
-                                    case IMaterialForm uMF: oMOs.Add(new MachineOperation(new ToolPath(uMF)));
+                                    case IMaterialForm uMF:
+                                        oMOs.Add(new MachineOperation(new ToolPath(uMF)));
                                         break;
-                                    case MaterialTool uMT: oMOs.Add(new MachineOperation(new ToolPath(uMT)));
+                                    case MaterialTool uMT:
+                                        oMOs.Add(new MachineOperation(new ToolPath(uMT)));
                                         break;
-                                    default: ignores++;
+                                    default:
+                                        ignores++;
                                         break;
                                 }
                                 break;
@@ -256,7 +265,7 @@ namespace CAMel.Types
                     }
                     if (tpPath)
                     {
-                        oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP }));
+                        oMOs.Add(new MachineOperation(new List<ToolPath> {tempTP}));
                     }
                     break;
                 }
@@ -265,6 +274,7 @@ namespace CAMel.Types
         }
 
         #region Point extraction and previews
+
         public ToolPath getSinglePath()
         {
             if (!this.Any()) { return new ToolPath(); }
@@ -294,8 +304,7 @@ namespace CAMel.Types
             return dirs;
         }
         // Create a path with the points
-        [NotNull]
-        [PublicAPI]
+        [NotNull, PublicAPI]
         public List<List<Point3d>> getPointsAndDirs([CanBeNull] out List<List<Vector3d>> dirs)
         {
             List<List<Point3d>> ptsOut = new List<List<Point3d>>();
@@ -333,16 +342,24 @@ namespace CAMel.Types
             foreach (ToolPath tP in this) { lines.AddRange(tP.toolLines()); }
             return lines;
         }
+
         #endregion
 
         #region List Functions
+
         public int Count => this._tPs.Count;
-        public bool IsReadOnly => ((IList<ToolPath>)this._tPs).IsReadOnly;
+        public bool IsReadOnly => ((IList<ToolPath>) this._tPs).IsReadOnly;
         [NotNull] public ToolPath this[int index] { get => this._tPs[index]; set => this._tPs[index] = value; }
         public int IndexOf(ToolPath item) => this._tPs.IndexOf(item);
-        public void Insert(int index, ToolPath item) { if (item != null) { this._tPs.Insert(index, item); } }
+        public void Insert(int index, ToolPath item)
+        {
+            if (item != null) { this._tPs.Insert(index, item); }
+        }
         public void RemoveAt(int index) => this._tPs.RemoveAt(index);
-        public void Add(ToolPath item) { if (item != null) { this._tPs.Add(item); }}
+        public void Add(ToolPath item)
+        {
+            if (item != null) { this._tPs.Add(item); }
+        }
         [PublicAPI] public void AddRange([NotNull] IEnumerable<ToolPath> items) => this._tPs.AddRange(items.Where(x => x != null));
         public void Clear() => this._tPs.Clear();
         public bool Contains(ToolPath item) => this._tPs.Contains(item);
@@ -352,7 +369,7 @@ namespace CAMel.Types
         IEnumerator IEnumerable.GetEnumerator() => this._tPs.GetEnumerator();
 
         #endregion
-}
+    }
 
     // Grasshopper Type Wrapper
     public sealed class GH_MachineOperation : CAMel_Goo<MachineOperation>, IGH_PreviewData
@@ -364,7 +381,7 @@ namespace CAMel.Types
         // Copy Constructor.
         public GH_MachineOperation([CanBeNull] GH_MachineOperation mO) { this.Value = mO?.Value?.deepClone(); }
         // Duplicate
-        [NotNull] public override IGH_Goo Duplicate() { return new GH_MachineOperation(this); }
+        [NotNull] public override IGH_Goo Duplicate() => new GH_MachineOperation(this);
 
         public override bool CastTo<T>(ref T target)
         {
@@ -372,30 +389,30 @@ namespace CAMel.Types
             if (typeof(T).IsAssignableFrom(typeof(MachineOperation)))
             {
                 object ptr = this.Value;
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(ToolPath)))
             {
                 object ptr = this.Value.getSinglePath();
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(GH_ToolPath)))
             {
                 object ptr = new GH_ToolPath(this.Value.getSinglePath());
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
             if (typeof(T).IsAssignableFrom(typeof(Curve)))
             {
-                target = (T)(object)this.Value.getLine();
+                target = (T) (object) this.Value.getLine();
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Curve)))
             {
-                target = (T)(object)new GH_Curve(this.Value.getLine());
+                target = (T) (object) new GH_Curve(this.Value.getLine());
                 return true;
             }
 
@@ -447,5 +464,4 @@ namespace CAMel.Types
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.machineoperations;
     }
-
 }

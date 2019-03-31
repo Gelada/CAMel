@@ -144,8 +144,16 @@ namespace CAMel.Types.Machine
 
             double feed = co.machineState["F"];
             double speed = co.machineState["S"];
-            if (feed < 0) { feed = tP.matTool.feedCut; fChange = true; }
-            if (speed < 0) { speed = tP.matTool.speed; sChange = true; }
+            if (feed < 0)
+            {
+                feed = tP.matTool.feedCut;
+                fChange = true;
+            }
+            if (speed < 0)
+            {
+                speed = tP.matTool.speed;
+                sChange = true;
+            }
 
             foreach (ToolPoint tPt in tP)
             {
@@ -158,7 +166,8 @@ namespace CAMel.Types.Machine
                     {
                         fChange = true;
                         feed = tPt.feed;
-                    } else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
+                    }
+                    else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
                     {
                         fChange = true;
                         feed = tP.matTool.feedCut;
@@ -181,7 +190,8 @@ namespace CAMel.Types.Machine
                 // Act if feed has changed
                 if (fChange)
                 {
-                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; } else
+                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
+                    else
                     {
                         ptCode = "G01 " + ptCode;
                         if (feed > 0) { ptCode = ptCode + " F" + feed.ToString("0"); }

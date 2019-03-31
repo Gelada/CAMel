@@ -17,9 +17,7 @@ namespace CAMel.GH
         public C_DrillOperation()
             : base("Drill Operation", "Drill",
                 "Create a Machine Operation drilling at a certain point.",
-                "CAMel", " Operations")
-        {
-        }
+                "CAMel", " Operations") { }
 
         /// <inheritdoc />
         /// <summary>

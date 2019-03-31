@@ -46,7 +46,7 @@ namespace CAMel.GH
         [UsedImplicitly] private readonly PathClick _click;
         private GH_Document _doc;
 
-        [ItemNotNull] [NotNull] private List<AugCurve> _curves;
+        [ItemNotNull, NotNull] private List<AugCurve> _curves;
         [NotNull] private SortedSet<double> _allKeys;
 
         /// <inheritdoc />
@@ -112,19 +112,17 @@ namespace CAMel.GH
 
             List<GH_Curve> paths = new List<GH_Curve>();
             this._enabled = false;
-            if (!da.GetDataList("Paths", paths) || paths.Count == 0) { return; }
             RhinoDoc uDoc = RhinoDoc.ActiveDoc;
-            if (uDoc?.Objects == null) { return; }
+            if (!da.GetDataList("Paths", paths) || paths.Count == 0 || uDoc?.Objects == null) { return; }
 
             // Insist on reference curves
             foreach (GH_Curve p in paths)
             {
-                if (p == null || p.IsReferencedGeometry) { continue; }
+                if (p?.IsReferencedGeometry != false) { continue; }
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error,
                     "Only referenced curves can be organised with this component. If you wish to organise grasshopper curves, first bake.");
                 return;
             }
-
 
             // Check for current keys stored in the rhino file
             // set the keys for the curves read in
@@ -132,7 +130,7 @@ namespace CAMel.GH
             this._curves = new List<AugCurve>();
             foreach (GH_Curve curve in paths)
             {
-                if(curve?.Value!=null) { this._curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
+                if (curve?.Value != null) { this._curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
             }
 
             foreach (RhinoObject ro in uDoc.Objects)
@@ -156,9 +154,9 @@ namespace CAMel.GH
             // Add keys to new paths with open paths at the start and closed paths at the end
             foreach (AugCurve c in this._curves)
             {
-                if (c == null){ continue; }
+                if (c == null) { continue; }
                 this._enabled = true;
-                if (!double.IsNaN(c.key)) { continue;}
+                if (!double.IsNaN(c.key)) { continue; }
                 if (c.c.IsClosed)
                 {
                     c.key = this._allKeys.Max + 1;
@@ -195,10 +193,7 @@ namespace CAMel.GH
 
         private class CurveComp : IComparer<AugCurve>
         {
-            public int Compare(AugCurve x, AugCurve y)
-            {
-                return x?.key.CompareTo(y?.key) ?? 0;
-            }
+            public int Compare(AugCurve x, AugCurve y) => x?.key.CompareTo(y?.key) ?? 0;
         }
 
         private static readonly CurveComp _CurveC = new CurveComp();
@@ -223,10 +218,7 @@ namespace CAMel.GH
 
                 vP.GetWorldToScreenScale(c.c.PointAtStart, out double pixelsPerUnit);
                 double dist = l.DistanceTo(c.c.PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, false);
-                if (dist * pixelsPerUnit < _DotSize)
-                {
-                    clicked = i;
-                }
+                if (dist * pixelsPerUnit < _DotSize) { clicked = i; }
             }
 
             // return if click did not attach to a path
@@ -265,10 +257,12 @@ namespace CAMel.GH
                                             side = 0;
                                             break;
                                         case 1:
-                                            if (cC) { side = -1; } else { side = 1; }
+                                            if (cC) { side = -1; }
+                                            else { side = 1; }
                                             break;
                                         case 2:
-                                            if (cC) { side = 1; } else { side = -1; }
+                                            if (cC) { side = 1; }
+                                            else { side = -1; }
                                             break;
                                     }
                                     break;
@@ -355,15 +349,17 @@ namespace CAMel.GH
                             case 1:
                                 if (c.c.IsClosed)
                                 {
-                                    if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis)== CurveOrientation.CounterClockwise )
-                                    { c.side = -1; } else { c.side = 1; }
+                                    if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise)
+                                    { c.side = -1; }
+                                    else { c.side = 1; }
                                 }
                                 break;
                             case 2:
                                 if (c.c.IsClosed)
                                 {
                                     if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis) != CurveOrientation.CounterClockwise
-                                    ) { c.side = -1; } else { c.side = 1; }
+                                    ) { c.side = -1; }
+                                    else { c.side = 1; }
                                 }
                                 break;
                             case 3:
@@ -427,7 +423,8 @@ namespace CAMel.GH
             int count = sel.Count;
             int uPos = newPos + count - sel.Count(x => x >= newPos + count);
             if (uPos <= count) { newKeys = new Interval(this._allKeys.Min - sel.Count - 1, this._allKeys.Min); }
-            else if (uPos >= this._curves.Count) { newKeys = new Interval(this._allKeys.Max, this._allKeys.Max + sel.Count + 1); } else
+            else if (uPos >= this._curves.Count) { newKeys = new Interval(this._allKeys.Max, this._allKeys.Max + sel.Count + 1); }
+            else
             {
                 double aboveKey = this._curves[uPos].key;
                 double belowKey = this._allKeys
@@ -436,7 +433,7 @@ namespace CAMel.GH
             }
             for (int i = 0; i < sel.Count; i++)
             {
-                double newKey = newKeys.ParameterAt((i + 1) / (double)(sel.Count + 1));
+                double newKey = newKeys.ParameterAt((i + 1) / (double) (sel.Count + 1));
                 this._curves[sel[i]].key = newKey;
                 this._allKeys.Add(newKey);
             }
@@ -470,11 +467,11 @@ namespace CAMel.GH
             GetInteger gi = setUp(i);
             counterClock = new OptionToggle(cC, "Clockwise", "CounterClockwise");
             gi.AddOptionToggle("Direction", ref counterClock);
-            List<string> sideL = new List<string> { "Centre", "Inside", "Outside" };
+            List<string> sideL = new List<string> {"Centre", "Inside", "Outside"};
             int dVal = 0;
             if (cC && side < 0 || !cC && side > 0) { dVal = 1; } // cutting inside
             if (cC && side > 0 || !cC && side < 0) { dVal = 2; } // cutting outside
-            gi.AddOptionList("Side", sideL,dVal);
+            gi.AddOptionList("Side", sideL, dVal);
             gi.AddOption("MoveSeam");
 
             return gi;
@@ -486,7 +483,7 @@ namespace CAMel.GH
             GetInteger gi = setUp(i);
             flip = new OptionToggle(false, "Leave", "Flip");
             gi.AddOptionToggle("Direction", ref flip);
-            List<string> sideL = new List<string> { "Centre", "Left", "Right" };
+            List<string> sideL = new List<string> {"Centre", "Left", "Right"};
             int dVal = 0;
             if (side < 0) { dVal = 1; } // cutting left
             if (side > 0) { dVal = 2; } // cutting right
@@ -503,7 +500,7 @@ namespace CAMel.GH
             gi.SetCommandPromptDefault("");
             List<string> dir = new List<string> {"Leave", "CounterClockAll", "ClockAll"};
             gi.AddOptionList("Direction", dir, 0);
-            List<string> side = new List<string> { "Leave", "InsideAll", "OutsideAll", "LeftAll", "RightAll" };
+            List<string> side = new List<string> {"Leave", "InsideAll", "OutsideAll", "LeftAll", "RightAll"};
             gi.AddOptionList("Side", side, 0);
 
             return gi;
@@ -537,11 +534,11 @@ namespace CAMel.GH
                             co.CurveGeometry.ChangeClosedCurveSeam(t);
                             c.c.setNewSeam(double.NaN);
                         }
-                    } else
+                    }
+                    else
                     {
                         if (c.c.PointAtStart != co.CurveGeometry.PointAtStart) { co.CurveGeometry.Reverse(); }
                     }
-
                 }
                 ro?.CommitChanges();
             }
@@ -567,7 +564,7 @@ namespace CAMel.GH
                 args.Viewport.GetWorldToScreenScale(this._curves[i].c.PointAtStart, out double pixelsPerUnit);
 
                 System.Drawing.Color lineC = args.WireColour;
-                if (this.Attributes != null && this.Attributes.Selected) { lineC = args.WireColour_Selected; }
+                if (this.Attributes?.Selected == true) { lineC = args.WireColour_Selected; }
                 args.Display.DrawCurve(this._curves[i].c, lineC);
 
                 args.Display.DrawDot(this._curves[i].c.PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, (i + 1).ToString());

@@ -12,7 +12,7 @@ namespace CAMel.Types
     public interface ICAMelBase
     {
         [NotNull] string TypeDescription { get; }
-        [NotNull] [PublicAPI] string TypeName { get; }
+        [NotNull, PublicAPI] string TypeName { get; }
 
         [NotNull] string ToString();
     }
@@ -23,10 +23,7 @@ namespace CAMel.Types
         // Valid if not null
         public override bool IsValid => this.Value != null;
 
-        public override IGH_Goo Duplicate()
-        {
-            throw new NotImplementedException("Camel_Base object has not implemented its duplicate command.");
-        }
+        public override IGH_Goo Duplicate() => throw new NotImplementedException("Camel_Base object has not implemented its duplicate command.");
 
         [NotNull] public override string TypeDescription => this.Value?.TypeDescription ?? "Value of CAMel Grasshopper wrapper currently set to null.";
 
@@ -93,10 +90,7 @@ namespace CAMel.Types
         }
 
         // convert from cylindrical coordinate
-        public static Point3d fromCyl(Point3d pt)
-        {
-            return new Point3d(pt.X * Math.Cos(pt.Y), pt.X * Math.Sin(pt.Y), pt.Z);
-        }
+        public static Point3d fromCyl(Point3d pt) => new Point3d(pt.X * Math.Cos(pt.Y), pt.X * Math.Sin(pt.Y), pt.Z);
 
         [CanBeNull]
         public static object cleanGooList([CanBeNull] object gooey)
