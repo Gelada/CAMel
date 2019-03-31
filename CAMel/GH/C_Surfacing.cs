@@ -17,9 +17,7 @@ namespace CAMel.GH
         public C_Surfacing()
             : base("Surfacing Operation", "Surface",
                 "Create a Machine Operations to create a surface.",
-                "CAMel", " Operations")
-        {
-        }
+                "CAMel", " Operations") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -28,8 +26,8 @@ namespace CAMel.GH
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddGeometryParameter("Surface", "S","The surface, brep or mesh to carve", GH_ParamAccess.item);
-            pManager.AddParameter(new GH_SurfacePathPar(),"Rough Path", "R", "Information to create roughing path", GH_ParamAccess.item);
+            pManager.AddGeometryParameter("Surface", "S", "The surface, brep or mesh to carve", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_SurfacePathPar(), "Rough Path", "R", "Information to create roughing path", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool Rough", "MTR", "The material to cut and the tool to do it for roughing", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[2].WireDisplay = GH_ParamWireDisplay.faint;
@@ -104,13 +102,13 @@ namespace CAMel.GH
             MachineOperation finishO;
             if (geom.GetType() == typeof(Mesh))
             {
-                Mesh m = (Mesh)geom;
+                Mesh m = (Mesh) geom;
                 roughO = roughP.generateOperation(m, mTf.finishDepth, mTr, mF, addRough);
                 finishO = finalP.generateOperation(m, 0.0, mTf, mF, addFinish);
             }
             else if (geom.GetType() == typeof(Brep))
             {
-                Brep b = (Brep)geom;
+                Brep b = (Brep) geom;
                 roughO = roughP.generateOperation(b, mTf.finishDepth, mTr, mF, addRough);
                 finishO = finalP.generateOperation(b, 0.0, mTf, mF, addFinish);
             }

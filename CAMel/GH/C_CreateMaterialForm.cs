@@ -1,10 +1,7 @@
 ﻿using System;
-
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-
 using CAMel.Types.MaterialForm;
-
 using JetBrains.Annotations;
 
 namespace CAMel.GH
@@ -19,9 +16,7 @@ namespace CAMel.GH
         public C_CreateMaterialForm()
             : base("Create Material Form", "MaterialForm",
                 "Give details of the position of material to cut",
-                "CAMel", " Hardware")
-        {
-        }
+                "CAMel", " Hardware") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -46,7 +41,7 @@ namespace CAMel.GH
         protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddParameter(new GH_MaterialFormPar(),"MaterialForm", "MF", "Details of material position", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialFormPar(), "MaterialForm", "MF", "Details of material position", GH_ParamAccess.item);
         }
 
         /// <inheritdoc />
@@ -73,7 +68,6 @@ namespace CAMel.GH
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Box or a Cylinder. ");
             }
-
         }
 
         /// <inheritdoc />

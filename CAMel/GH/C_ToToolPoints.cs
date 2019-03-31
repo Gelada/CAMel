@@ -16,9 +16,7 @@ namespace CAMel.GH
         public C_ToToolPoints()
             : base("To ToolPoints", "ToolPoints",
                 "Extract a list of toolpoints from a ToolPath, Machine Operation or Machine Instructions.",
-                "CAMel", " ToolPaths")
-        {
-        }
+                "CAMel", " ToolPaths") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -37,7 +35,7 @@ namespace CAMel.GH
         protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddParameter(new GH_ToolPointPar(),"ToolPoints", "TP", "ToolPoints contained in input", GH_ParamAccess.list);
+            pManager.AddParameter(new GH_ToolPointPar(), "ToolPoints", "TP", "ToolPoints contained in input", GH_ParamAccess.list);
         }
 
         /// <inheritdoc />
@@ -57,7 +55,7 @@ namespace CAMel.GH
             }
 
             List<GH_ToolPoint> tPtPs = new List<GH_ToolPoint>();
-            foreach(ToolPoint tPt in tP.getSinglePath())
+            foreach (ToolPoint tPt in tP.getSinglePath())
             { tPtPs.Add(new GH_ToolPoint(tPt)); }
 
             da.SetDataList(0, tPtPs);

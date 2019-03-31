@@ -6,20 +6,18 @@ using JetBrains.Annotations;
 
 namespace CAMel.GH
 {
-
-    public class WriteCodeAttributes : GH_ComponentAttributes {
+    public class WriteCodeAttributes : GH_ComponentAttributes
+    {
         public WriteCodeAttributes([NotNull] IGH_Component owner) :
-            base(owner)
-        {
-        }
+            base(owner) { }
 
         [NotNull]
         private static string totalFiles(long l)
         {
             double lMB = l / 1000000.0; // Use smallest MB possibility so numbers are not larger.
-            if (l == 0) { return "Nothing Written";}
+            if (l == 0) { return "Nothing Written"; }
             if (lMB > .99) { return lMB.ToString(".0") + " MB Written"; }
-             return (1000*lMB).ToString("0") + " KB Written";
+            return (1000 * lMB).ToString("0") + " KB Written";
         }
 
         protected override void Layout()
@@ -45,16 +43,16 @@ namespace CAMel.GH
 
             if (channel != GH_CanvasChannel.Objects) { return; }
 
-            if(this.Owner == null) { return;}
+            if (this.Owner == null) { return; }
 
-            string message = totalFiles(((C_WriteCode)this.Owner).bytesWritten);
+            string message = totalFiles(((C_WriteCode) this.Owner).bytesWritten);
 
             GH_Capsule textCap = GH_Capsule.CreateTextCapsule(
                 this.progressBounds,
                 this.progressBounds,
                 GH_Palette.Transparent,
                 message,
-                0,1);
+                0, 1);
 
             GH_Capsule progressOl = GH_Capsule.CreateCapsule(
                 this.progressBounds,

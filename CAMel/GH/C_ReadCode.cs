@@ -18,9 +18,7 @@ namespace CAMel.GH
         public C_ReadCode()
             : base("Read CNC Code", "Read",
                 "Read CNC Code",
-                "CAMel", "CNC Code")
-        {
-        }
+                "CAMel", "CNC Code") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -30,7 +28,7 @@ namespace CAMel.GH
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddTextParameter("Code", "C", "CNC code file", GH_ParamAccess.item);
-            pManager.AddParameter(new GH_MachinePar(),"Machine", "M", "Machine to read code", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MachinePar(), "Machine", "M", "Machine to read code", GH_ParamAccess.item);
         }
 
         /// <inheritdoc />
@@ -66,17 +64,16 @@ namespace CAMel.GH
             List<Point3d> selPt = new List<Point3d>();
             List<Vector3d> selDir = new List<Vector3d>();
 
-            foreach(ToolPoint tp in mI.getSinglePath())
+            foreach (ToolPoint tp in mI.getSinglePath())
             {
-                    selPt.Add(tp.pt);
-                    selDir.Add(tp.dir);
+                selPt.Add(tp.pt);
+                selDir.Add(tp.dir);
             }
 
-            da.SetData(0,new GH_MachineInstruction(mI));
+            da.SetData(0, new GH_MachineInstruction(mI));
             da.SetDataList(1, selPt);
             da.SetDataList(2, selDir);
             da.SetDataList(3, mI.getSinglePath().getSpeedFeed());
-
         }
 
         /// <inheritdoc />

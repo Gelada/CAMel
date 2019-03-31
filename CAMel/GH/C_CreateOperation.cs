@@ -16,9 +16,7 @@ namespace CAMel.GH
         public C_CreateOperation()
             : base("Create Operation ", "Operation",
                 "Create an operation from a list of toolpaths",
-                "CAMel", " ToolPaths")
-        {
-        }
+                "CAMel", " ToolPaths") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -27,9 +25,8 @@ namespace CAMel.GH
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddTextParameter("Name", "N", "Name of operation", GH_ParamAccess.item,string.Empty);
+            pManager.AddTextParameter("Name", "N", "Name of operation", GH_ParamAccess.item, string.Empty);
             pManager.AddGenericParameter("Toolpaths", "TP", "The list of toolpaths to use for the operation.\nWill attempt to process various reasonable collections.", GH_ParamAccess.list);
-
         }
 
         /// <inheritdoc />
@@ -39,7 +36,7 @@ namespace CAMel.GH
         protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddParameter(new GH_MachineOperationPar(),"Machine Operation", "MO", "A machine operation.", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MachineOperationPar(), "Machine Operation", "MO", "A machine operation.", GH_ParamAccess.item);
         }
 
         /// <inheritdoc />
@@ -70,7 +67,7 @@ namespace CAMel.GH
                 return;
             }
             List<GH_MachineOperation> ghMOs = new List<GH_MachineOperation>();
-            foreach(MachineOperation mO in mOs) { ghMOs.Add(new GH_MachineOperation(mO)); }
+            foreach (MachineOperation mO in mOs) { ghMOs.Add(new GH_MachineOperation(mO)); }
 
             da.SetDataList(0, ghMOs);
         }

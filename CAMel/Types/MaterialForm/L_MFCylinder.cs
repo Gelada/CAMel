@@ -38,7 +38,7 @@ namespace CAMel.Types.MaterialForm
         public MFintersects intersect(ToolPoint tP, double tolerance) => intersect(tP.pt, tP.dir, tolerance);
 
         public bool intersect(Point3d start, Point3d end, double tolerance, out MFintersects inter)
-        => MFDefault.lineIntersect(this, start, end, tolerance, out inter);
+            => MFDefault.lineIntersect(this, start, end, tolerance, out inter);
 
         public MFintersects intersect(Point3d ptIn, Vector3d dirIn, double tolerance)
         {
@@ -49,7 +49,7 @@ namespace CAMel.Types.MaterialForm
 
             // convert to Cylinder coordinates
             this.plane.RemapToPlaneSpace(dirIn + this.plane.Origin, out Point3d pt);
-            Vector3d dir = (Vector3d)pt;
+            Vector3d dir = (Vector3d) pt;
             dir.Unitize();
             this.plane.RemapToPlaneSpace(ptIn, out pt);
             // give the projections of the points to the cylinder's planes
@@ -74,32 +74,32 @@ namespace CAMel.Types.MaterialForm
                     // Find the closest point on the line, the distance to it and so
                     // the distance along the line from the closest point to the
                     // cylinder
-                    linePcen = (Vector3d)pt2D * dir2D;
-                    cenDist = ((Vector3d)(pt2D - linePcen * dir2D)).Length;
+                    linePcen = (Vector3d) pt2D * dir2D;
+                    cenDist = ((Vector3d) (pt2D - linePcen * dir2D)).Length;
                     if (cenDist < exRadius)
                     {
                         linePshift = Math.Sqrt(exRadius * exRadius - cenDist * cenDist);
                         // add the two intersection points.
-                        intPt = (Vector3d)pt + (linePshift - linePcen) * dir;
-                        inters.add(fromPlane((Point3d)intPt), fromPlane((Point3d)zeroZ(intPt)) - this.plane.Origin, linePshift - linePcen);
-                        intPt = (Vector3d)pt + (-linePshift - linePcen) * dir;
-                        inters.add(fromPlane((Point3d)intPt), fromPlane((Point3d)zeroZ(intPt)) - this.plane.Origin, -linePshift - linePcen);
+                        intPt = (Vector3d) pt + (linePshift - linePcen) * dir;
+                        inters.add(fromPlane((Point3d) intPt), fromPlane((Point3d) zeroZ(intPt)) - this.plane.Origin, linePshift - linePcen);
+                        intPt = (Vector3d) pt + (-linePshift - linePcen) * dir;
+                        inters.add(fromPlane((Point3d) intPt), fromPlane((Point3d) zeroZ(intPt)) - this.plane.Origin, -linePshift - linePcen);
                     }
                 }
             }
             else
             {
                 double lineP = (-uTol - pt.Z) / dir.Z;
-                intPt = (Vector3d)pt + lineP * dir;
+                intPt = (Vector3d) pt + lineP * dir;
                 if (zeroZ(intPt).Length <= exRadius) // hit bottom
                 {
-                    inters.add(fromPlane((Point3d)intPt), -this.plane.ZAxis, lineP);
+                    inters.add(fromPlane((Point3d) intPt), -this.plane.ZAxis, lineP);
                 }
                 lineP = (this.height + uTol - pt.Z) / dir.Z;
-                intPt = (Vector3d)pt + lineP * dir;
+                intPt = (Vector3d) pt + lineP * dir;
                 if (zeroZ(intPt).Length <= exRadius) // hit top
                 {
-                    inters.add(fromPlane((Point3d)intPt), this.plane.ZAxis, lineP);
+                    inters.add(fromPlane((Point3d) intPt), this.plane.ZAxis, lineP);
                 }
 
                 if (inters.count < 2 && flatDist > 0) // not all hits top or bottom
@@ -107,24 +107,24 @@ namespace CAMel.Types.MaterialForm
                     // Find the closest point on the line, the distance to it and so
                     // the distance along the line from the closest point to the
                     // cylinder
-                    linePcen = (Vector3d)pt2D * dir2D / flatDist;
-                    cenDist = ((Vector3d)(pt2D - linePcen * dir2D / flatDist)).Length;
+                    linePcen = (Vector3d) pt2D * dir2D / flatDist;
+                    cenDist = ((Vector3d) (pt2D - linePcen * dir2D / flatDist)).Length;
                     linePshift = Math.Sqrt(exRadius * exRadius - cenDist * cenDist);
                     // add the two intersection points.
-                    intPt = (Vector3d)pt + (linePshift - linePcen) * dir / flatDist;
+                    intPt = (Vector3d) pt + (linePshift - linePcen) * dir / flatDist;
                     if (intPt.Z >= 0 && intPt.Z <= this.height)
                     {
                         inters.add(
-                            fromPlane((Point3d)intPt),
-                            fromPlane((Point3d)zeroZ(intPt)) - this.plane.Origin,
+                            fromPlane((Point3d) intPt),
+                            fromPlane((Point3d) zeroZ(intPt)) - this.plane.Origin,
                             (linePshift - linePcen) / flatDist);
                     }
-                    intPt = (Vector3d)pt + (-linePshift - linePcen) * dir / flatDist;
+                    intPt = (Vector3d) pt + (-linePshift - linePcen) * dir / flatDist;
                     if (intPt.Z >= 0 && intPt.Z <= this.height)
                     {
                         inters.add(
-                            fromPlane((Point3d)intPt),
-                            fromPlane((Point3d)zeroZ(intPt)) - this.plane.Origin,
+                            fromPlane((Point3d) intPt),
+                            fromPlane((Point3d) zeroZ(intPt)) - this.plane.Origin,
                             (-linePshift - linePcen) / flatDist);
                     }
                 }
@@ -143,10 +143,10 @@ namespace CAMel.Types.MaterialForm
                 closeD = this.height + uTol - pt.Z;
                 outD = this.plane.ZAxis;
             }
-            if (closeD > this.radius + uTol - ((Vector3d)zeroZ(pt)).Length) // closer to side?
+            if (closeD > this.radius + uTol - ((Vector3d) zeroZ(pt)).Length) // closer to side?
             {
-                closeD = this.radius + uTol - ((Vector3d)zeroZ(pt)).Length;
-                if (((Vector3d)zeroZ(pt)).Length > 0.000001)
+                closeD = this.radius + uTol - ((Vector3d) zeroZ(pt)).Length;
+                if (((Vector3d) zeroZ(pt)).Length > 0.000001)
                 {
                     outD = fromPlane(zeroZ(pt)) - this.plane.Origin;
                 }
@@ -165,24 +165,12 @@ namespace CAMel.Types.MaterialForm
         }
 
         // Move a point to the Plane space
-        private Point3d fromPlane(Point3d pt)
-        {
-            return this.plane.PointAt(pt.X, pt.Y, pt.Z);
-        }
+        private Point3d fromPlane(Point3d pt) => this.plane.PointAt(pt.X, pt.Y, pt.Z);
 
-        private static Point3d zeroZ(Point3d pt)
-        {
-            return new Point3d(pt.X, pt.Y, 0);
-        }
-        private static Vector3d zeroZ(Vector3d pt)
-        {
-            return new Vector3d(pt.X, pt.Y, 0);
-        }
+        private static Point3d zeroZ(Point3d pt) => new Point3d(pt.X, pt.Y, 0);
+        private static Vector3d zeroZ(Vector3d pt) => new Vector3d(pt.X, pt.Y, 0);
 
-        public ToolPath refine(ToolPath tP, IMachine m)
-        {
-            return MFDefault.refine(this, tP, m);
-        }
+        public ToolPath refine(ToolPath tP, IMachine m) => MFDefault.refine(this, tP, m);
 
         private Mesh _myMesh;
 
@@ -201,5 +189,4 @@ namespace CAMel.Types.MaterialForm
             return this._myMesh.GetBoundingBox(false);
         }
     }
-
 }

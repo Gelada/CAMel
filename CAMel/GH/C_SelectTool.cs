@@ -9,7 +9,6 @@ using JetBrains.Annotations;
 
 namespace CAMel.GH
 {
-
     [UsedImplicitly]
     public class C_SelectTool : GH_Component
     {
@@ -20,9 +19,7 @@ namespace CAMel.GH
         public C_SelectTool()
             : base("Select Tool", "FindMT",
                 "Find a Material Tool from a list",
-                "CAMel", " Hardware")
-        {
-        }
+                "CAMel", " Hardware") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -32,10 +29,9 @@ namespace CAMel.GH
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddGenericParameter("Tool List", "L", "List of Material Tool Details or Machine with list of Material Tools", GH_ParamAccess.list);
-            pManager.AddTextParameter("Material", "M", "Material to cut", GH_ParamAccess.item,"");
-            pManager.AddTextParameter("Tool", "T", "Tool to use", GH_ParamAccess.item,"");
+            pManager.AddTextParameter("Material", "M", "Material to cut", GH_ParamAccess.item, "");
+            pManager.AddTextParameter("Tool", "T", "Tool to use", GH_ParamAccess.item, "");
         }
-
 
         /// <inheritdoc />
         /// <summary>
@@ -44,7 +40,7 @@ namespace CAMel.GH
         protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTools", "MT", "Correct from the .csv file", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "MaterialTools", "MT", "Correct from the .csv file", GH_ParamAccess.item);
         }
 
         private static void vlUpdate([NotNull] GH_ValueList vL, [NotNull] ref SortedSet<string> items)
@@ -58,7 +54,7 @@ namespace CAMel.GH
                 if (vLi.Name != "One" && vLi.Name != "Two" && vLi.Name != "Three" && vLi.Name != "Four")
                 { items.Add(vLi.Name); }
                 else { newList = true; }
-                if(vLi.Selected) { selected = vLi.Name; }
+                if (vLi.Selected) { selected = vLi.Name; }
             }
 
             if (!newList && vL.ListItems.Count == items.Count) { return; }
@@ -99,9 +95,11 @@ namespace CAMel.GH
             foreach (object ob in oMTs)
             {
                 switch (ob) {
-                    case MaterialTool tool: readMTs.Add(tool);
+                    case MaterialTool tool:
+                        readMTs.Add(tool);
                         break;
-                    case IMachine machine: readMTs.UnionWith(machine.mTs);
+                    case IMachine machine:
+                        readMTs.UnionWith(machine.mTs);
                         break;
                 }
             }
@@ -123,7 +121,8 @@ namespace CAMel.GH
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
                         "More than one material tool combination found, using first.");
-                } else
+                }
+                else
                 {
                     found = true;
                     mT = imT;

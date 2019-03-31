@@ -45,9 +45,7 @@ namespace CAMel.GH
         public C_ReadToolFile()
             : base("Read Tool File", "ReadMT",
                 "Read in a .csv file with material and tool details",
-                "CAMel", " Hardware")
-        {
-        }
+                "CAMel", " Hardware") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -56,9 +54,8 @@ namespace CAMel.GH
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddParameter(new Param_FilePath(),"File", "F", "File containing Material Tool Details", GH_ParamAccess.item);
+            pManager.AddParameter(new Param_FilePath(), "File", "F", "File containing Material Tool Details", GH_ParamAccess.item);
         }
-
 
         /// <inheritdoc />
         /// <summary>
@@ -99,7 +96,7 @@ namespace CAMel.GH
             }
 
             List<MaterialTool> mTs = new List<MaterialTool>();
-            foreach(MaterialToolBuilder mTb in mTbs) { mTs.Add(new MaterialTool(mTb)); }
+            foreach (MaterialToolBuilder mTb in mTbs) { mTs.Add(new MaterialTool(mTb)); }
 
             da.SetDataList(0, mTs);
         }

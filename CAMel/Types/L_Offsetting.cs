@@ -7,7 +7,6 @@ using Rhino.Geometry;
 
 namespace CAMel.Types
 {
-
     // Wrapper classes and library interfaces for leveraging the clipper
     // library for doing offsetting
     public static class Offsetting
@@ -19,12 +18,12 @@ namespace CAMel.Types
             // Bring path into clipper, scaling to take advantage of integer arithmetic
             BoundingBox bb = p.GetBoundingBox(false);
             double md = bb.Max.X;
-            if(bb.Max.Y > md) { md = bb.Max.Y; }
+            if (bb.Max.Y > md) { md = bb.Max.Y; }
             if (-bb.Min.X > md) { md = -bb.Min.X; }
             if (-bb.Min.Y > md) { md = -bb.Min.Y; }
-            double sc = _ScF/md;
+            double sc = _ScF / md;
 
-            List<List<IntPoint>> iPs = pLtoInt(p,sc);
+            List<List<IntPoint>> iPs = pLtoInt(p, sc);
 
             // Offset the paths.
 
@@ -33,7 +32,7 @@ namespace CAMel.Types
             ClipperOffset co = new ClipperOffset();
             co.AddPaths(iPs, JoinType.jtRound, et);
             List<List<IntPoint>> oPf = new List<List<IntPoint>>();
-            co.Execute(ref oPf, d*sc);
+            co.Execute(ref oPf, d * sc);
 
             // Clean the paths.
 
@@ -44,7 +43,7 @@ namespace CAMel.Types
                 oP.Add(clp);
             }
 
-            List<PolylineCurve> oPl = intToPl(oP,sc);
+            List<PolylineCurve> oPl = intToPl(oP, sc);
             // find point closest to first of original curve
 
             int cp = -1;
@@ -52,7 +51,7 @@ namespace CAMel.Types
             double dist = 1000000000000000000;
             for (int i = 0; i < oPl.Count; i++)
             {
-                if (oPl[i] == null) { continue;}
+                if (oPl[i] == null) { continue; }
                 oPl[i].ClosestPoint(p.PointAtStart, out double t, dist);
                 double di = oPl[i].PointAt(t).DistanceTo(p.PointAt(0));
                 if (!(di < dist)) { continue; }
@@ -62,19 +61,13 @@ namespace CAMel.Types
                 pos = t;
             }
 
-            if (cp >= 0 && oPl[cp]!=null) { oPl[cp].ChangeClosedCurveSeam(pos); }
+            if (cp >= 0 && oPl[cp] != null) { oPl[cp].ChangeClosedCurveSeam(pos); }
 
             return oPl;
         }
 
-        private static IntPoint dToi (Point3d p, double sc)
-        {
-            return new IntPoint((long)Math.Round(p.X * sc), (long)Math.Round(p.Y * sc));
-        }
-        private static Point3d iTod(IntPoint p, double sc)
-        {
-            return new Point3d(p.X/sc,p.Y/sc,0);
-        }
+        private static IntPoint dToi(Point3d p, double sc) => new IntPoint((long) Math.Round(p.X * sc), (long) Math.Round(p.Y * sc));
+        private static Point3d iTod(IntPoint p, double sc) => new Point3d(p.X / sc, p.Y / sc, 0);
 
         [NotNull]
         // ReSharper disable once SuggestBaseTypeForParameter
@@ -82,9 +75,9 @@ namespace CAMel.Types
         {
             List<IntPoint> intP = new List<IntPoint>();
             pc.TryGetPolyline(out Polyline p);
-            foreach(Point3d pt in p) { intP.Add(dToi(pt,sc)); }
+            foreach (Point3d pt in p) { intP.Add(dToi(pt, sc)); }
             //List<List<IntPoint>> IntPL = Clipper.SimplifyPolygon(IntP,);
-            List<List<IntPoint>> intPl = new List<List<IntPoint>> { intP };
+            List<List<IntPoint>> intPl = new List<List<IntPoint>> {intP};
 
             return intPl;
         }
@@ -94,16 +87,15 @@ namespace CAMel.Types
         {
             List<PolylineCurve> pls = new List<PolylineCurve>();
 
-            foreach(List<IntPoint> intP in iPs.Where(x => x != null))
+            foreach (List<IntPoint> intP in iPs.Where(x => x != null))
             {
                 Polyline pl = new Polyline();
-                foreach(IntPoint iP in intP) { pl.Add(iTod(iP, sc)); }
+                foreach (IntPoint iP in intP) { pl.Add(iTod(iP, sc)); }
                 if (intP.Count > 0) { pl.Add(iTod(intP[0], sc)); }
                 pls.Add(new PolylineCurve(pl));
             }
 
             return pls;
         }
-
     }
 }

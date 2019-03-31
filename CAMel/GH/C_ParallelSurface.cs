@@ -17,9 +17,7 @@ namespace CAMel.GH
         public C_ParallelSurfacePath()
             : base("Create Parallel Surfacing Path", "SurfacePath",
                 "Create a parallel surfacing recipe",
-                "CAMel", " ToolPaths")
-        {
-        }
+                "CAMel", " ToolPaths") { }
 
         // put this item in the second batch (surfacing strategies)
         public override GH_Exposure Exposure => GH_Exposure.secondary;
@@ -37,10 +35,9 @@ namespace CAMel.GH
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
-            pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item,0);
+            pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Step over", "SO", "Stepover as a multiple of tool width. Default to Tools side load(for negative values).", GH_ParamAccess.item, -1);
             pManager.AddBooleanParameter("Zig and Zag", "Z", "Go forward and back, or just forward along path", GH_ParamAccess.item, true);
-
         }
 
         /// <inheritdoc />
@@ -65,7 +62,7 @@ namespace CAMel.GH
             Curve c = null; // path to move parallel to
             Plane dir = Plane.WorldXY; // Direction to project onto the surface
             MaterialTool mT = null; // The materialtool, mainly for tool width
-            int tD=0;
+            int tD = 0;
             double stepOver = 0;
             bool zz = true; // ZigZag if true, Zig if false
 
@@ -85,11 +82,11 @@ namespace CAMel.GH
             if (!geom.CastTo(out BoundingBox bb))
             {
                 if (geom.CastTo(out Surface s))
-                { bb = s.GetBoundingBox(dir); }     // extents of S in the coordinate system
+                { bb = s.GetBoundingBox(dir); } // extents of S in the coordinate system
                 else if (geom.CastTo(out Brep b))
-                { bb = b.GetBoundingBox(dir); }     // extents of B in the coordinate system
+                { bb = b.GetBoundingBox(dir); } // extents of B in the coordinate system
                 else if (geom.CastTo(out Mesh m))
-                { bb = m.GetBoundingBox(dir); }     // extents of M in the coordinate system
+                { bb = m.GetBoundingBox(dir); } // extents of M in the coordinate system
                 else
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep."); }
                 bb.Inflate(mT.toolWidth);
@@ -99,18 +96,26 @@ namespace CAMel.GH
             SurfToolDir sTd;
             switch (tD)
             {
-                case 0: sTd = SurfToolDir.Projection; break;
-                case 1: sTd = SurfToolDir.PathTangent; break;
-                case 2: sTd = SurfToolDir.PathNormal; break;
-                case 3: sTd = SurfToolDir.Normal; break;
+                case 0:
+                    sTd = SurfToolDir.Projection;
+                    break;
+                case 1:
+                    sTd = SurfToolDir.PathTangent;
+                    break;
+                case 2:
+                    sTd = SurfToolDir.PathNormal;
+                    break;
+                case 3:
+                    sTd = SurfToolDir.Normal;
+                    break;
                 default:
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error,
+                        "Input parameter TD can only have values 0,1,2 or 3");
                     return;
             }
 
-            SurfacePath sP = Surfacing.parallel(c, dir, stepOver,zz, sTd, bb, mT);
+            SurfacePath sP = Surfacing.parallel(c, dir, stepOver, zz, sTd, bb, mT);
             da.SetData(0, new GH_SurfacePath(sP));
-
         }
 
         /// <inheritdoc />

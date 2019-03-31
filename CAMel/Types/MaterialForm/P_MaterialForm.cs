@@ -6,10 +6,11 @@ using Grasshopper.Kernel.Types;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 
-namespace CAMel.Types.MaterialForm {
+namespace CAMel.Types.MaterialForm
+{
     public struct MFintersection
     {
-        public MFintersection(Point3d pt, Vector3d away,double lineP)
+        public MFintersection(Point3d pt, Vector3d away, double lineP)
         {
             this.point = pt;
             this.lineP = lineP;
@@ -21,10 +22,9 @@ namespace CAMel.Types.MaterialForm {
         public Point3d point { get; } // Point of intersection
         public Vector3d away { get; } // direction to get away from the material (eg normal)
 
-        public double lineP { get; }  // position along intersecting line
+        public double lineP { get; } // position along intersecting line
         public bool isSet { get; }
     }
-
 
     public class MFintersects
     {
@@ -47,8 +47,10 @@ namespace CAMel.Types.MaterialForm {
         public Point3d mid => (this.first.point + this.through.point) / 2; // midpoint through material
 
         private Vector3d _midOut;
+
         public Vector3d midOut
-        { // direction to head to surface from the middle of middle of the line
+        {
+            // direction to head to surface from the middle of middle of the line
             get => this._midOut;
             set
             {
@@ -57,12 +59,13 @@ namespace CAMel.Types.MaterialForm {
             }
         }
 
-        [PublicAPI] public void add(MFintersection inter)
+        [PublicAPI]
+        public void add(MFintersection inter)
         {
             this.inters.Add(inter);
 
-            if(!this.through.isSet || this.through.lineP < inter.lineP ) { this.through = inter; }
-            if(!this.first.isSet || this.first.lineP > inter.lineP) { this.first = inter; }
+            if (!this.through.isSet || this.through.lineP < inter.lineP) { this.through = inter; }
+            if (!this.first.isSet || this.first.lineP > inter.lineP) { this.first = inter; }
         }
         public void add(Point3d pt, Vector3d away, double lineP)
         {
@@ -77,7 +80,7 @@ namespace CAMel.Types.MaterialForm {
     internal static class MFDefault
     {
         // Does the line intersect the surface of the material?
-        internal static bool lineIntersect([NotNull] IMaterialForm mF,Point3d start, Point3d end, double tolerance, [CanBeNull] out MFintersects inters)
+        internal static bool lineIntersect([NotNull] IMaterialForm mF, Point3d start, Point3d end, double tolerance, [CanBeNull] out MFintersects inters)
         {
             inters = mF.intersect(start, end - start, tolerance);
             double lLength = (end - start).Length;
@@ -87,9 +90,9 @@ namespace CAMel.Types.MaterialForm {
         }
 
         [NotNull]
-        internal static ToolPath refine([NotNull] IMaterialForm mF, [NotNull] ToolPath tP,[NotNull] IMachine m)
+        internal static ToolPath refine([NotNull] IMaterialForm mF, [NotNull] ToolPath tP, [NotNull] IMachine m)
         {
-            if(tP.matTool == null) { Exceptions.matToolException(); }
+            if (tP.matTool == null) { Exceptions.matToolException(); }
             // for each line check if it intersects
             // the MF and add those points.
             // also add the midpoint if going more than half way through
@@ -106,7 +109,7 @@ namespace CAMel.Types.MaterialForm {
             {
                 // for every line between points check if we leave or enter the material
 
-                if(mF.intersect(tP[i].pt, tP[i + 1].pt, 0, out MFintersects inters))
+                if (mF.intersect(tP[i].pt, tP[i + 1].pt, 0, out MFintersects inters))
                 {
                     double lineLen = (tP[i + 1].pt - tP[i].pt).Length;
 
@@ -115,15 +118,14 @@ namespace CAMel.Types.MaterialForm {
                         refined.Add(m.interpolate(tP[i], tP[i + 1], tP.matTool, inters.firstDist / lineLen, false));
                     }
 
-                    if(inters.firstDist > 0 && lineLen > inters.thrDist) // add midpoint of intersection if it passes right through
+                    if (inters.firstDist > 0 && lineLen > inters.thrDist) // add midpoint of intersection if it passes right through
                     {
-                        refined.Add(m.interpolate(tP[i], tP[i + 1], tP.matTool, (inters.firstDist+inters.thrDist) / (2.0*lineLen),false));
+                        refined.Add(m.interpolate(tP[i], tP[i + 1], tP.matTool, (inters.firstDist + inters.thrDist) / (2.0 * lineLen), false));
                     }
-                    if(lineLen > inters.thrDist) // add last intersection if on line
+                    if (lineLen > inters.thrDist) // add last intersection if on line
                     {
-                        refined.Add(m.interpolate(tP[i], tP[i + 1], tP.matTool, inters.thrDist / lineLen,false));
+                        refined.Add(m.interpolate(tP[i], tP[i + 1], tP.matTool, inters.thrDist / lineLen, false));
                     }
-
                 }
                 refined.Add(tP[i + 1]);
             }
@@ -141,7 +143,7 @@ namespace CAMel.Types.MaterialForm {
         [NotNull] MFintersects intersect([NotNull] ToolPoint tP, double tolerance);
         bool intersect(Point3d start, Point3d end, double tolerance, [NotNull] out MFintersects inters);
 
-        [NotNull] ToolPath refine([NotNull] ToolPath tP,[NotNull] IMachine m);
+        [NotNull] ToolPath refine([NotNull] ToolPath tP, [NotNull] IMachine m);
 
         [NotNull] Mesh getMesh();
         BoundingBox getBoundingBox();
@@ -250,7 +252,7 @@ namespace CAMel.Types.MaterialForm {
         // Copy Constructor (just reference as MaterialForm is Immutable)
         public GH_MaterialForm([CanBeNull] GH_MaterialForm mF) { this.Value = mF?.Value; }
         // Duplicate
-        [NotNull] public override IGH_Goo Duplicate() { return new GH_MaterialForm(this); }
+        [NotNull] public override IGH_Goo Duplicate() => new GH_MaterialForm(this);
 
         public override bool CastTo<T>(ref T target)
         {
@@ -259,7 +261,7 @@ namespace CAMel.Types.MaterialForm {
             if (typeof(T).IsAssignableFrom(typeof(IMaterialForm)))
             {
                 object ptr = this.Value;
-                target = (T)ptr;
+                target = (T) ptr;
                 return true;
             }
 
@@ -271,7 +273,7 @@ namespace CAMel.Types.MaterialForm {
                 if (!m.IsValid) { return false; }
 
                 object gHm = new GH_Mesh(m);
-                target = (T)gHm;
+                target = (T) gHm;
                 return true;
             }
             return false;

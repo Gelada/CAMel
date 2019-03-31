@@ -17,9 +17,7 @@ namespace CAMel.GH
         public C_CreateSurfacePath()
             : base("Create Surfacing Path", "SurfacePath",
                 "Create a surfacing recipe",
-                "CAMel", " ToolPaths")
-        {
-        }
+                "CAMel", " ToolPaths") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -29,11 +27,11 @@ namespace CAMel.GH
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddCurveParameter("Paths", "P", "Paths to project onto surface", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Projection", "Pr", "Type of projection to use.\n 0: Parallel\n 1: Cylindrical\n 2: Spherical", GH_ParamAccess.item,0);
+            pManager.AddNumberParameter("Projection", "Pr", "Type of projection to use.\n 0: Parallel\n 1: Cylindrical\n 2: Spherical", GH_ParamAccess.item, 0);
             pManager.AddCurveParameter("Centre Curve", "CC", "Central Curve for cylindrical projection", GH_ParamAccess.item);
             pManager.AddVectorParameter("Direction", "Dir", "Direction for parallel projection or orthogonal direction for cylindrical", GH_ParamAccess.item, new Vector3d(0, 0, -1));
             pManager.AddPointParameter("Centre", "C", "Centre for spherical projection", GH_ParamAccess.item, new Point3d(0, 0, 0));
-            pManager.AddNumberParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item,0);
+            pManager.AddNumberParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item, 0);
         }
 
         /// <inheritdoc />
@@ -66,7 +64,7 @@ namespace CAMel.GH
 
             if (!da.GetDataList(0, paths)) { return; }
             if (!da.GetData(5, ref tDd)) { return; }
-            int tD = (int)tDd;
+            int tD = (int) tDd;
             // set Surfacing direction
             SurfToolDir sTD;
             switch (tD)
@@ -85,12 +83,12 @@ namespace CAMel.GH
                     break;
                 default:
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
-                return;
+                    return;
             }
 
             // find the projection type (will effect the information we wish to use)
             if (!da.GetData(1, ref prD)) { return; }
-            int prT = (int)prD;
+            int prT = (int) prD;
             switch (prT)
             {
                 case 0: // Parallel
@@ -100,7 +98,7 @@ namespace CAMel.GH
                 case 1: // Cylindrical
                     if (!da.GetData(2, ref cc)) { return; }
                     if (!da.GetData(3, ref dir)) { return; }
-                    sP = new SurfacePath(paths,dir,cc,sTD);
+                    sP = new SurfacePath(paths, dir, cc, sTD);
                     break;
                 case 2: // Spherical
                     if (!da.GetData(4, ref cen)) { return; }
@@ -108,7 +106,7 @@ namespace CAMel.GH
                     break;
                 default:
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter Pr can only have values 0,1 or 2");
-                return;
+                    return;
             }
 
             da.SetData(0, new GH_SurfacePath(sP));

@@ -15,9 +15,13 @@ namespace CAMel.Types
     public static class ReadPhoto
     {
         [NotNull]
-        public static  List<Curve> trace([CanBeNull] string filename, int blur, int jump, bool debug, [NotNull] out List<string> times)
+        public static List<Curve> trace([CanBeNull] string filename, int blur, int jump, bool debug, [NotNull] out List<string> times)
         {
-            if(filename == null) { times = new List<string>(); return new List<Curve>(); }
+            if (filename == null)
+            {
+                times = new List<string>();
+                return new List<Curve>();
+            }
 
             Stopwatch watch = Stopwatch.StartNew();
 
@@ -132,12 +136,12 @@ namespace CAMel.Types
                 VectorOfPoint cont = new VectorOfPoint();
                 int j = 1;
                 while (contours[i][j - 1] != contours[i][j + 1] && j < contours[i].Size - 1) { j++; }
-                System.Drawing.Point[] pt = { contours[i][j], contours[i][j + 1] };
+                System.Drawing.Point[] pt = {contours[i][j], contours[i][j + 1]};
                 cont.Push(pt);
                 j += 2;
                 while (j < contours[i].Size && contours[i][j - 2] != contours[i][j])
                 {
-                    pt = new[] { contours[i][j] };
+                    pt = new[] {contours[i][j]};
                     cont.Push(pt);
                     j++;
                 }
@@ -198,7 +202,7 @@ namespace CAMel.Types
             jCurves.AddRange(Curve.JoinCurves(tCurves, jump, false) ?? new Curve[0]);
 
             // Move to centre.
-            foreach (Curve c in jCurves) { c.Translate(-(Vector3d)bb.Center); }
+            foreach (Curve c in jCurves) { c.Translate(-(Vector3d) bb.Center); }
 
             if (debug)
             {
@@ -210,9 +214,6 @@ namespace CAMel.Types
             return jCurves;
         }
 
-        private static Point3d pt2R(System.Drawing.Point p)
-        {
-            return new Point3d(p.X, -p.Y, 0);
-        }
+        private static Point3d pt2R(System.Drawing.Point p) => new Point3d(p.X, -p.Y, 0);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-
 using Grasshopper.Kernel;
 using JetBrains.Annotations;
 
@@ -22,19 +21,16 @@ namespace CAMel
         [NotNull] public override string AuthorContact => "http://www.Camel3d.com";
     }
 
-
-
-   [UsedImplicitly]
-   public class CAMelCategory : GH_AssemblyPriority
-   {
-
-       public override GH_LoadingInstruction PriorityLoad()
-       {
-           if (Grasshopper.Instances.ComponentServer == null) { throw new ArgumentNullException(); }
-           Grasshopper.Instances.ComponentServer.AddCategoryIcon("CAMel", Properties.Resources.BW_CAMel);
-           Grasshopper.Instances.ComponentServer.AddCategoryShortName("CAMel", "CMl");
-           Grasshopper.Instances.ComponentServer.AddCategorySymbolName("CAMel", 'C');
-           return GH_LoadingInstruction.Proceed;
-       }
-   }
+    [UsedImplicitly]
+    public class CAMelCategory : GH_AssemblyPriority
+    {
+        public override GH_LoadingInstruction PriorityLoad()
+        {
+            if (Grasshopper.Instances.ComponentServer == null) { throw new ArgumentNullException(); }
+            Grasshopper.Instances.ComponentServer.AddCategoryIcon("CAMel", Properties.Resources.BW_CAMel);
+            Grasshopper.Instances.ComponentServer.AddCategoryShortName("CAMel", "CMl");
+            Grasshopper.Instances.ComponentServer.AddCategorySymbolName("CAMel", 'C');
+            return GH_LoadingInstruction.Proceed;
+        }
+    }
 }

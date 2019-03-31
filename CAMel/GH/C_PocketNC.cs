@@ -18,9 +18,7 @@ namespace CAMel.GH
         public C_PocketNC()
             : base("PocketNC Machine", "PocketNC",
                 "PocketNC 5 Axis Machine",
-                "CAMel", " Hardware")
-        {
-        }
+                "CAMel", " Hardware") { }
 
         // put this item in the second batch (Machines)
         public override GH_Exposure Exposure => GH_Exposure.secondary;
@@ -43,7 +41,6 @@ namespace CAMel.GH
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
-
         }
 
         /// <inheritdoc />
@@ -121,9 +118,15 @@ namespace CAMel.GH
             {
                 switch (v)
                 {
-                    case 0: pivot = new Vector3d(0, 0, 0); break;
-                    case 1: pivot = new Vector3d(0, 0, 0); break;
-                    case 2: pivot = new Vector3d(0, 0, 0); break;
+                    case 0:
+                        pivot = new Vector3d(0, 0, 0);
+                        break;
+                    case 1:
+                        pivot = new Vector3d(0, 0, 0);
+                        break;
+                    case 2:
+                        pivot = new Vector3d(0, 0, 0);
+                        break;
                 }
                 uFoot = "G49 (Clear tool length compensation)\n" + foot;
             }
@@ -131,9 +134,15 @@ namespace CAMel.GH
             {
                 switch (v)
                 {
-                    case 0: pivot = new Vector3d(0, 0, 3.6); break;
-                    case 1: pivot = new Vector3d(0, 0, 3.0 - bT); break;
-                    case 2: pivot = new Vector3d(0, 0, 3.0 - bT); break;
+                    case 0:
+                        pivot = new Vector3d(0, 0, 3.6);
+                        break;
+                    case 1:
+                        pivot = new Vector3d(0, 0, 3.0 - bT);
+                        break;
+                    case 2:
+                        pivot = new Vector3d(0, 0, 3.0 - bT);
+                        break;
                 }
             }
 
@@ -148,7 +157,6 @@ namespace CAMel.GH
         /// </summary>
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.create5axis;
-
 
         /// <inheritdoc />
         /// <summary>

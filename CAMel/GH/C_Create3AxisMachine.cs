@@ -17,9 +17,7 @@ namespace CAMel.GH
         public C_Create3AxisMachine()
             : base("Create 3 Axis Machine", "3Axis",
                 "Create 3 Axis Machine",
-                "CAMel", " Hardware")
-        {
-        }
+                "CAMel", " Hardware") { }
 
         // put this item in the second batch (Machines)
         public override GH_Exposure Exposure => GH_Exposure.secondary;
@@ -37,15 +35,16 @@ namespace CAMel.GH
             pManager[1].WireDisplay = GH_ParamWireDisplay.faint;
             pManager[1].Optional = true;
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
-            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty); List<string> ccDefault = new List<string> { GCode.DefaultCommentStart, GCode.DefaultCommentEnd, GCode.DefaultSectionBreak };
+            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
+            List<string> ccDefault = new List<string> {GCode.DefaultCommentStart, GCode.DefaultCommentEnd, GCode.DefaultSectionBreak};
             pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list, ccDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[4].Optional = true;
-            List<string> irDefault = new List<string> { GCode.DefaultSpeedChangeCommand };
+            List<string> irDefault = new List<string> {GCode.DefaultSpeedChangeCommand};
             pManager.AddTextParameter("Speed/ToolChange", "ST", "Command to change speed and change tool", GH_ParamAccess.list, irDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[5].Optional = true;
-            List<string> fileDefault = new List<string> { GCode.DefaultFileStart, GCode.DefaultFileEnd };
+            List<string> fileDefault = new List<string> {GCode.DefaultFileStart, GCode.DefaultFileEnd};
             pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[6].Optional = true;
@@ -126,7 +125,6 @@ namespace CAMel.GH
             IGCodeMachine m = new ThreeAxis(threeAxis);
 
             da.SetData(0, new GH_Machine(m));
-
         }
 
         /// <inheritdoc />
@@ -135,7 +133,6 @@ namespace CAMel.GH
         /// </summary>
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.create3axis;
-
 
         /// <inheritdoc />
         /// <summary>

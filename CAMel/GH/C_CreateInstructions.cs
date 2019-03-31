@@ -17,9 +17,7 @@ namespace CAMel.GH
         public C_CreateInstructions()
             : base("Create Instructions", "Instructions",
                 "Create machine instructions from a list of machine operations, or tool paths and a machine",
-                "CAMel", " ToolPaths")
-        {
-        }
+                "CAMel", " ToolPaths") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -28,7 +26,7 @@ namespace CAMel.GH
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddTextParameter("Name", "N", "name", GH_ParamAccess.item,string.Empty);
+            pManager.AddTextParameter("Name", "N", "name", GH_ParamAccess.item, string.Empty);
             pManager.AddGenericParameter("Operations", "MO", "Machine Operations to apply\n Will attempt to process any reasonable collection.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Start Point", "SP", "Starting moves, can gather data from all sorts of scraps that imply a point. Will use (0,0,1) for direction when Points are used alone.", GH_ParamAccess.list);
             // ReSharper disable once PossibleNullReferenceException
@@ -48,7 +46,7 @@ namespace CAMel.GH
         protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddParameter(new GH_MachineInstructionPar(),"Instructions", "I", "Machine Instructions", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MachineInstructionPar(), "Instructions", "I", "Machine Instructions", GH_ParamAccess.item);
         }
 
         private double _nameCount;
@@ -90,7 +88,7 @@ namespace CAMel.GH
                 object cleanEP = CAMel_Goo.cleanGooList(eP);
                 // The start and end paths should be rapid moves
                 ToolPath startP = ToolPath.toPath(cleanSP);
-                foreach(ToolPoint tPt in startP) { tPt.feed = 0; }
+                foreach (ToolPoint tPt in startP) { tPt.feed = 0; }
                 ToolPath endP = ToolPath.toPath(cleanEP);
                 foreach (ToolPoint tPt in endP) { tPt.feed = 0; }
 
@@ -114,7 +112,6 @@ namespace CAMel.GH
         [NotNullAttribute]
         private string makeName([NotNull] string name)
         {
-
             // Deal with tree coming in if there is one name
             // otherwise assume something sensible is happening
             if (!(this.Params?.Input?[1]?.VolatileData?.PathCount > 1) || this.Params?.Input?[0]?.VolatileDataCount != 1

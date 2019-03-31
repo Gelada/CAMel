@@ -15,9 +15,7 @@ namespace CAMel.GH
         public C_CreateMaterialTool()
             : base("Create Material Tool", "MaterialTool",
                 "Give details of the material to cut and the tool cutting it",
-                "CAMel", " Hardware")
-        {
-        }
+                "CAMel", " Hardware") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -35,7 +33,7 @@ namespace CAMel.GH
             pManager.AddNumberParameter("Cut Depth", "CD", "Maximum depth of material to cut (negative values will allow cuts as deep as needed).", GH_ParamAccess.item, -1);
             pManager.AddNumberParameter("Finish Depth", "FD", "Maximum depth of material in final cut (negative values will allow cuts as deep as needed).", GH_ParamAccess.item, -1);
             pManager.AddNumberParameter("Tolerance", "To", "Tolerance when converting curves to toolpaths", GH_ParamAccess.item, 0.005);
-            pManager.AddNumberParameter("minStep", "mS", "Minimum distance between machine positions", GH_ParamAccess.item,.05);
+            pManager.AddNumberParameter("minStep", "mS", "Minimum distance between machine positions", GH_ParamAccess.item, .05);
             pManager.AddNumberParameter("Tool Width", "TW", "Width of tool", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Insert Width", "IW", "Width needed for tool insertion (for example for plasma);", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis).", GH_ParamAccess.item, 0);
@@ -50,7 +48,7 @@ namespace CAMel.GH
         protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddParameter(new GH_MaterialToolPar(),"MaterialTool", "MT", "Details of material and the tool cutting it", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "MaterialTool", "MT", "Details of material and the tool cutting it", GH_ParamAccess.item);
         }
 
         /// <inheritdoc />
@@ -65,7 +63,7 @@ namespace CAMel.GH
             string toolName = string.Empty;
 
             int T = 1;
-            double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW=0, tL = 0, sL =1;
+            double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW = 0, tL = 0, sL = 1;
 
             string toolShape = string.Empty;
             EndShape eS;

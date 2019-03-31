@@ -93,9 +93,9 @@ namespace CAMel.GH
                 double cl = jCurves[i]?.GetLength() ?? 0;
                 Polyline pl = new Polyline();
                 jCurves[i]?.TryGetPolyline(out pl);
-                for(int j=0; j<pl.Count; j++)
+                for (int j = 0; j < pl.Count; j++)
                 {
-                    if (j > 0) { cp = cp + (pl[j]-pl[j-1]).Length/cl; }
+                    if (j > 0) { cp = cp + (pl[j] - pl[j - 1]).Length / cl; }
                     eP.AddVariable("x", cp);
                     double h = eP.Evaluate()?._Double ?? 0.0;
                     pl[j] = new Point3d(pl[j].X, pl[j].Y, h);
@@ -118,7 +118,7 @@ namespace CAMel.GH
                     if (j < pl.Count - 1)
                     {
                         double ang = Vector3d.VectorAngle(pl[j] - pl[j - 1], pl[j + 1] - pl[j]);
-                        if (ang > Math.PI / 2.1) { op.Add(pl[j]);  }
+                        if (ang > Math.PI / 2.1) { op.Add(pl[j]); }
                     }
                     op.Add(pl[j]);
                 }
@@ -176,7 +176,7 @@ namespace CAMel.GH
             mI.Controls.Add(l);
             mI.Controls.Add(uD);
 
-            mI.Height = uD.Height+6;
+            mI.Height = uD.Height + 6;
 
             ToolStripItem tSi = new ToolStripControlHost(mI)
             {
@@ -194,7 +194,6 @@ namespace CAMel.GH
             foreach (string s in this._times) { traceData.AppendLine(s); }
 
             Clipboard.SetText(traceData.ToString());
-
         }
         private void debugClicked([NotNull] object sender, [CanBeNull] EventArgs e)
         {
@@ -204,21 +203,20 @@ namespace CAMel.GH
         }
         private void traceSettings([NotNull] object sender, [CanBeNull] EventArgs e)
         {
-            NumericUpDown ud = (NumericUpDown)sender;
+            NumericUpDown ud = (NumericUpDown) sender;
             RecordUndoEvent(ud.Name);
             switch (ud.Name)
             {
                 case "Blur":
-                    this._blur = (int)ud.Value;
+                    this._blur = (int) ud.Value;
                     break;
                 case "Jump":
-                    this._jump = (int)ud.Value;
+                    this._jump = (int) ud.Value;
                     break;
                 case "Mega Pixels":
-                    this._maxFile = (int)ud.Value;
+                    this._maxFile = (int) ud.Value;
                     break;
             }
-
         }
 
         // Need to save and recover the trace settings
@@ -250,7 +248,6 @@ namespace CAMel.GH
             // Then call the base class implementation.
             return base.Read(reader);
         }
-
 
         /// <inheritdoc />
         /// <summary>
