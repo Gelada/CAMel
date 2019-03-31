@@ -20,58 +20,19 @@ namespace CAMel.Types
             {
                 c.TryGetPlane(out p, _PlaneTolerance);
             }
-            Curve uC = c.DuplicateCurve();
-            uC.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
             double uOS = oS;
-            if (d * p.ZAxis > 0) { uOS = -uOS;}
-            bool reversed = false;
-            // ensure the curve is anticlockwise
-            if (Math.Abs(uOS) > CAMel_Goo.Tolerance)
-            {
-                if (uC.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
-                {
-                    uC.Reverse();
-                    reversed = true;
-                    uOS = -uOS;
-                }
-            }
-
-            // record the average Z location of the curve
-            BoundingBox bb = uC.GetBoundingBox(true);
-            double useZ = (bb.Max.Z + bb.Min.Z) / 2.0;
-
-            // turn the curve into a Polyline
-            PolylineCurve pl = ToolPath.convertAccurate(uC);
-
-            // offSet
-            List<PolylineCurve> osC = new List<PolylineCurve>();
-            if (Math.Abs(uOS) < CAMel_Goo.Tolerance) { osC.Add(pl); }
-            else { osC = Offsetting.offset(pl, uOS * mT.toolWidth / 2.0); }
-
-            if (Math.Abs(uOS) > CAMel_Goo.Tolerance && !reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
+            if (d * p.ZAxis > 0) { uOS = -uOS; }
 
             // create Operation
 
-            MachineOperation mO = new MachineOperation
-            {name = "2d Cut Path"};
+            MachineOperation mO = new MachineOperation {name = "2d Cut "};
 
-            int i = 1;
-            foreach (PolylineCurve osPl in osC)
-            {
-                // Create and add name, material/tool and material form
-                ToolPath tP = new ToolPath("Cut", mT, mF,tPa);
-                if (osC.Count > 1) { tP.name = tP.name + " " + i; }
-                i++;
+            ToolPath tP = new ToolPath("", mT, mF, tPa);
+            tP.convertCurve(c, d);
+            tP.additions.offset = mT.toolWidth * uOS * p.ZAxis;
 
-                // return to original orientation
+            mO.Add(tP);
 
-                osPl.Translate(new Vector3d(0, 0, -useZ));
-                osPl.Transform(Transform.PlaneToPlane(Plane.WorldXY, p));
-
-                // Add to Operation
-                tP.convertCurve(osPl, d);
-                mO.Add(tP);
-            }
             return mO;
         }
 
@@ -79,7 +40,7 @@ namespace CAMel.Types
         public static MachineOperation opIndex3Axis([NotNull] List<Curve> cs, Vector3d dir, [NotNull] ToolPathAdditions tPa, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, out int invalidCurves)
         {
             MachineOperation mO = new MachineOperation
-            { name = "Index 3-Axis Cutting with " + cs.Count + " path" };
+                {name = "Index 3-Axis Cutting with " + cs.Count + " path"};
             if (cs.Count > 1) { mO.name = mO.name + "s"; }
 
             int i = 1;
@@ -97,8 +58,7 @@ namespace CAMel.Types
 
                 // Turn Curve into path
 
-                if (tP.convertCurve(c, dir)) { mO.Add(tP); }
-                else { invalidCurves++; }
+                if (tP.convertCurve(c, dir)) { mO.Add(tP); } else { invalidCurves++; }
                 i++;
             }
             return mO;
@@ -134,12 +94,11 @@ namespace CAMel.Types
             // calculate the number of pecks we need to do
 
             int steps;
-            if (peck > 0) { steps = (int)Math.Ceiling(d.Radius / peck); }
-            else { steps = 1; }
+            if (peck > 0) { steps = (int) Math.Ceiling(d.Radius / peck); } else { steps = 1; }
 
             for (int j = 1; j <= steps; j++)
             {
-                tP.Add(new ToolPoint(d.Center - j / (double)steps * d.Radius * d.Normal, d.Normal, -1, mT.feedPlunge));
+                tP.Add(new ToolPoint(d.Center - j / (double) steps * d.Radius * d.Normal, d.Normal, -1, mT.feedPlunge));
                 tP.Add(new ToolPoint(d.Center, d.Normal, -1, mT.feedPlunge));
             }
 

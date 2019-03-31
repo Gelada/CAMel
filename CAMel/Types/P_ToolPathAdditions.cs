@@ -61,7 +61,7 @@ namespace CAMel.Types
             this._replaceable = tPa._replaceable;
             this.insert = tPa.insert;
             this.retract = tPa.retract;
-            this.offset = new Vector3d(0, 0, 0);
+            this.offset = tPa.offset;
             this.activate = tPa.activate;
             this.stepDown = tPa.stepDown;
             this.sdDropStart = tPa.sdDropStart;

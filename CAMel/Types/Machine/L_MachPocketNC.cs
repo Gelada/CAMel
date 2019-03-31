@@ -52,7 +52,7 @@ namespace CAMel.Types.Machine
             this.aMin = aMin;
             this.aMax = aMax;
             this.bMax = bMax;
-            this._terms = new List<char> { 'X', 'Y', 'Z', 'A', 'B', 'S', 'F' };
+            this._terms = new List<char> {'X', 'Y', 'Z', 'A', 'B', 'S', 'F'};
         }
 
         public string TypeDescription => "Instructions for a PocketNC machine";
@@ -64,6 +64,7 @@ namespace CAMel.Types.Machine
         public string comment(string l) => GCode.comment(this, l);
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
+        public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir) ? Utility.planeOffset(tP, dir) : Utility.localOffset(tP);
         public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
@@ -82,13 +83,13 @@ namespace CAMel.Types.Machine
 
         public MachineInstruction readCode(string code)
         {
-            if(this.mTs.Count == 0) { Exceptions.noToolException(); }
+            if (this.mTs.Count == 0) { Exceptions.noToolException(); }
             return GCode.gcRead(this, this.mTs, code, this._terms);
         }
         public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT)
         {
             Point3d machPt = new Point3d(values['X'], values['Y'], values['Z']);
-            Vector3d ab = new Vector3d(values['A']*Math.PI/180.0, values['B'] * Math.PI/180.0, 0);
+            Vector3d ab = new Vector3d(values['A'] * Math.PI / 180.0, values['B'] * Math.PI / 180.0, 0);
 
             ToolPoint tP = new ToolPoint
             {
@@ -131,8 +132,8 @@ namespace CAMel.Types.Machine
 
             Vector3d ab = new Vector3d(co.machineState["A"], co.machineState["B"], 0);
 
-            double bTo = 0;  // Allow for smooth adjustment through the cusp with A at 90.
-            int bSteps = 0;  //
+            double bTo = 0; // Allow for smooth adjustment through the cusp with A at 90.
+            int bSteps = 0; //
 
             Point3d machPt = new Point3d();
 
@@ -151,8 +152,7 @@ namespace CAMel.Types.Machine
                     {
                         fChange = true;
                         feed = tPt.feed;
-                    }
-                    else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
+                    } else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
                     {
                         fChange = true;
                         feed = tP.matTool.feedCut;
@@ -190,8 +190,7 @@ namespace CAMel.Types.Machine
                     {
                         newAB.Y = ab.Y + (bTo - ab.Y) / bSteps;
                         bSteps--;
-                    }
-                    else // head forward to next non-vertical point or the end.
+                    } else // head forward to next non-vertical point or the end.
                     {
                         int j = i + 1;
 
@@ -215,8 +214,7 @@ namespace CAMel.Types.Machine
                             bTo = ab.X;
                             bSteps = j - i;
                             newAB.Y = bTo;
-                        }
-                        else
+                        } else
                         {
                             bTo = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
                             bSteps = j - i;
@@ -237,8 +235,7 @@ namespace CAMel.Types.Machine
                     {
                         newAB.X = Math.PI - newAB.X;
                         newAB.Y = newAB.Y - Math.PI;
-                    }
-                    else if (newAB.Y - ab.Y < -Math.PI) // check for big rotation in B
+                    } else if (newAB.Y - ab.Y < -Math.PI) // check for big rotation in B
                     {
                         newAB.X = Math.PI - newAB.X;
                         newAB.Y = newAB.Y + Math.PI;
@@ -246,7 +243,6 @@ namespace CAMel.Types.Machine
                 }
 
                 // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
-
 
                 if (Math.Abs(newAB.Y) > this.bMax)
                 {
@@ -349,7 +345,7 @@ namespace CAMel.Types.Machine
             // Check end of this path and start of TP
             // For each see if it is safe in one Material Form
             // As we pull back to safe distance we allow a little wiggle.
-            if(fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
             if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
@@ -364,8 +360,7 @@ namespace CAMel.Types.Machine
                                 + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
                                 + this.pathJump + " to at least: " + length);
                 }
-            }
-            else // Safely move from one safe point to another.
+            } else // Safely move from one safe point to another.
             {
                 ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 move.name = string.Empty;
@@ -383,11 +378,7 @@ namespace CAMel.Types.Machine
                     {
                         MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
                         route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-                    }
-                    else
-                    {
-                        i++;
-                    }
+                    } else { i++; }
                 }
 
                 // add extra points if the angle change between steps is too large (pi/30)
@@ -396,7 +387,7 @@ namespace CAMel.Types.Machine
                 // work out how far angle needs to move
                 double angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, false);
 
-                int steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
+                int steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                 if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0
 
                 // Try to build a path with angles.
@@ -408,15 +399,16 @@ namespace CAMel.Types.Machine
                     // add new points at speed 0 to describe rapid move.
                     for (int j = 0; j < steps; j++)
                     {
-                        double shift = (steps * i + j) / (double)(steps * (route.Count - 1));
-                        Vector3d mixDir = interpolate(fP.lastP, tP.firstP, fP.matTool, shift,lng).dir;
+                        double shift = (steps * i + j) / (double) (steps * (route.Count - 1));
+                        Vector3d mixDir = interpolate(fP.lastP, tP.firstP, fP.matTool, shift, lng).dir;
 
                         ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
                         if (fP.matForm.intersect(newTP, 0).thrDist > 0
                             || tP.matForm.intersect(newTP, 0).thrDist > 0)
                         {
                             if (lng)
-                            {   // something has gone horribly wrong and
+                            {
+                                // something has gone horribly wrong and
                                 // both angle change directions will hit the material
 
                                 throw new Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
@@ -427,10 +419,9 @@ namespace CAMel.Types.Machine
                             i = 0;
                             j = 0;
                             angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, true);
-                            steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
+                            steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                             move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                        }
-                        else
+                        } else
                         {
                             move.Add(newTP);
                         }

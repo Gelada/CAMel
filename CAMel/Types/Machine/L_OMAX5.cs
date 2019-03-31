@@ -46,6 +46,7 @@ namespace CAMel.Types.Machine
         public string comment(string l) => string.Empty;
         public string lineNumber(string l, int line) => l;
 
+        public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> {tP};
         public ToolPath insertRetract(ToolPath tP) => Utility.leadInOutV(tP, string.Empty, string.Empty, true);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
@@ -54,7 +55,7 @@ namespace CAMel.Types.Machine
         // Use spherical interpolation (as the range of angles is rather small)
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
         {
-            ToolPoint iPt = new ToolPoint { pt = (1 - par) * fP.pt + par * tP.pt };
+            ToolPoint iPt = new ToolPoint {pt = (1 - par) * fP.pt + par * tP.pt};
             Vector3d cr = Vector3d.CrossProduct(fP.dir, tP.dir);
             double an = Vector3d.VectorAngle(fP.dir, tP.dir);
             iPt.dir = fP.dir;
@@ -92,7 +93,7 @@ namespace CAMel.Types.Machine
                         else
                         {
                             mI.Add(new MachineOperation(tP));
-                            tP = new ToolPath { additions = { activate = quality } };
+                            tP = new ToolPath {additions = {activate = quality}};
                         }
                     }
 
@@ -143,13 +144,9 @@ namespace CAMel.Types.Machine
                     {
                         tPt.dir = -new Vector3d(dirVals[0], dirVals[1], dirVals[2]);
                         endPt.dir = -new Vector3d(dirVals[3], dirVals[4], dirVals[5]);
-                    }
-                    else { badRead = true; }
-
-                }
-                else { badRead = true; }
-            }
-            else if (fm != 0) { badRead = true; }
+                    } else { badRead = true; }
+                } else { badRead = true; }
+            } else if (fm != 0) { badRead = true; }
 
             if (badRead) { tPt.addError("Unreadable code: " + l); }
 
@@ -170,7 +167,7 @@ namespace CAMel.Types.Machine
 
             Point3d lastPt = new Point3d(co.machineState["X"], co.machineState["Y"], co.machineState["Z"]);
             Vector3d lastDir = new Vector3d(co.machineState["dX"], co.machineState["dY"], co.machineState["dZ"]);
-            int lastQ = (int)co.machineState["Q"];
+            int lastQ = (int) co.machineState["Q"];
 
             // as each instruction has a end tilt as well as a start tilt
             // if the position does not change can ignore one point
@@ -189,7 +186,7 @@ namespace CAMel.Types.Machine
                 }
                 justEnd = true;
 
-                string ptCode = OMXCode.omxTiltPt(co, lastPt, lastDir, tPt, lastQ, this.tiltMax);
+                string ptCode = OMXCode.omxTiltPt(co, lastPt, lastDir, tPt, lastQ, this.tiltMax, tP.additions.offset);
 
                 ptCode = tPt.preCode + ptCode + tPt.postCode;
 
@@ -231,7 +228,7 @@ namespace CAMel.Types.Machine
             co.machineState.Add("dY", fPt.dir.Y);
             co.machineState.Add("dZ", fPt.dir.Z);
             co.machineState.Add("Q", startPath.additions.activate);
-            if ((int)co.machineState["Q"] == 0) { co.machineState["Q"] = 10; }
+            if ((int) co.machineState["Q"] == 0) { co.machineState["Q"] = 10; }
 
             OMXCode.omxInstStart(this, ref co, mI, startPath);
         }
@@ -265,7 +262,7 @@ namespace CAMel.Types.Machine
             move.additions.activate = 0;
 
             // if needed add new point at speed 0 to describe rapid move.
-            if((int)co.machineState["Q"] != 0 && (int)co.machineState["Q"] != 10)
+            if ((int) co.machineState["Q"] != 0 && (int) co.machineState["Q"] != 10)
             { move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0)); }
 
             move.Add(new ToolPoint((2 * fP.lastP.pt + tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
@@ -280,7 +277,7 @@ namespace CAMel.Types.Machine
     {
         [NotNull]
         public static string omxTiltPt([NotNull] CodeInfo co, Point3d lastPt, Vector3d lastDir,
-            [NotNull] ToolPoint tPt, int lastQ, double tiltMax)
+            [NotNull] ToolPoint tPt, int lastQ, double tiltMax, Vector3d os)
         {
             // Work on tilts
 
@@ -301,11 +298,18 @@ namespace CAMel.Types.Machine
             co.growRange("Z", lastPt.Z);
             co.growRange("T", Math.Max(tiltStart, tiltEnd));
 
-            return omxTiltPt(lastPt, lastDir, tPt.dir, 0, lastQ);
+            return omxTiltPt(lastPt, lastDir, tPt.dir, 0, lastQ, os);
+        }
+
+        private static int vToSide(Vector3d V)
+        {
+            double d = V * -Vector3d.ZAxis;
+            if (d > CAMel_Goo.Tolerance) { return 1; }
+            return d < -CAMel_Goo.Tolerance ? 2 : 0;
         }
 
         [NotNull]
-        private static string omxTiltPt(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality)
+        private static string omxTiltPt(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality, Vector3d os)
         {
             StringBuilder gPtBd = new StringBuilder("[0],");
             gPtBd.Append(machPt.X.ToString("0.0000") + ", ");
@@ -314,42 +318,10 @@ namespace CAMel.Types.Machine
             gPtBd.Append("0, "); // tiltStart
             gPtBd.Append("0, "); // tiltEnd
             gPtBd.Append(bow.ToString("0.0000") + ", ");
-            int uQuality = Math.Abs(quality);
-            if (quality == 21) { uQuality = 1; }
-            if (quality == 22) { uQuality = 2; }
-            if (quality == 23) { uQuality = 3; }
-            if (quality == 24) { uQuality = 4; }
-            if (quality == 25) { uQuality = 5; }
-            gPtBd.Append(Math.Abs(uQuality) + ", ");
+            int uQuality = quality;
+            gPtBd.Append(uQuality + ", ");
 
-            int offset;
-            switch (quality)
-            {
-                case -11:
-                case -9:
-                case -8:
-                case -5:
-                case -4:
-                case -3:
-                case -2:
-                case -1:
-                    offset = 1;
-                    break;
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                case 8:
-                case 9:
-                case 11:
-                    offset = 2;
-                    break;
-                default:
-                    offset = 0;
-                    break;
-            }
-            gPtBd.Append(offset + ", ");
+            gPtBd.Append(vToSide(os) + ", ");
             gPtBd.Append("R, R, R, R, R, 27, "); // Reserved items and XType
 
             // flip tool directions
@@ -366,7 +338,6 @@ namespace CAMel.Types.Machine
 
             return gPtBd.ToString();
         }
-
 
         public static void omxInstStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
             [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath)

@@ -67,7 +67,7 @@ namespace CAMel.Types.Machine
     {
         public string name { get; }
         public string extension { get; }
-        public double pathJump { get;}
+        public double pathJump { get; }
         public bool toolLengthCompensation { get; }
         public string sectionBreak { get; }
         public string speedChangeCommand { get; }
@@ -103,7 +103,7 @@ namespace CAMel.Types.Machine
             this.fileEnd = ta.fileEnd;
             this.toolChangeCommand = ta.toolChangeCommand;
             this.mTs = ta.mTs;
-            this._terms = new List<char> { 'X', 'Y', 'S', 'F' };
+            this._terms = new List<char> {'X', 'Y', 'S', 'F'};
         }
 
         public string TypeDescription => @"Instructions for a 2-Axis machine";
@@ -114,17 +114,18 @@ namespace CAMel.Types.Machine
 
         public string comment(string l) => GCode.comment(this, l);
 
+        public List<ToolPath> offSet(ToolPath tP) => Utility.planeOffset(tP, Vector3d.ZAxis);
         public ToolPath insertRetract(ToolPath tP) => Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
 
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
-        => Kinematics.interpolateLinear(fP, tP, par);
+            => Kinematics.interpolateLinear(fP, tP, par);
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) => 0;
 
-        public MachineInstruction readCode(string code) => GCode.gcRead(this,this.mTs,code, this._terms);
-        public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT) => new ToolPoint(new Point3d(values['X'], values['Y'],0), new Vector3d(0, 0, 0), values['S'], values['F']);
+        public MachineInstruction readCode(string code) => GCode.gcRead(this, this.mTs, code, this._terms);
+        public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT) => new ToolPoint(new Point3d(values['X'], values['Y'], 0), new Vector3d(0, 0, 0), values['S'], values['F']);
 
         public Vector3d toolDir(ToolPoint tP) => Vector3d.ZAxis;
 
@@ -157,8 +158,7 @@ namespace CAMel.Types.Machine
                     {
                         fChange = true;
                         feed = tPt.feed;
-                    }
-                    else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
+                    } else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
                     {
                         fChange = true;
                         feed = tP.matTool.feedCut;
@@ -184,7 +184,7 @@ namespace CAMel.Types.Machine
                     if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; } else
                     {
                         ptCode = "G01 " + ptCode;
-                        if(feed> 0) { ptCode = ptCode +" F" + feed.ToString("0"); }
+                        if (feed > 0) { ptCode = ptCode + " F" + feed.ToString("0"); }
                     }
                 }
                 fChange = false;
@@ -240,7 +240,7 @@ namespace CAMel.Types.Machine
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
 
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
-            List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
+            List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = string.Empty;

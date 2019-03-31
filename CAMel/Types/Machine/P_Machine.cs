@@ -26,13 +26,13 @@ namespace CAMel.Types.Machine
         [NotNull] List<MaterialTool> mTs { get; } // list of Material Tools used by machine
 
         // Writing and reading code
-        [NotNull] string extension { get;  }
+        [NotNull] string extension { get; }
 
         [NotNull] string comment([NotNull] string l);
         [NotNull] string lineNumber([NotNull] string l, int line);
 
         void writeFileStart([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath);
-        void writeFileEnd([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath,[NotNull] ToolPath endPath);
+        void writeFileEnd([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath);
         void writeOpStart([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
         void writeOpEnd([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
         void writeCode([NotNull] ref CodeInfo co, [NotNull] ToolPath tP);
@@ -42,18 +42,17 @@ namespace CAMel.Types.Machine
 
         // Functions needed to process additions
 
+        [NotNull, ItemNotNull] List<ToolPath> offSet([NotNull] ToolPath tP);
         [NotNull] ToolPath insertRetract([NotNull] ToolPath tP);
         [NotNull] List<List<ToolPath>> stepDown([NotNull] ToolPath tP);
         [NotNull] ToolPath threeAxisHeightOffset([NotNull] ToolPath tP);
-        [NotNull] List<ToolPath> finishPaths([NotNull] ToolPath tP);
+        [NotNull, ItemNotNull] List<ToolPath> finishPaths([NotNull] ToolPath tP);
 
         // Machine movement
         Vector3d toolDir([NotNull] ToolPoint tP);
         [NotNull] ToolPoint interpolate([NotNull] ToolPoint fP, [NotNull] ToolPoint tP, [NotNull] MaterialTool mT, double par, bool lng);
         [UsedImplicitly] double angDiff([NotNull] ToolPoint tP1, [NotNull] ToolPoint tP2, [NotNull] MaterialTool mT, bool lng); // max change for orientation axes
     }
-
-
 
     // Grasshopper Type Wrapper
     public sealed class GH_Machine : CAMel_Goo<IMachine>
@@ -64,7 +63,7 @@ namespace CAMel.Types.Machine
         // Unwrapped type
         public GH_Machine([CanBeNull] IMachine m) { this.Value = m; }
         // Copy Constructor (just reference as Machine is Immutable)
-        public GH_Machine([CanBeNull] GH_Machine m) { this.Value = m?.Value;  }
+        public GH_Machine([CanBeNull] GH_Machine m) { this.Value = m?.Value; }
         // Duplicate
         [NotNull]
         public override IGH_Goo Duplicate() { return new GH_Machine(this); }
@@ -74,7 +73,7 @@ namespace CAMel.Types.Machine
             if (!typeof(T).IsAssignableFrom(typeof(IMachine))) { return false; }
 
             object ptr = this.Value;
-            target = (T)ptr;
+            target = (T) ptr;
             return true;
         }
 
@@ -94,8 +93,7 @@ namespace CAMel.Types.Machine
     public class GH_MachinePar : GH_Param<GH_Machine>
     {
         public GH_MachinePar() :
-            base("Machine", "Machine", "Contains a collection of information on CNC machines", "CAMel", "  Params", GH_ParamAccess.item)
-        { }
+            base("Machine", "Machine", "Contains a collection of information on CNC machines", "CAMel", "  Params", GH_ParamAccess.item) { }
         public override Guid ComponentGuid => new Guid("df6dcfa2-510e-4613-bdae-3685b094e7d7");
         /// <inheritdoc />
         /// <summary>
@@ -104,5 +102,4 @@ namespace CAMel.Types.Machine
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.machine;
     }
-
 }

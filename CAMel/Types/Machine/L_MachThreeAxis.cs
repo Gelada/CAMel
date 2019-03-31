@@ -110,13 +110,14 @@ namespace CAMel.Types.Machine
         public string comment(string l) => GCode.comment(this, l);
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
+        public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir) ? Utility.planeOffset(tP, dir) : Utility.localOffset(tP);
         public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
 
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
-        => Kinematics.interpolateLinear(fP, tP, par);
+            => Kinematics.interpolateLinear(fP, tP, par);
 
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) => 0;
 
@@ -205,7 +206,7 @@ namespace CAMel.Types.Machine
                 co.growRange("Z", tPt.pt.Z);
             }
             // Pass machine state information
-            if(tP.lastP == null) { Exceptions.nullPanic(); }
+            if (tP.lastP == null) { Exceptions.nullPanic(); }
             co.machineState.Clear();
             co.machineState.Add("X", tP.lastP.pt.X);
             co.machineState.Add("Y", tP.lastP.pt.Y);
@@ -219,7 +220,7 @@ namespace CAMel.Types.Machine
         {
             // Set up Machine State
 
-            if(startPath.firstP == null) { Exceptions.noToolPathException(); }
+            if (startPath.firstP == null) { Exceptions.noToolPathException(); }
 
             co.machineState.Clear();
             co.machineState.Add("X", startPath.firstP.pt.X);
@@ -236,7 +237,7 @@ namespace CAMel.Types.Machine
 
         public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
         {
-            if(fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
+            if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             // check there is anything to transition from or to
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
             // See if we lie in the material
@@ -258,14 +259,13 @@ namespace CAMel.Types.Machine
                                 + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
                                 + this.pathJump + " to at least: " + length);
                 }
-            }
-            else // Safely move from one safe point to another.
+            } else // Safely move from one safe point to another.
             {
                 // Start with a straight line, see how close it
                 // comes to danger. If its too close add a new
                 // point and try again.
 
-                List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
+                List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
 
                 int i;
 
@@ -276,8 +276,7 @@ namespace CAMel.Types.Machine
                     {
                         MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
                         route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-                    }
-                    else {  i++; }
+                    } else { i++; }
                 }
 
                 // get rid of start and end points that are already in the paths

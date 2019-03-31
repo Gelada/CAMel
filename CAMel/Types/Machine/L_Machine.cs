@@ -16,7 +16,7 @@ namespace CAMel.Types.Machine
         [NotNull] string header { get; }
         [NotNull] string footer { get; }
 
-        [NotNull] [UsedImplicitly] string speedChangeCommand { get; }
+        [NotNull, UsedImplicitly] string speedChangeCommand { get; }
         [NotNull] string toolChangeCommand { get; }
 
         [NotNull] string sectionBreak { get; }
@@ -126,7 +126,7 @@ namespace CAMel.Types.Machine
             return kFiveAxisABTable(from, pivot, toolLength, outPt, outAB);
         }
 
-        public static double angDiffFiveAxisABTable(Vector3d pivot, double toolLength, [NotNull] ToolPoint fP, [NotNull] ToolPoint tP,bool lng)
+        public static double angDiffFiveAxisABTable(Vector3d pivot, double toolLength, [NotNull] ToolPoint fP, [NotNull] ToolPoint tP, bool lng)
         {
             Vector3d ang1 = ikFiveAxisABTable(fP, pivot, toolLength, out Point3d _);
             Vector3d ang2 = ikFiveAxisABTable(tP, pivot, toolLength, out Point3d _);
@@ -136,24 +136,94 @@ namespace CAMel.Types.Machine
             {
                 diff.X = Math.Abs(ang1.X - ang2.X);
                 diff.Y = 2 * Math.PI - Math.Abs(ang1.Y - ang2.Y);
-            }
-            else
+            } else
             {
                 diff.X = Math.Abs(ang1.X - ang2.X);
                 diff.Y = Math.Min(Math.Min(Math.Abs(ang1.Y - ang2.Y), Math.Abs(2 * Math.PI + ang1.Y - ang2.Y)), Math.Abs(2 * Math.PI - ang1.Y + ang2.Y));
             }
             return Math.Max(diff.X, diff.Y);
         }
-
     }
 
     public static class Utility
     {
+        // planeOffset works with self-intersection of a closed curve
+        // It looses possible toolpoint information and uses toolDir
+        // for all points
+        [NotNull]
+        public static List<ToolPath> planeOffset([NotNull] ToolPath tP, Vector3d toolDir)
+        {
+            if (tP.additions.offset.SquareLength < CAMel_Goo.Tolerance) { return new List<ToolPath> {tP}; }
+            // if the path is open localOffset will do well enough
+            if (!tP.isClosed()) { return localOffset(tP); }
+            // Shift curve to XY plane
+            Vector3d d = tP.additions.offset;
+            double uOS = d.Length;
+            Plane p = new Plane(Point3d.Origin, d);
+
+            PolylineCurve uC = tP.getLine();
+
+            uC.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
+            bool reversed = false;
+
+            // ensure the curve is anticlockwise
+            if (Math.Abs(uOS) > CAMel_Goo.Tolerance)
+            {
+                if (uC.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
+                {
+                    uC.Reverse();
+                    reversed = true;
+                    uOS = -uOS;
+                }
+            }
+
+            // record the average Z location of the curve
+            BoundingBox bb = uC.GetBoundingBox(true);
+            double useZ = (bb.Max.Z + bb.Min.Z) / 2.0;
+
+            // offSet
+
+            List<PolylineCurve> osC = Offsetting.offset(uC, uOS);
+
+            if (Math.Abs(uOS) > CAMel_Goo.Tolerance && !reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
+
+            // create Operation
+
+            List<ToolPath> tPs = new List<ToolPath>();
+
+            int i = 1;
+            foreach (PolylineCurve osPl in osC)
+            {
+                // Create and add name, material/tool and material form
+                ToolPath osTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+                osTP.additions.offset = Vector3d.Zero;
+                osTP.name = osTP.name + " offset";
+                if (osC.Count > 1) { osTP.name = osTP.name + " " + i; }
+                i++;
+
+                // return to original orientation
+
+                osPl.Translate(new Vector3d(0, 0, -useZ));
+                osPl.Transform(Transform.PlaneToPlane(Plane.WorldXY, p));
+
+                // Add to Operation
+                osTP.convertCurve(osPl, toolDir);
+                tPs.Add(osTP);
+            }
+            return tPs;
+        }
+
+        [NotNull]
+        public static List<ToolPath> localOffset([NotNull] ToolPath tP)
+        {
+            return new List<ToolPath> {tP};
+        }
+
         // Step down into material
         [NotNull]
         public static List<List<ToolPath>> stepDown([NotNull] ToolPath tP, [NotNull] IMachine m)
         {
-            if(tP.matForm == null) { Exceptions.matFormException(); }
+            if (tP.matForm == null) { Exceptions.matFormException(); }
             if (tP.matTool == null) { Exceptions.matToolException(); }
             // Give default value for negative DropMiddle
             if (tP.additions.sdDropMiddle < 0) { tP.additions.sdDropMiddle = 8.0 * tP.matForm.safeDistance; }
@@ -180,10 +250,10 @@ namespace CAMel.Types.Machine
             {
                 MFintersection inter = tP.matForm.intersect(tPt, 0).through;
                 matDist.Add(inter.lineP); // distance to material surface
-                if (matDist[matDist.Count - 1] < 0) { matDist[matDist.Count - 1] = 0; }// avoid negative distances (outside material)
+                if (matDist[matDist.Count - 1] < 0) { matDist[matDist.Count - 1] = 0; } // avoid negative distances (outside material)
 
                 // calculate maximum number of cutDepth height steps down to finishDepth above material
-                numSteps.Add((int)Math.Ceiling((matDist[matDist.Count - 1] - finishDepth) / cutDepth));
+                numSteps.Add((int) Math.Ceiling((matDist[matDist.Count - 1] - finishDepth) / cutDepth));
                 if (numSteps[numSteps.Count - 1] > maxSteps) { maxSteps = numSteps[numSteps.Count - 1]; }
             }
 
@@ -206,7 +276,7 @@ namespace CAMel.Types.Machine
                 ToolPath tempTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 tempTP.name = tP.name + " Pass " + (i + 1);
                 tempTP.additions.stepDown = false;
-                tempTP.additions.onion = new List<double> { 0 };
+                tempTP.additions.onion = new List<double> {0};
 
                 bool start = true;
                 bool end = false;
@@ -236,8 +306,7 @@ namespace CAMel.Types.Machine
                         tempTP.Add(tPt);
                         start = false;
                         dropLength = 0;
-                    }
-                    else if (start) // We have not hit any cutting yet;
+                    } else if (start) // We have not hit any cutting yet;
                     {
                         if (tP.additions.sdDropStart) { continue; }
                         tPt = refPath[j].deepClone();
@@ -245,11 +314,10 @@ namespace CAMel.Types.Machine
                         if (height > matDist[j]) { height = 0; }
                         tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                         tempTP.Add(tPt);
-                    }
-                    else // We need to look ahead
+                    } else // We need to look ahead
                     {
                         int k;
-                        for (k = j; k < refPath.Count && i >= numSteps[k]; k++) {} // Look ahead to the next cut
+                        for (k = j; k < refPath.Count && i >= numSteps[k]; k++) { } // Look ahead to the next cut
 
                         if (k == refPath.Count) // No more cutting required
                         {
@@ -262,16 +330,14 @@ namespace CAMel.Types.Machine
                                 tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                 tempTP.Add(tPt);
                                 end = true;
-                            }
-                            else // add point
+                            } else // add point
                             {
                                 tPt = refPath[j].deepClone();
                                 height = finishDepth;
                                 tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                 tempTP.Add(tPt);
                             }
-                        }
-                        else // into the middle
+                        } else // into the middle
                         {
                             if (tP.additions.sdDropMiddle < 0 || k - j < 3) // we are not dropping middle or there are not enough points to justify it
                             {
@@ -279,8 +345,7 @@ namespace CAMel.Types.Machine
                                 height = finishDepth;
                                 tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                 tempTP.Add(tPt);
-                            }
-                            else //check length of drop
+                            } else //check length of drop
                             {
                                 if (Math.Abs(dropLength) < CAMel_Goo.Tolerance) // If we are at the start of a possible drop Add the length until we hit the end or go over
                                 {
@@ -305,7 +370,7 @@ namespace CAMel.Types.Machine
                                     tempTP.name = tP.name + " Continuing Pass " + i;
                                     tempTP.additions.insert = true;
                                     tempTP.additions.stepDown = false;
-                                    tempTP.additions.onion = new List<double> { 0 };
+                                    tempTP.additions.onion = new List<double> {0};
 
                                     // add k-1 point as k is deep
                                     // this will not result in a double point as we checked (k-j) >=3
@@ -314,9 +379,7 @@ namespace CAMel.Types.Machine
                                     tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                     tempTP.Add(tPt);
                                     j = k - 1; //set j to k-1 so it deals with the k point next
-
-                                }
-                                else // after all that we still need to add the point
+                                } else // after all that we still need to add the point
                                 {
                                     tPt = refPath[j].deepClone();
                                     height = finishDepth;
@@ -350,10 +413,12 @@ namespace CAMel.Types.Machine
             Point3d startPt = toolL.PointAtStart;
             // Get tangents and the Normal pointing in the direction we want the lead.
             Vector3d startTan = toolL.TangentAtStart;
-            Vector3d startNorm = startTan; startNorm.Rotate(normAng, Vector3d.ZAxis);
+            Vector3d startNorm = startTan;
+            startNorm.Rotate(normAng, Vector3d.ZAxis);
 
             Vector3d endTan = toolL.TangentAtEnd;
-            Vector3d endNorm = endTan; endNorm.Rotate(normAng, Vector3d.ZAxis);
+            Vector3d endNorm = endTan;
+            endNorm.Rotate(normAng, Vector3d.ZAxis);
 
             Vector3d uTan, uNorm;
 
@@ -372,7 +437,7 @@ namespace CAMel.Types.Machine
             {
                 Point3d testPt = leadCirc.PointAt(d);
                 outP.Add(testPt);
-                if (toolL.Contains(testPt) == incorrectSide ) { return null; }
+                if (toolL.Contains(testPt) == incorrectSide) { return null; }
                 toolL.ClosestPoint(testPt, out double testDist);
                 testDist = testPt.DistanceTo(toolL.PointAt(testDist));
                 if (testDist > insertWidth * 0.52) { return new PolylineCurve(outP); }
@@ -396,11 +461,11 @@ namespace CAMel.Types.Machine
         [NotNull]
         public static ToolPath leadInOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
         {
-            if(tP.matTool == null) { Exceptions.matToolException(); }
+            if (tP.matTool == null) { Exceptions.matToolException(); }
             double leadCurve = tP.additions.leadCurvature;
 
             ToolPath newTP = tP.deepClone();
-            if(!keepActivate) { newTP.additions.activate = 0; }
+            if (!keepActivate) { newTP.additions.activate = 0; }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
 
@@ -412,7 +477,7 @@ namespace CAMel.Types.Machine
 
             PolylineCurve toolL = tP.getLine();
 
-            if(tP.additions.insert)
+            if (tP.additions.insert)
             {
                 PolylineCurve leadIn = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, true);
                 // If no suitable curve found throw an error
@@ -421,7 +486,7 @@ namespace CAMel.Types.Machine
                 {
                     leadIn.Reverse();
                     List<ToolPoint> tPts = new List<ToolPoint>();
-                    if(tP.firstP == null) { Exceptions.nullPanic(); }
+                    if (tP.firstP == null) { Exceptions.nullPanic(); }
                     for (int i = 1; i < leadIn.PointCount; i++)
                     {
                         ToolPoint tPt = tP.firstP.deepClone();
@@ -456,7 +521,7 @@ namespace CAMel.Types.Machine
         public static ToolPath leadInOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
-            if (tP.firstP == null || tP.lastP == null) { return tP;}
+            if (tP.firstP == null || tP.lastP == null) { return tP; }
             double leadCurve = tP.additions.leadCurvature;
 
             ToolPath newTP = tP.deepClone();
@@ -474,13 +539,13 @@ namespace CAMel.Types.Machine
             const double wiggle = .1;
             if (tP.additions.insert)
             {
-                double r = Math.PI / 2.0-wiggle;
+                double r = Math.PI / 2.0 - wiggle;
                 if (tP.additions.activate > 0) { r = -Math.PI / 2.0 + wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtStart;
                 tan.Rotate(r, Vector3d.ZAxis);
                 ToolPoint tPt = tP.firstP.deepClone();
                 tPt.pt = tPt.pt + tan * tP.matTool.insertWidth;
-                newTP.Insert(0,tPt);
+                newTP.Insert(0, tPt);
             }
 
             if (tP.additions.retract)
@@ -506,7 +571,7 @@ namespace CAMel.Types.Machine
             if (tP.matForm == null) { Exceptions.matFormException(); }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
-            if(!keepActivate) {newTP.additions.activate = 0;}
+            if (!keepActivate) { newTP.additions.activate = 0; }
 
             MFintersection inter;
 
@@ -541,8 +606,7 @@ namespace CAMel.Types.Machine
                     tempTP.pt = tempTP.pt + inter.away * uTol;
                     tempTP.feed = 0; // we can use a rapid move
                     newTP.Insert(0, tempTP);
-                }
-                else
+                } else
                 {
                     // check intersection with material extended to safe distance
                     inter = tP.matForm.intersect(newTP.firstP, uTol).through;
@@ -582,8 +646,7 @@ namespace CAMel.Types.Machine
                 tempTP.pt = tempTP.pt + inter.away * uTol;
                 tempTP.feed = 0; // we can use a rapid move
                 newTP.Add(tempTP);
-            }
-            else
+            } else
             {
                 // check intersection with material extended to safe distance
                 inter = tP.matForm.intersect(newTP.lastP, uTol).through;
@@ -598,8 +661,6 @@ namespace CAMel.Types.Machine
             return newTP;
         }
 
-
-
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
         // TODO make this guarantee that it does not gouge locally. There is a problem
         // with paths that are steep down, followed by some bottom moves followed by steep out.
@@ -609,7 +670,7 @@ namespace CAMel.Types.Machine
             if (tP.matTool == null) { Exceptions.matToolException(); }
             List<ToolPoint> offsetPath = new List<ToolPoint>();
 
-            if (tP.Count < 2) { return tP;}
+            if (tP.Count < 2) { return tP; }
 
             Vector3d travel = tP[1].pt - tP[0].pt;
             travel.Unitize();
@@ -619,7 +680,7 @@ namespace CAMel.Types.Machine
 
             ToolPoint point = tP.matTool.threeAxisHeightOffset(m, tP[0], travel, uOrth);
 
-            List<Line> osLines = new List<Line> { new Line(point.pt, travel) };
+            List<Line> osLines = new List<Line> {new Line(point.pt, travel)};
 
             bool changeDirection = false; // Has tool direction changed?
 
@@ -654,7 +715,7 @@ namespace CAMel.Types.Machine
                 Rhino.Geometry.Intersect.Intersection.LineLine(osLines[osLines.Count - 2], osLines[osLines.Count - 1], out double inter, out double nextInter);
                 // find the orientation of the new path
                 ToolPoint osP = offsetPath[offsetPath.Count - 1];
-                if(osP == null) { Exceptions.nullPanic(); }
+                if (osP == null) { Exceptions.nullPanic(); }
                 double orient = (osLines[osLines.Count - 2].PointAt(inter) - osP.pt) * osLines[osLines.Count - 2].UnitTangent;
 
                 // loop until we find a suitable line, removing previous points that are now problematic
@@ -688,9 +749,7 @@ namespace CAMel.Types.Machine
                     startCp = tP[i].deepClone();
                     startCp.pt = osLines[osLines.Count - 1].PointAt(nextInter);
                     offsetPath.Add(startCp);
-
-                }
-                else
+                } else
                 {
                     // Add the new intersection we like using the closest points on the two lines (the points on each line closest to the other line)
                     // note that we keep the information from the toolpoint before the line we are going to be cutting
@@ -750,7 +809,7 @@ namespace CAMel.Types.Machine
                 if (newTP.name != string.Empty) { newTP.name = newTP.name + " "; }
                 newTP.name = newTP.name + "(Finish at height " + height.ToString("0.###") + ")";
                 newTP.additions.stepDown = false;
-                newTP.additions.onion = new List<double> { 0 };
+                newTP.additions.onion = new List<double> {0};
                 fP.Add(newTP);
             }
 
@@ -759,7 +818,7 @@ namespace CAMel.Types.Machine
             {
                 ToolPath newTP = tP.deepClone();
                 newTP.additions.stepDown = false;
-                newTP.additions.onion = new List<double> { 0 };
+                newTP.additions.onion = new List<double> {0};
                 fP.Add(newTP);
             }
             return fP;
@@ -771,8 +830,8 @@ namespace CAMel.Types.Machine
         {
             ToolPath newTP = tP.deepClone();
             newTP.additions.stepDown = false;
-            newTP.additions.onion = new List<double> { 0 };
-            return new List<ToolPath> { newTP };
+            newTP.additions.onion = new List<double> {0};
+            return new List<ToolPath> {newTP};
         }
     }
 
@@ -794,7 +853,7 @@ namespace CAMel.Types.Machine
         // Formatting structure for GCode
 
         [NotNull]
-        public static string gcLineNumber([NotNull] string l, int line) =>"N" + line.ToString("0000") + "0 " + l;
+        public static string gcLineNumber([NotNull] string l, int line) => "N" + line.ToString("0000") + "0 " + l;
 
         public static void gcInstStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath)
         {
@@ -811,8 +870,7 @@ namespace CAMel.Types.Machine
             if (mI.name != string.Empty) { co.appendComment(mI.name); }
             co.appendComment("");
             co.appendComment(" Machine Instructions Created " + thisDay.ToString("f"));
-            co.appendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
-                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            co.appendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
             co.appendComment(" Starting with: ");
             co.appendComment("  Tool: " + mI[0][0].matTool.toolName);
@@ -850,7 +908,7 @@ namespace CAMel.Types.Machine
 
         // ReSharper disable once UnusedParameter.Global
         public static void gcOpEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO)
-        => co.append(mO.postCode);
+            => co.append(mO.postCode);
 
         public static void gcPathStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP)
         {
@@ -938,7 +996,7 @@ namespace CAMel.Types.Machine
         }
         // TODO detect tool changes and new paths
         [NotNull]
-        public static MachineInstruction gcRead([NotNull] IGCodeMachine m, [NotNull][ItemNotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
+        public static MachineInstruction gcRead([NotNull] IGCodeMachine m, [NotNull, ItemNotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
         {
             ToolPath tP = new ToolPath();
             Dictionary<char, double> values = new Dictionary<char, double>();
@@ -964,14 +1022,12 @@ namespace CAMel.Types.Machine
                         }
                     }
                     MaterialTool uMT = MaterialTool.Empty;
-                    if(mTs.Count > 0) { uMT = mTs[0]; }
+                    if (mTs.Count > 0) { uMT = mTs[0]; }
                     if (changed) { tP.Add(m.readTP(values, uMT)); }
                 }
             }
             return new MachineInstruction(m) {new MachineOperation(tP)};
         }
-
-
 
         [NotNull]
         public static string comment([NotNull] IGCodeMachine m, [NotNull] string l)
