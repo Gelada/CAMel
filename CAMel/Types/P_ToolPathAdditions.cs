@@ -168,7 +168,6 @@ namespace CAMel.Types
             this.threeAxisHeightOffset = tPa.threeAxisHeightOffset;
             this.tabbing = tPa.tabbing;
             this.leadCurvature = tPa.leadCurvature;
-
         }
     }
 
@@ -378,7 +377,7 @@ namespace CAMel.Types
                 this.Owner.Value = tPa;
             }
         }
-        [Category(" General"), Description("Offset, number or vector as x, y, z. The number offsets right or left on XY plane. For vector, length gives the amount on right,going anticlockwise on the perpendicular plane. "), DisplayName(" Activate/Quality"), RefreshProperties(RefreshProperties.All)]
+        [Category(" General"), Description("Offset, number or vector as x, y, z. Positive number offsets right going anticlockwise of XY plane. For vector, length gives the amount on right, going anticlockwise. "), DisplayName(" Offset"), RefreshProperties(RefreshProperties.All)]
         [UsedImplicitly, NotNull]
         public string offset
         {
@@ -386,7 +385,8 @@ namespace CAMel.Types
             {
                 Vector3d os = this.Owner?.Value?.offset ?? ToolPathAdditions.basicDefault.offset;
                 if (os.IsParallelTo(Vector3d.ZAxis, 0.0001)!= 0) { return (os * Vector3d.ZAxis).ToString(CultureInfo.InvariantCulture); }
-                return os.X + ", "  + os.Y +", "+  os.Z;
+                if (Math.Abs(os.SquareLength) < CAMel_Goo.Tolerance) { return "0"; }
+                return os.X + ", " + os.Y + ", " + os.Z;
             }
             set
             {
