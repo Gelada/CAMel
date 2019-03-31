@@ -18,9 +18,7 @@ namespace CAMel.GH
         public C_Index2DCut()
             : base("2D Cut", "2D",
                 "Create a Machine Operations cutting out 2D shapes.",
-                "CAMel", " Operations")
-        {
-        }
+                "CAMel", " Operations") { }
 
         /// <inheritdoc />
         /// <summary>
@@ -34,7 +32,7 @@ namespace CAMel.GH
             pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
             GH_ToolPathAdditionsPar tPaPar = new GH_ToolPathAdditionsPar();
             tPaPar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
-            pManager.AddParameter(tPaPar,"Additions","TPA", "Additional Processing for the path, note some options like step down might be ignored by some machines.",GH_ParamAccess.item);
+            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional Processing for the path, note some options like step down might be ignored by some machines.", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
@@ -92,8 +90,8 @@ namespace CAMel.GH
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Curves that are not closed will not be offset.");
                 os = 0;
             }
-            
-            if (Math.Abs(os) < CAMel_Goo.Tolerance) { tPa.leadCurvature = 0;}
+
+            if (Math.Abs(os) < CAMel_Goo.Tolerance) { tPa.leadCurvature = 0; }
             if (os < 0) { tPa.leadCurvature = -tPa.leadCurvature; }
             MachineOperation mO = Operations.opIndex2DCut(c, dir, os, tPa, mT, mF);
 
