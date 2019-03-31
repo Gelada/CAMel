@@ -15,8 +15,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_OMAX()
-            : base("PocketNC Machine", "PocketNC",
-                "PocketNC 5 Axis Machine",
+            : base("OMAX Waterjet", "OMAX",
+                "Waterjet cutter from OMAX corporation",
                 "CAMel", " Hardware") { }
 
         // put this item in the second batch (Machines)
