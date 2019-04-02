@@ -85,12 +85,6 @@ namespace CAMel.GH
 
             tPa = tPa.deepClone();
 
-            if (!c.IsClosed && Math.Abs(os) > CAMel_Goo.Tolerance)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Curves that are not closed will not be offset.");
-                os = 0;
-            }
-
             if (Math.Abs(os) < CAMel_Goo.Tolerance) { tPa.leadCurvature = 0; }
             if (os < 0) { tPa.leadCurvature = -tPa.leadCurvature; }
             MachineOperation mO = Operations.opIndex2DCut(c, dir, os, tPa, mT, mF);
