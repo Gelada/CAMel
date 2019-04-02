@@ -215,7 +215,46 @@ namespace CAMel.Types.Machine
         }
 
         [NotNull]
-        public static List<ToolPath> localOffset([NotNull] ToolPath tP) => new List<ToolPath> {tP};
+        public static List<ToolPath> localOffset([NotNull] ToolPath tP)
+        {
+            List<ToolPoint> oTPts = new List<ToolPoint>();
+            Vector3d os = tP.additions.offset;
+            double osL = os.Length;
+            os.Unitize();
+
+            // Start with first point unless the ToolPath is closed.
+            if (tP.firstP == null || tP.lastP == null) { return new List<ToolPath> {tP}; }
+            ToolPoint lP = tP.firstP, uTP;
+            if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { lP = tP[tP.Count - 2]; }
+            Vector3d osD;
+
+            for (int i = 0; i < tP.Count - 1; i++)
+            {
+                uTP = tP[i].deepClone();
+                // offset direction given by tangent and offset Plane
+                osD = Vector3d.CrossProduct(os, tP[i + 1].pt - lP.pt);
+                osD.Unitize();
+                uTP.pt = uTP.pt + osL * osD;
+                oTPts.Add(uTP);
+                lP = tP[i];
+            }
+
+            // Loop back to start if closed.
+            ToolPoint nP = tP.lastP;
+            if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { nP = tP[2]; }
+
+            uTP = tP[tP.Count - 1].deepClone();
+            osD = Vector3d.CrossProduct(os, nP.pt - lP.pt);
+            osD.Unitize();
+            uTP.pt = uTP.pt + osL * osD;
+            oTPts.Add(uTP);
+
+            ToolPath oTP = tP.deepCloneWithNewPoints(oTPts);
+
+            oTP.additions.offset = Vector3d.Zero;
+
+            return new List<ToolPath> {oTP};
+        }
 
         // Step down into material
         [NotNull]
@@ -406,12 +445,16 @@ namespace CAMel.Types.Machine
             // work out the rotation to get the desired normal
             double normAng = Math.PI / 2.0;
             // take into account the orientation of the path
-            if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
+            //if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
             // now we have the internal normal, flip if we want external.
             if (leadCurve >= 0) { normAng = -normAng; }
 
-            PointContainment incorrectSide = PointContainment.Inside;
-            if (leadCurve < 0) { incorrectSide = PointContainment.Outside; }
+            PointContainment incorrectSide = PointContainment.Outside;
+            CurveOrientation orient = toolL.ClosedCurveOrientation(Vector3d.ZAxis);
+
+            if ((orient == CurveOrientation.Clockwise && leadCurve > 0) || (orient == CurveOrientation.CounterClockwise && leadCurve < 0))
+            { incorrectSide = PointContainment.Inside; }
+
             double uLeadCurve = Math.Abs(leadCurve);
 
             Point3d startPt = toolL.PointAtStart;
@@ -474,6 +517,7 @@ namespace CAMel.Types.Machine
         public static ToolPath leadInOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
+
             double leadCurve = tP.additions.leadCurvature;
 
             ToolPath newTP = tP.deepClone();
@@ -484,8 +528,8 @@ namespace CAMel.Types.Machine
             if (tP.additions.activate != 0 && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
             if (tP.additions.activate != 0 && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
 
-            // If leadCurve == 0 can now return
-            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return newTP; }
+            // If leadCurve == 0 or path is open can now return
+            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return newTP; }
 
             PolylineCurve toolL = tP.getLine();
 
