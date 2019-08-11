@@ -115,7 +115,7 @@ namespace CAMel.Types.Machine
         public string comment(string l) => GCode.comment(this, l);
 
         public List<ToolPath> offSet(ToolPath tP) => Utility.planeOffset(tP, Vector3d.ZAxis);
-        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
+        public List<ToolPath> insertRetract(ToolPath tP) => Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
@@ -243,13 +243,17 @@ namespace CAMel.Types.Machine
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref co, mI, finalPath, endPath);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
+        public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
 
         public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
         {
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
             // check there is anything to transition from
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
 
-            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
+            // no transition needed if endpoints are the same position
+            if (Utility.noTransitionPos(fP.lastP, tP.firstP)) { return; }
+
             List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());

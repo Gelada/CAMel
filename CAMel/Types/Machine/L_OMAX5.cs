@@ -47,7 +47,7 @@ namespace CAMel.Types.Machine
         public string lineNumber(string l, int line) => l;
 
         public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> {tP};
-        public ToolPath insertRetract(ToolPath tP) => Utility.leadInOutV(tP, string.Empty, string.Empty, true);
+        public List<ToolPath> insertRetract(ToolPath tP) => Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
@@ -87,7 +87,7 @@ namespace CAMel.Types.Machine
                 {
                     ToolPoint tPt = readTP(line, out ToolPoint endPt, out int quality);
                     if (tPt == null) { continue; }
-                    if (quality != 0 && quality != 10)
+                    if (quality != 0)
                     {
                         if (tP.additions.activate == 0) { tP.additions.activate = quality; }
                         else
@@ -166,7 +166,7 @@ namespace CAMel.Types.Machine
             OMXCode.omxPathStart(this, ref co, tP);
 
             int pathQuality = tP.additions.activate;
-            if (pathQuality == 0) { pathQuality = 10; }
+            // if (pathQuality == 0) { pathQuality = 10; }
 
             Point3d lastPt = new Point3d(co.machineState["X"], co.machineState["Y"], co.machineState["Z"]);
             Vector3d lastDir = new Vector3d(co.machineState["dX"], co.machineState["dY"], co.machineState["dZ"]);
@@ -197,7 +197,7 @@ namespace CAMel.Types.Machine
 
                 lastPt = tPt.pt;
                 lastDir = tPt.dir;
-                lastQ = Math.Abs(tPt.feed) < CAMel_Goo.Tolerance ? 10 : pathQuality;
+                lastQ = Math.Abs(tPt.feed) < CAMel_Goo.Tolerance ? 0 : pathQuality;
             }
 
             // Pass machine state information
@@ -231,7 +231,7 @@ namespace CAMel.Types.Machine
             co.machineState.Add("dY", fPt.dir.Y);
             co.machineState.Add("dZ", fPt.dir.Z);
             co.machineState.Add("Q", startPath.additions.activate);
-            if ((int) co.machineState["Q"] == 0) { co.machineState["Q"] = 10; }
+            if ((int) co.machineState["Q"] == 0) { co.machineState["Q"] = 0; }
 
             OMXCode.omxInstStart(this, ref co, mI, startPath);
         }
@@ -246,6 +246,7 @@ namespace CAMel.Types.Machine
         }
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpEnd(this, ref co, mO);
+        public void toolChange(ref CodeInfo co, int toolNumber) { }
 
         // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
@@ -258,6 +259,8 @@ namespace CAMel.Types.Machine
 
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
 
+            if (Utility.noTransitionPosDir(fP.lastP, tP.firstP)) { return; }
+
             ToolPath move = fP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = string.Empty;
             move.preCode = string.Empty;
@@ -265,7 +268,7 @@ namespace CAMel.Types.Machine
             move.additions.activate = 0;
 
             // if needed add new point at speed 0 to describe rapid move.
-            if ((int) co.machineState["Q"] != 0 && (int) co.machineState["Q"] != 10)
+            if ((int) co.machineState["Q"] != 0)
             { move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0)); }
 
             move.Add(new ToolPoint((2 * fP.lastP.pt + tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));

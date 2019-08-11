@@ -155,7 +155,13 @@ namespace CAMel.Types
             {
                 levelPaths = new List<ToolPath>();
                 foreach (List<ToolPath> lTp in finishPaths)
-                { if (i < lTp.Count) { levelPaths.Add(lTp[i]); } }
+                {
+                    if (i < lTp.Count)
+                    {
+                        if (lTp[i] == null) { continue; }
+                        levelPaths.AddRange(m.insertRetract(lTp[i]));
+                    }
+                }
 
                 // sort here (remember to only move chunks that are outside the material!)
 
@@ -178,8 +184,7 @@ namespace CAMel.Types
             {
                 if (tP.Count <= 0) { continue; }
 
-                // If a move is needed transition from one path to the next
-                if (oldPath.lastP != tP.firstP) { m.writeTransition(ref co, oldPath, tP, first); }
+                m.writeTransition(ref co, oldPath, tP, first);
 
                 // Add Path to Code
                 m.writeCode(ref co, tP);

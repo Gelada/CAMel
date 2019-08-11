@@ -330,8 +330,8 @@ namespace CAMel.Types.Machine
                         if (start && j > 0)
                         {
                             tPt = refPath[j - 1].deepClone();
-                            height = finishDepth;
-                            if (height > matDist[j - 1]) { height = 0; }
+                            height = matDist[j - 1] - cutLevel[i];
+                            if (height < finishDepth) { height = finishDepth; }
                             tPt.pt = m.toolDir(tPt) * height + tPt.pt; // stay finishDepth above final path
 
                             tempTP.Add(tPt);
@@ -409,7 +409,7 @@ namespace CAMel.Types.Machine
                                     newPaths[newPaths.Count - 1]?.Add(tempTP); // add path and create a new one
 
                                     tempTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                                    tempTP.name = tP.name + " Continuing Pass " + i;
+                                    tempTP.name = tP.name + " Continuing Pass " + (i + 1);
                                     tempTP.additions.insert = true;
                                     tempTP.additions.stepDown = false;
                                     tempTP.additions.onion = new List<double> {0};
@@ -449,11 +449,11 @@ namespace CAMel.Types.Machine
             // now we have the internal normal, flip if we want external.
             if (leadCurve >= 0) { normAng = -normAng; }
 
-            PointContainment incorrectSide = PointContainment.Outside;
-            CurveOrientation orient = toolL.ClosedCurveOrientation(Vector3d.ZAxis);
+            PointContainment incorrectSide = PointContainment.Inside;
+            CurveOrientation orient = toolL.ClosedCurveOrientation(-Vector3d.ZAxis);
 
             if ((orient == CurveOrientation.Clockwise && leadCurve > 0) || (orient == CurveOrientation.CounterClockwise && leadCurve < 0))
-            { incorrectSide = PointContainment.Inside; }
+            { incorrectSide = PointContainment.Outside; }
 
             double uLeadCurve = Math.Abs(leadCurve);
 
@@ -514,22 +514,31 @@ namespace CAMel.Types.Machine
         }
 
         [NotNull]
-        public static ToolPath leadInOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
+        public static List<ToolPath> leadInOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
         {
+            // Will add insert and retract paths as new ToolPaths
+            List<ToolPath> irTps = new List<ToolPath>();
+
+            // Update the main toolpath
+            ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
+            newTP.additions.insert = false;
+            newTP.additions.retract = false;
+            newTP.additions.leadCurvature = 0;
+
+            // Add activation code to main path if tool not activated for insert/retract
+            if (tP.additions.activate != 0 && irActivate == 0)
+            {
+                if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            }
+
+            irTps.Add(newTP);
 
             double leadCurve = tP.additions.leadCurvature;
 
-            ToolPath newTP = tP.deepClone();
-            if (!keepActivate) { newTP.additions.activate = 0; }
-            newTP.additions.insert = false;
-            newTP.additions.retract = false;
-
-            if (tP.additions.activate != 0 && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-            if (tP.additions.activate != 0 && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
-
             // If leadCurve == 0 or path is open can now return
-            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return newTP; }
+            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return irTps; }
 
             PolylineCurve toolL = tP.getLine();
 
@@ -549,7 +558,13 @@ namespace CAMel.Types.Machine
                         tPt.pt = leadIn.Point(i);
                         tPts.Add(tPt);
                     }
-                    newTP.InsertRange(0, tPts);
+
+                    ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
+                    iTp.name = iTp.name + " insert";
+                    if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
+                    iTp.AddRange(tPts);
+
+                    if (iTp.Count > 0) { irTps.Insert(0, iTp); }
                 }
             }
 
@@ -560,87 +575,135 @@ namespace CAMel.Types.Machine
                 // If no suitable curve found throw an error
                 else
                 {
+                    List<ToolPoint> tPts = new List<ToolPoint>();
+                    if (tP.firstP == null) { Exceptions.nullPanic(); }
                     for (int i = 1; i < leadOut.PointCount; i++)
                     {
-                        if (tP.firstP == null) { Exceptions.nullPanic(); }
                         ToolPoint tPt = tP.firstP.deepClone();
                         tPt.pt = leadOut.Point(i);
-                        newTP.Add(tPt);
+                        tPts.Add(tPt);
                     }
+
+                    ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
+                    rTp.name = rTp.name + " retract";
+                    if(tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
+                    rTp.AddRange(tPts);
+
+                    if (rTp.Count > 0) { irTps.Add(rTp); }
                 }
             }
 
-            newTP.additions.leadCurvature = 0;
-            return newTP;
+            return irTps;
         }
         [NotNull]
-        public static ToolPath leadInOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
+        public static List<ToolPath> leadInOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
         {
-            if (tP.matTool == null) { Exceptions.matToolException(); }
-            if (tP.firstP == null || tP.lastP == null) { return tP; }
-            double leadCurve = tP.additions.leadCurvature;
+            // Will add insert and retract paths as new ToolPaths
+            List<ToolPath> irTps = new List<ToolPath>();
 
+            // Update the main toolpath
             ToolPath newTP = tP.deepClone();
-            if (!keepActivate) { newTP.additions.activate = 0; }
+            if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
+            newTP.additions.leadCurvature = 0;
 
-            if (tP.additions.activate != 0 && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-            if (tP.additions.activate != 0 && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            // Add activation code to main path if tool not activated for insert/retract
+            if (tP.additions.activate != 0 && irActivate == 0)
+            {
+                if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            }
+
+            irTps.Add(newTP);
+
+            double leadCurve = tP.additions.leadCurvature;
 
             // If leadCurve == 0 can now return
-            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return newTP; }
+            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
 
             PolylineCurve toolL = tP.getLine();
             const double wiggle = .1;
             if (tP.additions.insert)
             {
+                ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
+                iTp.name = iTp.name + " insert";
+                if(tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
+                if (irActivate != 0 && activate != String.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
+
                 double r = Math.PI / 2.0 - wiggle;
                 if (tP.additions.activate > 0) { r = -Math.PI / 2.0 + wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtStart;
                 tan.Rotate(r, Vector3d.ZAxis);
                 ToolPoint tPt = tP.firstP.deepClone();
                 tPt.pt = tPt.pt + tan * tP.matTool.insertWidth;
-                newTP.Insert(0, tPt);
+
+                iTp.Add(tPt);
+                tPt = tP.firstP.deepClone();
+                iTp.Add(tPt);
+
+                irTps.Insert(0, iTp);
             }
 
             if (tP.additions.retract)
             {
+                ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
+                rTp.name = rTp.name + " retract";
+                if(tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
+                if (irActivate != 0 && activate != String.Empty) { rTp.preCode = activate + "\n" + newTP.preCode; }
+
                 double r = Math.PI / 2.0 + wiggle;
                 if (tP.additions.activate > 0) { r = -Math.PI / 2.0 - wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtEnd;
                 tan.Rotate(r, Vector3d.ZAxis);
                 ToolPoint tPt = tP.lastP.deepClone();
+                rTp.Add(tPt);
+                tPt = tP.lastP.deepClone();
                 tPt.pt = tPt.pt + tan * tP.matTool.insertWidth;
-                newTP.Add(tPt);
+
+                rTp.Add(tPt);
+                irTps.Add(rTp);
             }
 
-            newTP.additions.leadCurvature = 0;
-            return newTP;
+            return irTps;
         }
 
         [NotNull]
-        internal static ToolPath insertRetract([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", bool keepActivate = false)
+        internal static List<ToolPath> insertRetract([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 1)
         {
+            // Will add insert and retract paths as new ToolPaths
+            List<ToolPath> irTps = new List<ToolPath>();
+
+            // Update the main toolpath
             ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
             if (tP.matForm == null) { Exceptions.matFormException(); }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
-            if (!keepActivate) { newTP.additions.activate = 0; }
 
             MFintersection inter;
 
             double uTol = tP.matForm.safeDistance * 1.05;
             ToolPoint tempTP;
 
-            if (tP.additions.activate != 0 && activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-            if (tP.additions.activate != 0 && deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            // Add activation code to main path if tool not activated for insert/retract
+            if (tP.additions.activate != 0 && irActivate == 0)
+            {
+                if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            }
+
+            irTps.Add(newTP);
 
             // check if we have something to do
             if (tP.additions.insert && newTP.Count > 0) // add insert
             {
+                ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
+                iTp.name = iTp.name + " insert";
                 //note we do this backwards adding points to the start of the path.
+
+                if(tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
+                if (irActivate != 0 && activate != String.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
 
                 // get distance to surface and insert direction
                 if (newTP.firstP == null) { Exceptions.nullPanic(); }
@@ -654,14 +717,14 @@ namespace CAMel.Types.Machine
                     tempTP = newTP.firstP.deepClone();
                     tempTP.pt = inter.point;
                     tempTP.feed = tP.matTool.feedPlunge;
-                    newTP.Insert(0, tempTP);
+                    iTp.Insert(0, tempTP);
 
                     // point out at safe distance
-                    if (newTP.firstP == null) { Exceptions.nullPanic(); }
-                    tempTP = newTP.firstP.deepClone();
+                    if (iTp.firstP == null) { Exceptions.nullPanic(); }
+                    tempTP = iTp.firstP.deepClone();
                     tempTP.pt = tempTP.pt + inter.away * uTol;
                     tempTP.feed = 0; // we can use a rapid move
-                    newTP.Insert(0, tempTP);
+                    iTp.Insert(0, tempTP);
                 }
                 else
                 {
@@ -673,13 +736,22 @@ namespace CAMel.Types.Machine
                         tempTP = newTP.firstP.deepClone();
                         tempTP.pt = inter.point;
                         tempTP.feed = 0; // we can use a rapid move
-                        newTP.Insert(0, tempTP);
+                        iTp.Insert(0, tempTP);
                     } //  otherwise nothing needs to be added as we do not interact with material
                 }
+
+                if (iTp.Count > 0) { irTps.Insert(0, iTp); }
             }
 
-            if (!tP.additions.retract || newTP.Count <= 0) { return newTP; }
+            if (!tP.additions.retract || newTP.Count <= 0) { return irTps; }
             if (newTP.lastP == null) { Exceptions.nullPanic(); }
+
+            ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
+            rTp.name = rTp.name + " retract";
+            //note we do this backwards adding points to the start of the path.
+
+            if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
+            if (irActivate != 0 && activate != String.Empty) { rTp.preCode = activate + "\n" + newTP.preCode; }
 
             // get distance to surface and retract direction
             inter = tP.matForm.intersect(newTP.lastP, 0).through;
@@ -693,30 +765,33 @@ namespace CAMel.Types.Machine
                 // Pull back to surface
                 tempTP.pt = inter.point;
 
-                newTP.Add(tempTP);
+                rTp.Add(tempTP);
 
                 // Pull away to safe distance
 
-                if (newTP.lastP == null) { Exceptions.nullPanic(); }
+                if (rTp.lastP == null) { Exceptions.nullPanic(); }
 
-                tempTP = newTP.lastP.deepClone();
+                tempTP = rTp.lastP.deepClone();
                 tempTP.pt = tempTP.pt + inter.away * uTol;
                 tempTP.feed = 0; // we can use a rapid move
-                newTP.Add(tempTP);
+                rTp.Add(tempTP);
             }
             else
             {
                 // check intersection with material extended to safe distance
                 inter = tP.matForm.intersect(newTP.lastP, uTol).through;
-                if (!inter.isSet) { return newTP; }
+                if (!inter.isSet) { return irTps; }
 
                 // point out at safe distance
                 tempTP = newTP.lastP.deepClone();
                 tempTP.pt = inter.point;
                 tempTP.feed = 0; // we can use a rapid move
-                newTP.Add(tempTP);
+                rTp.Add(tempTP);
             }
-            return newTP;
+
+            if (rTp.Count > 0) { irTps.Add(rTp); }
+
+            return irTps;
         }
 
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
@@ -892,6 +967,8 @@ namespace CAMel.Types.Machine
             newTP.additions.onion = new List<double> {0};
             return new List<ToolPath> {newTP};
         }
+        public static bool noTransitionPosDir([NotNull] ToolPoint fP, [NotNull] ToolPoint tP) => fP.pt == tP.pt && fP.dir == tP.dir;
+        public static bool noTransitionPos([NotNull] ToolPoint fP, [NotNull] ToolPoint tP) => fP.pt == tP.pt;
     }
 
     public static class GCode
@@ -983,8 +1060,8 @@ namespace CAMel.Types.Machine
             if (tP.matTool != null && tP.matTool.toolName != co.currentMT.toolName)
             {
                 co.appendComment(" using: " + tP.matTool.toolName + " into " + tP.matTool.matName);
-                if (m.toolLengthCompensation && tP.matTool.toolNumber != co.currentMT.toolNumber) {
-                    co.append(m.toolChangeCommand + tP.matTool.toolNumber);
+                if (tP.matTool.toolNumber != co.currentMT.toolNumber) {
+                    m.toolChange(ref co, tP.matTool.toolNumber);
                 }
                 co.currentMT = tP.matTool;
                 preamble = true;
@@ -1100,6 +1177,23 @@ namespace CAMel.Types.Machine
             uL = l.Replace('(', ']');
             uL = uL.Replace(')', ']');
             return m.commentStart + " " + uL + " " + m.commentEnd;
+        }
+
+        internal static void toolChange([NotNull] IGCodeMachine m, ref CodeInfo co, int toolNumber)
+        {
+            string[] lines = m.toolChangeCommand.Split(new[] {"\\n"}, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string line in lines)
+            {
+                string[] tC = line.Split('#');
+                bool first = true;
+                foreach (string tCp in tC)
+                {
+                    if (first && tC.Length > 1) { co.append(tCp + toolNumber); }
+                    else { co.append(tCp); }
+                    first = false;
+                }
+            }
         }
     }
 }

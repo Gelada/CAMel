@@ -111,7 +111,7 @@ namespace CAMel.Types.Machine
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
         public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir) ? Utility.planeOffset(tP, dir) : Utility.localOffset(tP);
-        public ToolPath insertRetract(ToolPath tP) => Utility.insertRetract(tP);
+        public List<ToolPath> insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
@@ -241,17 +241,21 @@ namespace CAMel.Types.Machine
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref co, mI, finalPath, endPath);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
+        public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
 
         public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
             // check there is anything to transition from or to
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
+            // no transition needed if endpoints are the same position
+            if (Utility.noTransitionPos(fP.lastP, tP.firstP)) { return; }
+
             // See if we lie in the material
             // Check end of this path and start of TP
             // For each see if it is safe in one Material Form
             // As we pull back to safe distance we allow a little wiggle.
-            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
             if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)

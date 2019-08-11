@@ -37,13 +37,14 @@ namespace CAMel.Types.Machine
         void writeOpEnd([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
         void writeCode([NotNull] ref CodeInfo co, [NotNull] ToolPath tP);
         void writeTransition([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool first);
+        void toolChange([NotNull] ref CodeInfo co, int toolNumber);
 
         [NotNull] MachineInstruction readCode([NotNull] string code);
 
         // Functions needed to process additions
 
         [NotNull, ItemNotNull] List<ToolPath> offSet([NotNull] ToolPath tP);
-        [NotNull] ToolPath insertRetract([NotNull] ToolPath tP);
+        [NotNull] List<ToolPath> insertRetract([NotNull] ToolPath tP);
         [NotNull] List<List<ToolPath>> stepDown([NotNull] ToolPath tP);
         [NotNull] ToolPath threeAxisHeightOffset([NotNull] ToolPath tP);
         [NotNull, ItemNotNull] List<ToolPath> finishPaths([NotNull] ToolPath tP);

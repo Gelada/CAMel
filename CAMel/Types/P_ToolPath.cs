@@ -170,34 +170,42 @@ namespace CAMel.Types
                     List<List<ToolPath>> rPs = m.stepDown(tP);
                     for (int i = 0; i < rPs.Count; i++)
                     {
-                        if (roughPaths.Count < i) { roughPaths.Add(new List<ToolPath>()); }
+                        if (roughPaths.Count <= i) { roughPaths.Add(new List<ToolPath>()); }
                         if (roughPaths[i] != null && rPs[i] != null) { roughPaths[i].AddRange(rPs[i]); }
                     }
                 }
             }
 
             // add finishing paths, processing onion
-            fP = new List<ToolPath>();
-            foreach (ToolPath tP in useTP) { fP.AddRange(m.finishPaths(tP)); }
+
+            List<ToolPath> tempFp = new List<ToolPath>();
+            foreach (ToolPath tP in useTP) { tempFp.AddRange(m.finishPaths(tP)); }
 
             // add insert and retract moves
 
-            foreach (List<ToolPath> tP in roughPaths)
+            List<List<ToolPath>> newRp = new List<List<ToolPath>>();
+
+            foreach (List<ToolPath> tPs in roughPaths)
             {
-                if (tP == null) { continue; }
-                for (int i = 0; i < tP.Count; i++)
+                if (tPs == null) { continue; }
+                List<ToolPath> newTP = new List<ToolPath>();
+                foreach (ToolPath tP in tPs)
                 {
-                    if (tP[i] == null) { continue; }
-                    tP[i] = m.insertRetract(tP[i]);
+                    if (tP == null) { continue; }
+                    newTP.AddRange(m.insertRetract(tP));
                 }
-            }
-            for (int i = 0; i < fP.Count; i++)
-            {
-                if (fP[i] == null) { continue; }
-                fP[i] = m.insertRetract(fP[i]);
+                newRp.Add(newTP);
             }
 
-            return roughPaths;
+            // Delay insert and retract for toolpaths
+            fP = new List<ToolPath>();
+            foreach (ToolPath tP in tempFp)
+            {
+                if (tP == null) { continue; }
+                fP.Add(tP);
+            }
+
+            return newRp;
         }
 
         // Use a curve and direction vector to create a path of toolpoints
@@ -220,6 +228,13 @@ namespace CAMel.Types
                 ToolPoint tPt = new ToolPoint(pt, d);
                 Add(tPt);
             }
+
+            if (c.IsClosed)
+            {
+                ToolPoint tPt = new ToolPoint(pL[0], d);
+                Add(tPt);
+            }
+
             return true;
         }
         private const double _AccTol = 0.0001;
