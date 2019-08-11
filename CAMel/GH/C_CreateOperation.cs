@@ -53,7 +53,8 @@ namespace CAMel.GH
 
             if (!da.GetData(0, ref name)) { return; }
             if (!da.GetDataList(1, tPs)) { return; }
-            List<MachineOperation> mOs = MachineOperation.toOperations(tPs, out int ignores);
+
+            List<MachineOperation> mOs = MachineOperation.toOperations(CAMel_Goo.cleanGooList(tPs), out int ignores);
             if (mOs.Count > 0)
             {
                 if (ignores > 1)
