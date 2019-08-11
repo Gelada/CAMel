@@ -125,8 +125,7 @@ namespace CAMel.Types
         [NotNull]
         private MachineOperation generateOperation_(double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
-            if (this._m == null) { throw new NullReferenceException("Trying to generate a surfacing path with no mesh set. ");
-            }
+            if (this._m == null) { throw new NullReferenceException("Trying to generate a surfacing path with no mesh set. "); }
             // create unprojected toolpath (mainly to convert the curve into a list of points)
             List<ToolPath> tPs = new List<ToolPath>();
 
