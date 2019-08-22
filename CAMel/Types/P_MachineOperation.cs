@@ -183,7 +183,7 @@ namespace CAMel.Types
             foreach (ToolPath tP in this)
             {
                 if (tP.Count <= 0) { continue; }
-
+                // TODO Remove this (turn into a toolpath in process and write normally)
                 m.writeTransition(ref co, oldPath, tP, first);
 
                 // Add Path to Code

@@ -251,7 +251,7 @@ namespace CAMel.Types.Machine
         // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
         // hopefully at that point there is a better understanding of safe moves!
-
+        //TODO convert into a toolpath creating or error throwing part of process
         public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
         {
             // check there is anything to transition from
@@ -259,7 +259,7 @@ namespace CAMel.Types.Machine
 
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
 
-            if (Utility.noTransitionPosDir(fP.lastP, tP.firstP)) { return; }
+            if (Utility.noTransitionPosDir(fP, tP)) { return; }
 
             ToolPath move = fP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = string.Empty;
@@ -381,6 +381,7 @@ namespace CAMel.Types.Machine
         public static void omxInstEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co,
             [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath)
         {
+            // TODO no need to write the final path, it will be included
             m.writeTransition(ref co, finalPath, endPath, true);
             ToolPath uEndPath = endPath.deepClone();
             if (uEndPath.lastP == null) { return; }

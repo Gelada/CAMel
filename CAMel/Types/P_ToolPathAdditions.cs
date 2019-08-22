@@ -19,7 +19,7 @@ namespace CAMel.Types
         private bool _replaceable;
         public bool insert { get; set; }
         public bool retract { get; set; }
-        public int activate { get; set; } // Quality or activation information for the toolpath. 
+        public int activate { get; set; } // Quality or activation information for the toolpath.
         public Vector3d offset { get; set; } // offset plane(normal to vector and amount on the right when turning clockwise.
         public bool stepDown { get; set; }
         public bool sdDropStart { get; set; } // How stepdown will deal with

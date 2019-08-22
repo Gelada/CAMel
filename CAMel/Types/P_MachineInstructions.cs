@@ -110,6 +110,7 @@ namespace CAMel.Types
             validTP = valid.startPath;
 
             // process and validate all Operations
+            // TODO operation transitions here
             foreach (MachineOperation mO in this) { valid.Add(mO.processAdditions(this.mach, ref validTP)); }
 
             valid.startPath.additions = new ToolPathAdditions();

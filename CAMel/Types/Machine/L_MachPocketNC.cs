@@ -346,7 +346,7 @@ namespace CAMel.Types.Machine
         // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
         // hopefully at that point there is a better understanding of safe moves!
-
+        //TODO convert into a toolpath creating or error throwing part of process
         public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
@@ -357,7 +357,7 @@ namespace CAMel.Types.Machine
             if (fP.Count <= 0 || tP.Count <= 0) { return; }
 
             // no transition needed if endpoints are the same
-            if (Utility.noTransitionPosDir(fP.lastP, tP.firstP)) { return; }
+            if (Utility.noTransitionPosDir(fP, tP)) { return; }
 
             // See if we lie in the material
             // Check end of this path and start of TP

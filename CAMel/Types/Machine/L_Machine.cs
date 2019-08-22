@@ -199,6 +199,7 @@ namespace CAMel.Types.Machine
                 ToolPath osTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 osTP.additions.offset = Vector3d.Zero;
                 osTP.name = osTP.name + " offset";
+
                 if (osC.Count > 1) { osTP.name = osTP.name + " " + i; }
                 i++;
 
@@ -224,30 +225,30 @@ namespace CAMel.Types.Machine
 
             // Start with first point unless the ToolPath is closed.
             if (tP.firstP == null || tP.lastP == null) { return new List<ToolPath> {tP}; }
-            ToolPoint lP = tP.firstP, uTP;
-            if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { lP = tP[tP.Count - 2]; }
+            ToolPoint lPt = tP.firstP, uTPt;
+            if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { lPt = tP[tP.Count - 2]; }
             Vector3d osD;
 
             for (int i = 0; i < tP.Count - 1; i++)
             {
-                uTP = tP[i].deepClone();
+                uTPt = tP[i].deepClone();
                 // offset direction given by tangent and offset Plane
-                osD = Vector3d.CrossProduct(os, tP[i + 1].pt - lP.pt);
+                osD = Vector3d.CrossProduct(os, tP[i + 1].pt - lPt.pt);
                 osD.Unitize();
-                uTP.pt = uTP.pt + osL * osD;
-                oTPts.Add(uTP);
-                lP = tP[i];
+                uTPt.pt = uTPt.pt + osL * osD;
+                oTPts.Add(uTPt);
+                lPt = tP[i];
             }
 
             // Loop back to start if closed.
             ToolPoint nP = tP.lastP;
             if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { nP = tP[2]; }
 
-            uTP = tP[tP.Count - 1].deepClone();
-            osD = Vector3d.CrossProduct(os, nP.pt - lP.pt);
+            uTPt = tP[tP.Count - 1].deepClone();
+            osD = Vector3d.CrossProduct(os, nP.pt - lPt.pt);
             osD.Unitize();
-            uTP.pt = uTP.pt + osL * osD;
-            oTPts.Add(uTP);
+            uTPt.pt = uTPt.pt + osL * osD;
+            oTPts.Add(uTPt);
 
             ToolPath oTP = tP.deepCloneWithNewPoints(oTPts);
 
@@ -314,6 +315,7 @@ namespace CAMel.Types.Machine
                 tempTP.name = tP.name + " Pass " + (i + 1);
                 tempTP.additions.stepDown = false;
                 tempTP.additions.onion = new List<double> {0};
+                tempTP.label = PathLabel.RoughCut;
 
                 bool start = true;
                 bool end = false;
@@ -413,6 +415,7 @@ namespace CAMel.Types.Machine
                                     tempTP.additions.insert = true;
                                     tempTP.additions.stepDown = false;
                                     tempTP.additions.onion = new List<double> {0};
+                                    tempTP.label = PathLabel.RoughCut;
 
                                     // add k-1 point as k is deep
                                     // this will not result in a double point as we checked (k-j) >=3
@@ -561,6 +564,7 @@ namespace CAMel.Types.Machine
 
                     ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                     iTp.name = iTp.name + " insert";
+                    iTp.label = PathLabel.Insert;
                     if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
                     iTp.AddRange(tPts);
 
@@ -586,7 +590,8 @@ namespace CAMel.Types.Machine
 
                     ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                     rTp.name = rTp.name + " retract";
-                    if(tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
+                    rTp.label = PathLabel.Retract;
+                    if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
                     rTp.AddRange(tPts);
 
                     if (rTp.Count > 0) { irTps.Add(rTp); }
@@ -623,24 +628,26 @@ namespace CAMel.Types.Machine
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
 
             PolylineCurve toolL = tP.getLine();
-            const double wiggle = .1;
+            const double wiggle = 2.5 * Math.PI / 180.0; // Angles from orthogonal in radians
             if (tP.additions.insert)
             {
                 ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                 iTp.name = iTp.name + " insert";
-                if(tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
+                iTp.label = PathLabel.Insert;
+                if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
                 if (irActivate != 0 && activate != String.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
 
-                double r = Math.PI / 2.0 - wiggle;
-                if (tP.additions.activate > 0) { r = -Math.PI / 2.0 + wiggle; } // cut to the right
+                double r = Math.PI / 2.0 + wiggle;
+                if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 - wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtStart;
                 tan.Rotate(r, Vector3d.ZAxis);
+                if (tP.firstP == null) { Exceptions.nullPanic(); }
                 ToolPoint tPt = tP.firstP.deepClone();
                 tPt.pt = tPt.pt + tan * tP.matTool.insertWidth;
 
                 iTp.Add(tPt);
-                tPt = tP.firstP.deepClone();
-                iTp.Add(tPt);
+                //tPt = tP.firstP.deepClone();
+                //iTp.Add(tPt);
 
                 irTps.Insert(0, iTp);
             }
@@ -649,19 +656,26 @@ namespace CAMel.Types.Machine
             {
                 ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                 rTp.name = rTp.name + " retract";
-                if(tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
+                rTp.label = PathLabel.Retract;
+
+                if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
                 if (irActivate != 0 && activate != String.Empty) { rTp.preCode = activate + "\n" + newTP.preCode; }
 
-                double r = Math.PI / 2.0 + wiggle;
-                if (tP.additions.activate > 0) { r = -Math.PI / 2.0 - wiggle; } // cut to the right
+                double r = Math.PI / 2.0 - wiggle;
+                if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 + wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtEnd;
                 tan.Rotate(r, Vector3d.ZAxis);
+                if (tP.lastP == null) { Exceptions.nullPanic(); }
                 ToolPoint tPt = tP.lastP.deepClone();
                 rTp.Add(tPt);
                 tPt = tP.lastP.deepClone();
                 tPt.pt = tPt.pt + tan * tP.matTool.insertWidth;
 
                 rTp.Add(tPt);
+                // Remove last point of toolpath to avoid point repeat
+
+                irTps[irTps.Count - 1]?.removeLast();
+
                 irTps.Add(rTp);
             }
 
@@ -684,7 +698,7 @@ namespace CAMel.Types.Machine
             MFintersection inter;
 
             double uTol = tP.matForm.safeDistance * 1.05;
-            ToolPoint tempTP;
+            ToolPoint tempTPt;
 
             // Add activation code to main path if tool not activated for insert/retract
             if (tP.additions.activate != 0 && irActivate == 0)
@@ -700,9 +714,11 @@ namespace CAMel.Types.Machine
             {
                 ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                 iTp.name = iTp.name + " insert";
+                iTp.label = PathLabel.Insert;
+
                 //note we do this backwards adding points to the start of the path.
 
-                if(tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
+                if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
                 if (irActivate != 0 && activate != String.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
 
                 // get distance to surface and insert direction
@@ -714,17 +730,17 @@ namespace CAMel.Types.Machine
                 {
                     // point on material surface
 
-                    tempTP = newTP.firstP.deepClone();
-                    tempTP.pt = inter.point;
-                    tempTP.feed = tP.matTool.feedPlunge;
-                    iTp.Insert(0, tempTP);
+                    tempTPt = newTP.firstP.deepClone();
+                    tempTPt.pt = inter.point;
+                    tempTPt.feed = tP.matTool.feedPlunge;
+                    iTp.Insert(0, tempTPt);
 
                     // point out at safe distance
                     if (iTp.firstP == null) { Exceptions.nullPanic(); }
-                    tempTP = iTp.firstP.deepClone();
-                    tempTP.pt = tempTP.pt + inter.away * uTol;
-                    tempTP.feed = 0; // we can use a rapid move
-                    iTp.Insert(0, tempTP);
+                    tempTPt = iTp.firstP.deepClone();
+                    tempTPt.pt = tempTPt.pt + inter.away * uTol;
+                    tempTPt.feed = 0; // we can use a rapid move
+                    iTp.Insert(0, tempTPt);
                 }
                 else
                 {
@@ -733,10 +749,10 @@ namespace CAMel.Types.Machine
                     if (inter.isSet)
                     {
                         // point out at safe distance
-                        tempTP = newTP.firstP.deepClone();
-                        tempTP.pt = inter.point;
-                        tempTP.feed = 0; // we can use a rapid move
-                        iTp.Insert(0, tempTP);
+                        tempTPt = newTP.firstP.deepClone();
+                        tempTPt.pt = inter.point;
+                        tempTPt.feed = 0; // we can use a rapid move
+                        iTp.Insert(0, tempTPt);
                     } //  otherwise nothing needs to be added as we do not interact with material
                 }
 
@@ -748,6 +764,8 @@ namespace CAMel.Types.Machine
 
             ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
             rTp.name = rTp.name + " retract";
+            rTp.label = PathLabel.Retract;
+
             //note we do this backwards adding points to the start of the path.
 
             if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
@@ -757,24 +775,24 @@ namespace CAMel.Types.Machine
             inter = tP.matForm.intersect(newTP.lastP, 0).through;
             if (inter.isSet)
             {
-                tempTP = newTP.lastP.deepClone();
+                tempTPt = newTP.lastP.deepClone();
 
                 // set speed to the plunge feed rate.
-                tempTP.feed = tP.matTool.feedPlunge;
+                tempTPt.feed = tP.matTool.feedPlunge;
 
                 // Pull back to surface
-                tempTP.pt = inter.point;
+                tempTPt.pt = inter.point;
 
-                rTp.Add(tempTP);
+                rTp.Add(tempTPt);
 
                 // Pull away to safe distance
 
                 if (rTp.lastP == null) { Exceptions.nullPanic(); }
 
-                tempTP = rTp.lastP.deepClone();
-                tempTP.pt = tempTP.pt + inter.away * uTol;
-                tempTP.feed = 0; // we can use a rapid move
-                rTp.Add(tempTP);
+                tempTPt = rTp.lastP.deepClone();
+                tempTPt.pt = tempTPt.pt + inter.away * uTol;
+                tempTPt.feed = 0; // we can use a rapid move
+                rTp.Add(tempTPt);
             }
             else
             {
@@ -783,10 +801,10 @@ namespace CAMel.Types.Machine
                 if (!inter.isSet) { return irTps; }
 
                 // point out at safe distance
-                tempTP = newTP.lastP.deepClone();
-                tempTP.pt = inter.point;
-                tempTP.feed = 0; // we can use a rapid move
-                rTp.Add(tempTP);
+                tempTPt = newTP.lastP.deepClone();
+                tempTPt.pt = inter.point;
+                tempTPt.feed = 0; // we can use a rapid move
+                rTp.Add(tempTPt);
             }
 
             if (rTp.Count > 0) { irTps.Add(rTp); }
@@ -942,6 +960,7 @@ namespace CAMel.Types.Machine
                 ToolPath newTP = tP.deepClone(height, m);
                 if (newTP.name != string.Empty) { newTP.name = newTP.name + " "; }
                 newTP.name = newTP.name + "(Finish at height " + height.ToString("0.###") + ")";
+                newTP.label = PathLabel.FinishCut;
                 newTP.additions.stepDown = false;
                 newTP.additions.onion = new List<double> {0};
                 fP.Add(newTP);
@@ -953,6 +972,7 @@ namespace CAMel.Types.Machine
                 ToolPath newTP = tP.deepClone();
                 newTP.additions.stepDown = false;
                 newTP.additions.onion = new List<double> {0};
+                newTP.label = PathLabel.FinishCut;
                 fP.Add(newTP);
             }
             return fP;
@@ -965,10 +985,23 @@ namespace CAMel.Types.Machine
             ToolPath newTP = tP.deepClone();
             newTP.additions.stepDown = false;
             newTP.additions.onion = new List<double> {0};
+            newTP.label = PathLabel.FinishCut;
             return new List<ToolPath> {newTP};
         }
-        public static bool noTransitionPosDir([NotNull] ToolPoint fP, [NotNull] ToolPoint tP) => fP.pt == tP.pt && fP.dir == tP.dir;
-        public static bool noTransitionPos([NotNull] ToolPoint fP, [NotNull] ToolPoint tP) => fP.pt == tP.pt;
+        public static bool noTransitionPosDir([NotNull] ToolPath fP, [NotNull] ToolPath tP)
+        {
+            if (fP.lastP == null || tP.firstP == null) { return false; }
+            if (fP.lastP.pt == tP.firstP.pt && fP.lastP.dir == tP.firstP.dir) { return true; }
+            if (fP.label == PathLabel.Insert || tP.label == PathLabel.Retract) { return true; }
+            return false;
+        }
+        public static bool noTransitionPos([NotNull] ToolPath fP, [NotNull] ToolPath tP)
+        {
+            if (fP.lastP == null || tP.firstP == null) { return false; }
+            if (fP.lastP.pt == tP.firstP.pt) { return true; }
+            if (fP.label == PathLabel.Insert || tP.label == PathLabel.Retract) { return true; }
+            return false;
+        }
     }
 
     public static class GCode
@@ -1021,6 +1054,7 @@ namespace CAMel.Types.Machine
         public static void gcInstEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath)
         {
             co.appendComment(m.sectionBreak);
+            // TODO remove this, the final transition will be written as usual
             m.writeTransition(ref co, finalPath, endPath, true);
             m.writeCode(ref co, endPath);
 

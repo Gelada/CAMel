@@ -11,6 +11,16 @@ using Rhino.Geometry;
 
 namespace CAMel.Types
 {
+    public enum PathLabel
+    {
+        Unprocessed,
+        RoughCut,
+        FinishCut,
+        Insert,
+        Transition,
+        Retract
+    }
+
     // One action of the machine, such as cutting a line
     public class ToolPath : IList<ToolPoint>, IToolPointContainer
     {
@@ -18,6 +28,8 @@ namespace CAMel.Types
         public MaterialTool matTool { get; set; } // Material and tool to cut it with
         public IMaterialForm matForm { get; set; } // Shape of the material
         [NotNull] public ToolPathAdditions additions; // Features we might add to the path
+
+        public PathLabel label { get; internal set; }
 
         public ToolPoint firstP => this.Count > 0 ? this[0] : null;
 
@@ -27,6 +39,7 @@ namespace CAMel.Types
         public ToolPath()
         {
             this.name = string.Empty;
+            this.label = PathLabel.Unprocessed;
             this._pts = new List<ToolPoint>();
             this.matTool = null;
             this.matForm = null;
@@ -38,6 +51,7 @@ namespace CAMel.Types
         public ToolPath([NotNull] MaterialTool mT)
         {
             this.name = string.Empty;
+            this.label = PathLabel.Unprocessed;
             this._pts = new List<ToolPoint>();
             this.matTool = mT;
             this.matForm = null;
@@ -49,6 +63,7 @@ namespace CAMel.Types
         public ToolPath([NotNull] IMaterialForm mf)
         {
             this.name = string.Empty;
+            this.label = PathLabel.Unprocessed;
             this._pts = new List<ToolPoint>();
             this.matTool = null;
             this.matForm = mf;
@@ -60,6 +75,7 @@ namespace CAMel.Types
         public ToolPath([NotNull] string name, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
             this.name = name;
+            this.label = PathLabel.Unprocessed;
             this._pts = new List<ToolPoint>();
             this.matTool = mT;
             this.matForm = mF;
@@ -71,6 +87,7 @@ namespace CAMel.Types
         public ToolPath([NotNull] string name, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tpa)
         {
             this.name = name;
+            this.label = PathLabel.Unprocessed;
             this._pts = new List<ToolPoint>();
             this.matTool = mT;
             this.matForm = mF;
@@ -82,6 +99,7 @@ namespace CAMel.Types
         private ToolPath([NotNull] ToolPath tP)
         {
             this.name = string.Copy(tP.name);
+            this.label = tP.label;
             this._pts = new List<ToolPoint>();
             foreach (ToolPoint pt in tP) { Add(pt?.deepClone()); }
             this.matTool = tP.matTool;
@@ -376,6 +394,7 @@ namespace CAMel.Types
         }
         public void InsertRange(int index, [NotNull] IEnumerable<ToolPoint> items) => this._pts.InsertRange(index, items.Where(x => x != null));
         public void RemoveAt(int index) => this._pts.RemoveAt(index);
+        public void removeLast() { this._pts.RemoveAt(this.Count - 1); }
         public void Add(ToolPoint item)
         {
             if (item != null) { this._pts.Add(item); }
