@@ -988,6 +988,41 @@ namespace CAMel.Types.Machine
             newTP.label = PathLabel.FinishCut;
             return new List<ToolPath> {newTP};
         }
+
+        // Check travel between toolpaths
+        internal static void jumpCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
+        {
+            if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
+            if (fP.matTool == null) { Exceptions.matToolException(); }
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
+
+            // check there is anything to transition from or to
+            if (fP.Count <= 0 || tP.Count <= 0) { return; }
+
+            // See if we lie in the material
+            // Check end of this path and start of TP
+            // For each see if it is safe in one Material Form
+            // As we pull back to safe distance we allow a little wiggle.
+            if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
+                && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 ||
+                fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
+                && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
+            {
+                // If in material we probably need to throw an error
+                // first path in an operation
+                double length = fP.lastP.pt.DistanceTo(tP.firstP.pt);
+                if (length > m.pathJump) // changing between paths in material
+                {
+                    co.addError("Long Transition between paths in material. \n"
+                                + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
+                                + m.pathJump + " to at least: " + length);
+                }
+            }
+        }
+
+        // Assume all moves are fine
+        internal static void noCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP) { }
+
         public static bool noTransitionPosDir([NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
             if (fP.lastP == null || tP.firstP == null) { return false; }
@@ -1024,7 +1059,7 @@ namespace CAMel.Types.Machine
         [NotNull]
         public static string gcLineNumber([NotNull] string l, int line) => "N" + line.ToString("0000") + "0 " + l;
 
-        public static void gcInstStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath)
+        public static void gcInstStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI)
         {
             if (mI[0].Count == 0) { Exceptions.noToolPathException(); }
             if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
@@ -1049,15 +1084,9 @@ namespace CAMel.Types.Machine
             co.append(m.header);
             co.append(mI.preCode);
             co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
-            m.writeCode(ref co, startPath);
         }
-        public static void gcInstEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath)
+        public static void gcInstEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI)
         {
-            co.appendComment(m.sectionBreak);
-            // TODO remove this, the final transition will be written as usual
-            m.writeTransition(ref co, finalPath, endPath, true);
-            m.writeCode(ref co, endPath);
-
             co.appendComment(m.sectionBreak);
             co.appendComment(" End of ToolPaths");
             co.appendComment(m.sectionBreak);

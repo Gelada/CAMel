@@ -160,44 +160,39 @@ namespace CAMel.Types.Machine
 
         public void writeCode(ref CodeInfo co, ToolPath tP)
         {
-            if (tP.Count <= 0) { return; }
+            if (tP.Count == 0) { return; }
             if (tP.matTool == null) { Exceptions.matToolException(); }
 
             OMXCode.omxPathStart(this, ref co, tP);
 
             int pathQuality = tP.additions.activate;
-            // if (pathQuality == 0) { pathQuality = 10; }
 
             Point3d lastPt = new Point3d(co.machineState["X"], co.machineState["Y"], co.machineState["Z"]);
             Vector3d lastDir = new Vector3d(co.machineState["dX"], co.machineState["dY"], co.machineState["dZ"]);
             int lastQ = (int) co.machineState["Q"];
-
-            // as each instruction has a end tilt as well as a start tilt
-            // if the position does not change can ignore one point
-
-            bool justEnd = true;
+            bool first = co.machineState["Fi"] > 0;
 
             foreach (ToolPoint tPt in tP)
             {
                 if (tPt == null) { continue; }
+                // Errors will be recorded 1 line early
                 tPt.writeErrorAndWarnings(ref co);
-                if (tPt.feed > 0 && tPt.pt == lastPt && justEnd)
-                {
-                    justEnd = false;
-                    lastDir = tPt.dir;
-                    continue;
-                }
-                justEnd = true;
 
                 string ptCode = OMXCode.omxTiltPt(co, lastPt, lastDir, tPt, lastQ, this.tiltMax, tP.additions.offset);
 
                 ptCode = tPt.preCode + ptCode + tPt.postCode;
 
-                co.append(ptCode);
-
                 lastPt = tPt.pt;
                 lastDir = tPt.dir;
                 lastQ = Math.Abs(tPt.feed) < CAMel_Goo.Tolerance ? 0 : pathQuality;
+
+                if (first)
+                {
+                    first = false;
+                    continue;
+                }
+
+                co.append(ptCode);
             }
 
             // Pass machine state information
@@ -210,15 +205,14 @@ namespace CAMel.Types.Machine
             co.machineState.Add("dY", lastDir.Y);
             co.machineState.Add("dZ", lastDir.Z);
             co.machineState.Add("Q", lastQ);
+            co.machineState.Add("Fi", first ? 1 : -1);
 
             OMXCode.omxPathEnd(this, ref co, tP);
         }
 
-        public void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
+        public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
-
-            if (startPath.matTool == null) { Exceptions.matToolException(); }
 
             ToolPoint fPt = mI.startPath.firstP;
             if (fPt == null) { Exceptions.nullPanic(); }
@@ -230,36 +224,25 @@ namespace CAMel.Types.Machine
             co.machineState.Add("dX", fPt.dir.X);
             co.machineState.Add("dY", fPt.dir.Y);
             co.machineState.Add("dZ", fPt.dir.Z);
-            co.machineState.Add("Q", startPath.additions.activate);
-            if ((int) co.machineState["Q"] == 0) { co.machineState["Q"] = 0; }
+            co.machineState.Add("Q", mI[0][0].additions.activate);
+            co.machineState.Add("Fi", 1); // Know this is setup data not the record of a point
 
-            OMXCode.omxInstStart(this, ref co, mI, startPath);
+            // HACK: (slight) repeat the final point so it gets written
+            // To write omx entities we need to know the end position, so write points one behind.
+            mI.RemoveAt(0);
+            mI[mI.Count - 1][mI[mI.Count - 1].Count - 1].Add(mI.lastP.deepClone());
+
+            OMXCode.omxInstStart(this, ref co, mI);
         }
-        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath)
-        {
-            // Add copy of last point to ensure everything is written
-
-            ToolPath uEndPath = endPath.deepClone();
-            uEndPath.Add(uEndPath.lastP);
-
-            OMXCode.omxInstEnd(this, ref co, mI, finalPath, uEndPath);
-        }
+        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => OMXCode.omxInstEnd(this, ref co, mI);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpEnd(this, ref co, mO);
         public void toolChange(ref CodeInfo co, int toolNumber) { }
+        public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.noCheck(ref co, this, fP, tP);
 
-        // This should call a utility with standard options
-        // a good time to move it is when a second 5-axis is added
-        // hopefully at that point there is a better understanding of safe moves!
-        //TODO convert into a toolpath creating or error throwing part of process
-        public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
+        public ToolPath transition(ToolPath fP, ToolPath tP)
         {
-            // check there is anything to transition from
-            if (fP.Count <= 0 || tP.Count <= 0) { return; }
-
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
-
-            if (Utility.noTransitionPosDir(fP, tP)) { return; }
 
             ToolPath move = fP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = string.Empty;
@@ -267,14 +250,12 @@ namespace CAMel.Types.Machine
             move.postCode = string.Empty;
             move.additions.activate = 0;
 
-            // if needed add new point at speed 0 to describe rapid move.
-            if ((int) co.machineState["Q"] != 0)
-            { move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0)); }
+            move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0));
 
             move.Add(new ToolPoint((2 * fP.lastP.pt + tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
             move.Add(new ToolPoint((fP.lastP.pt + 2 * tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
 
-            writeCode(ref co, move);
+            return move;
         }
     }
 
@@ -346,7 +327,7 @@ namespace CAMel.Types.Machine
         }
 
         public static void omxInstStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-            [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath)
+            [NotNull] MachineInstruction mI)
         {
             if (mI[0].Count == 0) { Exceptions.noToolPathException(); }
             if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
@@ -375,19 +356,10 @@ namespace CAMel.Types.Machine
             co.append("[END]");
 
             co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
-            m.writeCode(ref co, startPath);
         }
         // ReSharper disable once UnusedParameter.Global
         public static void omxInstEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-            [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath)
-        {
-            // TODO no need to write the final path, it will be included
-            m.writeTransition(ref co, finalPath, endPath, true);
-            ToolPath uEndPath = endPath.deepClone();
-            if (uEndPath.lastP == null) { return; }
-            uEndPath.Add(uEndPath.lastP.deepClone());
-            m.writeCode(ref co, uEndPath);
-        }
+            [NotNull] MachineInstruction mI) => co.append(mI.postCode);
 
         // ReSharper disable once UnusedParameter.Global
         public static void omxOpStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,

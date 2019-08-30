@@ -20,8 +20,12 @@ namespace CAMel.Types
     {
         [ItemNotNull, NotNull] private List<ToolPath> _tPs;
 
-        public ToolPoint firstP => this.First(a => a?.firstP != null)?.firstP;
-        public ToolPoint lastP => this.Last(a => a?.lastP != null)?.lastP;
+        public ToolPoint firstP => this.FirstOrDefault(a => a?.firstP != null)?.lastP;
+        public ToolPoint lastP => this.LastOrDefault(a => a?.lastP != null)?.lastP;
+        public void removeLastPoint()
+        {
+            this[this.Count - 1].removeLast();
+        }
 
         // Default Constructor
         public MachineOperation()
@@ -163,12 +167,27 @@ namespace CAMel.Types
                     }
                 }
 
-                // sort here (remember to only move chunks that are outside the material!)
-
                 procPaths.AddRange(levelPaths);
             }
 
-            return deepCloneWithNewPaths(procPaths);
+            List<ToolPath> transPaths = new List<ToolPath>();
+            ToolPath frP = new ToolPath();
+            foreach (ToolPath tP in procPaths)
+            {
+                // Do nothing for empty paths
+                if (tP.Count <= 0) { continue; }
+                // Check if transition is needed
+                if (frP.Count > 0 && tP.label == PathLabel.Insert || frP.label == PathLabel.Retract)
+                {
+                    // Remove last point of previous path
+                    transPaths[transPaths.Count - 1]?.removeLast();
+                    transPaths.Add(m.transition(frP, tP));
+                }
+                transPaths.Add(tP);
+                frP = tP;
+            }
+
+            return deepCloneWithNewPaths(transPaths);
         }
 
         // Write GCode for this operation
@@ -178,19 +197,17 @@ namespace CAMel.Types
             m.writeOpStart(ref co, this);
 
             ToolPath oldPath = sP;
-            bool first = true;
 
             foreach (ToolPath tP in this)
             {
                 if (tP.Count <= 0) { continue; }
-                // TODO Remove this (turn into a toolpath in process and write normally)
-                m.writeTransition(ref co, oldPath, tP, first);
+
+                // Check for jump between paths
+                m.jumpCheck(ref co, oldPath, tP);
 
                 // Add Path to Code
                 m.writeCode(ref co, tP);
-
                 oldPath = tP;
-                first = false;
             }
 
             m.writeOpEnd(ref co, this);

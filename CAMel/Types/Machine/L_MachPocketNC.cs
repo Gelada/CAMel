@@ -33,7 +33,8 @@ namespace CAMel.Types.Machine
 
         public string extension => "ngc";
 
-        public PocketNC([NotNull] string name, [NotNull] string header, [NotNull] string footer, Vector3d pivot, double aMin, double aMax, double bMax, bool tLc, double pathJump, [NotNull] List<MaterialTool> mTs)
+        public PocketNC([NotNull] string name, [NotNull] string header, [NotNull] string footer, Vector3d pivot,
+            double aMin, double aMax, double bMax, bool tLc, double pathJump, [NotNull] List<MaterialTool> mTs)
         {
             this.name = name;
             this.toolLengthCompensation = tLc;
@@ -64,7 +65,9 @@ namespace CAMel.Types.Machine
         public string comment(string l) => GCode.comment(this, l);
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
-        public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir) ? Utility.planeOffset(tP, dir) : Utility.localOffset(tP);
+        public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir)
+            ? Utility.planeOffset(tP, dir)
+            : Utility.localOffset(tP);
         public List<ToolPath> insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
@@ -207,8 +210,7 @@ namespace CAMel.Types.Machine
                         while (j < tP.Count - 1 &&
                                Math.Abs(
                                    Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X
-                                   - Math.PI / 2.0) < _AngleAcc)
-                        { j++; }
+                                   - Math.PI / 2.0) < _AngleAcc) { j++; }
 
                         // If we are at the start of a path and vertical then we can just use the first non-vertical
                         // position for the whole run.
@@ -219,7 +221,8 @@ namespace CAMel.Types.Machine
                             newAB.Y = bTo;
                         }
                         // if we get to the end and it is still vertical we do not need to rotate.
-                        else if (Math.Abs(Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X) < _AngleAcc)
+                        else if (Math.Abs(Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X) <
+                                 _AngleAcc)
                         {
                             bTo = ab.X;
                             bSteps = j - i;
@@ -256,14 +259,8 @@ namespace CAMel.Types.Machine
 
                 // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
 
-                if (Math.Abs(newAB.Y) > this.bMax)
-                {
-                    co.addError("Out of bounds on B");
-                }
-                if (newAB.X > this.aMax || newAB.X < this.aMin)
-                {
-                    co.addError("Out of bounds on A");
-                }
+                if (Math.Abs(newAB.Y) > this.bMax) { co.addError("Out of bounds on B"); }
+                if (newAB.X > this.aMax || newAB.X < this.aMin) { co.addError("Out of bounds on A"); }
 
                 // update AB value
 
@@ -316,16 +313,16 @@ namespace CAMel.Types.Machine
             GCode.gcPathEnd(this, ref co, tP);
         }
 
-        public void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
+        public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
 
-            if (startPath.matTool == null) { Exceptions.matToolException(); }
+            if (mI.firstP == null) { Exceptions.nullPanic(); }
+            if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
 
-            double toolLength = mI.mach.toolLengthCompensation ? 0 : startPath.matTool.toolLength;
+            double toolLength = mI.m.toolLengthCompensation ? 0 : mI[0][0].matTool.toolLength;
 
-            if (mI.startPath.firstP == null) { Exceptions.nullPanic(); }
-            Vector3d ab = Kinematics.ikFiveAxisABTable(mI.startPath.firstP, this.pivot, toolLength, out Point3d machPt);
+            Vector3d ab = Kinematics.ikFiveAxisABTable(mI.firstP, this.pivot, toolLength, out Point3d machPt);
 
             co.machineState.Clear();
             co.machineState.Add("X", machPt.X);
@@ -336,118 +333,108 @@ namespace CAMel.Types.Machine
             co.machineState.Add("F", -1);
             co.machineState.Add("S", -1);
 
-            GCode.gcInstStart(this, ref co, mI, startPath);
+            GCode.gcInstStart(this, ref co, mI);
         }
-        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref co, mI, finalPath, endPath);
+        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => GCode.gcInstEnd(this, ref co, mI);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
         public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
+        public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.jumpCheck(ref co, this, fP, tP);
 
         // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
         // hopefully at that point there is a better understanding of safe moves!
-        //TODO convert into a toolpath creating or error throwing part of process
-        public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
+        public ToolPath transition(ToolPath fP, ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
 
-            // check there is anything to transition from or to
-            if (fP.Count <= 0 || tP.Count <= 0) { return; }
+            // Safely move from one safe point to another.
 
-            // no transition needed if endpoints are the same
-            if (Utility.noTransitionPosDir(fP, tP)) { return; }
+            ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+            move.name = string.Empty;
+
+            List<Point3d> route = new List<Point3d>();
+            int i;
+
+            route.Add(fP.lastP.pt);
+            route.Add(tP.firstP.pt);
+
+            // loop through intersecting with safe bubble and adding points
+            for (i = 0; i < route.Count - 1 && route.Count < 1000;)
+            {
+                if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out MFintersects inters))
+                {
+                    MFintersects fromMid =
+                        tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
+                    route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
+                }
+                else { i++; }
+            }
+
+            // add extra points if the angle change between steps is too large (pi/30)
+
+            bool lng = false;
+            // work out how far angle needs to move
+            double angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, false);
+
+            int steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
+            if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0
+
+            // Try to build a path with angles.
+            // If a tool line hits the material
+            // switch to the longer rotate and try again
+
+            for (i = 0; i < route.Count - 1; i++)
+            {
+                // add new points at speed 0 to describe rapid move.
+                for (int j = 0; j < steps; j++)
+                {
+                    double shift = (steps * i + j) / (double) (steps * (route.Count - 1));
+                    Vector3d mixDir = interpolate(fP.lastP, tP.firstP, fP.matTool, shift, lng).dir;
+
+                    ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
+                    if (fP.matForm.intersect(newTP, 0).thrDist > 0
+                        || tP.matForm.intersect(newTP, 0).thrDist > 0)
+                    {
+                        if (lng)
+                        {
+                            // something has gone horribly wrong and
+                            // both angle change directions will hit the material
+
+                            throw new Exception(
+                                "Safe Route failed to find a safe path from the end of one toolpath to the next.");
+                        }
+                        // start again with the longer angle change
+
+                        lng = true;
+                        i = 0;
+                        j = 0;
+                        angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, true);
+                        steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
+                        move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+                    }
+                    else { move.Add(newTP); }
+                }
+            }
 
             // See if we lie in the material
             // Check end of this path and start of TP
             // For each see if it is safe in one Material Form
             // As we pull back to safe distance we allow a little wiggle.
-            if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
-                && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
-                && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
+            if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.00001
+                && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.00001
+                || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.00001
+                && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.00001)
             {
-                // If in material we probably need to throw an error
-                // first path in an operation
-                double length = fP.lastP.pt.DistanceTo(tP.firstP.pt);
-                if (first) { co.addError("Transition between operations might be in material."); }
-                else if (length > this.pathJump) // changing between paths in material
-                {
-                    co.addError("Long Transition between paths in material. \n"
-                                + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
-                                + this.pathJump + " to at least: " + length);
-                }
+                // TODO Add errors
+                // Possibly in material transition but add error
             }
-            else // Safely move from one safe point to another.
-            {
-                ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                move.name = string.Empty;
 
-                List<Point3d> route = new List<Point3d>();
-                int i;
-
-                route.Add(fP.lastP.pt);
-                route.Add(tP.firstP.pt);
-
-                // loop through intersecting with safe bubble and adding points
-                for (i = 0; i < route.Count - 1 && route.Count < 1000;)
-                {
-                    if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out MFintersects inters))
-                    {
-                        MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
-                        route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-                    }
-                    else { i++; }
-                }
-
-                // add extra points if the angle change between steps is too large (pi/30)
-
-                bool lng = false;
-                // work out how far angle needs to move
-                double angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, false);
-
-                int steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
-                if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0
-
-                // Try to build a path with angles.
-                // If a tool line hits the material
-                // switch to the longer rotate and try again
-
-                for (i = 0; i < route.Count - 1; i++)
-                {
-                    // add new points at speed 0 to describe rapid move.
-                    for (int j = 0; j < steps; j++)
-                    {
-                        double shift = (steps * i + j) / (double) (steps * (route.Count - 1));
-                        Vector3d mixDir = interpolate(fP.lastP, tP.firstP, fP.matTool, shift, lng).dir;
-
-                        ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
-                        if (fP.matForm.intersect(newTP, 0).thrDist > 0
-                            || tP.matForm.intersect(newTP, 0).thrDist > 0)
-                        {
-                            if (lng)
-                            {
-                                // something has gone horribly wrong and
-                                // both angle change directions will hit the material
-
-                                throw new Exception("Safe Route failed to find a safe path from the end of one toolpath to the next.");
-                            }
-                            // start again with the longer angle change
-
-                            lng = true;
-                            i = 0;
-                            j = 0;
-                            angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, true);
-                            steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
-                            move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                        }
-                        else { move.Add(newTP); }
-                    }
-                }
-                // get rid of start point that was already in the paths
-                move.RemoveAt(0);
-                writeCode(ref co, move);
-            }
+            // get rid of start point that was already in the paths
+            move.RemoveAt(0);
+            return move;
         }
     }
 }

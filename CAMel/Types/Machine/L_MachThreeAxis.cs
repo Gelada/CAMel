@@ -223,92 +223,68 @@ namespace CAMel.Types.Machine
 
             GCode.gcPathEnd(this, ref co, tP);
         }
-        public void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
+        public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
 
-            if (startPath.firstP == null) { Exceptions.noToolPathException(); }
+            if (mI.firstP == null) { Exceptions.noToolPathException(); }
 
             co.machineState.Clear();
-            co.machineState.Add("X", startPath.firstP.pt.X);
-            co.machineState.Add("Y", startPath.firstP.pt.Y);
-            co.machineState.Add("Z", startPath.firstP.pt.Z);
+            co.machineState.Add("X", mI.firstP.pt.X);
+            co.machineState.Add("Y", mI.firstP.pt.Y);
+            co.machineState.Add("Z", mI.firstP.pt.Z);
             co.machineState.Add("F", -1);
             co.machineState.Add("S", -1);
 
-            GCode.gcInstStart(this, ref co, mI, startPath);
+            GCode.gcInstStart(this, ref co, mI);
         }
-        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref co, mI, finalPath, endPath);
+        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => GCode.gcInstEnd(this, ref co, mI);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
         public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
-        //TODO convert into a toolpath creating or error throwing part of process
-        public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
+        public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.jumpCheck(ref co, this, fP, tP);
+
+        public ToolPath transition(ToolPath fP, ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
+            if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
-            // check there is anything to transition from or to
-            if (fP.Count <= 0 || tP.Count <= 0) { return; }
-            // no transition needed if endpoints are the same position
-            if (Utility.noTransitionPos(fP, tP)) { return; }
 
-            // See if we lie in the material
-            // Check end of this path and start of TP
-            // For each see if it is safe in one Material Form
-            // As we pull back to safe distance we allow a little wiggle.
-            if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
-                && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
-                && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
+            // Start with a straight line, see how close it
+            // comes to danger. If its too close add a new
+            // point and try again.
+
+            List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
+
+            int i;
+
+            // loop through intersecting with safe bubble and adding points
+            for (i = 0; i < route.Count - 1 && i < 100;)
             {
-                // If in material we probably need to throw an error
-                // first path in an operation
-                double length = fP.lastP.pt.DistanceTo(tP.firstP.pt);
-                if (first) { co.addError("Transition between operations might be in material."); }
-                else if (length > this.pathJump) // changing between paths in material
+                if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out MFintersects inters))
                 {
-                    co.addError("Long Transition between paths in material. \n"
-                                + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
-                                + this.pathJump + " to at least: " + length);
+                    MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
+                    route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
                 }
+                else { i++; }
             }
-            else // Safely move from one safe point to another.
+
+            // get rid of start and end points that are already in the paths
+            route.RemoveAt(0);
+            route.RemoveAt(route.Count - 1);
+
+            ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+            move.name = string.Empty;
+            move.preCode = string.Empty;
+            move.postCode = string.Empty;
+
+            foreach (Point3d pt in route)
             {
-                // Start with a straight line, see how close it
-                // comes to danger. If its too close add a new
-                // point and try again.
-
-                List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
-
-                int i;
-
-                // loop through intersecting with safe bubble and adding points
-                for (i = 0; i < route.Count - 1 && i < 100;)
-                {
-                    if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out MFintersects inters))
-                    {
-                        MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
-                        route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
-                    }
-                    else { i++; }
-                }
-
-                // get rid of start and end points that are already in the paths
-                route.RemoveAt(0);
-                route.RemoveAt(route.Count - 1);
-
-                ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                move.name = string.Empty;
-                move.preCode = string.Empty;
-                move.postCode = string.Empty;
-
-                foreach (Point3d pt in route)
-                {
-                    // add new point at speed 0 to describe rapid move.
-                    move.Add(new ToolPoint(pt, new Vector3d(), -1, 0));
-                }
-
-                writeCode(ref co, move);
+                // add new point at speed 0 to describe rapid move.
+                move.Add(new ToolPoint(pt, new Vector3d(), -1, 0));
             }
+
+            return move;
         }
     }
 }

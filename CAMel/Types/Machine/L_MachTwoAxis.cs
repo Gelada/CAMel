@@ -227,32 +227,30 @@ namespace CAMel.Types.Machine
             GCode.gcPathEnd(this, ref co, tP);
         }
 
-        public void writeFileStart(ref CodeInfo co, MachineInstruction mI, ToolPath startPath)
+        public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
 
-            if (startPath.firstP == null) { Exceptions.nullPanic(); }
+            if (mI.firstP == null) { Exceptions.nullPanic(); }
             co.machineState.Clear();
-            co.machineState.Add("X", startPath.firstP.pt.X);
-            co.machineState.Add("Y", startPath.firstP.pt.Y);
+            co.machineState.Add("X", mI.firstP.pt.X);
+            co.machineState.Add("Y", mI.firstP.pt.Y);
             co.machineState.Add("F", -1);
             co.machineState.Add("S", -1);
 
-            GCode.gcInstStart(this, ref co, mI, startPath);
+            GCode.gcInstStart(this, ref co, mI);
         }
-        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI, ToolPath finalPath, ToolPath endPath) => GCode.gcInstEnd(this, ref co, mI, finalPath, endPath);
+        public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => GCode.gcInstEnd(this, ref co, mI);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
-        //TODO convert into a toolpath creating or error throwing part of process
-        public void writeTransition(ref CodeInfo co, ToolPath fP, ToolPath tP, bool first)
-        {
-            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
-            // check there is anything to transition from
-            if (fP.Count <= 0 || tP.Count <= 0) { return; }
+        public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.noCheck(ref co, this, fP, tP);
 
-            // no transition needed if endpoints are the same position
-            if (Utility.noTransitionPos(fP, tP)) { return; }
+        public ToolPath transition(ToolPath fP, ToolPath tP)
+        {
+            if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
+            if (fP.matTool == null) { Exceptions.matToolException(); }
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
 
             List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
 
@@ -265,7 +263,7 @@ namespace CAMel.Types.Machine
                 // add new point at speed 0 to describe rapid move.
                 move.Add(new ToolPoint(pt, new Vector3d(), -1, 0));
             }
-            writeCode(ref co, move);
+            return move;
         }
     }
 }

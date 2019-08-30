@@ -113,7 +113,7 @@ namespace CAMel.GH
             {
                 fPath = Path.GetDirectoryName(fPath) ?? string.Empty;
                 string filePath = fPath;
-                fPath = Path.Combine(filePath, mI.name + "." + mI.mach.extension);
+                fPath = Path.Combine(filePath, mI.name + "." + mI.m.extension);
                 if (File.Exists(fPath)) { File.Delete(fPath); }
                 using (StreamWriter sW = new StreamWriter(fPath))
                 {

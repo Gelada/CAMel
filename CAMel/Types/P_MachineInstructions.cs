@@ -22,15 +22,16 @@ namespace CAMel.Types
         public string preCode { get; set; }
         public string postCode { get; set; }
 
-        [PublicAPI, NotNull] public IMachine mach { get; set; }
+        [PublicAPI, NotNull] public IMachine m { get; set; }
 
-        public ToolPoint firstP => this.First(a => a?.firstP != null)?.firstP;
-        public ToolPoint lastP => this.Last(a => a?.lastP != null)?.lastP;
+        public ToolPoint firstP => this.FirstOrDefault(a => a?.firstP != null)?.firstP;
+        public ToolPoint lastP => this.LastOrDefault(a => a?.lastP != null)?.lastP;
+        [PublicAPI] public void removeLastPoint() { this[this.Count - 1].removeLastPoint(); }
 
         // Default Constructor
         public MachineInstruction([NotNull] IMachine m)
         {
-            this.mach = m;
+            this.m = m;
             this._mOs = new List<MachineOperation>();
             this.startPath = new ToolPath();
             this.endPath = new ToolPath();
@@ -43,7 +44,7 @@ namespace CAMel.Types
         public MachineInstruction([NotNull] string name, [NotNull] IMachine mach, [CanBeNull] List<MachineOperation> mOs, [CanBeNull] ToolPath startPath = null, [CanBeNull] ToolPath endPath = null)
         {
             this.name = name;
-            this.mach = mach;
+            this.m = mach;
             this._mOs = mOs ?? new List<MachineOperation>();
             this.startPath = startPath ?? new ToolPath();
             this.endPath = endPath ?? new ToolPath();
@@ -56,7 +57,7 @@ namespace CAMel.Types
             this.name = string.Copy(mI.name);
             this.preCode = string.Copy(mI.preCode);
             this.postCode = string.Copy(mI.postCode);
-            this.mach = mI.mach;
+            this.m = mI.m;
             this.startPath = mI.startPath.deepClone();
             this.endPath = mI.endPath.deepClone();
             this._mOs = new List<MachineOperation>();
@@ -69,12 +70,12 @@ namespace CAMel.Types
         [NotNull, PublicAPI]
         public MachineInstruction deepCloneWithNewPaths([NotNull] List<MachineOperation> mOs)
         {
-            MachineInstruction outInst = new MachineInstruction(this.mach)
+            MachineInstruction outInst = new MachineInstruction(this.m)
             {
                 name = string.Copy(this.name),
                 preCode = string.Copy(this.preCode),
                 postCode = string.Copy(this.postCode),
-                mach = this.mach,
+                m = this.m,
                 startPath = this.startPath.deepClone(),
                 endPath = this.endPath.deepClone(),
                 _mOs = mOs
@@ -106,30 +107,43 @@ namespace CAMel.Types
             // Mix this.startPath and this.validStart as required to
             // give a valid startPath.
             ToolPath validTP = validStart();
-            valid.startPath.validate(validTP, this.mach);
+            valid.startPath.validate(validTP, this.m);
             validTP = valid.startPath;
 
             // process and validate all Operations
-            // TODO operation transitions here
-            foreach (MachineOperation mO in this) { valid.Add(mO.processAdditions(this.mach, ref validTP)); }
 
-            valid.startPath.additions = new ToolPathAdditions();
-
-            // If the start path has no points add the first point of the processed points
-            if (valid.startPath.Count == 0)
+            ToolPath fP = new ToolPath();
+            // If there is a start path use it.
+            MachineOperation pMo;
+            if (valid.startPath.Count > 0)
             {
-                valid.startPath.Add(valid.firstP?.deepClone());
-                if (valid.startPath.firstP != null) { valid.startPath.firstP.feed = 0; }
+                pMo = new MachineOperation {valid.startPath};
+                valid.Add(pMo.processAdditions(this.m, ref validTP));
+                fP = valid.startPath;
             }
 
-            // validate endPath, validTP will have the most recent information
-            valid.endPath.validate(validTP, this.mach);
-            valid.endPath.additions = new ToolPathAdditions();
-            // if we need a point add the last point of the processed paths.
-            if (valid.endPath.Count != 0) { return valid; }
+            foreach (MachineOperation mO in this)
+            {
+                // Always transition between operations (other than start)
+                pMo = mO.processAdditions(this.m, ref validTP);
+                if (fP.Count > 0 && pMo.Count > 0)
+                {
+                    pMo.Insert(0, this.m.transition(fP, pMo[0]));
+                    valid.removeLastPoint();
+                    fP = pMo[pMo.Count - 1];
+                }
+                valid.Add(pMo);
+            }
 
-            valid.endPath.Add(valid.lastP?.deepClone());
-            if (valid.endPath.firstP != null) { valid.endPath.firstP.feed = 0; }
+            // Transition to end path
+            pMo = new MachineOperation {valid.endPath};
+            pMo = pMo.processAdditions(this.m, ref validTP);
+            if (fP.Count > 0 && pMo.Count > 0)
+            {
+                pMo.Insert(0, this.m.transition(fP, pMo[0]));
+                valid.removeLastPoint();
+            }
+            valid.Add(pMo);
 
             return valid;
         }
@@ -137,21 +151,21 @@ namespace CAMel.Types
         [NotNull]
         public CodeInfo writeCode()
         {
-            ToolPath uStartPath = this.startPath;
-            if (uStartPath.matForm == null) { Exceptions.matFormException(); }
-            if (uStartPath.matTool == null) { Exceptions.matToolException(); }
+            ToolPath fP = this[0][0];
+            if (fP.matForm == null) { Exceptions.matFormException(); }
+            if (fP.matTool == null) { Exceptions.matToolException(); }
 
-            CodeInfo co = new CodeInfo(this.mach, uStartPath.matForm, uStartPath.matTool);
+            CodeInfo co = new CodeInfo(this.m, fP.matForm, fP.matTool);
 
-            this.mach.writeFileStart(ref co, this, uStartPath);
+            this.m.writeFileStart(ref co, this);
 
             foreach (MachineOperation mO in this)
             {
-                mO.writeCode(ref co, this.mach, out ToolPath uEndPath, uStartPath);
-                uStartPath = uEndPath;
+                mO.writeCode(ref co, this.m, out ToolPath eP, fP);
+                fP = eP;
             }
 
-            this.mach.writeFileEnd(ref co, this, uStartPath, this.endPath);
+            this.m.writeFileEnd(ref co, this);
 
             return co;
         }
@@ -184,12 +198,12 @@ namespace CAMel.Types
                 }
             }
             // if the machine has one tool use that.
-            if (this.mach.mTs.Count != 1 || !mFFound)
+            if (this.m.mTs.Count != 1 || !mFFound)
             {
                 throw new InvalidOperationException(
                     "Cannot validate Machine Instructions, there are either no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
             }
-            valid.matTool = this.mach.mTs[0];
+            valid.matTool = this.m.mTs[0];
             return valid; // if we go through the whole thing without finding all the valid pieces
         }
 
@@ -325,14 +339,14 @@ namespace CAMel.Types
             }
             if (typeof(T).IsAssignableFrom(typeof(IMachine)))
             {
-                object ptr = this.Value.mach;
+                object ptr = this.Value.m;
                 target = (T) ptr;
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Machine)))
             {
-                object ptr = new GH_Machine(this.Value.mach);
+                object ptr = new GH_Machine(this.Value.m);
                 target = (T) ptr;
                 return true;
             }

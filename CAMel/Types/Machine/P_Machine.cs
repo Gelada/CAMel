@@ -31,13 +31,14 @@ namespace CAMel.Types.Machine
         [NotNull] string comment([NotNull] string l);
         [NotNull] string lineNumber([NotNull] string l, int line);
 
-        void writeFileStart([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath startPath);
-        void writeFileEnd([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI, [NotNull] ToolPath finalPath, [NotNull] ToolPath endPath);
+        void writeFileStart([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI);
+        void writeFileEnd([NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI);
         void writeOpStart([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
         void writeOpEnd([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
         void writeCode([NotNull] ref CodeInfo co, [NotNull] ToolPath tP);
-        void writeTransition([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool first);
+        //void writeTransition([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool first);
         void toolChange([NotNull] ref CodeInfo co, int toolNumber);
+        void jumpCheck([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP);
 
         [NotNull] MachineInstruction readCode([NotNull] string code);
 
@@ -48,6 +49,7 @@ namespace CAMel.Types.Machine
         [NotNull] List<List<ToolPath>> stepDown([NotNull] ToolPath tP);
         [NotNull] ToolPath threeAxisHeightOffset([NotNull] ToolPath tP);
         [NotNull, ItemNotNull] List<ToolPath> finishPaths([NotNull] ToolPath tP);
+        [NotNull] ToolPath transition([NotNull] ToolPath fP, [NotNull] ToolPath tP);
 
         // Machine movement
         Vector3d toolDir([NotNull] ToolPoint tP);
