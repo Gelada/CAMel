@@ -597,6 +597,13 @@ namespace CAMel.Types.Machine
                     if (rTp.Count > 0) { irTps.Add(rTp); }
                 }
             }
+            
+            // Add activation codes
+            if (tP.additions.activate != 0)
+            {
+                if (activate != string.Empty) { irTps[0].preCode = activate + "\n" + newTP.preCode; }
+                if (deActivate != string.Empty) { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
+            }
 
             return irTps;
         }
@@ -635,7 +642,6 @@ namespace CAMel.Types.Machine
                 iTp.name = iTp.name + " insert";
                 iTp.label = PathLabel.Insert;
                 if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
-                if (irActivate != 0 && activate != String.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
 
                 double r = Math.PI / 2.0 + wiggle;
                 if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 - wiggle; } // cut to the right
@@ -659,7 +665,6 @@ namespace CAMel.Types.Machine
                 rTp.label = PathLabel.Retract;
 
                 if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
-                if (irActivate != 0 && activate != String.Empty) { rTp.preCode = activate + "\n" + newTP.preCode; }
 
                 double r = Math.PI / 2.0 - wiggle;
                 if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 + wiggle; } // cut to the right
@@ -677,6 +682,13 @@ namespace CAMel.Types.Machine
                 irTps[irTps.Count - 1]?.removeLast();
 
                 irTps.Add(rTp);
+            }
+            
+            // Add activation codes
+            if (tP.additions.activate != 0)
+            {
+                if (activate != string.Empty) { irTps[0].preCode = activate + "\n" + newTP.preCode; }
+                if (deActivate != string.Empty) { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
             }
 
             return irTps;
