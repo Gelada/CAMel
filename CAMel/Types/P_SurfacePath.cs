@@ -109,6 +109,7 @@ namespace CAMel.Types
             // Just convert to Mesh
             MeshingParameters mP = MeshingParameters.Smooth;
             this._m = Mesh.CreateFromBrep(b, mP)?[0];
+            this._m.FaceNormals.ComputeFaceNormals();
 
             return generateOperation_(offset, mT, mF, tPa);
         }
