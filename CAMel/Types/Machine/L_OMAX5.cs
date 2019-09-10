@@ -238,6 +238,7 @@ namespace CAMel.Types.Machine
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpEnd(this, ref co, mO);
         public void toolChange(ref CodeInfo co, int toolNumber) { }
+        public double jumpCheck(ToolPath fP, ToolPath tP) => 0;
         public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.noCheck(ref co, this, fP, tP);
 
         public ToolPath transition(ToolPath fP, ToolPath tP)
@@ -249,6 +250,7 @@ namespace CAMel.Types.Machine
             move.preCode = string.Empty;
             move.postCode = string.Empty;
             move.additions.activate = 0;
+            move.label = PathLabel.Transition;
 
             move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0));
 

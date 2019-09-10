@@ -242,6 +242,7 @@ namespace CAMel.Types.Machine
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
         public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
+        public double jumpCheck(ToolPath fP, ToolPath tP) => Utility.jumpCheck(this, fP, tP);
         public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.jumpCheck(ref co, this, fP, tP);
 
         public ToolPath transition(ToolPath fP, ToolPath tP)
@@ -274,9 +275,10 @@ namespace CAMel.Types.Machine
             route.RemoveAt(route.Count - 1);
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-            move.name = string.Empty;
+            move.name = "Transition";
             move.preCode = string.Empty;
             move.postCode = string.Empty;
+            move.label = PathLabel.Transition;
 
             foreach (Point3d pt in route)
             {

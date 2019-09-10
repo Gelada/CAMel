@@ -317,7 +317,7 @@ namespace CAMel.Types.Machine
         {
             // Set up Machine State
 
-            if (mI.firstP == null) { Exceptions.nullPanic(); }
+            if (mI.firstP == null) { Exceptions.emptyPathException(); }
             if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
 
             double toolLength = mI.m.toolLengthCompensation ? 0 : mI[0][0].matTool.toolLength;
@@ -339,6 +339,7 @@ namespace CAMel.Types.Machine
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
         public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
+        public double jumpCheck(ToolPath fP, ToolPath tP) => Utility.jumpCheck(this, fP, tP);
         public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.jumpCheck(ref co, this, fP, tP);
 
         // This should call a utility with standard options
@@ -348,12 +349,15 @@ namespace CAMel.Types.Machine
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }
-            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.emptyPathException(); }
+
+            if (this.jumpCheck(fP, tP) > 0) { Exceptions.transitionException(); }
 
             // Safely move from one safe point to another.
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-            move.name = string.Empty;
+            move.name = "Transition";
+            move.label = PathLabel.Transition;
 
             List<Point3d> route = new List<Point3d>();
             int i;
@@ -402,7 +406,7 @@ namespace CAMel.Types.Machine
                         {
                             // something has gone horribly wrong and
                             // both angle change directions will hit the material
-
+                            //break;
                             throw new Exception(
                                 "Safe Route failed to find a safe path from the end of one toolpath to the next.");
                         }
@@ -418,22 +422,6 @@ namespace CAMel.Types.Machine
                     else { move.Add(newTP); }
                 }
             }
-
-            // See if we lie in the material
-            // Check end of this path and start of TP
-            // For each see if it is safe in one Material Form
-            // As we pull back to safe distance we allow a little wiggle.
-            if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.00001
-                && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.00001
-                || fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.00001
-                && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.00001)
-            {
-                // TODO Add errors
-                // Possibly in material transition but add error
-            }
-
-            // get rid of start point that was already in the paths
-            move.RemoveAt(0);
             return move;
         }
     }

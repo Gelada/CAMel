@@ -554,7 +554,7 @@ namespace CAMel.Types.Machine
                 {
                     leadIn.Reverse();
                     List<ToolPoint> tPts = new List<ToolPoint>();
-                    if (tP.firstP == null) { Exceptions.nullPanic(); }
+                    if (tP.firstP == null) { Exceptions.emptyPathException(); }
                     for (int i = 1; i < leadIn.PointCount; i++)
                     {
                         ToolPoint tPt = tP.firstP.deepClone();
@@ -580,7 +580,7 @@ namespace CAMel.Types.Machine
                 else
                 {
                     List<ToolPoint> tPts = new List<ToolPoint>();
-                    if (tP.firstP == null) { Exceptions.nullPanic(); }
+                    if (tP.firstP == null) { Exceptions.emptyPathException(); }
                     for (int i = 1; i < leadOut.PointCount; i++)
                     {
                         ToolPoint tPt = tP.firstP.deepClone();
@@ -647,7 +647,7 @@ namespace CAMel.Types.Machine
                 if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 - wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtStart;
                 tan.Rotate(r, Vector3d.ZAxis);
-                if (tP.firstP == null) { Exceptions.nullPanic(); }
+                if (tP.firstP == null) { Exceptions.emptyPathException(); }
                 ToolPoint tPt = tP.firstP.deepClone();
                 tPt.pt = tPt.pt + tan * tP.matTool.insertWidth;
 
@@ -670,7 +670,7 @@ namespace CAMel.Types.Machine
                 if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 + wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtEnd;
                 tan.Rotate(r, Vector3d.ZAxis);
-                if (tP.lastP == null) { Exceptions.nullPanic(); }
+                if (tP.lastP == null) { Exceptions.emptyPathException(); }
                 ToolPoint tPt = tP.lastP.deepClone();
                 rTp.Add(tPt);
                 tPt = tP.lastP.deepClone();
@@ -734,7 +734,7 @@ namespace CAMel.Types.Machine
                 if (irActivate != 0 && activate != String.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
 
                 // get distance to surface and insert direction
-                if (newTP.firstP == null) { Exceptions.nullPanic(); }
+                if (newTP.firstP == null) { Exceptions.emptyPathException(); }
                 inter = tP.matForm.intersect(newTP.firstP, 0).through;
 
                 // check to see if there was an intersection
@@ -748,7 +748,7 @@ namespace CAMel.Types.Machine
                     iTp.Insert(0, tempTPt);
 
                     // point out at safe distance
-                    if (iTp.firstP == null) { Exceptions.nullPanic(); }
+                    if (iTp.firstP == null) { Exceptions.emptyPathException(); }
                     tempTPt = iTp.firstP.deepClone();
                     tempTPt.pt = tempTPt.pt + inter.away * uTol;
                     tempTPt.feed = 0; // we can use a rapid move
@@ -772,7 +772,7 @@ namespace CAMel.Types.Machine
             }
 
             if (!tP.additions.retract || newTP.Count <= 0) { return irTps; }
-            if (newTP.lastP == null) { Exceptions.nullPanic(); }
+            if (newTP.lastP == null) { Exceptions.emptyPathException(); }
 
             ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
             rTp.name = rTp.name + " retract";
@@ -787,10 +787,16 @@ namespace CAMel.Types.Machine
             inter = tP.matForm.intersect(newTP.lastP, 0).through;
             if (inter.isSet)
             {
+                // Replace last point of toolpath
                 tempTPt = newTP.lastP.deepClone();
+                newTP.removeLast();
 
                 // set speed to the plunge feed rate.
                 tempTPt.feed = tP.matTool.feedPlunge;
+
+                rTp.Add(tempTPt);
+
+                tempTPt = tempTPt.deepClone();
 
                 // Pull back to surface
                 tempTPt.pt = inter.point;
@@ -799,7 +805,7 @@ namespace CAMel.Types.Machine
 
                 // Pull away to safe distance
 
-                if (rTp.lastP == null) { Exceptions.nullPanic(); }
+                if (rTp.lastP == null) { Exceptions.emptyPathException(); }
 
                 tempTPt = rTp.lastP.deepClone();
                 tempTPt.pt = tempTPt.pt + inter.away * uTol;
@@ -811,6 +817,15 @@ namespace CAMel.Types.Machine
                 // check intersection with material extended to safe distance
                 inter = tP.matForm.intersect(newTP.lastP, uTol).through;
                 if (!inter.isSet) { return irTps; }
+
+                // Replace last point of toolpath
+                tempTPt = newTP.lastP.deepClone();
+                newTP.removeLast();
+
+                // set speed to the plunge feed rate.
+                tempTPt.feed = tP.matTool.feedPlunge;
+
+                rTp.Add(tempTPt);
 
                 // point out at safe distance
                 tempTPt = newTP.lastP.deepClone();
@@ -934,7 +949,7 @@ namespace CAMel.Types.Machine
 
             // add the final point.
 
-            if (tP.lastP == null) { Exceptions.nullPanic(); }
+            if (tP.lastP == null) { Exceptions.emptyPathException(); }
             orth = Vector3d.CrossProduct(travel, m.toolDir(tP.lastP));
             if (Math.Abs(orth.Length) > CAMel_Goo.Tolerance) { uOrth = orth; }
             offsetPath.Add(tP.matTool.threeAxisHeightOffset(m, tP.lastP, travel, uOrth));
@@ -1001,15 +1016,18 @@ namespace CAMel.Types.Machine
             return new List<ToolPath> {newTP};
         }
 
-        // Check travel between toolpaths
-        internal static void jumpCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
+        // Check for jumps in material, return
+        // 0 if not in material
+        // positive if in material
+        // -1 if one of the paths has 0 points
+        internal static double jumpCheck([NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }
-            if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
+            if (fP.lastP == null || tP.firstP == null) { Exceptions.emptyPathException(); }
 
             // check there is anything to transition from or to
-            if (fP.Count <= 0 || tP.Count <= 0) { return; }
+            if (fP.Count <= 0 || tP.Count <= 0) { return -1; }
 
             // See if we lie in the material
             // Check end of this path and start of TP
@@ -1020,15 +1038,32 @@ namespace CAMel.Types.Machine
                 fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
             {
-                // If in material we probably need to throw an error
-                // first path in an operation
+                // We trust insert and retract moves and retract to transitions. 
+
+                if (fP.label == PathLabel.Insert
+                    || tP.label == PathLabel.Retract
+                    || fP.label == PathLabel.Retract && tP.label == PathLabel.Transition)
+                { return 0; }
+
+                // return distance in material
                 double length = fP.lastP.pt.DistanceTo(tP.firstP.pt);
-                if (length > m.pathJump) // changing between paths in material
-                {
-                    co.addError("Long Transition between paths in material. \n"
-                                + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
-                                + m.pathJump + " to at least: " + length);
-                }
+
+                return length;
+            }
+            return 0;
+        }
+
+        // Check travel between toolpaths
+        internal static void jumpCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP,
+            [NotNull] ToolPath tP)
+        {
+            // check if there is a problem moving between paths
+            double length = jumpCheck(m, fP, tP);
+            if (length > m.pathJump)
+            {
+                co.addError("Long Transition between paths in material. \n"
+                            + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
+                            + m.pathJump + " to at least: " + length);
             }
         }
 

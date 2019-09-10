@@ -366,6 +366,10 @@ namespace CAMel.Types
         [Pure]
         public bool planarOffset(out Vector3d dir)
         {
+            if (this.Count == 0)
+            {
+                dir = new Vector3d(); return false;
+            }
             dir = this[0].dir;
             // Check that there is a unique directions
             foreach (ToolPoint tPt in this)
