@@ -31,6 +31,15 @@ namespace CAMel.Types
                 paths.Add(tempC.DuplicateCurve());
                 if (zZ) { tempC.Reverse(); }
             }
+            // Join paths for zigzag
+            if (!zZ) { return new SurfacePath(paths, -dir.ZAxis, sTD); }
+
+            Curve[] joined = Curve.JoinCurves(paths, stepOver * mT.toolWidth + 0.0001, true);
+
+            if (joined == null) { return new SurfacePath(paths, -dir.ZAxis, sTD); }
+
+            paths = new List<Curve>();
+            paths.AddRange(joined);
 
             return new SurfacePath(paths, -dir.ZAxis, sTD);
         }
@@ -58,7 +67,7 @@ namespace CAMel.Types
             }
             else
             {
-                cTp.convertCurve(c, new Vector3d(0, 0, 1));
+                cTp.convertCurve(c, new Vector3d(0, 0, 1), 1);
                 bool first = true;
                 double turns = 0;
                 double angle = 0;
