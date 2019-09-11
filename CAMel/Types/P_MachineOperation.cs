@@ -179,7 +179,7 @@ namespace CAMel.Types
                 // Check if transition is needed
                 if (frP.Count > 0 && (tP.label == PathLabel.Insert || frP.label == PathLabel.Retract))
                 {
-                    // Calulate transition
+                    // Calculate transition
                     ToolPath trP = m.transition(frP, tP);
                     // Remove last point of previous path
                     transPaths[transPaths.Count - 1]?.removeLast();
