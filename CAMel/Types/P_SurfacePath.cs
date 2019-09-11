@@ -133,7 +133,7 @@ namespace CAMel.Types
             foreach (Curve p in this._paths)
             {
                 tPs.Add(new ToolPath(string.Empty, mT, mF, tPa));
-                tPs[tPs.Count - 1]?.convertCurve(p, new Vector3d(0, 0, 1));
+                tPs[tPs.Count - 1]?.convertCurve(p, new Vector3d(0, 0, 1), 1);
             }
 
             // move points onto surface storing projection direction

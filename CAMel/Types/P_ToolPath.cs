@@ -227,13 +227,13 @@ namespace CAMel.Types
         }
 
         // Use a curve and direction vector to create a path of toolpoints
-        public bool convertCurve([CanBeNull] Curve c, Vector3d d)
+        public bool convertCurve([CanBeNull] Curve c, Vector3d d, double maxStep = 20)
         {
             if (c?.IsValid != true) { return false; }
             if (this.matTool == null) { Exceptions.matToolException(); }
 
             Curve c2 = c.ToPolyline(0, 0, Math.PI, 0, 0, this.matTool.tolerance, this.matTool.minStep,
-                20.0 * this.matTool.toolWidth, true);
+                maxStep * this.matTool.toolWidth, true);
             if (c2 == null) { return false; }
             c2.TryGetPolyline(out Polyline pL);
 
