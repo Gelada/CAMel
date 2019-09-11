@@ -100,9 +100,9 @@ namespace CAMel.Types.MaterialForm
             // check how close to each face, return normal of closest
             double closeD = this.box.X.Max + uTol - pt.X;
             Vector3d outD = this.box.Plane.XAxis;
-            if (closeD > pt.X - this.box.X.Min - uTol)
+            if (closeD > pt.X - this.box.X.Min + uTol)
             {
-                closeD = pt.X - this.box.X.Min - uTol;
+                closeD = pt.X - this.box.X.Min + uTol;
                 outD = -this.box.Plane.XAxis;
             }
             if (closeD > this.box.Y.Max + uTol - pt.Y)
@@ -110,9 +110,9 @@ namespace CAMel.Types.MaterialForm
                 closeD = this.box.Y.Max + uTol - pt.Y;
                 outD = this.box.Plane.YAxis;
             }
-            if (closeD > pt.Y - this.box.Y.Min - uTol)
+            if (closeD > pt.Y - this.box.Y.Min + uTol)
             {
-                closeD = pt.Y - this.box.Y.Min - uTol;
+                closeD = pt.Y - this.box.Y.Min + uTol;
                 outD = -this.box.Plane.YAxis;
             }
             if (closeD > this.box.Z.Max + uTol - pt.Z)
@@ -120,9 +120,9 @@ namespace CAMel.Types.MaterialForm
                 closeD = this.box.Z.Max + uTol - pt.Z;
                 outD = this.box.Plane.ZAxis;
             }
-            if (closeD > pt.Z - this.box.Z.Min - uTol)
+            if (closeD > pt.Z - this.box.Z.Min + uTol)
             {
-                closeD = pt.Z - this.box.Z.Min - uTol;
+                closeD = pt.Z - this.box.Z.Min + uTol;
                 outD = -this.box.Plane.ZAxis;
             }
             if (closeD < -2 * uTol) { throw new FormatException("MidOutDir in MFBox called for point outside the Box."); }
