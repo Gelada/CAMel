@@ -223,8 +223,10 @@ namespace CAMel.Types.Machine
             double osL = os.Length;
             os.Unitize();
 
+            // Check if there is enough to offset
+            if (osL < CAMel_Goo.Tolerance || tP.Count < 2 || tP.firstP == null || tP.lastP == null) { return new List<ToolPath> {tP}; }
+
             // Start with first point unless the ToolPath is closed.
-            if (tP.firstP == null || tP.lastP == null) { return new List<ToolPath> {tP}; }
             ToolPoint lPt = tP.firstP, uTPt;
             if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { lPt = tP[tP.Count - 2]; }
             Vector3d osD;
@@ -986,7 +988,7 @@ namespace CAMel.Types.Machine
             {
                 ToolPath newTP = tP.deepClone(height, m);
                 if (newTP.name != string.Empty) { newTP.name = newTP.name + " "; }
-                newTP.name = newTP.name + "(Finish at height " + height.ToString("0.###") + ")";
+                newTP.name = newTP.name + "Finish at height " + height.ToString("0.###");
                 newTP.label = PathLabel.FinishCut;
                 newTP.additions.stepDown = false;
                 newTP.additions.onion = new List<double> {0};
@@ -1038,7 +1040,7 @@ namespace CAMel.Types.Machine
                 fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
             {
-                // We trust insert and retract moves and retract to transitions. 
+                // We trust insert and retract moves and retract to transitions.
 
                 if (fP.label == PathLabel.Insert
                     || tP.label == PathLabel.Retract
@@ -1094,7 +1096,7 @@ namespace CAMel.Types.Machine
         [NotNull] internal const string DefaultCommentEnd = ")";
         [NotNull] internal const string DefaultSectionBreak = "------------------------------------------";
         [NotNull] internal const string DefaultSpeedChangeCommand = "M03";
-        [NotNull] internal const string DefaultToolChangeCommand = "G43H";
+        [NotNull] internal const string DefaultToolChangeCommand = "G43H#";
         [NotNull] internal const string DefaultActivateCommand = "M61";
         [NotNull] internal const string DefaultDeActivateCommand = "M62";
         [NotNull] internal const string DefaultFileStart = "";
