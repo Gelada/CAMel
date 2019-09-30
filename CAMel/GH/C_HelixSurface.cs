@@ -107,8 +107,6 @@ namespace CAMel.GH
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep.");
                 }
-
-                //bb.Inflate(mT.toolWidth);
             }
 
             // set Surfacing direction
