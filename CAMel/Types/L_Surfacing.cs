@@ -34,12 +34,18 @@ namespace CAMel.Types
             // Join paths for zigzag
             if (!zZ) { return new SurfacePath(paths, -dir.ZAxis, sTD); }
 
-            Curve[] joined = Curve.JoinCurves(paths, stepOver * mT.toolWidth + 0.0001, true);
+            //Curve[] joined = Curve.JoinCurves (paths, stepOver * mT.toolWidth + 0.0001, true);
 
-            if (joined == null) { return new SurfacePath(paths, -dir.ZAxis, sTD); }
+            PolyCurve joined = new PolyCurve();
+            joined.Append(paths[0]);
+            for (int i = 1; i < paths.Count; i++)
+            {
+                Curve join = Curve.CreateBlendCurve(joined, paths[i], BlendContinuity.Position);
+                joined.Append(join);
+                joined.Append(paths[i]);
+            }
 
-            paths = new List<Curve>();
-            paths.AddRange(joined);
+            paths = new List<Curve> {joined};
 
             return new SurfacePath(paths, -dir.ZAxis, sTD);
         }
@@ -124,28 +130,31 @@ namespace CAMel.Types
                 }
             }
 
-            // Create spiral from the loop
+            // Create helix from the loop
             if (cTp.firstP == null || cTp.lastP == null) { throw new NullReferenceException("SurfacePath.helix has somehow ended up with a zero length curve."); }
             double winding = (cTp.lastP.pt.Y - cTp.firstP.pt.Y) / (2.0 * Math.PI);
             double raisePer = stepOver * mT.toolWidth; // height dealt with by each loop
-            double rot =
+            double roth =
                 (bb.Max.Z - bb.Min.Z // height of surface
-                 + (zMax - zMin) // height variation in path
-                )
-                / (winding * raisePer);
+                 + (zMax - zMin)); // height variation in path
+            double rot = roth / (winding * raisePer);
 
             raisePer = raisePer / (2.0 * Math.PI); // convert to per radian
 
             List<Point3d> spiralPath = new List<Point3d>();
-
-            for (i = -1; i <= Math.Abs(rot); i++) // strange limits to make sure we go top to bottom
+            double h;
+            for (i = -1; i <= Math.Abs(rot + 1); i++) // strange limits to make sure we go top to bottom
             {
                 foreach (ToolPoint tPt in cTp)
                 {
+                    h = (2.0 * Math.PI * winding * i + tPt.pt.Y) * raisePer; // winding height
+                    if (h < 0) { h = 0; } // do a first loop on the top
+                    if (h > roth) { h = roth;} // do the final loop at the bottom 
+                    h = h + bb.Min.Z - zMax + tPt.pt.Z;
                     Point3d tempPt = CAMel_Goo.fromCyl(new Point3d(
                         outerRadius,
                         -tPt.pt.Y,
-                        bb.Min.Z - zMax + tPt.pt.Z + (2.0 * Math.PI * winding * i + tPt.pt.Y) * raisePer));
+                        h));
                     tempPt = dir.PointAt(tempPt.X, tempPt.Y, tempPt.Z);
                     spiralPath.Add(tempPt);
                 }
