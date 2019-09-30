@@ -418,6 +418,8 @@ namespace CAMel.Types.Machine
                         angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, true);
                         steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                         move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+                        move.name = "Transition";
+                        move.label = PathLabel.Transition;
                     }
                     else { move.Add(newTP); }
                 }
