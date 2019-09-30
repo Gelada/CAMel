@@ -130,8 +130,8 @@ namespace CAMel.Types
                 {
                     pMo.Insert(0, this.m.transition(fP, pMo[0]));
                     valid.removeLastPoint();
-                    fP = pMo[pMo.Count - 1];
                 }
+                if (pMo.Count > 0) { fP = pMo[pMo.Count - 1]; }
                 valid.Add(pMo);
             }
 
