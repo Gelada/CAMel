@@ -205,7 +205,7 @@ namespace CAMel.Types
                 if (tP.Count <= 0) { continue; }
 
                 // Check for jump between paths
-                m.jumpCheck(ref co, oldPath, tP);
+                if( oldPath.Count > 0) { m.jumpCheck(ref co, oldPath, tP); }
 
                 // Add Path to Code
                 m.writeCode(ref co, tP);
