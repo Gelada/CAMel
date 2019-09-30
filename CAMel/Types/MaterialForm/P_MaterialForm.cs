@@ -44,7 +44,7 @@ namespace CAMel.Types.MaterialForm
         public MFintersection through { get; private set; } // intersection with highest lineParameter
         [PublicAPI] public MFintersection first { get; private set; } // intersection with lowest lineParameter
 
-        public Point3d mid => (this.first.point + this.through.point) / 2; // midpoint through material
+        public Point3d mid => (1.5*this.first.point + this.through.point) / 2.5; // midpoint through material
 
         private Vector3d _midOut;
 
