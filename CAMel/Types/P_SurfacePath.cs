@@ -108,6 +108,10 @@ namespace CAMel.Types
         {
             // Just convert to Mesh
             MeshingParameters mP = MeshingParameters.Smooth;
+            //mP.MaximumEdgeLength = mT.toolWidth / 5.0;
+            mP.ComputeCurvature = true;
+            mP.MaximumEdgeLength = 0.01;
+            mP.MinimumEdgeLength = 0.00001;
             this._m = Mesh.CreateFromBrep(b, mP)?[0];
             this._m.FaceNormals.ComputeFaceNormals();
 
@@ -133,7 +137,7 @@ namespace CAMel.Types
             foreach (Curve p in this._paths)
             {
                 tPs.Add(new ToolPath(string.Empty, mT, mF, tPa));
-                tPs[tPs.Count - 1]?.convertCurve(p, new Vector3d(0, 0, 1), 1);
+                tPs[tPs.Count - 1]?.convertCurve(p, new Vector3d(0, 0, 1), .5);
             }
 
             // move points onto surface storing projection direction
@@ -157,24 +161,32 @@ namespace CAMel.Types
                 ToolPath tempTP = new ToolPath(string.Empty, mT, mF, tPa);
                 List<Vector3d> tempN = new List<Vector3d>();
 
+                bool missed = false;
+
                 foreach (ToolPoint tPt in tP)
                 {
                     FirstIntersectResponse fIr = intersectInfo[tPt];
                     if (fIr.hit)
                     {
+                        // Check to see if a new path is needed.
+                        if (missed && tempTP.lastP != null)
+                        {
+                            if (tempTP.lastP.pt.DistanceTo(fIr.tP.pt) > mT.toolWidth * 2.0)
+                            {
+                                if (tempTP.Count > 1)
+                                {
+                                    newTPs.Add(tempTP);
+                                    norms.Add(tempN);
+                                }
+                                tempTP = new ToolPath(string.Empty, mT, mF, tPa);
+                                tempN = new List<Vector3d>();
+                            }
+                        }
                         tempTP.Add(fIr.tP);
                         tempN.Add(fIr.norm);
+                        missed = false;
                     }
-                    else if (tempTP.Count > 0)
-                    {
-                        if (tempTP.Count > 1)
-                        {
-                            newTPs.Add(tempTP);
-                            norms.Add(tempN);
-                        }
-                        tempTP = new ToolPath(string.Empty, mT, mF, tPa);
-                        tempN = new List<Vector3d>();
-                    }
+                    else if (tempTP.Count > 0) { missed = true; }
                 }
                 if (tempTP.Count <= 1) { continue; }
                 newTPs.Add(tempTP);
@@ -230,9 +242,15 @@ namespace CAMel.Types
                             newTPs[j][i].dir = norms[j][i];
                             break;
                     }
-                    // Adjust the tool position based on the surface normal and the tool orientation
-                    // so that the cutting surface not the tooltip is at the correct point
+                }
+            }
 
+            // Adjust the tool position based on the surface normal and the tool orientation
+            // so that the cutting surface not the tooltip is at the correct point
+            for (int j = 0; j < newTPs.Count; j++)
+            {
+                for (int i = 0; i < newTPs[j]?.Count; i++)
+                {
                     if (norms[j]?[i] == null) { break; }
                     newTPs[j][i].pt = newTPs[j][i].pt + mT.cutOffset(newTPs[j][i].dir, norms[j][i]);
 
@@ -241,7 +259,6 @@ namespace CAMel.Types
                     newTPs[j][i].pt = newTPs[j][i].pt + offset * norms[j][i];
                 }
             }
-
             // make the machine operation
             MachineOperation mO = new MachineOperation(ToString(), newTPs);
             return mO;
