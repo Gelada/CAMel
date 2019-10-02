@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using CAMel.Types.Machine;
 using CAMel.Types.MaterialForm;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -108,9 +109,8 @@ namespace CAMel.Types
         {
             // Just convert to Mesh
             MeshingParameters mP = MeshingParameters.Smooth;
-            //mP.MaximumEdgeLength = mT.toolWidth / 5.0;
+            mP.MaximumEdgeLength = mT.toolWidth / 2.0;
             mP.ComputeCurvature = true;
-            mP.MaximumEdgeLength = 0.01;
             mP.MinimumEdgeLength = 0.00001;
             this._m = Mesh.CreateFromBrep(b, mP)?[0];
             this._m.FaceNormals.ComputeFaceNormals();
@@ -193,6 +193,8 @@ namespace CAMel.Types
                 norms.Add(tempN);
             }
 
+            //norms = smoothNorms(newTPs, norms);
+
             for (int j = 0; j < newTPs.Count; j++)
             {
                 for (int i = 0; i < newTPs[j]?.Count; i++)
@@ -263,6 +265,7 @@ namespace CAMel.Types
             MachineOperation mO = new MachineOperation(ToString(), newTPs);
             return mO;
         }
+        private List<List<Vector3d>> smoothNorms(List<ToolPath> newTPs, List<List<Vector3d>> norms) { return null; }
 
         private struct FirstIntersectResponse
         {
@@ -271,6 +274,25 @@ namespace CAMel.Types
             public bool hit { get; set; }
 
             public override string ToString() => this.hit.ToString();
+        }
+
+        // Transcribed from Christer Ericson's Real-Time Collision Detection
+        // Compute barycentric coordinates (u, v, w) for
+        // point p with respect to triangle (a, b, c)
+        Vector3d Barycentric(Point3d p, Point3d a, Point3d b, Point3d c)
+        {
+            Vector3d v0 = b - a, v1 = c - a, v2 = p - a;
+            double d00 = v0 * v0;
+            double d01 = v0 * v1;
+            double d11 = v1 * v1;
+            double d20 = v2 * v0;
+            double d21 = v2 * v1;
+            double denom = d00 * d11 - d01 * d01;
+            if(Math.Abs(denom) < CAMel_Goo.Tolerance) { return new Vector3d(1, 0, 0); }
+            double u = (d11 * d20 - d01 * d21) / denom;
+            double v = (d00 * d21 - d01 * d20) / denom;
+
+            return new Vector3d(u, v, 1.0 - u - v);
         }
 
         private FirstIntersectResponse firstIntersect([NotNull] ToolPoint tP)
@@ -289,7 +311,12 @@ namespace CAMel.Types
             fIr.tP = new ToolPoint(rayL.PointAt(inter), -proj);
             List<int> lFaces = new List<int>();
             lFaces.AddRange(faces);
-            fIr.norm = this._m.FaceNormals[lFaces[0]];
+            MeshFace mF = this._m.Faces[lFaces[0]];
+
+            Vector3d bary = Barycentric(fIr.tP.pt,
+                this._m.Vertices[mF.A], this._m.Vertices[mF.B], this._m.Vertices[mF.C]);
+
+            fIr.norm = this._m.NormalAt(lFaces[0],bary.Z,bary.X,bary.Y,0.0);
 
             if (fIr.norm * rayL.Direction > 0) { fIr.norm = -fIr.norm; }
 
