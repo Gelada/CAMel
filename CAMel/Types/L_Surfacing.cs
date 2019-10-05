@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Emgu.CV.XFeatures2D;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 
@@ -170,6 +171,45 @@ namespace CAMel.Types
                 dir.PointAt(bb.Center.X, bb.Center.Y, bb.Max.Z));
 
             return new SurfacePath(paths, dir.ZAxis, cc, sTD);
+        }
+        // TODO make work for planes and with a boundary curve to spiral to
+        [NotNull]
+        public static SurfacePath spiral([CanBeNull] Curve C, Plane dir, double r, double stepOver, SurfToolDir sTd,
+            BoundingBox bb, [CanBeNull] MaterialTool mT)
+        {
+            double raisePer = stepOver * mT.toolWidth;
+            // find radius of sphere containing bounding box centered on origin.
+
+            double radius = CAMel_Goo.boundSphere(bb, Point3d.Origin);
+
+            List<Point3d> spiralPath = new List<Point3d>();
+            double h = radius;
+            double th = 0;
+            double c = r * Math.PI / raisePer;
+            double st = (10.0 / c) * (Math.PI / 180.0);
+
+            // Apply spherical spiral
+            while (h > bb.Min.Z)
+            {
+                h = radius * Math.Cos(th);
+                double temp = radius * Math.Sin(th);
+                spiralPath.Add(dir.PointAt(temp * Math.Cos(c * th), temp * Math.Sin(c * th), h));
+                th = th + st;
+            }
+
+            // Make a final loop at the bottom
+            for (double thl = 0; thl < 2 * Math.PI; thl = thl + st)
+            {
+                double temp = radius * Math.Sin(th);
+                spiralPath.Add(dir.PointAt(temp * Math.Cos(c * th + thl), temp * Math.Sin(c * th + thl), h));
+            }
+            
+            List<Curve> paths = new List<Curve>
+            {
+                Curve.CreateInterpolatedCurve(spiralPath, 3)
+            };
+
+            return new SurfacePath(paths, dir.Origin, sTd);
         }
     }
 }

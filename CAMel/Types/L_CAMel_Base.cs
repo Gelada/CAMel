@@ -92,6 +92,9 @@ namespace CAMel.Types
         // convert from cylindrical coordinate
         public static Point3d fromCyl(Point3d pt) => new Point3d(pt.X * Math.Cos(pt.Y), pt.X * Math.Sin(pt.Y), pt.Z);
 
+        // find radius of smallest sphere with given origin containing a bounding box 
+        public static double boundSphere(BoundingBox bb, Point3d c) => c.DistanceTo(bb.FurthestPoint(c));
+
         [CanBeNull]
         public static object cleanGooList([CanBeNull] object gooey)
         {
