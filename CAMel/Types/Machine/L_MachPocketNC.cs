@@ -65,10 +65,10 @@ namespace CAMel.Types.Machine
         public string comment(string l) => GCode.comment(this, l);
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
-        private const double refineAngle = 2.0 * Math.PI / 180.0;
-        public ToolPath refine(ToolPath tP)
+        private const double _RefineAngle = 2.0 * Math.PI / 180.0;
+        public ToolPath refine([NotNull] ToolPath tP)
         {
-            ToolPath refined = Kinematics.angleRefine(this, tP, refineAngle);
+            ToolPath refined = Kinematics.angleRefine(this, tP, _RefineAngle);
             return tP.matForm.refine(refined, this);
         }
         public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir)
