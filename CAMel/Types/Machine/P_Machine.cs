@@ -44,7 +44,7 @@ namespace CAMel.Types.Machine
         [NotNull] MachineInstruction readCode([NotNull] string code);
 
         // Functions needed to process additions
-
+        [NotNull] ToolPath refine(ToolPath toolPath);
         [NotNull, ItemNotNull] List<ToolPath> offSet([NotNull] ToolPath tP);
         [NotNull] List<ToolPath> insertRetract([NotNull] ToolPath tP);
         [NotNull] List<List<ToolPath>> stepDown([NotNull] ToolPath tP);

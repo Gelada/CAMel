@@ -144,6 +144,29 @@ namespace CAMel.Types.Machine
             }
             return Math.Max(diff.X, diff.Y);
         }
+
+        public static ToolPath angleRefine(IMachine m, ToolPath tP, double maxAngle)
+        {
+            if (tP.Count < 2) { return tP.deepClone(); }
+
+            ToolPath sRef = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+            sRef.Add(tP[0]);
+
+            for(int i=1; i<tP.Count; i++)
+            {
+                double angCh = m.angDiff(tP[i - 1], tP[i], tP.matTool, false);
+                if ( angCh > maxAngle)
+                {
+                    int newSt = (int)Math.Ceiling(angCh / maxAngle);
+                    for (int j = 1; j < newSt; j++)
+                    {
+                        sRef.Add(m.interpolate(tP[i-1],tP[i], tP.matTool, (double)j/(double)newSt,false));
+                    }
+                }
+                sRef.Add(tP[i]);
+            }
+            return sRef;
+        }
     }
 
     public static class Utility
@@ -277,8 +300,9 @@ namespace CAMel.Types.Machine
             int maxSteps = 0; // Maximum distance of all points.
 
             // ask the material form to refine the path
+            // (the path is now refined at the start of processing
 
-            ToolPath refPath = tP.matForm.refine(tP, m);
+            ToolPath refPath = tP;
 
             double finishDepth;
             if (tP.matTool.finishDepth <= 0) { finishDepth = onionSort.First(); }

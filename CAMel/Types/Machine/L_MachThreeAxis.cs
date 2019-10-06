@@ -109,7 +109,7 @@ namespace CAMel.Types.Machine
 
         public string comment(string l) => GCode.comment(this, l);
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
-
+        public ToolPath refine(ToolPath tP) => tP.matForm.refine(tP, this);
         public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir) ? Utility.planeOffset(tP, dir) : Utility.localOffset(tP);
         public List<ToolPath> insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);

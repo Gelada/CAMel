@@ -46,6 +46,7 @@ namespace CAMel.Types.Machine
         public string comment(string l) => string.Empty;
         public string lineNumber(string l, int line) => l;
 
+        public ToolPath refine(ToolPath tP) => tP.matForm.refine(tP, this);
         public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> {tP};
         public List<ToolPath> insertRetract(ToolPath tP) => Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();

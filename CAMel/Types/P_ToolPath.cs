@@ -169,8 +169,10 @@ namespace CAMel.Types
             if (this.matTool == null) { Exceptions.matToolException(); }
             if (this.matForm == null) { Exceptions.matFormException(); }
 
-            // offset Curve
-            List<ToolPath> useTP = m.offSet(this);
+            ToolPath refined = m.refine(this);
+
+            // offset Path
+            List<ToolPath> useTP = m.offSet(refined);
 
             // adjust path for three axis (or index three axis)
             for (int i = 0; i < useTP.Count; i++)
