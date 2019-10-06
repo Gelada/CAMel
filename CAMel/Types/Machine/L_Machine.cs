@@ -1085,11 +1085,11 @@ namespace CAMel.Types.Machine
         {
             // check if there is a problem moving between paths
             double length = jumpCheck(m, fP, tP);
-            if (length > m.pathJump)
+            if (length > fP.matTool?.pathJump)
             {
                 co.addError("Long Transition between paths in material. \n"
-                            + "To remove this error, don't use ignore, instead change PathJump for the machine from: "
-                            + m.pathJump + " to at least: " + length);
+                            + "To remove this error, don't use ignore, instead change PathJump for the material/tool from: "
+                            + fP.matTool.pathJump + " to at least: " + (length + .01).ToString("0.00"));
             }
         }
 

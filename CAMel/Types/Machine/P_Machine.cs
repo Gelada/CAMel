@@ -19,7 +19,6 @@ namespace CAMel.Types.Machine
     public interface IMachine : ICAMelBase
     {
         [NotNull] string name { get; }
-        [PublicAPI] double pathJump { get; } // Maximum jump between toolpaths in material
         bool toolLengthCompensation { get; } // Tool Length Compensation
         // ReSharper disable once InconsistentNaming
         [NotNull] ToolPathAdditions defaultTPA { get; }
@@ -44,7 +43,7 @@ namespace CAMel.Types.Machine
         [NotNull] MachineInstruction readCode([NotNull] string code);
 
         // Functions needed to process additions
-        [NotNull] ToolPath refine(ToolPath toolPath);
+        [NotNull] ToolPath refine([NotNull] ToolPath toolPath);
         [NotNull, ItemNotNull] List<ToolPath> offSet([NotNull] ToolPath tP);
         [NotNull] List<ToolPath> insertRetract([NotNull] ToolPath tP);
         [NotNull] List<List<ToolPath>> stepDown([NotNull] ToolPath tP);

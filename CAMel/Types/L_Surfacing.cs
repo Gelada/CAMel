@@ -35,8 +35,6 @@ namespace CAMel.Types
             // Join paths for zigzag
             if (!zZ) { return new SurfacePath(paths, -dir.ZAxis, sTD); }
 
-            //Curve[] joined = Curve.JoinCurves (paths, stepOver * mT.toolWidth + 0.0001, true);
-
             PolyCurve joined = new PolyCurve();
             joined.Append(paths[0]);
             for (int i = 1; i < paths.Count; i++)

@@ -10,13 +10,8 @@ namespace CAMel.Types.Machine
 {
     public class Omax5 : IMachine
     {
-        public double pathJump { get; }
-        //public string sectionBreak { get; }
         public string name { get; }
-        //public string commentStart { get; }
-        //public string commentEnd { get; }
         public List<MaterialTool> mTs { get; }
-
         public string extension => "omx";
 
         private double tiltMax { get; }
@@ -24,14 +19,10 @@ namespace CAMel.Types.Machine
         //TODO
         public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
-        public Omax5([NotNull] string name, double pathJump, [NotNull] List<MaterialTool> mTs, double tiltMax)
+        public Omax5([NotNull] string name, [NotNull] List<MaterialTool> mTs, double tiltMax)
         {
             this.name = name;
             this.toolLengthCompensation = false;
-            //this.commentStart = GCode.DefaultCommentStart;
-            //this.commentEnd = GCode.DefaultCommentEnd;
-            //this.sectionBreak = GCode.DefaultSectionBreak;
-            this.pathJump = pathJump;
             this.tiltMax = tiltMax;
             this.mTs = mTs;
         }

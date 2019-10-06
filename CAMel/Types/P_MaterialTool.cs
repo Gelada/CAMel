@@ -35,6 +35,7 @@ namespace CAMel.Types
         public double sideLoad { get; [UsedImplicitly] set; } // Suggested side load for the tool.
         public double tolerance { get; [UsedImplicitly] set; } // The maximum permitted distance of approximation from curve
         public double minStep { get; [UsedImplicitly] set; } // shortest path permitted
+        public double pathJump { get; [UsedImplicitly] set; } // maximum jump between toolpaths in material
     }
 
     // Settings for a particular material and tool
@@ -53,6 +54,7 @@ namespace CAMel.Types
         public double toolLength { get; } // length from the tip of the tool to the spindle
         private EndShape shape { get; } // End shape of the tool
         public double sideLoad { get; } // Suggested side load for the tool.
+        public double pathJump { get; } // maximum jump between toolpaths in material
 
         // settings for curve approximation
 
@@ -61,12 +63,12 @@ namespace CAMel.Types
 
         // Adding anything here needs significant support:
         //  Add to MaterialToolBuilder
+        //  Add to Constructors
         //  Add to csv mapping
         //  Add to create Material Tool
-        //  Add to Constructors
 
         // Everything, with defaults
-        public MaterialTool([CanBeNull] string mat, [CanBeNull] string tool, int toolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = -1, double iWidth = -1, double tL = 0, EndShape eS = EndShape.Other, double tol = 0, double mS = 0, double sideLoad = 0.7)
+        public MaterialTool([CanBeNull] string mat, [CanBeNull] string tool, int toolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = -1, double iWidth = -1, double tL = 0, EndShape eS = EndShape.Other, double tol = 0, double mS = 0, double sideLoad = 0.7, double pathJump = -1.0)
         {
             this.matName = mat ?? string.Empty;
             this.toolName = tool ?? string.Empty;
@@ -83,6 +85,7 @@ namespace CAMel.Types
             this.minStep = mS;
             this.shape = eS;
             this.sideLoad = sideLoad;
+            this.pathJump = pathJump;
         }
 
         public MaterialTool([NotNull] MaterialToolBuilder mT)
@@ -121,13 +124,14 @@ namespace CAMel.Types
             }
             this.shape = eS;
             this.sideLoad = mT.sideLoad;
+            this.pathJump = mT.pathJump;
         }
 
         [NotNull]
         public static MaterialTool changeFinishDepth([NotNull] MaterialTool mT, double fd) => new MaterialTool(
             mT.matName, mT.toolName, mT.toolNumber, mT.speed,
             mT.feedCut, mT.feedPlunge, mT.cutDepth, fd,
-            mT.toolWidth, mT.insertWidth, mT.toolLength, mT.shape, mT.tolerance, mT.minStep, mT.sideLoad);
+            mT.toolWidth, mT.insertWidth, mT.toolLength, mT.shape, mT.tolerance, mT.minStep, mT.sideLoad, mT.pathJump);
 
         [NotNull] public static readonly MaterialTool Empty = new MaterialTool(null, null, -1, -1, -1, -1, -1, -1);
 

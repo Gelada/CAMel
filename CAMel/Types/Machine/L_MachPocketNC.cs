@@ -8,7 +8,6 @@ namespace CAMel.Types.Machine
 {
     public class PocketNC : IGCodeMachine
     {
-        public double pathJump { get; }
         public string sectionBreak { get; }
         public string speedChangeCommand { get; }
         public string toolChangeCommand { get; }
@@ -34,7 +33,7 @@ namespace CAMel.Types.Machine
         public string extension => "ngc";
 
         public PocketNC([NotNull] string name, [NotNull] string header, [NotNull] string footer, Vector3d pivot,
-            double aMin, double aMax, double bMax, bool tLc, double pathJump, [NotNull] List<MaterialTool> mTs)
+            double aMin, double aMax, double bMax, bool tLc, [NotNull] List<MaterialTool> mTs)
         {
             this.name = name;
             this.toolLengthCompensation = tLc;
@@ -47,7 +46,6 @@ namespace CAMel.Types.Machine
             this.sectionBreak = GCode.DefaultSectionBreak;
             this.speedChangeCommand = GCode.DefaultSpeedChangeCommand;
             this.toolChangeCommand = GCode.DefaultToolChangeCommand;
-            this.pathJump = pathJump;
             this.mTs = mTs;
             this.pivot = pivot;
             this.aMin = aMin;

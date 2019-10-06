@@ -9,7 +9,6 @@ namespace CAMel.Types.Machine
     {
         [NotNull] public string name { get; set; }
         [NotNull] public string extension { get; set; }
-        public double pathJump { get; set; }
         [NotNull] public string sectionBreak { get; set; }
         [NotNull] public string speedChangeCommand { get; set; }
         [NotNull] public string toolChangeCommand { get; set; }
@@ -29,7 +28,6 @@ namespace CAMel.Types.Machine
             this.extension = GCode.DefaultExtension;
             this.header = string.Empty;
             this.footer = string.Empty;
-            this.pathJump = 100;
             this.toolActivate = GCode.DefaultActivateCommand;
             this.toolDeActivate = GCode.DefaultDeActivateCommand;
             this.commentStart = GCode.DefaultCommentStart;
@@ -48,7 +46,6 @@ namespace CAMel.Types.Machine
             this.extension = ta.extension;
             this.header = ta.header;
             this.footer = ta.footer;
-            this.pathJump = ta.pathJump;
             this.speedChangeCommand = ta.speedChangeCommand;
             this.toolActivate = ta.toolActivate;
             this.toolDeActivate = ta.toolDeActivate;
@@ -67,7 +64,6 @@ namespace CAMel.Types.Machine
     {
         public string name { get; }
         public string extension { get; }
-        public double pathJump { get; }
         public bool toolLengthCompensation { get; }
         public string sectionBreak { get; }
         public string speedChangeCommand { get; }
@@ -91,7 +87,6 @@ namespace CAMel.Types.Machine
             this.extension = ta.extension;
             this.header = ta.header;
             this.footer = ta.footer;
-            this.pathJump = ta.pathJump;
             this.toolLengthCompensation = false;
             this.speedChangeCommand = ta.speedChangeCommand;
             this.toolActivate = ta.toolActivate;

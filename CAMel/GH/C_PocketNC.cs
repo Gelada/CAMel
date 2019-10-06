@@ -146,7 +146,7 @@ namespace CAMel.GH
                 }
             }
 
-            PocketNC m = new PocketNC(version, head, uFoot, pivot, aMin, aMax, bMax, tLc, pj, mTs);
+            PocketNC m = new PocketNC(version, head, uFoot, pivot, aMin, aMax, bMax, tLc, mTs);
 
             da.SetData(0, new GH_Machine(m));
         }

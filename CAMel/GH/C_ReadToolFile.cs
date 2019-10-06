@@ -32,6 +32,7 @@ namespace CAMel.GH
             Map(m => m.minStep)?.Name("Min Step");
             Map(m => m.shape)?.Name("Shape");
             Map(m => m.sideLoad)?.Name("Side Load");
+            Map(m => m.pathJump)?.Name("PathJump");
         }
     }
 
@@ -40,7 +41,7 @@ namespace CAMel.GH
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the Create3AxisMachine class.
+        /// Reads a file of Material Tools
         /// </summary>
         public C_ReadToolFile()
             : base("Read Tool File", "ReadMT",

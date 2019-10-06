@@ -39,6 +39,8 @@ namespace CAMel.GH
             pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis).", GH_ParamAccess.item, 0);
             pManager.AddTextParameter("Tool Shape", "TS", "End shape of tool (Ball, Square, V, Other).", GH_ParamAccess.item, "Other");
             pManager.AddNumberParameter("Side Load", "SL", "Fraction of the tool to engage with the material when surfacing.", GH_ParamAccess.item, 1);
+            pManager.AddNumberParameter("Path Jump", "PJ", "Maximum distance allowed between toolPaths in material.",
+                GH_ParamAccess.item, -1);
         }
 
         /// <inheritdoc />
@@ -63,7 +65,7 @@ namespace CAMel.GH
             string toolName = string.Empty;
 
             int T = 1;
-            double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW = 0, tL = 0, sL = 1;
+            double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW = 0, tL = 0, sL = 1, pJ = -1;
 
             string toolShape = string.Empty;
             EndShape eS;
@@ -83,6 +85,7 @@ namespace CAMel.GH
             if (!da.GetData("Tool Length", ref tL)) { return; }
             if (!da.GetData("Tool Shape", ref toolShape)) { return; }
             if (!da.GetData("Side Load", ref sL)) { return; }
+            if (!da.GetData("Path Jump", ref pJ)) { return; }
 
             switch (toolShape)
             {
@@ -104,7 +107,7 @@ namespace CAMel.GH
                     break;
             }
 
-            MaterialTool mT = new MaterialTool(matName, toolName, T, s, cf, pf, cd, fd, tW, iW, tL, eS, to, mS, sL);
+            MaterialTool mT = new MaterialTool(matName, toolName, T, s, cf, pf, cd, fd, tW, iW, tL, eS, to, mS, sL, pJ);
 
             da.SetData(0, new GH_MaterialTool(mT));
         }

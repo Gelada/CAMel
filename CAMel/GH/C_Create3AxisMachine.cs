@@ -75,35 +75,33 @@ namespace CAMel.GH
             string ext = string.Empty;
             string head = string.Empty;
             string foot = string.Empty;
-            double pj = 0;
 
-            if (!da.GetData(0, ref uName)) { return; }
-            if (!da.GetData(8, ref ext)) { return; }
-            if (!da.GetData(2, ref head)) { return; }
-            if (!da.GetData(3, ref foot)) { return; }
-            if (!da.GetData(7, ref pj)) { return; }
+            if (!da.GetData("Name", ref uName)) { return; }
+            if (!da.GetData("Extension", ref ext)) { return; }
+            if (!da.GetData("Header", ref head)) { return; }
+            if (!da.GetData("Footer", ref foot)) { return; }
 
             List<string> cc = new List<string>();
-            da.GetDataList(4, cc);
+            da.GetDataList("Comment", cc);
 
             string uCommentStart = cc.Count > 0 ? cc[0] ?? string.Empty : GCode.DefaultCommentStart;
             string uCommentEnd = cc.Count > 1 ? cc[1] ?? string.Empty : GCode.DefaultCommentEnd;
             string uSectionBreak = cc.Count > 2 ? cc[2] ?? string.Empty : GCode.DefaultSectionBreak;
 
             List<string> sir = new List<string>();
-            da.GetDataList(5, sir);
+            da.GetDataList("Speed/ToolChange", sir);
 
             string speed = sir.Count > 0 ? sir[0] ?? string.Empty : GCode.DefaultSpeedChangeCommand;
             string tool = sir.Count > 1 ? sir[1] ?? string.Empty : GCode.DefaultToolChangeCommand;
 
             List<string> se = new List<string>();
-            da.GetDataList(6, se);
+            da.GetDataList("File Start and End", se);
 
             string uFileStart = sir.Count > 0 ? se[0] ?? string.Empty : GCode.DefaultFileStart;
             string uFileEnd = sir.Count > 1 ? se[1] ?? string.Empty : GCode.DefaultFileEnd;
 
             List<MaterialTool> uMTs = new List<MaterialTool>();
-            da.GetDataList(1, uMTs);
+            da.GetDataList("Material Tools", uMTs);
 
             ThreeAxisFactory threeAxis = new ThreeAxisFactory
             {
@@ -112,7 +110,6 @@ namespace CAMel.GH
                 mTs = uMTs,
                 header = head,
                 footer = foot,
-                pathJump = pj,
                 speedChangeCommand = speed,
                 toolChangeCommand = tool,
                 commentStart = uCommentStart,

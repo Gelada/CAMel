@@ -171,7 +171,7 @@ namespace CAMel.Types
                         // Check to see if a new path is needed.
                         if (missed && tempTP.lastP != null)
                         {
-                            if (tempTP.lastP.pt.DistanceTo(fIr.tP.pt) > mT.toolWidth * 2.0)
+                            if (tempTP.lastP.pt.DistanceTo(fIr.tP.pt) > mT.pathJump)
                             {
                                 if (tempTP.Count > 1)
                                 {
@@ -192,8 +192,6 @@ namespace CAMel.Types
                 newTPs.Add(tempTP);
                 norms.Add(tempN);
             }
-
-            //norms = smoothNorms(newTPs, norms);
 
             for (int j = 0; j < newTPs.Count; j++)
             {
@@ -265,7 +263,6 @@ namespace CAMel.Types
             MachineOperation mO = new MachineOperation(ToString(), newTPs);
             return mO;
         }
-        private List<List<Vector3d>> smoothNorms(List<ToolPath> newTPs, List<List<Vector3d>> norms) { return null; }
 
         private struct FirstIntersectResponse
         {
