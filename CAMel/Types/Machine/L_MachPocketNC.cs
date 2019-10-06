@@ -301,8 +301,8 @@ namespace CAMel.Types.Machine
                 co.growRange("X", machPt.X);
                 co.growRange("Y", machPt.Y);
                 co.growRange("Z", machPt.Z);
-                co.growRange("A", ab.X);
-                co.growRange("B", ab.Y);
+                co.growRange("A", ab.X * 180.0 / Math.PI);
+                co.growRange("B", ab.Y * 180.0 / Math.PI);
             }
 
             // Pass machine state information
