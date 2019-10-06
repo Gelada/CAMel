@@ -112,7 +112,7 @@ namespace CAMel.Types.MaterialForm
                     linePshift = Math.Sqrt(exRadius * exRadius - cenDist * cenDist);
                     // add the two intersection points.
                     intPt = (Vector3d) pt + (linePshift - linePcen) * dir / flatDist;
-                    if (intPt.Z >= 0 && intPt.Z <= this.height)
+                    if (intPt.Z >= -uTol && intPt.Z <= this.height + uTol)
                     {
                         inters.add(
                             fromPlane((Point3d) intPt),
@@ -120,7 +120,7 @@ namespace CAMel.Types.MaterialForm
                             (linePshift - linePcen) / flatDist);
                     }
                     intPt = (Vector3d) pt + (-linePshift - linePcen) * dir / flatDist;
-                    if (intPt.Z >= 0 && intPt.Z <= this.height)
+                    if (intPt.Z >= -uTol && intPt.Z <= this.height + uTol)
                     {
                         inters.add(
                             fromPlane((Point3d) intPt),
@@ -136,6 +136,7 @@ namespace CAMel.Types.MaterialForm
         {
             this.plane.RemapToPlaneSpace(ptIn, out Point3d pt);
             double uTol = tolerance + this.materialTolerance;
+            // start assuming closest to bottom
             double closeD = uTol + pt.Z;
             Vector3d outD = -this.plane.ZAxis;
             if (closeD > this.height + uTol - pt.Z) // closer to top?
