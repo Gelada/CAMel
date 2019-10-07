@@ -44,7 +44,7 @@ namespace CAMel.Types.MaterialForm
         public MFintersection through { get; private set; } // intersection with highest lineParameter
         [PublicAPI] public MFintersection first { get; private set; } // intersection with lowest lineParameter
 
-        public Point3d mid => (1.5*this.first.point + this.through.point) / 2.5; // midpoint through material
+        public Point3d mid => (1.5 * this.first.point + this.through.point) / 2.5; // midpoint through material
 
         private Vector3d _midOut;
 
@@ -146,6 +146,7 @@ namespace CAMel.Types.MaterialForm
         [NotNull] ToolPath refine([NotNull] ToolPath tP, [NotNull] IMachine m);
 
         [NotNull] Mesh getMesh();
+        [CanBeNull] Brep getBrep();
         BoundingBox getBoundingBox();
     }
 
@@ -264,7 +265,15 @@ namespace CAMel.Types.MaterialForm
                 target = (T) ptr;
                 return true;
             }
+            if (typeof(T).IsAssignableFrom(typeof(GH_Brep)))
+            {
+                Brep b = this.Value.getBrep();
+                if (b?.IsValid != true) { return false; }
 
+                object gHm = new GH_Brep(b);
+                target = (T) gHm;
+                return true;
+            }
             // Cast to a Mesh if that is asked for.
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Mesh)))

@@ -99,7 +99,7 @@ namespace CAMel.Types
             int totalTP = 0;
             foreach (ToolPath tP in this)
             {
-                totalTP = totalTP + tP.Count;
+                totalTP += tP.Count;
             }
             return "Machine Operation: " + this.name + ", " + this.Count + " toolpaths, " + totalTP + " total tool points.";
         }
@@ -205,7 +205,7 @@ namespace CAMel.Types
                 if (tP.Count <= 0) { continue; }
 
                 // Check for jump between paths
-                if( oldPath.Count > 0) { m.jumpCheck(ref co, oldPath, tP); }
+                if (oldPath.Count > 0) { m.jumpCheck(ref co, oldPath, tP); }
 
                 // Add Path to Code
                 m.writeCode(ref co, tP);

@@ -64,8 +64,9 @@ namespace CAMel.Types.Machine
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
         private const double _RefineAngle = 2.0 * Math.PI / 180.0;
-        public ToolPath refine([NotNull] ToolPath tP)
+        public ToolPath refine(ToolPath tP)
         {
+            if (tP.matForm == null) { Exceptions.matFormException(); }
             ToolPath refined = Kinematics.angleRefine(this, tP, _RefineAngle);
             return tP.matForm.refine(refined, this);
         }
@@ -191,7 +192,7 @@ namespace CAMel.Types.Machine
                 Vector3d newAB = Kinematics.ikFiveAxisABTable(tPt, this.pivot, toolLength, out machPt);
 
                 // adjust B to correct period
-                newAB.Y = newAB.Y + 2.0 * Math.PI * Math.Round((ab.Y - newAB.Y) / (2.0 * Math.PI));
+                newAB.Y += 2.0 * Math.PI * Math.Round((ab.Y - newAB.Y) / (2.0 * Math.PI));
 
                 // set A to 90 if it is close (to avoid a lot of messing with B for no real reason)
 
@@ -252,12 +253,12 @@ namespace CAMel.Types.Machine
                     if (newAB.Y - ab.Y > Math.PI) // check for big rotation in B
                     {
                         newAB.X = Math.PI - newAB.X;
-                        newAB.Y = newAB.Y - Math.PI;
+                        newAB.Y -= Math.PI;
                     }
                     else if (newAB.Y - ab.Y < -Math.PI) // check for big rotation in B
                     {
                         newAB.X = Math.PI - newAB.X;
-                        newAB.Y = newAB.Y + Math.PI;
+                        newAB.Y += Math.PI;
                     }
                 }
 
@@ -355,7 +356,7 @@ namespace CAMel.Types.Machine
             if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.emptyPathException(); }
 
-            if (this.jumpCheck(fP, tP) > 0) { Exceptions.transitionException(); }
+            if (jumpCheck(fP, tP) > 0) { Exceptions.transitionException(); }
 
             // Safely move from one safe point to another.
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CAMel.Types;
 using Grasshopper.Kernel;
 using JetBrains.Annotations;
@@ -54,9 +55,7 @@ namespace CAMel.GH
                 return;
             }
 
-            List<GH_ToolPoint> tPtPs = new List<GH_ToolPoint>();
-            foreach (ToolPoint tPt in tP.getSinglePath())
-            { tPtPs.Add(new GH_ToolPoint(tPt)); }
+            List<GH_ToolPoint> tPtPs = tP.getSinglePath().Select(tPt => new GH_ToolPoint(tPt)).ToList();
 
             da.SetDataList(0, tPtPs);
         }

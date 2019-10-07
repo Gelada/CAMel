@@ -154,7 +154,7 @@ namespace CAMel.Types
         public override string ToString()
         {
             string outP = this.name;
-            if (outP != string.Empty) { outP = outP + " "; }
+            if (outP != string.Empty) { outP += " "; }
             outP = outP + "Pt: (" +
                    this.pt.X.ToString("0.000") + ", " + this.pt.Y.ToString("0.000") + ", " +
                    this.pt.Z.ToString("0.000") +

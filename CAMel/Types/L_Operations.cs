@@ -41,7 +41,7 @@ namespace CAMel.Types
         {
             MachineOperation mO = new MachineOperation
                 {name = "Index 3-Axis Cutting with " + cs.Count + " path"};
-            if (cs.Count > 1) { mO.name = mO.name + "s"; }
+            if (cs.Count > 1) { mO.name += "s"; }
 
             int i = 1;
 

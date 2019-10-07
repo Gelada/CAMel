@@ -48,9 +48,8 @@ namespace CAMel.GH
             string selected = string.Empty;
             bool newList = false;
             if (vL.ListItems == null) { return; }
-            foreach (GH_ValueListItem vLi in vL.ListItems)
+            foreach (GH_ValueListItem vLi in vL.ListItems.Where(vLi => vLi?.Name != null))
             {
-                if (vLi?.Name == null) { continue; }
                 if (vLi.Name != "One" && vLi.Name != "Two" && vLi.Name != "Three" && vLi.Name != "Four")
                 { items.Add(vLi.Name); }
                 else { newList = true; }
@@ -109,10 +108,8 @@ namespace CAMel.GH
 
             bool found = false;
             MaterialTool mT = null;
-            foreach (MaterialTool imT in readMTs)
+            foreach (MaterialTool imT in readMTs.Where(imT => imT != null))
             {
-                if (imT == null) { continue; }
-
                 materials.Add(imT.matName);
                 tools.Add(imT.toolName);
 

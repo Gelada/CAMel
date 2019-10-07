@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using CAMel.Types;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -96,8 +97,7 @@ namespace CAMel.GH
                 }
             }
 
-            List<MaterialTool> mTs = new List<MaterialTool>();
-            foreach (MaterialToolBuilder mTb in mTbs) { mTs.Add(new MaterialTool(mTb)); }
+            List<MaterialTool> mTs = mTbs.Select(mTb => new MaterialTool(mTb)).ToList();
 
             da.SetDataList(0, mTs);
         }

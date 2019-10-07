@@ -31,7 +31,7 @@ namespace CAMel.GH
             pManager.AddParameter(new GH_SurfacePathPar(), "Finish Path", "F", "Information to create finishing path", GH_ParamAccess.item);
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
-            pManager[5].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
         }
 
         /// <inheritdoc />

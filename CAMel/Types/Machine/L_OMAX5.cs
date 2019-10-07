@@ -109,7 +109,7 @@ namespace CAMel.Types.Machine
         {
             endPt = new ToolPoint();
             quality = 0;
-            if (!l.StartsWith("[0]")) { return null; }
+            if (!l.StartsWith("[0]", StringComparison.Ordinal)) { return null; }
             string[] items = l.Split(',');
             ToolPoint tPt = new ToolPoint();
             endPt = new ToolPoint();
@@ -222,7 +222,7 @@ namespace CAMel.Types.Machine
             // HACK: (slight) repeat the final point so it gets written
             // To write omx entities we need to know the end position, so write points one behind.
             mI.RemoveAt(0);
-            mI[mI.Count - 1][mI[mI.Count - 1].Count - 1].Add(mI.lastP.deepClone());
+            mI[mI.Count - 1][mI[mI.Count - 1].Count - 1].Add(mI.lastP?.deepClone());
 
             OMXCode.omxInstStart(this, ref co, mI);
         }

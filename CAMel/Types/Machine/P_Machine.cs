@@ -37,7 +37,7 @@ namespace CAMel.Types.Machine
         void writeCode([NotNull] ref CodeInfo co, [NotNull] ToolPath tP);
         //void writeTransition([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool first);
         void toolChange([NotNull] ref CodeInfo co, int toolNumber);
-        double jumpCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP);
+        [UsedImplicitly] double jumpCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP);
         void jumpCheck([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP);
 
         [NotNull] MachineInstruction readCode([NotNull] string code);

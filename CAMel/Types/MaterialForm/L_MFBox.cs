@@ -136,6 +136,10 @@ namespace CAMel.Types.MaterialForm
 
         public Mesh getMesh() => this._myMesh ?? (this._myMesh = setMesh());
 
+        private Brep _myBrep;
+        [NotNull] private Brep setBrep() => Brep.CreateFromBox(this.box) ?? new Brep();
+
+        [NotNull] public Brep getBrep() => this._myBrep ?? (this._myBrep = setBrep());
         public BoundingBox getBoundingBox() => this.box.BoundingBox;
     }
 }

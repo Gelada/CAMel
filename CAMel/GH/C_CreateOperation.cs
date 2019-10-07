@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CAMel.Types;
 using Grasshopper.Kernel;
 using JetBrains.Annotations;
@@ -67,8 +68,7 @@ namespace CAMel.GH
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations");
                 return;
             }
-            List<GH_MachineOperation> ghMOs = new List<GH_MachineOperation>();
-            foreach (MachineOperation mO in mOs) { ghMOs.Add(new GH_MachineOperation(mO)); }
+            List<GH_MachineOperation> ghMOs = mOs.Select(mO => new GH_MachineOperation(mO)).ToList();
 
             da.SetDataList(0, ghMOs);
         }

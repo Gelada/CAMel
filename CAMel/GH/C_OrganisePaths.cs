@@ -116,9 +116,7 @@ namespace CAMel.GH
             if (!da.GetDataList("Paths", paths) || paths.Count == 0 || uDoc?.Objects == null) { return; }
 
             // Insist on reference curves
-            foreach (GH_Curve p in paths)
-            {
-                if (p?.IsReferencedGeometry != false) { continue; }
+            if (paths.Any(p => p?.IsReferencedGeometry == false)) {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error,
                     "Only referenced curves can be organised with this component. If you wish to organise grasshopper curves, first bake.");
                 return;
@@ -139,10 +137,8 @@ namespace CAMel.GH
                 if (double.IsNaN(key)) { continue; }
                 this._allKeys.Add(key);
 
-                foreach (AugCurve c in this._curves)
+                foreach (AugCurve c in this._curves.Where(c => c != null && c.id == ro.Id))
                 {
-                    if (c == null || c.id != ro.Id)
-                    { continue; }
                     c.key = key;
                     c.side = ro.Attributes.getSide();
                 }
@@ -152,9 +148,8 @@ namespace CAMel.GH
             if (this._allKeys.Count == 0) { this._allKeys.Add(0); }
 
             // Add keys to new paths with open paths at the start and closed paths at the end
-            foreach (AugCurve c in this._curves)
+            foreach (AugCurve c in this._curves.Where(c => c != null))
             {
-                if (c == null) { continue; }
                 this._enabled = true;
                 if (!double.IsNaN(c.key)) { continue; }
                 if (c.c.IsClosed)
@@ -341,9 +336,8 @@ namespace CAMel.GH
                 }
                 if (getR == GetResult.Number || getR == GetResult.Nothing)
                 {
-                    foreach (int i in sel)
+                    foreach (AugCurve c in sel.Select(i => this._curves[i]))
                     {
-                        AugCurve c = this._curves[i];
                         switch (side)
                         {
                             case 1:

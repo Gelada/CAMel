@@ -95,7 +95,7 @@ namespace CAMel.GH
                 jCurves[i]?.TryGetPolyline(out pl);
                 for (int j = 0; j < pl.Count; j++)
                 {
-                    if (j > 0) { cp = cp + (pl[j] - pl[j - 1]).Length / cl; }
+                    if (j > 0) { cp += (pl[j] - pl[j - 1]).Length / cl; }
                     eP.AddVariable("x", cp);
                     double h = eP.Evaluate()?._Double ?? 0.0;
                     pl[j] = new Point3d(pl[j].X, pl[j].Y, h);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Emgu.CV.XFeatures2D;
 using JetBrains.Annotations;
 using Rhino.Geometry;
 
@@ -26,7 +25,7 @@ namespace CAMel.Types
 
             // create enough curves to guarantee covering surface
 
-            for (double width = 0; width <= bb.Max.Y - bb.Min.Y + bbc.Max.Y - bbc.Min.Y; width = width + stepOver * mT.toolWidth)
+            for (double width = 0; width <= bb.Max.Y - bb.Min.Y + bbc.Max.Y - bbc.Min.Y; width += stepOver * mT.toolWidth)
             {
                 tempC.Translate((Vector3d) dir.PointAt(0, stepOver * mT.toolWidth, 0));
                 paths.Add(tempC.DuplicateCurve());
@@ -95,15 +94,15 @@ namespace CAMel.Types
 
                     if (angle > 3.0 * Math.PI / 2.0 && tp.pt.Y < Math.PI / 2.0)
                     {
-                        turns = turns + 2.0 * Math.PI;
+                        turns += 2.0 * Math.PI;
                     }
                     else if (angle < Math.PI / 2.0 && tp.pt.Y > 3.0 * Math.PI / 2.0)
                     {
-                        turns = turns - 2.0 * Math.PI;
+                        turns -= 2.0 * Math.PI;
                     }
                     angle = tp.pt.Y;
                     temp = tp.pt;
-                    temp.Y = temp.Y + turns;
+                    temp.Y += turns;
                     tp.pt = temp;
                 }
 
@@ -134,21 +133,20 @@ namespace CAMel.Types
             double winding = (cTp.lastP.pt.Y - cTp.firstP.pt.Y) / (2.0 * Math.PI);
             double raisePer = stepOver * mT.toolWidth; // height dealt with by each loop
             double roth =
-                (bb.Max.Z - bb.Min.Z // height of surface
-                 + (zMax - zMin)); // height variation in path
+                bb.Max.Z - bb.Min.Z // height of surface
+                + zMax - zMin; // height variation in path
             double rot = roth / (winding * raisePer);
 
-            raisePer = raisePer / (2.0 * Math.PI); // convert to per radian
+            raisePer /= 2.0 * Math.PI; // convert to per radian
 
             List<Point3d> spiralPath = new List<Point3d>();
-            double h;
             for (i = -1; i <= Math.Abs(rot + 1); i++) // strange limits to make sure we go top to bottom
             {
                 foreach (ToolPoint tPt in cTp)
                 {
-                    h = (2.0 * Math.PI * winding * i + tPt.pt.Y) * raisePer; // winding height
+                    double h = (2.0 * Math.PI * winding * i + tPt.pt.Y) * raisePer;
                     if (h < 0) { h = 0; } // do a first loop on the top
-                    if (h > roth) { h = roth;} // do the final loop at the bottom 
+                    if (h > roth) { h = roth; } // do the final loop at the bottom
                     h = h + bb.Min.Z - zMax + tPt.pt.Z;
                     Point3d tempPt = CAMel_Goo.fromCyl(new Point3d(
                         outerRadius,
@@ -172,8 +170,8 @@ namespace CAMel.Types
         }
         // TODO make work for planes and with a boundary curve to spiral to
         [NotNull]
-        public static SurfacePath spiral([CanBeNull] Curve C, Plane dir, double r, double stepOver, SurfToolDir sTd,
-            BoundingBox bb, [CanBeNull] MaterialTool mT)
+        public static SurfacePath spiral([CanBeNull] Curve c, Plane dir, double r, double stepOver, SurfToolDir sTd,
+            BoundingBox bb, [NotNull] MaterialTool mT)
         {
             double raisePer = stepOver * mT.toolWidth;
             // find radius of sphere containing bounding box centered on origin.
@@ -183,25 +181,25 @@ namespace CAMel.Types
             List<Point3d> spiralPath = new List<Point3d>();
             double h = radius;
             double th = 0;
-            double c = r * Math.PI / raisePer;
-            double st = (10.0 / c) * (Math.PI / 180.0);
+            double spiralRatio = r * Math.PI / raisePer;
+            double st = 10.0 / spiralRatio * (Math.PI / 180.0);
 
             // Apply spherical spiral
             while (h > bb.Min.Z)
             {
                 h = radius * Math.Cos(th);
                 double temp = radius * Math.Sin(th);
-                spiralPath.Add(dir.PointAt(temp * Math.Cos(c * th), temp * Math.Sin(c * th), h));
-                th = th + st;
+                spiralPath.Add(dir.PointAt(temp * Math.Cos(spiralRatio * th), temp * Math.Sin(spiralRatio * th), h));
+                th += st;
             }
 
             // Make a final loop at the bottom
-            for (double thl = 0; thl < 2 * Math.PI; thl = thl + st)
+            for (double thl = 0; thl < 2 * Math.PI; thl += st)
             {
                 double temp = radius * Math.Sin(th);
-                spiralPath.Add(dir.PointAt(temp * Math.Cos(c * th + thl), temp * Math.Sin(c * th + thl), h));
+                spiralPath.Add(dir.PointAt(temp * Math.Cos(spiralRatio * th + thl), temp * Math.Sin(spiralRatio * th + thl), h));
             }
-            
+
             List<Curve> paths = new List<Curve>
             {
                 Curve.CreateInterpolatedCurve(spiralPath, 3)

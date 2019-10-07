@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using CAMel.Types.Machine;
 using CAMel.Types.MaterialForm;
@@ -73,8 +74,7 @@ namespace CAMel.Types
         // Checks to see if warnings were reported, or errors on the ignore list
         public bool hasWarnings([CanBeNull] List<string> ignore)
         {
-            foreach (string k in this._errors.Keys)
-            { if (ignore?.Contains(k) == true) { return true; } }
+            if (this._errors.Keys.Any(k => ignore?.Contains(k) == true)) { return true; }
 
             return this._warnings.Count > 0;
         }
@@ -90,9 +90,9 @@ namespace CAMel.Types
             bool first = true;
             foreach (int i in data)
             {
-                if (!first) { lN = lN + ", "; }
+                if (!first) { lN += ", "; }
                 first = false;
-                lN = lN + i;
+                lN += i;
             }
             return lN;
         }
@@ -111,9 +111,8 @@ namespace CAMel.Types
 
             // Add ignored errors
             bool first = true;
-            foreach (string k in this._errors.Keys)
+            foreach (string k in this._errors.Keys.Where(k => ignore?.Contains(k) == true))
             {
-                if (ignore?.Contains(k) != true) { continue; }
                 if (first)
                 {
                     first = false;
@@ -130,10 +129,7 @@ namespace CAMel.Types
         // Checks to see if there are errors, other than those in the ignore list were reported
         public bool hasErrors([CanBeNull] List<string> ignore)
         {
-            foreach (string k in this._errors.Keys)
-            { if (ignore?.Contains(k) == false) { return true; } }
-
-            return false;
+            return this._errors.Keys.Any(k => ignore?.Contains(k) == false);
         }
 
         // return string with all errors
@@ -146,10 +142,8 @@ namespace CAMel.Types
             StringBuilder outP = new StringBuilder();
             bool first = true;
 
-            foreach (string k in this._errors.Keys)
+            foreach (string k in this._errors.Keys.Where(k => ignore?.Contains(k) == false))
             {
-                if (ignore?.Contains(k) != false) { continue; }
-
                 if (first)
                 {
                     first = false;
@@ -164,13 +158,7 @@ namespace CAMel.Types
         [NotNull]
         internal string getRangesString()
         {
-            string rOut = string.Empty;
-            foreach (string k in this._ranges.Keys)
-            {
-                rOut = rOut + "\n" + k + ": " + this._ranges[k].T0.ToString("0.00") +
-                       " to " + this._ranges[k].T1.ToString("0.00");
-            }
-            return rOut;
+            return this._ranges.Keys.Aggregate(string.Empty, (current, k) => current + "\n" + k + ": " + this._ranges[k].T0.ToString("0.00") + " to " + this._ranges[k].T1.ToString("0.00"));
         }
 
         public override string ToString() => this._code.ToString();

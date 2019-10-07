@@ -163,7 +163,7 @@ namespace CAMel.Types
             ToolPoint osTp = tP.deepClone();
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
-            osTp.pt = osTp.pt + cutOffset(m.toolDir(tP), norm);
+            osTp.pt += cutOffset(m.toolDir(tP), norm);
 
             return osTp;
         }

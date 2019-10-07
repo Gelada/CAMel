@@ -85,14 +85,14 @@ namespace CAMel.Types
         {
             Vector3d plPt = new Vector3d(pt.X, pt.Y, 0);
             double angle = Math.Atan2(pt.Y, pt.X);
-            if (angle < 0) { angle = angle + Math.PI * 2.0; }
+            if (angle < 0) { angle += Math.PI * 2.0; }
             return new Point3d(plPt.Length, angle, pt.Z);
         }
 
         // convert from cylindrical coordinate
         public static Point3d fromCyl(Point3d pt) => new Point3d(pt.X * Math.Cos(pt.Y), pt.X * Math.Sin(pt.Y), pt.Z);
 
-        // find radius of smallest sphere with given origin containing a bounding box 
+        // find radius of smallest sphere with given origin containing a bounding box
         public static double boundSphere(BoundingBox bb, Point3d c) => c.DistanceTo(bb.FurthestPoint(c));
 
         [CanBeNull]

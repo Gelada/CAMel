@@ -119,7 +119,7 @@ namespace CAMel.Types
             foreach (ToolPoint tPt in this)
             {
                 ToolPoint newTPt = tPt.deepClone();
-                newTPt.pt = newTPt.pt + h * m.toolDir(tPt);
+                newTPt.pt += h * m.toolDir(tPt);
                 tP.Add(newTPt);
             }
             return tP;
@@ -370,7 +370,8 @@ namespace CAMel.Types
         {
             if (this.Count == 0)
             {
-                dir = new Vector3d(); return false;
+                dir = new Vector3d();
+                return false;
             }
             dir = this[0].dir;
             // Check that there is a unique directions
@@ -398,7 +399,7 @@ namespace CAMel.Types
         {
             if (item != null) { this._pts.Insert(index, item); }
         }
-        public void InsertRange(int index, [NotNull] IEnumerable<ToolPoint> items) => this._pts.InsertRange(index, items.Where(x => x != null));
+        [UsedImplicitly] public void InsertRange(int index, [NotNull] IEnumerable<ToolPoint> items) => this._pts.InsertRange(index, items.Where(x => x != null));
         public void RemoveAt(int index) => this._pts.RemoveAt(index);
         public void removeLast() { this._pts.RemoveAt(this.Count - 1); }
         public void Add(ToolPoint item)

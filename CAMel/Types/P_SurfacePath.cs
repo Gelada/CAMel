@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using CAMel.Types.Machine;
 using CAMel.Types.MaterialForm;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -93,7 +93,7 @@ namespace CAMel.Types
                 case SurfProj.Parallel:
                     return new SurfacePath(this._paths, newMT, this.dir, this.surfToolDir);
                 case SurfProj.Cylindrical:
-                    if(this.cylOnto == null) { Exceptions.nullPanic(); }
+                    if (this.cylOnto == null) { Exceptions.nullPanic(); }
                     return new SurfacePath(this._paths, newMT, this.dir, this.cylOnto, this.surfToolDir);
                 case SurfProj.Spherical:
                     return new SurfacePath(this._paths, newMT, this.cen, this.surfToolDir);
@@ -102,7 +102,6 @@ namespace CAMel.Types
                     return new SurfacePath(this._paths, newMT, this.cen, this.surfToolDir);
             }
         }
-
 
         public string TypeDescription => "Path and projection information to generate a surfacing path";
         public string TypeName => "SurfacePath";
@@ -113,13 +112,13 @@ namespace CAMel.Types
             switch (this.surfProj)
             {
                 case SurfProj.Parallel:
-                    op = op + " Parallel Projection";
+                    op += " Parallel Projection";
                     break;
                 case SurfProj.Cylindrical:
-                    op = op + " Cylindrical Projection";
+                    op += " Cylindrical Projection";
                     break;
                 case SurfProj.Spherical:
-                    op = op + " Spherical Projection";
+                    op += " Spherical Projection";
                     break;
             }
             return op;
@@ -132,11 +131,12 @@ namespace CAMel.Types
         {
             // Just convert to Mesh
             MeshingParameters mP = MeshingParameters.Smooth;
-            mP.MaximumEdgeLength = mT.toolWidth / 2.0;
+            if (mP == null) { Exceptions.nullPanic(); }
+            mP.MaximumEdgeLength = this.mT.toolWidth / 2.0;
             mP.ComputeCurvature = true;
             mP.MinimumEdgeLength = 0.00001;
             this._m = Mesh.CreateFromBrep(b, mP)?[0];
-            this._m.FaceNormals.ComputeFaceNormals();
+            this._m?.FaceNormals?.ComputeFaceNormals();
 
             return generateOperation_(offset, mF, tPa);
         }
@@ -186,9 +186,8 @@ namespace CAMel.Types
 
                 bool missed = false;
 
-                foreach (ToolPoint tPt in tP)
+                foreach (FirstIntersectResponse fIr in tP.Select(tPt => intersectInfo[tPt]))
                 {
-                    FirstIntersectResponse fIr = intersectInfo[tPt];
                     if (fIr.hit)
                     {
                         // Check to see if a new path is needed.
@@ -201,7 +200,7 @@ namespace CAMel.Types
                                     newTPs.Add(tempTP);
                                     norms.Add(tempN);
                                 }
-                                tempTP = new ToolPath(string.Empty, mT, mF, tPa);
+                                tempTP = new ToolPath(string.Empty, this.mT, mF, tPa);
                                 tempN = new List<Vector3d>();
                             }
                         }
@@ -275,11 +274,11 @@ namespace CAMel.Types
                 for (int i = 0; i < newTPs[j]?.Count; i++)
                 {
                     if (norms[j]?[i] == null) { break; }
-                    newTPs[j][i].pt = newTPs[j][i].pt + mT.cutOffset(newTPs[j][i].dir, norms[j][i]);
+                    newTPs[j][i].pt += this.mT.cutOffset(newTPs[j][i].dir, norms[j][i]);
 
                     // Move to offset using normal
 
-                    newTPs[j][i].pt = newTPs[j][i].pt + offset * norms[j][i];
+                    newTPs[j][i].pt += offset * norms[j][i];
                 }
             }
             // make the machine operation
@@ -299,7 +298,7 @@ namespace CAMel.Types
         // Transcribed from Christer Ericson's Real-Time Collision Detection
         // Compute barycentric coordinates (u, v, w) for
         // point p with respect to triangle (a, b, c)
-        Vector3d Barycentric(Point3d p, Point3d a, Point3d b, Point3d c)
+        private static Vector3d barycentric(Point3d p, Point3d a, Point3d b, Point3d c)
         {
             Vector3d v0 = b - a, v1 = c - a, v2 = p - a;
             double d00 = v0 * v0;
@@ -308,7 +307,7 @@ namespace CAMel.Types
             double d20 = v2 * v0;
             double d21 = v2 * v1;
             double denom = d00 * d11 - d01 * d01;
-            if(Math.Abs(denom) < CAMel_Goo.Tolerance) { return new Vector3d(1, 0, 0); }
+            if (Math.Abs(denom) < CAMel_Goo.Tolerance) { return new Vector3d(1, 0, 0); }
             double u = (d11 * d20 - d01 * d21) / denom;
             double v = (d00 * d21 - d01 * d20) / denom;
 
@@ -333,10 +332,10 @@ namespace CAMel.Types
             lFaces.AddRange(faces);
             MeshFace mF = this._m.Faces[lFaces[0]];
 
-            Vector3d bary = Barycentric(fIr.tP.pt,
+            Vector3d bary = barycentric(fIr.tP.pt,
                 this._m.Vertices[mF.A], this._m.Vertices[mF.B], this._m.Vertices[mF.C]);
 
-            fIr.norm = this._m.NormalAt(lFaces[0],bary.Z,bary.X,bary.Y,0.0);
+            fIr.norm = this._m.NormalAt(lFaces[0], bary.Z, bary.X, bary.Y, 0.0);
 
             if (fIr.norm * rayL.Direction > 0) { fIr.norm = -fIr.norm; }
 
@@ -422,7 +421,6 @@ namespace CAMel.Types
         IEnumerator IEnumerable.GetEnumerator() => this._paths.GetEnumerator();
 
         #endregion
-
     }
 
     // Grasshopper Type Wrapper
