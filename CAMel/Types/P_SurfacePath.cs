@@ -50,36 +50,59 @@ namespace CAMel.Types
         private Vector3d dir { get; } // direction for parallel projection, or line direction for cylindrical
         private Point3d cen { get; } // centre for spherical projection
         private SurfToolDir surfToolDir { get; } // method to calculate tool direction
+        [NotNull] public MaterialTool mT { get; }
 
         // private storage when processing a model
 
         private Mesh _m; // Mesh
 
         // Parallel constructor
-        public SurfacePath([NotNull] List<Curve> paths, Vector3d dir, SurfToolDir sTd)
+        public SurfacePath([NotNull] List<Curve> paths, [NotNull] MaterialTool mT, Vector3d dir, SurfToolDir sTd)
         {
             this._paths = paths;
+            this.mT = mT;
             this.surfProj = SurfProj.Parallel;
             this.dir = dir;
             this.surfToolDir = sTd;
         }
         // Cylindrical constructor
-        public SurfacePath([NotNull] List<Curve> paths, Vector3d dir, [NotNull] Curve cc, SurfToolDir surfToolDir)
+        public SurfacePath([NotNull] List<Curve> paths, [NotNull] MaterialTool mT, Vector3d dir, [NotNull] Curve cc, SurfToolDir surfToolDir)
         {
             this._paths = paths;
+            this.mT = mT;
             this.surfProj = SurfProj.Cylindrical;
             this.dir = dir;
             this.cylOnto = cc;
             this.surfToolDir = surfToolDir;
         }
         // Spherical constructor
-        public SurfacePath([NotNull] List<Curve> paths, Point3d cen, SurfToolDir surfToolDir)
+        public SurfacePath([NotNull] List<Curve> paths, [NotNull] MaterialTool mT, Point3d cen, SurfToolDir surfToolDir)
         {
             this._paths = paths;
+            this.mT = mT;
             this.surfProj = SurfProj.Spherical;
             this.cen = cen;
             this.surfToolDir = surfToolDir;
         }
+        [NotNull]
+        public SurfacePath changeFinishDepth(double cutDepth)
+        {
+            MaterialTool newMT = MaterialTool.changeFinishDepth(this.mT, cutDepth);
+            switch (this.surfProj)
+            {
+                case SurfProj.Parallel:
+                    return new SurfacePath(this._paths, newMT, this.dir, this.surfToolDir);
+                case SurfProj.Cylindrical:
+                    if(this.cylOnto == null) { Exceptions.nullPanic(); }
+                    return new SurfacePath(this._paths, newMT, this.dir, this.cylOnto, this.surfToolDir);
+                case SurfProj.Spherical:
+                    return new SurfacePath(this._paths, newMT, this.cen, this.surfToolDir);
+                default:
+                    Exceptions.badSurfacePath();
+                    return new SurfacePath(this._paths, newMT, this.cen, this.surfToolDir);
+            }
+        }
+
 
         public string TypeDescription => "Path and projection information to generate a surfacing path";
         public string TypeName => "SurfacePath";
@@ -105,7 +128,7 @@ namespace CAMel.Types
         // Different calls to Generate a Machine Operation from different surfaces
 
         [NotNull]
-        public MachineOperation generateOperation([NotNull] Brep b, double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
+        public MachineOperation generateOperation([NotNull] Brep b, double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
             // Just convert to Mesh
             MeshingParameters mP = MeshingParameters.Smooth;
@@ -115,20 +138,20 @@ namespace CAMel.Types
             this._m = Mesh.CreateFromBrep(b, mP)?[0];
             this._m.FaceNormals.ComputeFaceNormals();
 
-            return generateOperation_(offset, mT, mF, tPa);
+            return generateOperation_(offset, mF, tPa);
         }
         [NotNull]
-        public MachineOperation generateOperation([NotNull] Mesh m, double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
+        public MachineOperation generateOperation([NotNull] Mesh m, double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
             if (m.FaceNormals == null) { throw new ArgumentNullException(); }
             m.FaceNormals.ComputeFaceNormals();
             this._m = m;
 
-            return generateOperation_(offset, mT, mF, tPa);
+            return generateOperation_(offset, mF, tPa);
         }
         // actual code to generate the operation
         [NotNull]
-        private MachineOperation generateOperation_(double offset, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
+        private MachineOperation generateOperation_(double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
             if (this._m == null) { throw new NullReferenceException("Trying to generate a surfacing path with no mesh set. "); }
             // create unprojected toolpath (mainly to convert the curve into a list of points)
@@ -136,7 +159,7 @@ namespace CAMel.Types
 
             foreach (Curve p in this._paths)
             {
-                tPs.Add(new ToolPath(string.Empty, mT, mF, tPa));
+                tPs.Add(new ToolPath(string.Empty, this.mT, mF, tPa));
                 tPs[tPs.Count - 1]?.convertCurve(p, new Vector3d(0, 0, 1), .5);
             }
 
@@ -158,7 +181,7 @@ namespace CAMel.Types
                     }
                 );
 
-                ToolPath tempTP = new ToolPath(string.Empty, mT, mF, tPa);
+                ToolPath tempTP = new ToolPath(string.Empty, this.mT, mF, tPa);
                 List<Vector3d> tempN = new List<Vector3d>();
 
                 bool missed = false;
@@ -171,7 +194,7 @@ namespace CAMel.Types
                         // Check to see if a new path is needed.
                         if (missed && tempTP.lastP != null)
                         {
-                            if (tempTP.lastP.pt.DistanceTo(fIr.tP.pt) > mT.pathJump)
+                            if (tempTP.lastP.pt.DistanceTo(fIr.tP.pt) > this.mT.pathJump)
                             {
                                 if (tempTP.Count > 1)
                                 {
@@ -399,6 +422,7 @@ namespace CAMel.Types
         IEnumerator IEnumerable.GetEnumerator() => this._paths.GetEnumerator();
 
         #endregion
+
     }
 
     // Grasshopper Type Wrapper

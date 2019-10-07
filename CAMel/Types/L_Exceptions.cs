@@ -21,5 +21,7 @@ namespace CAMel.Types
         public static void noToolPathException() => throw new InvalidOperationException("No ToolPaths found in Machine Operation.");
         [ContractAnnotation("=> halt")]
         public static void nullPanic() => throw new NullReferenceException("Something horrible went wrong, creating a null in CAMel. ");
+        [ContractAnnotation("=> halt")]
+        public static void badSurfacePath() => throw new ArgumentException("Bad SurfacePath.");
     }
 }

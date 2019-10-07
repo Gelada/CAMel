@@ -28,13 +28,7 @@ namespace CAMel.GH
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddGeometryParameter("Surface", "S", "The surface, brep or mesh to carve", GH_ParamAccess.item);
             pManager.AddParameter(new GH_SurfacePathPar(), "Rough Path", "R", "Information to create roughing path", GH_ParamAccess.item);
-            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool Rough", "MTR", "The material to cut and the tool to do it for roughing", GH_ParamAccess.item);
-            // ReSharper disable once PossibleNullReferenceException
-            pManager[2].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddParameter(new GH_SurfacePathPar(), "Finish Path", "F", "Information to create finishing path", GH_ParamAccess.item);
-            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool Finish", "MTF", "The material to cut and the tool to do it for finishing", GH_ParamAccess.item);
-            // ReSharper disable once PossibleNullReferenceException
-            pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[5].WireDisplay = GH_ParamWireDisplay.faint;
@@ -62,16 +56,12 @@ namespace CAMel.GH
             GeometryBase geom = null;
             SurfacePath roughP = null;
             SurfacePath finalP = null;
-            MaterialTool mTr = null;
-            MaterialTool mTf = null;
             IMaterialForm mF = null;
 
-            if (!da.GetData(0, ref geom)) { return; }
-            if (!da.GetData(1, ref roughP)) { return; }
-            if (!da.GetData(2, ref mTr)) { return; }
-            if (!da.GetData(3, ref finalP)) { return; }
-            if (!da.GetData(4, ref mTf)) { return; }
-            if (!da.GetData(5, ref mF)) { return; }
+            if (!da.GetData("Surface", ref geom)) { return; }
+            if (!da.GetData("Rough Path", ref roughP)) { return; }
+            if (!da.GetData("Finish Path", ref finalP)) { return; }
+            if (!da.GetData("Material Form", ref mF)) { return; }
 
             ToolPathAdditions addRough = new ToolPathAdditions
             {
@@ -84,7 +74,8 @@ namespace CAMel.GH
                 sdDropEnd = true,
                 threeAxisHeightOffset = false
             };
-            mTr = MaterialTool.changeFinishDepth(mTr, mTr.cutDepth); // ignore finish depth for roughing
+
+            roughP = roughP.changeFinishDepth(roughP.mT.cutDepth); // ignore finish depth for roughing
 
             ToolPathAdditions addFinish = new ToolPathAdditions
             {
@@ -103,14 +94,14 @@ namespace CAMel.GH
             if (geom.GetType() == typeof(Mesh))
             {
                 Mesh m = (Mesh) geom;
-                roughO = roughP.generateOperation(m, mTf.finishDepth, mTr, mF, addRough);
-                finishO = finalP.generateOperation(m, 0.0, mTf, mF, addFinish);
+                roughO = roughP.generateOperation(m, finalP.mT.finishDepth, mF, addRough);
+                finishO = finalP.generateOperation(m, 0.0, mF, addFinish);
             }
             else if (geom.GetType() == typeof(Brep))
             {
                 Brep b = (Brep) geom;
-                roughO = roughP.generateOperation(b, mTf.finishDepth, mTr, mF, addRough);
-                finishO = finalP.generateOperation(b, 0.0, mTf, mF, addFinish);
+                roughO = roughP.generateOperation(b, finalP.mT.finishDepth, mF, addRough);
+                finishO = finalP.generateOperation(b, 0.0, mF, addFinish);
             }
             else
             {

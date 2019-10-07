@@ -33,7 +33,7 @@ namespace CAMel.Types
                 if (zZ) { tempC.Reverse(); }
             }
             // Join paths for zigzag
-            if (!zZ) { return new SurfacePath(paths, -dir.ZAxis, sTD); }
+            if (!zZ) { return new SurfacePath(paths, mT, -dir.ZAxis, sTD); }
 
             PolyCurve joined = new PolyCurve();
             joined.Append(paths[0]);
@@ -46,7 +46,7 @@ namespace CAMel.Types
 
             paths = new List<Curve> {joined};
 
-            return new SurfacePath(paths, -dir.ZAxis, sTD);
+            return new SurfacePath(paths, mT, -dir.ZAxis, sTD);
         }
 
         [NotNull]
@@ -168,7 +168,7 @@ namespace CAMel.Types
                 dir.PointAt(bb.Center.X, bb.Center.Y, bb.Min.Z),
                 dir.PointAt(bb.Center.X, bb.Center.Y, bb.Max.Z));
 
-            return new SurfacePath(paths, dir.ZAxis, cc, sTD);
+            return new SurfacePath(paths, mT, dir.ZAxis, cc, sTD);
         }
         // TODO make work for planes and with a boundary curve to spiral to
         [NotNull]
@@ -207,7 +207,7 @@ namespace CAMel.Types
                 Curve.CreateInterpolatedCurve(spiralPath, 3)
             };
 
-            return new SurfacePath(paths, dir.Origin, sTd);
+            return new SurfacePath(paths, mT, dir.Origin, sTd);
         }
     }
 }

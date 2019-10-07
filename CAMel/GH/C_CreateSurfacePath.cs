@@ -32,6 +32,9 @@ namespace CAMel.GH
             pManager.AddVectorParameter("Direction", "Dir", "Direction for parallel projection or orthogonal direction for cylindrical", GH_ParamAccess.item, new Vector3d(0, 0, -1));
             pManager.AddPointParameter("Centre", "C", "Centre for spherical projection", GH_ParamAccess.item, new Point3d(0, 0, 0));
             pManager.AddNumberParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item, 0);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
+            // ReSharper disable once PossibleNullReferenceException
+            pManager[7].WireDisplay = GH_ParamWireDisplay.faint;
         }
 
         /// <inheritdoc />
@@ -62,8 +65,8 @@ namespace CAMel.GH
 
             SurfacePath sP;
 
-            if (!da.GetDataList(0, paths)) { return; }
-            if (!da.GetData(5, ref tDd)) { return; }
+            if (!da.GetDataList("Paths", paths)) { return; }
+            if (!da.GetData("Tool Direction", ref tDd)) { return; }
             int tD = (int) tDd;
             // set Surfacing direction
             SurfToolDir sTD;
@@ -86,23 +89,26 @@ namespace CAMel.GH
                     return;
             }
 
+            MaterialTool mT = null;
+            if (!da.GetData("Material/Tool", ref mT)) { return; }
+
             // find the projection type (will effect the information we wish to use)
-            if (!da.GetData(1, ref prD)) { return; }
+            if (!da.GetData("Projection", ref prD)) { return; }
             int prT = (int) prD;
             switch (prT)
             {
                 case 0: // Parallel
-                    if (!da.GetData(3, ref dir)) { return; }
-                    sP = new SurfacePath(paths, dir, sTD);
+                    if (!da.GetData("Direction", ref dir)) { return; }
+                    sP = new SurfacePath(paths, mT, dir, sTD);
                     break;
                 case 1: // Cylindrical
-                    if (!da.GetData(2, ref cc)) { return; }
-                    if (!da.GetData(3, ref dir)) { return; }
-                    sP = new SurfacePath(paths, dir, cc, sTD);
+                    if (!da.GetData("Centre Curve", ref cc)) { return; }
+                    if (!da.GetData("Direction", ref dir)) { return; }
+                    sP = new SurfacePath(paths, mT, dir, cc, sTD);
                     break;
                 case 2: // Spherical
-                    if (!da.GetData(4, ref cen)) { return; }
-                    sP = new SurfacePath(paths, cen, sTD);
+                    if (!da.GetData("Centre", ref cen)) { return; }
+                    sP = new SurfacePath(paths, mT, cen, sTD);
                     break;
                 default:
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter Pr can only have values 0,1 or 2");
