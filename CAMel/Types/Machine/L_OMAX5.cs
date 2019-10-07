@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 using Rhino.Geometry;
@@ -164,9 +165,8 @@ namespace CAMel.Types.Machine
             int lastQ = (int) co.machineState["Q"];
             bool first = co.machineState["Fi"] > 0;
 
-            foreach (ToolPoint tPt in tP)
+            foreach (ToolPoint tPt in tP.Where(tPt => tPt != null))
             {
-                if (tPt == null) { continue; }
                 // Errors will be recorded 1 line early
                 tPt.writeErrorAndWarnings(ref co);
 

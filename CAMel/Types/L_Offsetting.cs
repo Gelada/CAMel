@@ -36,12 +36,7 @@ namespace CAMel.Types
 
             // Clean the paths.
 
-            List<List<IntPoint>> oP = new List<List<IntPoint>>();
-            foreach (List<IntPoint> iP in oPf)
-            {
-                List<IntPoint> clp = Clipper.CleanPolygon(iP);
-                oP.Add(clp);
-            }
+            List<List<IntPoint>> oP = oPf.Select(iP => Clipper.CleanPolygon(iP)).ToList();
 
             List<PolylineCurve> oPl = intToPl(oP, sc);
             // find point closest to first of original curve
@@ -73,9 +68,8 @@ namespace CAMel.Types
         // ReSharper disable once SuggestBaseTypeForParameter
         private static List<List<IntPoint>> pLtoInt([NotNull] PolylineCurve pc, double sc)
         {
-            List<IntPoint> intP = new List<IntPoint>();
             pc.TryGetPolyline(out Polyline p);
-            foreach (Point3d pt in p) { intP.Add(dToi(pt, sc)); }
+            List<IntPoint> intP = p.Select(pt => dToi(pt, sc)).ToList();
             //List<List<IntPoint>> IntPL = Clipper.SimplifyPolygon(IntP,);
             List<List<IntPoint>> intPl = new List<List<IntPoint>> {intP};
 

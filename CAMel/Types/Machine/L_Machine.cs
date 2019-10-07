@@ -312,10 +312,8 @@ namespace CAMel.Types.Machine
 
             double cutDepth = tP.matTool.cutDepth <= 0 ? double.PositiveInfinity : tP.matTool.cutDepth;
 
-            foreach (ToolPoint tPt in refPath)
+            foreach (MFintersection inter in refPath.TakeWhile(tPt => tPt != null).Select(tPt => tP.matForm.intersect(tPt, 0).through))
             {
-                if (tPt == null) { break; }
-                MFintersection inter = tP.matForm.intersect(tPt, 0).through;
                 matDist.Add(inter.lineP); // distance to material surface
                 if (matDist[matDist.Count - 1] < 0) { matDist[matDist.Count - 1] = 0; } // avoid negative distances (outside material)
 
@@ -520,9 +518,8 @@ namespace CAMel.Types.Machine
 
             Polyline outP = new Polyline();
 
-            foreach (double d in divs)
+            foreach (Point3d testPt in divs.Select(d => leadCirc.PointAt(d)))
             {
-                Point3d testPt = leadCirc.PointAt(d);
                 outP.Add(testPt);
                 if (toolL.Contains(testPt) == incorrectSide) { return null; }
                 toolL.ClosestPoint(testPt, out double testDist);
@@ -628,6 +625,7 @@ namespace CAMel.Types.Machine
             }
 
             // Add activation codes
+            // ReSharper disable once InvertIf
             if (tP.additions.activate != 0)
             {
                 if (activate != string.Empty) { irTps[0].preCode = activate + "\n" + newTP.preCode; }
@@ -714,6 +712,7 @@ namespace CAMel.Types.Machine
             }
 
             // Add activation codes
+            // ReSharper disable once InvertIf
             if (tP.additions.activate != 0)
             {
                 if (activate != string.Empty) { irTps[0].preCode = activate + "\n" + newTP.preCode; }
@@ -1062,6 +1061,7 @@ namespace CAMel.Types.Machine
             // Check end of this path and start of TP
             // For each see if it is safe in one Material Form
             // As we pull back to safe distance we allow a little wiggle.
+            // ReSharper disable once InvertIf
             if (fP.matForm.intersect(fP.lastP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(fP.lastP, tP.matForm.safeDistance).thrDist > 0.0001 ||
                 fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
@@ -1259,9 +1259,7 @@ namespace CAMel.Types.Machine
         public static MachineInstruction gcRead([NotNull] IGCodeMachine m, [NotNull, ItemNotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
         {
             ToolPath tP = new ToolPath();
-            Dictionary<char, double> values = new Dictionary<char, double>();
-
-            foreach (char c in terms) { values.Add(c, 0); }
+            Dictionary<char, double> values = terms.ToDictionary<char, char, double>(c => c, c => 0);
 
             using (StringReader reader = new StringReader(code))
             {

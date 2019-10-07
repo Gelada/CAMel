@@ -89,8 +89,7 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            int totalTP = 0;
-            foreach (MachineOperation mO in this) {  foreach (ToolPath tP in mO) { totalTP += tP.Count; } }
+            int totalTP = this.SelectMany(mO => mO).Sum(tP => tP.Count);
             return "Machine Instruction: " + this.name + ", " + this.Count + " operations, " + totalTP + " total points.";
         }
 
@@ -180,22 +179,19 @@ namespace CAMel.Types
 
             ToolPath valid = new ToolPath();
             // scan through the paths looking for info
-            foreach (MachineOperation mO in this)
+            foreach (ToolPath tP in this.SelectMany(mO => mO))
             {
-                foreach (ToolPath tP in mO)
+                if (!mTFound && tP.matTool != null)
                 {
-                    if (!mTFound && tP.matTool != null)
-                    {
-                        mTFound = true;
-                        valid.matTool = tP.matTool;
-                    }
-                    if (!mFFound && tP.matForm != null)
-                    {
-                        mFFound = true;
-                        valid.matForm = tP.matForm;
-                    }
-                    if (mTFound && mFFound) { return valid; }
+                    mTFound = true;
+                    valid.matTool = tP.matTool;
                 }
+                if (!mFFound && tP.matForm != null)
+                {
+                    mFFound = true;
+                    valid.matForm = tP.matForm;
+                }
+                if (mTFound && mFFound) { return valid; }
             }
             // if the machine has one tool use that.
             if (this.m.mTs.Count != 1 || !mFFound)
@@ -219,17 +215,13 @@ namespace CAMel.Types
         [NotNull, PublicAPI]
         public List<List<List<Point3d>>> getPoints()
         {
-            List<List<List<Point3d>>> pts = new List<List<List<Point3d>>>();
-            foreach (MachineOperation mO in this) { pts.Add(mO.getPoints()); }
-            return pts;
+            return this.Select(mO => mO.getPoints()).ToList();
         }
         // Get the list of tool directions
         [NotNull, PublicAPI]
         public List<List<List<Vector3d>>> getDirs()
         {
-            List<List<List<Vector3d>>> dirs = new List<List<List<Vector3d>>>();
-            foreach (MachineOperation mO in this) { dirs.Add(mO.getDirs()); }
-            return dirs;
+            return this.Select(mO => mO.getDirs()).ToList();
         }
         // Create a path with the points
         [NotNull, PublicAPI]

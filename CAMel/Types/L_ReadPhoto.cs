@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -190,10 +191,8 @@ namespace CAMel.Types
             jCurves = new List<Curve>();
 
             BoundingBox bb = new BoundingBox();
-            foreach (Curve c in tCurves)
+            foreach (Curve c in tCurves.Where(c => c != null && c.GetLength() > jump * 4))
             {
-                if (c == null || !(c.GetLength() > jump * 4)) { continue; }
-
                 jCurves.Add(c);
                 bb.Union(c.GetBoundingBox(false));
             }

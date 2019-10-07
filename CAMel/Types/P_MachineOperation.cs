@@ -96,11 +96,7 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            int totalTP = 0;
-            foreach (ToolPath tP in this)
-            {
-                totalTP += tP.Count;
-            }
+            int totalTP = this.Sum(tP => tP.Count);
             return "Machine Operation: " + this.name + ", " + this.Count + " toolpaths, " + totalTP + " total tool points.";
         }
 
@@ -134,15 +130,13 @@ namespace CAMel.Types
             List<ToolPath> levelPaths; // all paths on one level
 
             // Find path with most levels
-            int levels = 0;
-            foreach (List<List<ToolPath>> lTp in newPaths)
-            { if (lTp.Count > levels) { levels = lTp.Count; } }
+            int levels = newPaths.Select(lTp => lTp.Count).Concat(new[] {0}).Max();
             // do the roughing layers
             for (int i = 0; i < levels; i++)
             {
                 levelPaths = new List<ToolPath>();
-                foreach (List<List<ToolPath>> lTp in newPaths)
-                { if (i < lTp.Count && lTp[i] != null) { levelPaths.AddRange(lTp[i]); } }
+                foreach (List<List<ToolPath>> lTp in newPaths.Where(lTp => i < lTp.Count && lTp[i] != null))
+                { levelPaths.AddRange(lTp[i]); }
 
                 // sort here (remember to only move chunks that are outside the material!)
 
@@ -150,21 +144,15 @@ namespace CAMel.Types
             }
             // finishing cuts
             // find path with most levels
-            levels = 0;
-            foreach (List<ToolPath> lTp in finishPaths)
-            { if (lTp.Count > levels) { levels = lTp.Count; } }
+            levels = finishPaths.Select(lTp => lTp.Count).Concat(new[] {0}).Max();
             // add finishing paths
 
             for (int i = 0; i < levels; i++)
             {
                 levelPaths = new List<ToolPath>();
-                foreach (List<ToolPath> lTp in finishPaths)
+                foreach (List<ToolPath> lTp in finishPaths.Where(lTp => i < lTp.Count).Where(lTp => lTp[i] != null))
                 {
-                    if (i < lTp.Count)
-                    {
-                        if (lTp[i] == null) { continue; }
-                        levelPaths.AddRange(m.insertRetract(lTp[i]));
-                    }
+                    levelPaths.AddRange(m.insertRetract(lTp[i]));
                 }
 
                 procPaths.AddRange(levelPaths);
@@ -172,10 +160,8 @@ namespace CAMel.Types
 
             List<ToolPath> transPaths = new List<ToolPath>();
             ToolPath frP = new ToolPath();
-            foreach (ToolPath tP in procPaths)
+            foreach (ToolPath tP in procPaths.Where(tP => tP.Count > 0))
             {
-                // Do nothing for empty paths
-                if (tP.Count <= 0) { continue; }
                 // Check if transition is needed
                 if (frP.Count > 0 && (tP.label == PathLabel.Insert || frP.label == PathLabel.Retract))
                 {
@@ -200,10 +186,8 @@ namespace CAMel.Types
 
             ToolPath oldPath = sP;
 
-            foreach (ToolPath tP in this)
+            foreach (ToolPath tP in this.Where(tP => tP.Count > 0))
             {
-                if (tP.Count <= 0) { continue; }
-
                 // Check for jump between paths
                 if (oldPath.Count > 0) { m.jumpCheck(ref co, oldPath, tP); }
 
@@ -315,17 +299,13 @@ namespace CAMel.Types
         [NotNull]
         public List<List<Point3d>> getPoints()
         {
-            List<List<Point3d>> pts = new List<List<Point3d>>();
-            foreach (ToolPath tP in this) { pts.Add(tP.getPoints()); }
-            return pts;
+            return this.Select(tP => tP.getPoints()).ToList();
         }
         // Get the list of tool directions
         [NotNull]
         public List<List<Vector3d>> getDirs()
         {
-            List<List<Vector3d>> dirs = new List<List<Vector3d>>();
-            foreach (ToolPath tP in this) { dirs.Add(tP.getDirs()); }
-            return dirs;
+            return this.Select(tP => tP.getDirs()).ToList();
         }
         // Create a path with the points
         [NotNull, PublicAPI]
@@ -354,9 +334,7 @@ namespace CAMel.Types
         [NotNull]
         public IEnumerable<PolylineCurve> getLines()
         {
-            List<PolylineCurve> lines = new List<PolylineCurve>();
-            foreach (ToolPath tP in this) { lines.Add(tP.getLine()); }
-            return lines;
+            return this.Select(tP => tP.getLine()).ToList();
         }
         // Lines for each toolpoint
         [NotNull]

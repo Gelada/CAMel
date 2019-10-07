@@ -126,9 +126,9 @@ namespace CAMel.GH
             // set the keys for the curves read in
             this._allKeys = new SortedSet<double>();
             this._curves = new List<AugCurve>();
-            foreach (GH_Curve curve in paths)
+            foreach (GH_Curve curve in paths.Where(curve => curve?.Value != null))
             {
-                if (curve?.Value != null) { this._curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
+                this._curves.Add(new AugCurve(curve.Value, curve.ReferenceID));
             }
 
             foreach (RhinoObject ro in uDoc.Objects)

@@ -185,9 +185,8 @@ namespace CAMel.Types
             List<List<ToolPath>> roughPaths = new List<List<ToolPath>>();
             if (this.additions.stepDown)
             {
-                foreach (ToolPath tP in useTP)
+                foreach (List<List<ToolPath>> rPs in useTP.Select(m.stepDown))
                 {
-                    List<List<ToolPath>> rPs = m.stepDown(tP);
                     for (int i = 0; i < rPs.Count; i++)
                     {
                         if (roughPaths.Count <= i) { roughPaths.Add(new List<ToolPath>()); }
@@ -209,21 +208,12 @@ namespace CAMel.Types
             {
                 if (tPs == null) { continue; }
                 List<ToolPath> newTP = new List<ToolPath>();
-                foreach (ToolPath tP in tPs)
-                {
-                    if (tP == null) { continue; }
-                    newTP.AddRange(m.insertRetract(tP));
-                }
+                foreach (ToolPath tP in tPs.Where(tP => tP != null)) { newTP.AddRange(m.insertRetract(tP)); }
                 newRp.Add(newTP);
             }
 
             // Delay insert and retract for toolpaths
-            fP = new List<ToolPath>();
-            foreach (ToolPath tP in tempFp)
-            {
-                if (tP == null) { continue; }
-                fP.Add(tP);
-            }
+            fP = tempFp.Where(tP => tP != null).ToList();
 
             return newRp;
         }
@@ -243,12 +233,9 @@ namespace CAMel.Types
 
             // Add the points to the Path
 
-            foreach (Point3d pt in pL)
-            {
-                ToolPoint tPt = new ToolPoint(pt, d);
-                Add(tPt);
-            }
+            foreach (ToolPoint tPt in pL.Select(pt => new ToolPoint(pt, d))) { Add(tPt); }
 
+            // ReSharper disable once InvertIf
             if (c.IsClosed)
             {
                 ToolPoint tPt = new ToolPoint(pL[0], d);
@@ -306,20 +293,13 @@ namespace CAMel.Types
         [NotNull, Pure]
         public List<Point3d> getPoints()
         {
-            List<Point3d> points = new List<Point3d>();
-
-            foreach (ToolPoint tP in this) { points.Add(tP.pt); }
-
-            return points;
+            return this.Select(tP => tP.pt).ToList();
         }
         // Get the list of tool directions
         [NotNull, Pure]
         public List<Vector3d> getDirs()
         {
-            List<Vector3d> dirs = new List<Vector3d>();
-
-            foreach (ToolPoint tP in this) { dirs.Add(tP.dir); }
-            return dirs;
+            return this.Select(tP => tP.dir).ToList();
         }
         // Create a path with the points
         [NotNull, Pure]
@@ -338,10 +318,7 @@ namespace CAMel.Types
         [NotNull, Pure]
         public IEnumerable<Vector3d> getSpeedFeed()
         {
-            List<Vector3d> sF = new List<Vector3d>();
-
-            foreach (ToolPoint tP in this) { sF.Add(new Vector3d(tP.speed, tP.feed, 0)); }
-            return sF;
+            return this.Select(tP => new Vector3d(tP.speed, tP.feed, 0)).ToList();
         }
 
         // Bounding Box for previews
@@ -360,9 +337,7 @@ namespace CAMel.Types
         [NotNull, Pure]
         public IEnumerable<Line> toolLines()
         {
-            List<Line> lines = new List<Line>();
-            foreach (ToolPoint tP in this) { lines.Add(tP.toolLine()); }
-            return lines;
+            return this.Select(tP => tP.toolLine()).ToList();
         }
 
         [Pure]
