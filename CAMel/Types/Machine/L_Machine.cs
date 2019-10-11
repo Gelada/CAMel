@@ -1135,7 +1135,14 @@ namespace CAMel.Types.Machine
             if (mI.name != string.Empty) { co.appendComment(mI.name); }
             co.appendComment("");
             co.appendComment(" Machine Instructions Created " + thisDay.ToString("f"));
-            co.appendComment("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            System.Reflection.AssemblyName CAMel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
+            DateTime buildTime = new DateTime(2000, 1, 1)
+                                 + new TimeSpan(CAMel.Version?.Build ?? 0, 0, 0, 0)
+                                 + TimeSpan.FromSeconds((CAMel.Version?.Revision ?? 0) * 2);
+
+            co.appendComment("  by " + CAMel.Name + " "
+                             + CAMel.Version?.ToString(2)
+                             + " built " + buildTime.ToString("U"));
             if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
             co.appendComment(" Starting with: ");
             co.appendComment("  Tool: " + mI[0][0].matTool.toolName);

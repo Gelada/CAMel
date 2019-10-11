@@ -344,8 +344,14 @@ namespace CAMel.Types.Machine
             co.append("[Reserved]");
             co.append("[COMMENT]");
             co.append(" Machine Instructions Created " + thisDay.ToString("f"));
-            co.append("  by " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " "
-                      + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            System.Reflection.AssemblyName CAMel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
+            DateTime buildTime = new DateTime(2000, 1, 1)
+                                 + new TimeSpan(CAMel.Version?.Build ?? 0, 0, 0, 0)
+                                 + TimeSpan.FromSeconds((CAMel.Version?.Revision ?? 0) * 2);
+
+            co.append("  by " + CAMel.Name + " "
+                      + CAMel.Version?.ToString(2)
+                      + " built " + buildTime.ToString("U"));
             if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
             co.append("[END]");
 
