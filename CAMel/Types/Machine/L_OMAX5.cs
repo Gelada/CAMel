@@ -292,7 +292,7 @@ namespace CAMel.Types.Machine
             co.growRange("Z", lastPt.Z);
             co.growRange("T", Math.Max(tiltStart, tiltEnd));
 
-            return omxTiltPt(lastPt, lastDir, tPt.dir, 0, lastQ, os);
+            return omxTiltPt27(lastPt, lastDir, tPt.dir, 0, lastQ, os);
         }
 
         private static int vToSide(Vector3d v)
@@ -303,7 +303,7 @@ namespace CAMel.Types.Machine
         }
 
         [NotNull]
-        private static string omxTiltPt(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality, Vector3d os)
+        private static string omxTiltPt27(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality, Vector3d os)
         {
             StringBuilder gPtBd = new StringBuilder("[0],");
             gPtBd.Append(machPt.X.ToString("0.0000") + ", ");
@@ -327,6 +327,40 @@ namespace CAMel.Types.Machine
                          "|"); // start tool direction
             gPtBd.Append(uE.X.ToString("0.0000") + "|" + uE.Y.ToString("0.0000") + "|" +
                          uE.Z.ToString("0.0000")); // end tool direction
+
+            gPtBd.Append(",[END]");
+
+            return gPtBd.ToString();
+        }
+        
+        [NotNull]
+        private static string omxTiltPt23(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality, Vector3d os)
+        {
+            StringBuilder gPtBd = new StringBuilder("[0],");
+            gPtBd.Append(machPt.X.ToString("0.0000") + ", ");
+            gPtBd.Append(machPt.Y.ToString("0.0000") + ", ");
+            gPtBd.Append(machPt.Z.ToString("0.0000") + ", ");
+            gPtBd.Append("0, "); // tiltStart
+            gPtBd.Append("0, "); // tiltEnd
+            gPtBd.Append(bow.ToString("0.0000") + ", ");
+            int uQuality = quality;
+            gPtBd.Append(uQuality + ", ");
+
+            gPtBd.Append(vToSide(os) + ", ");
+            gPtBd.Append("R, R, R, R, R, 23, "); // Reserved items and XType
+
+            // flip tool directions
+
+            Vector3d uS = -tiltS;
+            Vector3d uE = -tiltE;
+            // TODO set up for positive vs negative using atan2
+            double tiltStartX = Vector3d.VectorAngle(-Vector3d.ZAxis, new Vector3d(uS.X, 0, uS.Z));
+            double tiltStartY = Vector3d.VectorAngle(-Vector3d.ZAxis, new Vector3d(0, uS.Y, uS.Z));
+            double tiltEndX = Vector3d.VectorAngle(-Vector3d.ZAxis, new Vector3d(uE.X, 0, uE.Z));
+            double tiltEndY = Vector3d.VectorAngle(-Vector3d.ZAxis, new Vector3d(0, uE.Y, uE.Z));
+
+            gPtBd.Append(tiltStartX.ToString("0.0000") + "|" + tiltStartY.ToString("0.0000"));
+            gPtBd.Append("|" + tiltEndX.ToString("0.0000") + "|" + tiltEndY.ToString("0.0000"));
 
             gPtBd.Append(",[END]");
 
