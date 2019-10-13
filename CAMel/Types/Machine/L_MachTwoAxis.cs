@@ -110,7 +110,20 @@ namespace CAMel.Types.Machine
         public string comment(string l) => GCode.comment(this, l);
         public ToolPath refine(ToolPath tP) => tP.matForm.refine(tP, this);
         public List<ToolPath> offSet(ToolPath tP) => Utility.planeOffset(tP, Vector3d.ZAxis);
-        public List<ToolPath> insertRetract(ToolPath tP) => Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
+        public List<ToolPath> insertRetract(ToolPath tP)
+        {
+            switch (tP.additions.leadComm.command)
+            {
+                case "U":
+                case "":
+                    return Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
+                case "V":
+                    return Utility.leadInOutV(tP, this.toolActivate, this.toolDeActivate);
+                default:
+                    if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a U shaped lead."); }
+                    return Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
+            }
+        }
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);

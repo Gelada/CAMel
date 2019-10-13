@@ -40,7 +40,20 @@ namespace CAMel.Types.Machine
 
         public ToolPath refine(ToolPath tP) => tP.matForm.refine(tP, this);
         public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> {tP};
-        public List<ToolPath> insertRetract(ToolPath tP) => Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+        public List<ToolPath> insertRetract(ToolPath tP)
+        {
+            switch (tP.additions.leadComm.command)
+            {
+                case "V":
+                case "":
+                    return Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+                case "U":
+                    return Utility.leadInOutU(tP, string.Empty, string.Empty, 9);
+                default:
+                    if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a V shaped lead."); }
+                    return Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+            }
+        }
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
