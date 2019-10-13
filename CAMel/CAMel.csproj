@@ -93,9 +93,9 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="ClassDiagram1.cd" />
     <Compile Include="GH\C_SpiralSurface.cs" />
     <Compile Include="GH\C_OMAX.cs" />
+    <Compile Include="Types\L_BasicParser.cs" />
     <Compile Include="Types\L_CAMelData.cs" />
     <Compile Include="Types\L_PathClick.cs" />
     <Compile Include="GH\C_OrganisePaths.cs" />

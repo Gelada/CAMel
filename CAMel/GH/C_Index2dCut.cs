@@ -85,8 +85,8 @@ namespace CAMel.GH
 
             tPa = tPa.deepClone();
 
-            if (Math.Abs(os) < CAMel_Goo.Tolerance) { tPa.leadCurvature = 0; }
-            if (os < 0) { tPa.leadCurvature = -tPa.leadCurvature; }
+            if (Math.Abs(os) < CAMel_Goo.Tolerance) { tPa.leadCurvature = string.Empty; }
+
             MachineOperation mO = Operations.opIndex2DCut(c, dir, os, tPa, mT, mF);
 
             da.SetData(0, new GH_MachineOperation(mO));

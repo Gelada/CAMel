@@ -29,7 +29,24 @@ namespace CAMel.Types
         public List<double> onion { get; set; } // thicknesses to leave before final cut.
         public bool threeAxisHeightOffset { get; set; }
         public bool tabbing { get; set; } // add tabs if machine wants to.
-        public double leadCurvature { get; set; } // if leading in or out what factor of standard value to use
+
+        [NotNull]
+        public string leadCurvature // information to create leads
+        {
+            get => this.leadComm.ToString();
+            set => this.leadComm = new BpCommand(value);
+        }
+
+        [NotNull] public BpCommand leadComm { get; private set; }
+
+        [NotNull]
+        public string machineOptions
+        {
+            get => this._mOptions.ToString();
+            set => this._mOptions = new BasicParser(value);
+        }
+
+        [NotNull] private BasicParser _mOptions;
 
         // Adding anything here needs significant support:
         //  Add to Constructors
@@ -39,7 +56,7 @@ namespace CAMel.Types
         //  Add serialization and deserialization
         //  Add to the proxy editor
 
-        public ToolPathAdditions() // create the empty addition
+        public ToolPathAdditions()
         {
             this._replaceable = false;
             this.insert = false;
@@ -50,14 +67,15 @@ namespace CAMel.Types
             this.sdDropStart = false;
             this.sdDropMiddle = 0;
             this.sdDropEnd = false;
+            this.onion = new List<double> {0};
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
-            this.leadCurvature = 0;
-            this.onion = new List<double> {0};
+            this.leadComm = new BpCommand(string.Empty);
+            this.machineOptions = string.Empty;
         }
-
         private ToolPathAdditions([NotNull] ToolPathAdditions tPa)
         {
+            this.leadComm = tPa.leadComm;
             this._replaceable = tPa._replaceable;
             this.insert = tPa.insert;
             this.retract = tPa.retract;
@@ -71,7 +89,7 @@ namespace CAMel.Types
             this.onion.AddRange(tPa.onion);
             this.threeAxisHeightOffset = tPa.threeAxisHeightOffset;
             this.tabbing = tPa.tabbing;
-            this.leadCurvature = tPa.leadCurvature;
+            this.machineOptions = tPa.machineOptions;
         }
 
         [NotNull]
@@ -92,7 +110,8 @@ namespace CAMel.Types
             onion = new List<double> {0},
             threeAxisHeightOffset = false,
             tabbing = false,
-            leadCurvature = 0
+            leadComm = new BpCommand(string.Empty),
+            machineOptions = string.Empty
         };
 
         [NotNull]
@@ -110,7 +129,8 @@ namespace CAMel.Types
             onion = new List<double> {0},
             threeAxisHeightOffset = false,
             tabbing = false,
-            leadCurvature = 1
+            leadComm = new BpCommand("U 1"),
+            machineOptions = string.Empty
         };
 
         [NotNull]
@@ -128,7 +148,8 @@ namespace CAMel.Types
             onion = new List<double> {0},
             threeAxisHeightOffset = false,
             tabbing = false,
-            leadCurvature = 0
+            leadCurvature = string.Empty,
+            machineOptions = string.Empty
         };
 
         public bool any =>
@@ -140,7 +161,8 @@ namespace CAMel.Types
             this.threeAxisHeightOffset ||
             this.tabbing ||
             this.onion.Count == 1 && Math.Abs(this.onion[0]) > CAMel_Goo.Tolerance ||
-            this.onion.Count > 1;
+            this.onion.Count > 1 ||
+            this.machineOptions != string.Empty;
 
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
         public string TypeName => "ToolPathAdditions";
@@ -167,8 +189,14 @@ namespace CAMel.Types
             this.onion.AddRange(tPa.onion);
             this.threeAxisHeightOffset = tPa.threeAxisHeightOffset;
             this.tabbing = tPa.tabbing;
-            this.leadCurvature = tPa.leadCurvature;
+            this.leadComm = tPa.leadComm;
+            this.machineOptions = tPa.machineOptions;
         }
+
+        [NotNull] public List<double> leadParam() => this.leadComm.values;
+
+        [NotNull]
+        public string leadType([NotNull] string standard) => this.leadComm.command == string.Empty ? standard : this.leadComm.command;
     }
 
     // Grasshopper Type Wrapper
@@ -206,7 +234,8 @@ namespace CAMel.Types
             writer.SetInt32("onionCount", this.Value.onion.Count);
             writer.SetBoolean("threeAxisHeightOffset", this.Value.threeAxisHeightOffset);
             writer.SetBoolean("tabbing", this.Value.tabbing);
-            writer.SetDouble("leadCurve", this.Value.leadCurvature);
+            writer.SetString("leadCurve", this.Value.leadCurvature);
+            writer.SetString("machineOptions", this.Value.machineOptions);
 
             return base.Write(writer);
         }
@@ -239,9 +268,18 @@ namespace CAMel.Types
                 }
                 if (reader.ItemExists("threeAxisHeightOffset")) { tPa.threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset"); }
                 if (reader.ItemExists("tabbing")) { tPa.tabbing = reader.GetBoolean("tabbing"); }
-                if (reader.ItemExists("leadCurve")) { tPa.leadCurvature = reader.GetDouble("leadCurve"); }
+                if (reader.ItemExists("leadCurve"))
+                {
+                    double val = 0;
+                    tPa.leadCurvature = reader.TryGetDouble("leadCurve", ref val)
+                        ? val.ToString(CultureInfo.InvariantCulture)
+                        : reader?.GetString("leadCurve") ?? string.Empty;
+                }
+                if (reader.ItemExists("machineOptions")) { tPa.machineOptions = reader.GetString("machineOptions"); }
                 this.Value = tPa;
-                return base.Read(reader);
+                bool m = base.Read(reader);
+
+                return m;
             }
             catch (Exception ex) when (ex is OverflowException || ex is InvalidCastException || ex is NullReferenceException)
             {
@@ -495,8 +533,8 @@ namespace CAMel.Types
             }
         }
 
-        [Category(" General"), Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), DisplayName("Lead Curvature"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
-        public double leadCurve
+        [CanBeNull, Category(" General"), Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), DisplayName("Lead Curvature"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
+        public string leadCurve
         {
             get => this.Owner?.Value?.leadCurvature ?? ToolPathAdditions.basicDefault.leadCurvature;
             set
@@ -505,6 +543,20 @@ namespace CAMel.Types
                 if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
                 tPa.leadCurvature = value;
+                this.Owner.Value = tPa;
+            }
+        }
+
+        [CanBeNull, Category(" General"), Description("Specific options for a machine, be careful might not be standard between machines."), DisplayName("Machine Options"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
+        public string machineOptions
+        {
+            get => this.Owner?.Value?.machineOptions ?? ToolPathAdditions.basicDefault.machineOptions;
+            set
+            {
+                if (this.Owner == null) { throw new NullReferenceException(); }
+                if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
+                ToolPathAdditions tPa = this.Owner.Value;
+                tPa.machineOptions = value;
                 this.Owner.Value = tPa;
             }
         }

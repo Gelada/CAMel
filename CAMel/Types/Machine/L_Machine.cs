@@ -553,7 +553,7 @@ namespace CAMel.Types.Machine
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
-            newTP.additions.leadCurvature = 0;
+            newTP.additions.leadCurvature = string.Empty;
 
             // Add activation code to main path if tool not activated for insert/retract
             if (tP.additions.activate != 0 && irActivate == 0)
@@ -564,7 +564,7 @@ namespace CAMel.Types.Machine
 
             irTps.Add(newTP);
 
-            double leadCurve = tP.additions.leadCurvature;
+            double leadCurve = tP.additions.leadParam()[0];
 
             // If leadCurve == 0 or path is open can now return
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return irTps; }
@@ -645,7 +645,7 @@ namespace CAMel.Types.Machine
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
-            newTP.additions.leadCurvature = 0;
+            newTP.additions.leadCurvature = String.Empty;
 
             // Add activation code to main path if tool not activated for insert/retract
             if (tP.additions.activate != 0 && irActivate == 0)
@@ -656,7 +656,7 @@ namespace CAMel.Types.Machine
 
             irTps.Add(newTP);
 
-            double leadCurve = tP.additions.leadCurvature;
+            double leadCurve = tP.additions.leadComm[0];
 
             // If leadCurve == 0 can now return
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
