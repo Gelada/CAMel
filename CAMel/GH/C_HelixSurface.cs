@@ -110,28 +110,14 @@ namespace CAMel.GH
             }
 
             // set Surfacing direction
-            SurfToolDir sTd;
-            switch (tD)
+            SurfToolDir sTD = SurfacePath.getSurfDir(tD);
+            if (sTD == SurfToolDir.Error)
             {
-                case 0:
-                    sTd = SurfToolDir.Projection;
-                    break;
-                case 1:
-                    sTd = SurfToolDir.PathTangent;
-                    break;
-                case 2:
-                    sTd = SurfToolDir.PathNormal;
-                    break;
-                case 3:
-                    sTd = SurfToolDir.Normal;
-                    break;
-                default:
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error,
-                        "Input parameter TD can only have values 0,1,2 or 3");
-                    return;
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
+                return;
             }
 
-            SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTd, bb, mT);
+            SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTD, bb, mT);
             da.SetData(0, new GH_SurfacePath(sP));
             //DA.SetDataList(1, Paths);
         }

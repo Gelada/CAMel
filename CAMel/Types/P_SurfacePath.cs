@@ -37,7 +37,8 @@ namespace CAMel.Types
         Projection,
         PathTangent,
         PathNormal,
-        Normal
+        Normal,
+        Error
     }
 
     // A path that will project to a surface for surfacing
@@ -421,6 +422,23 @@ namespace CAMel.Types
         IEnumerator IEnumerable.GetEnumerator() => this._paths.GetEnumerator();
 
         #endregion
+
+        public static SurfToolDir getSurfDir(int tD)
+        {
+            switch (tD)
+            {
+                case 0:
+                    return SurfToolDir.Projection;
+                case 1:
+                    return SurfToolDir.PathTangent;
+                case 2:
+                    return SurfToolDir.PathNormal;
+                case 3:
+                    return SurfToolDir.Normal;
+                default:
+                    return SurfToolDir.Error;
+            }
+        }
     }
 
     // Grasshopper Type Wrapper
