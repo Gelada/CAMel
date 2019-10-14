@@ -103,26 +103,7 @@ namespace CAMel.Types
             this.toolLength = mT.toolLength;
             this.tolerance = mT.tolerance;
             this.minStep = mT.minStep;
-            EndShape eS;
-            switch (mT.shape)
-            {
-                case "Ball":
-                    eS = EndShape.Ball;
-                    break;
-                case "Square":
-                    eS = EndShape.Square;
-                    break;
-                case "V":
-                    eS = EndShape.V;
-                    break;
-                case "Other":
-                    eS = EndShape.Other;
-                    break;
-                default:
-                    eS = EndShape.Error;
-                    break;
-            }
-            this.shape = eS;
+            this.shape = getToolShape(mT.shape);
             this.sideLoad = mT.sideLoad;
             this.pathJump = mT.pathJump;
         }
@@ -206,6 +187,22 @@ namespace CAMel.Types
                     break;
             }
             return os;
+        }
+        public static EndShape getToolShape([CanBeNull] string toolShape)
+        {
+            switch (toolShape)
+            {
+                case "Ball":
+                    return EndShape.Ball;
+                case "Square":
+                    return EndShape.Square;
+                case "V":
+                    return EndShape.V;
+                case "Other":
+                    return EndShape.Other;
+                default:
+                    return EndShape.Error;
+            }
         }
     }
 

@@ -68,7 +68,6 @@ namespace CAMel.GH
             double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW = 0, tL = 0, sL = 1, pJ = -1;
 
             string toolShape = string.Empty;
-            EndShape eS;
 
             if (!da.GetData("Material Name", ref matName)) { return; }
             if (!da.GetData("Tool Name", ref toolName)) { return; }
@@ -87,24 +86,13 @@ namespace CAMel.GH
             if (!da.GetData("Side Load", ref sL)) { return; }
             if (!da.GetData("Path Jump", ref pJ)) { return; }
 
-            switch (toolShape)
+            EndShape eS = MaterialTool.getToolShape(toolShape);
+
+            if (eS == EndShape.Error)
             {
-                case "Ball":
-                    eS = EndShape.Ball;
-                    break;
-                case "Square":
-                    eS = EndShape.Square;
-                    break;
-                case "V":
-                    eS = EndShape.V;
-                    break;
-                case "Other":
-                    eS = EndShape.Other;
-                    break;
-                default:
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "End Shape not recognised. Options are \"Ball\", \"Square\", \"V\" use \"Other\" to avoid warning.");
-                    eS = EndShape.Other;
-                    break;
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                    "End Shape not recognised. Options are \"Ball\", \"Square\", \"V\" use \"Other\" to avoid warning.");
+                eS = EndShape.Other;
             }
 
             MaterialTool mT = new MaterialTool(matName, toolName, T, s, cf, pf, cd, fd, tW, iW, tL, eS, to, mS, sL, pJ);
