@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using CAMel.Types;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using CAMel.Types;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_ToToolPoints : GH_Component
     {
@@ -15,7 +18,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the CreateInstructions class.
         /// </summary>
         public C_ToToolPoints()
-            : base("To ToolPoints", "ToolPoints",
+            : base(
+                "To ToolPoints", "ToolPoints",
                 "Extract a list of toolpoints from a ToolPath, Machine Operation or Machine Instructions.",
                 "CAMel", " ToolPaths") { }
 

@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ClipperLib;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using ClipperLib;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     // Wrapper classes and library interfaces for leveraging the clipper
     // library for doing offsetting
     public static class Offsetting

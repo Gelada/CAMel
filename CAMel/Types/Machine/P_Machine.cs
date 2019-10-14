@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types.Machine
+﻿namespace CAMel.Types.Machine
 {
+    using System;
+    using System.Collections.Generic;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     // Settings for a machine (this is the POST!)
     // This is the only place we handle language
     // So other languages can be used.
@@ -62,11 +65,11 @@ namespace CAMel.Types.Machine
     {
         // Default constructor
         [UsedImplicitly]
-        public GH_Machine() { this.Value = null; }
+        public GH_Machine() => this.Value = null;
         // Unwrapped type
-        public GH_Machine([CanBeNull] IMachine m) { this.Value = m; }
+        public GH_Machine([CanBeNull] IMachine m) => this.Value = m;
         // Copy Constructor (just reference as Machine is Immutable)
-        public GH_Machine([CanBeNull] GH_Machine m) { this.Value = m?.Value; }
+        public GH_Machine([CanBeNull] GH_Machine m) => this.Value = m?.Value;
         // Duplicate
         [NotNull]
         public override IGH_Goo Duplicate() => new GH_Machine(this);

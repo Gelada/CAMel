@@ -1,14 +1,17 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using Grasshopper.Kernel.Expressions;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Text;
+
+    using Grasshopper.Kernel.Expressions;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public interface ICAMelBase
     {
         [NotNull] string TypeDescription { get; }
@@ -112,15 +115,15 @@ namespace CAMel.Types
                 case IGH_Goo goo:
                     return goo.ScriptVariable();
                 case IEnumerable objs:
-                {
-                    List<object> oP = new List<object>();
-                    foreach (object obj in objs)
                     {
-                        if (obj is IGH_Goo ghGoo) { oP.Add(ghGoo.ScriptVariable()); }
-                        else { oP.Add(obj); }
+                        List<object> oP = new List<object>();
+                        foreach (object obj in objs)
+                        {
+                            if (obj is IGH_Goo ghGoo) { oP.Add(ghGoo.ScriptVariable()); }
+                            else { oP.Add(obj); }
+                        }
+                        return oP;
                     }
-                    return oP;
-                }
                 default:
                     return gooey;
             }

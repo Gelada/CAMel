@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types;
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_OMAX : GH_Component
     {
@@ -15,7 +18,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_OMAX()
-            : base("OMAX Waterjet", "OMAX",
+            : base(
+                "OMAX Waterjet", "OMAX",
                 "Waterjet cutter from OMAX corporation",
                 "CAMel", " Hardware") { }
 

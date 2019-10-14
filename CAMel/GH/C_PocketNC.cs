@@ -1,13 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types;
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_PocketNC : GH_Component
     {
@@ -16,7 +20,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_PocketNC()
-            : base("PocketNC Machine", "PocketNC",
+            : base(
+                "PocketNC Machine", "PocketNC",
                 "PocketNC 5 Axis Machine",
                 "CAMel", " Hardware") { }
 

@@ -1,12 +1,16 @@
-﻿using System;
-using CAMel.Types;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+
+    using CAMel.Types;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_HelixSurfacePath : GH_Component
     {
@@ -15,7 +19,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the CreateToolPath class.
         /// </summary>
         public C_HelixSurfacePath()
-            : base("Create Helix Surfacing Path", "SurfacePath",
+            : base(
+                "Create Helix Surfacing Path", "SurfacePath",
                 "Create a helical surfacing recipe",
                 "CAMel", " ToolPaths") { }
 

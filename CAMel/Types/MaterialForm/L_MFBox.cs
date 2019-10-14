@@ -1,10 +1,13 @@
-﻿using System;
-using CAMel.Types.Machine;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types.MaterialForm
+﻿namespace CAMel.Types.MaterialForm
 {
+    using System;
+
+    using CAMel.Types.Machine;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public class MFBox : IMaterialForm
     {
         public MFBox(Box box, double matTol, double safeD)
@@ -12,7 +15,7 @@ namespace CAMel.Types.MaterialForm
             this.box = box;
             this.materialTolerance = matTol;
             this.safeDistance = safeD;
-            this._myMesh = null;
+            this.myMesh = null;
         }
 
         private Box box { get; }
@@ -131,15 +134,15 @@ namespace CAMel.Types.MaterialForm
 
         public ToolPath refine(ToolPath tP, IMachine m) => MFDefault.refine(this, tP, m);
 
-        private Mesh _myMesh;
+        private Mesh myMesh;
         [NotNull] private Mesh setMesh() => Mesh.CreateFromBox(this.box, 1, 1, 1) ?? new Mesh();
 
-        public Mesh getMesh() => this._myMesh ?? (this._myMesh = setMesh());
+        public Mesh getMesh() => this.myMesh ?? (this.myMesh = setMesh());
 
-        private Brep _myBrep;
+        private Brep myBrep;
         [NotNull] private Brep setBrep() => Brep.CreateFromBox(this.box) ?? new Brep();
 
-        [NotNull] public Brep getBrep() => this._myBrep ?? (this._myBrep = setBrep());
+        [NotNull] public Brep getBrep() => this.myBrep ?? (this.myBrep = setBrep());
         public BoundingBox getBoundingBox() => this.box.BoundingBox;
     }
 }

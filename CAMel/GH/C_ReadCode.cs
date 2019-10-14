@@ -1,13 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types;
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_ReadCode : GH_Component
     {
@@ -16,7 +20,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the WriteCode class.
         /// </summary>
         public C_ReadCode()
-            : base("Read CNC Code", "Read",
+            : base(
+                "Read CNC Code", "Read",
                 "Read CNC Code",
                 "CAMel", "CNC Code") { }
 

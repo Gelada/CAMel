@@ -1,20 +1,24 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     // List of toolpaths forming a complete set of instructions
     // for the machine
     public class MachineInstruction : IList<MachineOperation>, IToolPointContainer
     {
-        [ItemNotNull, NotNull] private List<MachineOperation> _mOs;
+        [ItemNotNull, NotNull] private List<MachineOperation> mOs;
         [PublicAPI, NotNull] public ToolPath startPath { get; set; }
         [PublicAPI, NotNull] public ToolPath endPath { get; set; }
 
@@ -32,7 +36,7 @@ namespace CAMel.Types
         public MachineInstruction([NotNull] IMachine m)
         {
             this.m = m;
-            this._mOs = new List<MachineOperation>();
+            this.mOs = new List<MachineOperation>();
             this.startPath = new ToolPath();
             this.endPath = new ToolPath();
             this.name = string.Empty;
@@ -45,7 +49,7 @@ namespace CAMel.Types
         {
             this.name = name;
             this.m = mach;
-            this._mOs = mOs ?? new List<MachineOperation>();
+            this.mOs = mOs ?? new List<MachineOperation>();
             this.startPath = startPath ?? new ToolPath();
             this.endPath = endPath ?? new ToolPath();
             this.preCode = string.Empty;
@@ -60,26 +64,26 @@ namespace CAMel.Types
             this.m = mI.m;
             this.startPath = mI.startPath.deepClone();
             this.endPath = mI.endPath.deepClone();
-            this._mOs = new List<MachineOperation>();
-            foreach (MachineOperation mO in mI) { this._mOs.Add(mO?.deepClone()); }
+            this.mOs = new List<MachineOperation>();
+            foreach (MachineOperation mO in mI) { this.mOs.Add(mO?.deepClone()); }
         }
 
         [NotNull] public MachineInstruction deepClone() => new MachineInstruction(this);
 
         // Copy basic information but add new paths
         [NotNull, PublicAPI]
-        public MachineInstruction deepCloneWithNewPaths([NotNull] List<MachineOperation> mOs)
+        public MachineInstruction deepCloneWithNewPaths([NotNull] List<MachineOperation> newMOs)
         {
             MachineInstruction outInst = new MachineInstruction(this.m)
-            {
-                name = string.Copy(this.name),
-                preCode = string.Copy(this.preCode),
-                postCode = string.Copy(this.postCode),
-                m = this.m,
-                startPath = this.startPath.deepClone(),
-                endPath = this.endPath.deepClone(),
-                _mOs = mOs
-            };
+                {
+                    name = string.Copy(this.name),
+                    preCode = string.Copy(this.preCode),
+                    postCode = string.Copy(this.postCode),
+                    m = this.m,
+                    startPath = this.startPath.deepClone(),
+                    endPath = this.endPath.deepClone(),
+                    mOs = newMOs
+                };
             return outInst;
         }
 
@@ -262,26 +266,28 @@ namespace CAMel.Types
 
         #region List Functions 
 
-        public int Count => this._mOs.Count;
-        public bool IsReadOnly => ((IList<MachineOperation>) this._mOs).IsReadOnly;
-        [NotNull] public MachineOperation this[int index] { get => this._mOs[index]; set => this._mOs[index] = value; }
-        public int IndexOf(MachineOperation item) => this._mOs.IndexOf(item);
+        public int Count => this.mOs.Count;
+        public bool IsReadOnly => ((IList<MachineOperation>) this.mOs).IsReadOnly;
+
+        [NotNull] public MachineOperation this[int index] { get => this.mOs[index]; set => this.mOs[index] = value; }
+
+        public int IndexOf(MachineOperation item) => this.mOs.IndexOf(item);
         public void Insert(int index, MachineOperation item)
         {
-            if (item != null) { this._mOs.Insert(index, item); }
+            if (item != null) { this.mOs.Insert(index, item); }
         }
-        public void RemoveAt(int index) => this._mOs.RemoveAt(index);
+        public void RemoveAt(int index) => this.mOs.RemoveAt(index);
         public void Add(MachineOperation item)
         {
-            if (item != null) { this._mOs.Add(item); }
+            if (item != null) { this.mOs.Add(item); }
         }
-        [PublicAPI] public void AddRange([NotNull] IEnumerable<MachineOperation> items) => this._mOs.AddRange(items.Where(x => x != null));
-        public void Clear() => this._mOs.Clear();
-        public bool Contains(MachineOperation item) => this._mOs.Contains(item);
-        public void CopyTo(MachineOperation[] array, int arrayIndex) => this._mOs.CopyTo(array, arrayIndex);
-        public bool Remove(MachineOperation item) => this._mOs.Remove(item);
-        public IEnumerator<MachineOperation> GetEnumerator() => this._mOs.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => this._mOs.GetEnumerator();
+        [PublicAPI] public void AddRange([NotNull] IEnumerable<MachineOperation> items) => this.mOs.AddRange(items.Where(x => x != null));
+        public void Clear() => this.mOs.Clear();
+        public bool Contains(MachineOperation item) => this.mOs.Contains(item);
+        public void CopyTo(MachineOperation[] array, int arrayIndex) => this.mOs.CopyTo(array, arrayIndex);
+        public bool Remove(MachineOperation item) => this.mOs.Remove(item);
+        public IEnumerator<MachineOperation> GetEnumerator() => this.mOs.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => this.mOs.GetEnumerator();
 
         #endregion
     }
@@ -290,11 +296,11 @@ namespace CAMel.Types
     public sealed class GH_MachineInstruction : CAMel_Goo<MachineInstruction>, IGH_PreviewData
     {
         // Default Constructor;
-        [UsedImplicitly] public GH_MachineInstruction() { this.Value = null; }
+        [UsedImplicitly] public GH_MachineInstruction() => this.Value = null;
         // Construct from value alone
-        public GH_MachineInstruction([CanBeNull] MachineInstruction mI) { this.Value = mI; }
+        public GH_MachineInstruction([CanBeNull] MachineInstruction mI) => this.Value = mI;
         // Copy Constructor.
-        public GH_MachineInstruction([CanBeNull] GH_MachineInstruction mI) { this.Value = mI?.Value?.deepClone(); }
+        public GH_MachineInstruction([CanBeNull] GH_MachineInstruction mI) => this.Value = mI?.Value?.deepClone();
         // Duplicate
         [NotNull] public override IGH_Goo Duplicate() => new GH_MachineInstruction(this);
 

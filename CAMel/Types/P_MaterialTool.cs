@@ -1,12 +1,16 @@
-﻿using System;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     // Different end mill shapes to consider
     public enum EndShape
     {
@@ -210,11 +214,11 @@ namespace CAMel.Types
     public sealed class GH_MaterialTool : CAMel_Goo<MaterialTool>
     {
         [UsedImplicitly]
-        public GH_MaterialTool() { this.Value = null; }
+        public GH_MaterialTool() => this.Value = null;
         // construct from unwrapped type
-        public GH_MaterialTool([CanBeNull] MaterialTool mT) { this.Value = mT; }
+        public GH_MaterialTool([CanBeNull] MaterialTool mT) => this.Value = mT;
         // Copy Constructor (just reference as MaterialTool is Immutable)
-        public GH_MaterialTool([CanBeNull] GH_MaterialTool mT) { this.Value = mT?.Value; }
+        public GH_MaterialTool([CanBeNull] GH_MaterialTool mT) => this.Value = mT?.Value;
         // Duplicate
         [CanBeNull]
         public override IGH_Goo Duplicate() => new GH_MaterialTool(this);

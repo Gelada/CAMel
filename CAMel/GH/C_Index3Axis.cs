@@ -1,13 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types;
-using CAMel.Types.MaterialForm;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types;
+    using CAMel.Types.MaterialForm;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_Index3Axis : GH_Component
     {
@@ -16,7 +20,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the WriteCode class.
         /// </summary>
         public C_Index3Axis()
-            : base("Index 3 Axis", "Index",
+            : base(
+                "Index 3 Axis", "Index",
                 "Create a machine operation from a collection of paths, with 3 Axis operation with the tool in a single orientation.",
                 "CAMel", " Operations") { }
 
@@ -31,8 +36,7 @@ namespace CAMel.GH
             pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
             GH_ToolPathAdditionsPar tPaPar = new GH_ToolPathAdditionsPar();
             tPaPar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
-            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n"
-                                                              + "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
+            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" + "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[2].Optional = true; // ToolPathAdditions
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);

@@ -1,16 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using CAMel.Types;
-using CsvHelper;
-using CsvHelper.Configuration;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Parameters;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+
+    using CAMel.Types;
+
+    using CsvHelper;
+    using CsvHelper.Configuration;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Parameters;
+
+    using JetBrains.Annotations;
+
     // Mappings for csv helper
 
     [UsedImplicitly]
@@ -45,7 +49,8 @@ namespace CAMel.GH
         /// Reads a file of Material Tools
         /// </summary>
         public C_ReadToolFile()
-            : base("Read Tool File", "ReadMT",
+            : base(
+                "Read Tool File", "ReadMT",
                 "Read in a .csv file with material and tool details",
                 "CAMel", " Hardware") { }
 

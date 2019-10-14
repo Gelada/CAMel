@@ -1,21 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using GH_IO.Serialization;
-using GH_IO.Types;
-using Grasshopper;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using Grasshopper.Kernel.Utility;
-using JetBrains.Annotations;
-using Rhino.Commands;
-using Rhino.Geometry;
-using Rhino.Input;
-using Rhino.Input.Custom;
-using GH_Plane = GH_IO.Types.GH_Plane;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+    using System.Collections.Generic;
+    using System.ComponentModel;
+
+    using GH_IO.Serialization;
+    using GH_IO.Types;
+
+    using Grasshopper;
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+    using Grasshopper.Kernel.Utility;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Commands;
+    using Rhino.Geometry;
+    using Rhino.Input;
+    using Rhino.Input.Custom;
+
+    using GH_Plane = GH_IO.Types.GH_Plane;
+
     // One position of the machine
     public class ToolPoint : IToolPointContainer
     {
@@ -178,11 +183,11 @@ namespace CAMel.Types
     {
         // Default Constructor, set up at the origin with direction set to 0 vector.
         [UsedImplicitly]
-        public GH_ToolPoint() { this.Value = new ToolPoint(); }
+        public GH_ToolPoint() => this.Value = new ToolPoint();
         // Create from unwrapped version
-        public GH_ToolPoint([CanBeNull] ToolPoint tP) { this.Value = tP?.deepClone(); }
+        public GH_ToolPoint([CanBeNull] ToolPoint tP) => this.Value = tP?.deepClone();
         // Copy Constructor
-        public GH_ToolPoint([CanBeNull] GH_ToolPoint tP) { this.Value = tP?.Value?.deepClone(); }
+        public GH_ToolPoint([CanBeNull] GH_ToolPoint tP) => this.Value = tP?.Value?.deepClone();
         // Duplicate
         [NotNull]
         public override IGH_Goo Duplicate() => new GH_ToolPoint(this);
@@ -414,22 +419,22 @@ namespace CAMel.Types
 
         private class GetToolDir : GetPoint
         {
-            private readonly Point3d _start;
-            private Line _dir;
-            private readonly OptionToggle _useToggle;
+            private readonly Point3d start;
+            private Line dir;
+            private readonly OptionToggle useToggle;
 
-            public bool useForRemainder => this._useToggle?.CurrentValue ?? false;
+            public bool useForRemainder => this.useToggle?.CurrentValue ?? false;
 
             public GetToolDir(Point3d startP, bool multiple)
             {
                 SetCommandPrompt("Tool Direction");
                 AcceptNothing(true);
-                this._start = !startP.IsValid ? Point3d.Origin : startP;
+                this.start = !startP.IsValid ? Point3d.Origin : startP;
                 SetBasePoint(startP, true);
                 if (multiple)
                 {
-                    this._useToggle = new OptionToggle(false, "Once", "ForRemainder");
-                    AddOptionToggle("Use", ref this._useToggle);
+                    this.useToggle = new OptionToggle(false, "Once", "ForRemainder");
+                    AddOptionToggle("Use", ref this.useToggle);
                 }
                 AddOption("X");
                 AddOption("Y");
@@ -443,13 +448,13 @@ namespace CAMel.Types
 
             private void moveMouse([CanBeNull] object sender, [CanBeNull] GetPointMouseEventArgs e)
             {
-                if (e != null) { this._dir = new Line(this._start, e.Point); }
+                if (e != null) { this.dir = new Line(this.start, e.Point); }
             }
 
             private void draw([CanBeNull] object sender, [CanBeNull] GetPointDrawEventArgs e)
             {
-                e?.Display?.DrawPoint(this._start, CentralSettings.PreviewPointStyle, 3, System.Drawing.Color.Black);
-                if (this._dir.IsValid) { e?.Display?.DrawArrow(this._dir, System.Drawing.Color.Black); }
+                e?.Display?.DrawPoint(this.start, CentralSettings.PreviewPointStyle, 3, System.Drawing.Color.Black);
+                if (this.dir.IsValid) { e?.Display?.DrawArrow(this.dir, System.Drawing.Color.Black); }
             }
         }
     }

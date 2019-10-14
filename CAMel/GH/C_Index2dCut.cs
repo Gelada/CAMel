@@ -1,13 +1,17 @@
-﻿using System;
-using CAMel.Types;
-using CAMel.Types.MaterialForm;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-using Rhino.Geometry.Intersect;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+
+    using CAMel.Types;
+    using CAMel.Types.MaterialForm;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+    using Rhino.Geometry.Intersect;
+
     [UsedImplicitly]
     public class C_Index2DCut : GH_Component
     {
@@ -16,7 +20,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the WriteCode class.
         /// </summary>
         public C_Index2DCut()
-            : base("2D Cut", "2D",
+            : base(
+                "2D Cut", "2D",
                 "Create a Machine Operations cutting out 2D shapes.",
                 "CAMel", " Operations") { }
 

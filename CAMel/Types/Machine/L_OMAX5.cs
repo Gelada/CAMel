@@ -1,14 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types.Machine
+﻿namespace CAMel.Types.Machine
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public class Omax5 : IMachine
     {
         public string name { get; }
@@ -270,11 +272,11 @@ namespace CAMel.Types.Machine
     internal static class OMXCode
     {
         [NotNull]
-        public static string omxTiltPt([NotNull] CodeInfo co, Point3d lastPt, Vector3d lastDir,
-            [NotNull] ToolPoint tPt, int lastQ, double tiltMax, Vector3d os)
+        public static string omxTiltPt([NotNull] CodeInfo co, Point3d lastPt,
+                                       Vector3d lastDir, [NotNull] ToolPoint tPt,
+                                       int lastQ, double tiltMax, Vector3d os)
         {
             // Work on tilts
-
             double tiltStart = Vector3d.VectorAngle(Vector3d.ZAxis, lastDir);
             double tiltEnd = Vector3d.VectorAngle(Vector3d.ZAxis, tPt.dir);
 
@@ -368,7 +370,7 @@ namespace CAMel.Types.Machine
         }
 
         public static void omxInstStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-            [NotNull] MachineInstruction mI)
+                                        [NotNull] MachineInstruction mI)
         {
             if (mI[0].Count == 0) { Exceptions.noToolPathException(); }
             if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
@@ -406,11 +408,13 @@ namespace CAMel.Types.Machine
         }
         // ReSharper disable once UnusedParameter.Global
         public static void omxInstEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-            [NotNull] MachineInstruction mI) => co.append(mI.postCode);
+                                      [NotNull] MachineInstruction mI)
+            => co.append(mI.postCode);
 
         // ReSharper disable once UnusedParameter.Global
         public static void omxOpStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-            [NotNull] MachineOperation mO) => co.append(mO.preCode);
+                                      [NotNull] MachineOperation mO)
+            => co.append(mO.preCode);
 
         // ReSharper disable once UnusedParameter.Global
         public static void

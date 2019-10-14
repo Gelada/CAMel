@@ -1,13 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types;
-using CAMel.Types.MaterialForm;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types;
+    using CAMel.Types.MaterialForm;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_CreateToolPath : GH_Component
     {
@@ -16,7 +20,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the CreateToolPath class.
         /// </summary>
         public C_CreateToolPath()
-            : base("Create Tool Path", "ToolPath",
+            : base(
+                "Create Tool Path", "ToolPath",
                 "Create a toolpath from lists of points and directions (if > 3axis)",
                 "CAMel", " ToolPaths") { }
 
@@ -43,8 +48,7 @@ namespace CAMel.GH
             pManager[7].WireDisplay = GH_ParamWireDisplay.faint;
             GH_ToolPathAdditionsPar tPaPar = new GH_ToolPathAdditionsPar();
             tPaPar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
-            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" +
-                                                              "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
+            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" + "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[8].Optional = true; // ToolPathAdditions
             pManager.AddTextParameter("Code", "C", "Addition CNC code to run before this path.", GH_ParamAccess.item, string.Empty);
@@ -77,7 +81,7 @@ namespace CAMel.GH
             MaterialTool mT = null;
             IMaterialForm mF = null;
             string co = string.Empty;
-            ToolPathAdditions tPa = ToolPathAdditions.replaceable;
+            ToolPathAdditions tPa = ToolPathAdditions.temp;
 
             if (!da.GetDataList(0, pts)) { return; }
             if (!da.GetDataList(1, dirs)) { return; }

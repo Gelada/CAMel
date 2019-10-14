@@ -1,12 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="C_Create2AxisMachine.cs" company="">
+//   
+// </copyright>
+// <summary>
+//   Defines the C_Create2AxisMachine type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
+
+    using CAMel.Types;
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_Create2AxisMachine : GH_Component
     {
@@ -15,7 +28,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_Create2AxisMachine()
-            : base("Create 2 Axis Machine", "2Axis",
+            : base(
+                "Create 2 Axis Machine", "2Axis",
                 "Create 2 Axis Machine",
                 "CAMel", " Hardware") { }
 
@@ -26,6 +40,7 @@ namespace CAMel.GH
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
+        [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1013:ClosingCurlyBracketsMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here.")]
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "Name", GH_ParamAccess.item, string.Empty);
@@ -35,11 +50,11 @@ namespace CAMel.GH
             pManager[1].Optional = true;
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
-            List<string> ccDefault = new List<string> {GCode.DefaultCommentStart, GCode.DefaultCommentEnd, GCode.DefaultSectionBreak};
+            List<string> ccDefault = new List<string> { GCode.DefaultCommentStart, GCode.DefaultCommentEnd, GCode.DefaultSectionBreak};
             pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list, ccDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[4].Optional = true;
-            List<string> irDefault = new List<string> {GCode.DefaultSpeedChangeCommand, GCode.DefaultActivateCommand, GCode.DefaultDeActivateCommand};
+            List<string> irDefault = new List<string> { GCode.DefaultSpeedChangeCommand, GCode.DefaultActivateCommand, GCode.DefaultDeActivateCommand};
             pManager.AddTextParameter("Speed/Insert/Retract/ToolChange", "SIRT", "Commands to change speed, insert and retract tool, and change tool", GH_ParamAccess.list, irDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[5].Optional = true;
@@ -103,22 +118,22 @@ namespace CAMel.GH
             da.GetDataList("Material Tools", uMTs);
 
             TwoAxisFactory twoAxis = new TwoAxisFactory
-            {
-                name = uName,
-                extension = ext,
-                mTs = uMTs,
-                header = head,
-                footer = foot,
-                speedChangeCommand = speed,
-                toolActivate = uInsert,
-                toolDeActivate = uRetract,
-                toolChangeCommand = tool,
-                commentStart = uCommentStart,
-                commentEnd = uCommentEnd,
-                sectionBreak = uSectionBreak,
-                fileStart = uFileStart,
-                fileEnd = uFileEnd
-            };
+                {
+                    name = uName,
+                    extension = ext,
+                    mTs = uMTs,
+                    header = head,
+                    footer = foot,
+                    speedChangeCommand = speed,
+                    toolActivate = uInsert,
+                    toolDeActivate = uRetract,
+                    toolChangeCommand = tool,
+                    commentStart = uCommentStart,
+                    commentEnd = uCommentEnd,
+                    sectionBreak = uSectionBreak,
+                    fileStart = uFileStart,
+                    fileEnd = uFileEnd
+                };
 
             IGCodeMachine m = new TwoAxis(twoAxis);
             da.SetData(0, m);

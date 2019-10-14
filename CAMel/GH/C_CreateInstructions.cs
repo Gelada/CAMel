@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types;
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_CreateInstructions : GH_Component
     {
@@ -15,7 +18,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the CreateInstructions class.
         /// </summary>
         public C_CreateInstructions()
-            : base("Create Instructions", "Instructions",
+            : base(
+                "Create Instructions", "Instructions",
                 "Create machine instructions from a list of machine operations, or tool paths and a machine",
                 "CAMel", " ToolPaths") { }
 
@@ -49,11 +53,11 @@ namespace CAMel.GH
             pManager.AddParameter(new GH_MachineInstructionPar(), "Instructions", "I", "Machine Instructions", GH_ParamAccess.item);
         }
 
-        private double _nameCount;
+        private double nameCount;
 
         protected override void BeforeSolveInstance()
         {
-            this._nameCount = 1;
+            this.nameCount = 1;
             base.BeforeSolveInstance();
         }
 
@@ -116,8 +120,8 @@ namespace CAMel.GH
             // otherwise assume something sensible is happening
             if (!(this.Params?.Input?[1]?.VolatileData?.PathCount > 1) || this.Params?.Input?[0]?.VolatileDataCount != 1
             ) { return name; }
-            string path = " " + this._nameCount;
-            this._nameCount++;
+            string path = " " + this.nameCount;
+            this.nameCount++;
             return name + path;
         }
 

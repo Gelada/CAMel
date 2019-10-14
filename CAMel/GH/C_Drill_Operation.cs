@@ -1,12 +1,16 @@
-﻿using System;
-using CAMel.Types;
-using CAMel.Types.MaterialForm;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+
+    using CAMel.Types;
+    using CAMel.Types.MaterialForm;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_DrillOperation : GH_Component
     {
@@ -15,7 +19,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the WriteCode class.
         /// </summary>
         public C_DrillOperation()
-            : base("Drill Operation", "Drill",
+            : base(
+                "Drill Operation", "Drill",
                 "Create a Machine Operation drilling at a certain point.",
                 "CAMel", " Operations") { }
 

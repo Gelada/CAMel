@@ -1,12 +1,16 @@
-﻿using System;
-using CAMel.Types;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+
+    using CAMel.Types;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_ParallelSurfacePath : GH_Component
     {
@@ -15,7 +19,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the CreateToolPath class.
         /// </summary>
         public C_ParallelSurfacePath()
-            : base("Create Parallel Surfacing Path", "SurfacePath",
+            : base(
+                "Create Parallel Surfacing Path", "SurfacePath",
                 "Create a parallel surfacing recipe",
                 "CAMel", " ToolPaths") { }
 

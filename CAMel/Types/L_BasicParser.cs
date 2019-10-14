@@ -1,10 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using JetBrains.Annotations;
+
     public class BpCommand : IEnumerable<double>
     {
         [NotNull] public string command { get; }
@@ -69,25 +70,25 @@ namespace CAMel.Types
 
     public class BasicParser : IEnumerable<BpCommand>
     {
-        [NotNull] private readonly List<BpCommand> _commands;
+        [NotNull] private readonly List<BpCommand> commands;
 
         public BasicParser([CanBeNull] string commandString)
         {
-            this._commands = new List<BpCommand>();
+            this.commands = new List<BpCommand>();
             if (string.IsNullOrEmpty(commandString)) { return; }
             List<string> split = new List<string>();
             split.AddRange(commandString.Split(','));
-            this._commands.AddRange(split.Select(s => new BpCommand(s)).ToList());
+            this.commands.AddRange(split.Select(s => new BpCommand(s)).ToList());
         }
         public override string ToString()
         {
-            return this._commands.Aggregate(string.Empty, (current, comm) => current + comm) ?? string.Empty;
+            return this.commands.Aggregate(string.Empty, (current, comm) => current + comm) ?? string.Empty;
         }
 
         [UsedImplicitly]
         public bool contains([NotNull] string command, out BpCommand c)
         {
-            foreach (BpCommand bpC in this._commands.Where(bpC => bpC?.command == command))
+            foreach (BpCommand bpC in this.commands.Where(bpC => bpC?.command == command))
             {
                 c = bpC;
                 return true;
@@ -97,8 +98,8 @@ namespace CAMel.Types
         }
 
         /// <inheritdoc />
-        public IEnumerator<BpCommand> GetEnumerator() => this._commands.GetEnumerator();
+        public IEnumerator<BpCommand> GetEnumerator() => this.commands.GetEnumerator();
         /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable) this._commands).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable) this.commands).GetEnumerator();
     }
 }

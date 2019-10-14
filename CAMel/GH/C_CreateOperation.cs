@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using CAMel.Types;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using CAMel.Types;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_CreateOperation : GH_Component
     {
@@ -15,7 +18,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the CreateToolPath class.
         /// </summary>
         public C_CreateOperation()
-            : base("Create Operation ", "Operation",
+            : base(
+                "Create Operation ", "Operation",
                 "Create an operation from a list of toolpaths",
                 "CAMel", " ToolPaths") { }
 

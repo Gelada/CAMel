@@ -1,11 +1,14 @@
-﻿using System;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using CAMel.Types.MaterialForm;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+
+    using CAMel.Types.MaterialForm;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_CreateMaterialForm : GH_Component
     {
@@ -14,7 +17,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_CreateMaterialForm()
-            : base("Create Material Form", "MaterialForm",
+            : base(
+                "Create Material Form", "MaterialForm",
                 "Give details of the position of material to cut",
                 "CAMel", " Hardware") { }
 

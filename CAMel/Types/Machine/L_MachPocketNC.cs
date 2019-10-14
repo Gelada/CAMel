@@ -1,11 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types.MaterialForm;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types.Machine
+﻿namespace CAMel.Types.Machine
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types.MaterialForm;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public class PocketNC : IGCodeMachine
     {
         public string sectionBreak { get; }
@@ -18,7 +21,7 @@ namespace CAMel.Types.Machine
         public string name { get; }
         public string commentStart { get; }
         public string commentEnd { get; }
-        [NotNull] private readonly List<char> _terms;
+        [NotNull] private readonly List<char> terms;
         public List<MaterialTool> mTs { get; }
 
         private double aMin { get; }
@@ -32,8 +35,10 @@ namespace CAMel.Types.Machine
 
         public string extension => "ngc";
 
-        public PocketNC([NotNull] string name, [NotNull] string header, [NotNull] string footer, Vector3d pivot,
-            double aMin, double aMax, double bMax, bool tLc, [NotNull] List<MaterialTool> mTs)
+        public PocketNC([NotNull] string name, [NotNull] string header,
+                        [NotNull] string footer, Vector3d pivot, double aMin,
+                        double aMax, double bMax, bool tLc,
+                        [NotNull] List<MaterialTool> mTs)
         {
             this.name = name;
             this.toolLengthCompensation = tLc;
@@ -51,7 +56,7 @@ namespace CAMel.Types.Machine
             this.aMin = aMin;
             this.aMax = aMax;
             this.bMax = bMax;
-            this._terms = new List<char> {'X', 'Y', 'Z', 'A', 'B', 'S', 'F'};
+            this.terms = new List<char> {'X', 'Y', 'Z', 'A', 'B', 'S', 'F'};
         }
 
         public string TypeDescription => "Instructions for a PocketNC machine";
@@ -70,9 +75,10 @@ namespace CAMel.Types.Machine
             ToolPath refined = Kinematics.angleRefine(this, tP, _RefineAngle);
             return tP.matForm.refine(refined, this);
         }
-        public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir)
-            ? Utility.planeOffset(tP, dir)
-            : Utility.localOffset(tP);
+        public List<ToolPath> offSet(ToolPath tP) =>
+            tP.planarOffset(out Vector3d dir)
+                ? Utility.planeOffset(tP, dir)
+                : Utility.localOffset(tP);
         public List<ToolPath> insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
@@ -92,7 +98,7 @@ namespace CAMel.Types.Machine
         public MachineInstruction readCode(string code)
         {
             if (this.mTs.Count == 0) { Exceptions.noToolException(); }
-            return GCode.gcRead(this, this.mTs, code, this._terms);
+            return GCode.gcRead(this, this.mTs, code, this.terms);
         }
         public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT)
         {
@@ -100,10 +106,10 @@ namespace CAMel.Types.Machine
             Vector3d ab = new Vector3d(values['A'] * Math.PI / 180.0, values['B'] * Math.PI / 180.0, 0);
 
             ToolPoint tP = new ToolPoint
-            {
-                speed = values['S'],
-                feed = values['F']
-            };
+                {
+                    speed = values['S'],
+                    feed = values['F']
+                };
 
             double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
 

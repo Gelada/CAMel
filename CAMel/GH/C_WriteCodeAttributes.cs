@@ -1,15 +1,17 @@
-﻿using System.Drawing;
-using Grasshopper.GUI.Canvas;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Attributes;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System.Drawing;
+
+    using Grasshopper.GUI.Canvas;
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Attributes;
+
+    using JetBrains.Annotations;
+
     public class WriteCodeAttributes : GH_ComponentAttributes
     {
-        public WriteCodeAttributes([NotNull] IGH_Component owner) :
-            base(owner) { }
+        public WriteCodeAttributes([NotNull] IGH_Component owner)
+            : base(owner) { }
 
         [NotNull]
         private static string totalFiles(long l)

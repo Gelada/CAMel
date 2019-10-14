@@ -1,10 +1,12 @@
-﻿using System;
-using JetBrains.Annotations;
-using Rhino.DocObjects;
-using Rhino.Runtime;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+
+    using JetBrains.Annotations;
+
+    using Rhino.DocObjects;
+    using Rhino.Runtime;
+
     public static class RhinoObjectExtension
     {
         private const string _KeyN = "95351F55-3489-40D1-BDBA-F49C0B84BDEA";

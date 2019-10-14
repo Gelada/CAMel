@@ -1,11 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types.MaterialForm;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types.MaterialForm;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     // Functions to generate operations
     public static class Operations
     {
@@ -40,7 +43,9 @@ namespace CAMel.Types
         public static MachineOperation opIndex3Axis([NotNull] List<Curve> cs, Vector3d dir, [NotNull] ToolPathAdditions tPa, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, out int invalidCurves)
         {
             MachineOperation mO = new MachineOperation
-                {name = "Index 3-Axis Cutting with " + cs.Count + " path"};
+                {
+                    name = "Index 3-Axis Cutting with " + cs.Count + " path"
+                };
             if (cs.Count > 1) { mO.name += "s"; }
 
             int i = 1;
@@ -69,23 +74,23 @@ namespace CAMel.Types
         public static MachineOperation drillOperation(Circle d, double peck, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
             MachineOperation mO = new MachineOperation
-            {
-                name = "Drilling depth " + d.Radius.ToString("0.000") + " at (" + d.Center.X.ToString("0.000") + "," + d.Center.Y.ToString("0.000") + "," + d.Center.Z.ToString("0.000") + ")."
-            };
+                {
+                    name = "Drilling depth " + d.Radius.ToString("0.000") + " at (" + d.Center.X.ToString("0.000") + "," + d.Center.Y.ToString("0.000") + "," + d.Center.Z.ToString("0.000") + ")."
+                };
 
             ToolPath tP = new ToolPath(string.Empty, mT, mF)
-            {
-                additions =
                 {
-                    insert = true,
-                    retract = true,
-                    stepDown = false,
-                    sdDropStart = false,
-                    sdDropMiddle = 0,
-                    sdDropEnd = false,
-                    threeAxisHeightOffset = false
-                }
-            };
+                    additions =
+                        {
+                            insert = true,
+                            retract = true,
+                            stepDown = false,
+                            sdDropStart = false,
+                            sdDropMiddle = 0,
+                            sdDropEnd = false,
+                            threeAxisHeightOffset = false
+                        }
+                };
 
             // Additions for toolpath
             // we will handle this with peck

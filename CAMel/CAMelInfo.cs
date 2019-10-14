@@ -1,24 +1,50 @@
-﻿using System;
-using System.Drawing;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="CAMelInfo.cs" company="">
+//   
+// </copyright>
+// <summary>
+//   Defines the CAMelInfo type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace CAMel
 {
+    using System;
+    using System.Drawing;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    /// <inheritdoc />
+    /// <summary>
+    /// Information on the CAMel Grasshopper Assembly
+    /// </summary>
     [UsedImplicitly]
     public class CAMelInfo : GH_AssemblyInfo
     {
-        [NotNull] public override string Name => "CAMel";
+        /// <inheritdoc />
+        [NotNull]
+        public override string Name => "CAMel";
 
-        [CanBeNull] public override Bitmap Icon => Properties.Resources.CAMel;
+        /// <inheritdoc />
+        [CanBeNull]
+        public override Bitmap Icon => Properties.Resources.CAMel;
 
-        [NotNull] public override string Description => "CAMel: Tools to roll your own CNC solutions";
+        /// <inheritdoc />
+        [NotNull]
+        public override string Description => "CAMel: Tools to roll your own CNC solutions";
 
+        /// <inheritdoc />
         public override Guid Id => new Guid("78ce1cc3-d79f-48d5-af54-9bb4f794186b");
 
-        [NotNull] public override string AuthorName => "Edmund Harriss";
+        /// <inheritdoc />
+        [NotNull]
+        public override string AuthorName => "Edmund Harriss";
 
-        [NotNull] public override string AuthorContact => "http://www.Camel3d.com";
+        /// <inheritdoc />
+        [NotNull]
+        public override string AuthorContact => "http://www.Camel3d.com";
     }
 
     [UsedImplicitly]

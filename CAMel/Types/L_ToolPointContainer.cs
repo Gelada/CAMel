@@ -1,8 +1,9 @@
-﻿using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public interface IToolPointContainer : ICAMelBase
     {
         [NotNull, UsedImplicitly] string name { get; set; }

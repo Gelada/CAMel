@@ -1,12 +1,16 @@
-﻿using System;
-using CAMel.Types;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+
+    using CAMel.Types;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_SpiralSurfacePath : GH_Component
     {
@@ -15,7 +19,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the CreateToolPath class.
         /// </summary>
         public C_SpiralSurfacePath()
-            : base("Create Spiral Surfacing Path", "SurfacePath",
+            : base(
+                "Create Spiral Surfacing Path", "SurfacePath",
                 "Create a spiral surfacing recipe",
                 "CAMel", " ToolPaths") { }
 
@@ -29,15 +34,12 @@ namespace CAMel.GH
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddGenericParameter("Bounding Box", "BB",
-                "Region to Mill as a bounding box oriented by Dir, will be calculated if you add the Mesh or Brep to Mill.",
-                GH_ParamAccess.item);
+            pManager.AddGenericParameter("Bounding Box", "BB", "Region to Mill as a bounding box oriented by Dir, will be calculated if you add the Mesh or Brep to Mill.", GH_ParamAccess.item);
             pManager.AddCurveParameter("Curve", "C", "Curve (not currently used)", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[1].Optional = true; // Curve
             pManager.AddPlaneParameter("Plane", "Pl", "Plane to use, Start above origin on Z.", GH_ParamAccess.item, Plane.WorldXY);
-            pManager.AddNumberParameter("Radius", "R", "Radius of sphere, use 0 for a spiral on a plane.",
-                GH_ParamAccess.item, 0.0);
+            pManager.AddNumberParameter("Radius", "R", "Radius of sphere, use 0 for a spiral on a plane.", GH_ParamAccess.item, 0.0);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[3].WireDisplay = GH_ParamWireDisplay.faint;

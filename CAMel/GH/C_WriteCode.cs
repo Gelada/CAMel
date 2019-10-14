@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using CAMel.Types;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+
+    using CAMel.Types;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_WriteCode : GH_Component
     {
@@ -17,12 +20,10 @@ namespace CAMel.GH
         /// Initializes a new instance of the WriteCode class.
         /// </summary>
         public C_WriteCode()
-            : base("Write CNC Code", "Write",
+            : base(
+                "Write CNC Code", "Write",
                 "Write CNC Code",
-                "CAMel", "CNC Code")
-        {
-            this.bytesWritten = 0;
-        }
+                "CAMel", "CNC Code") => this.bytesWritten = 0;
 
         public override void CreateAttributes()
         {

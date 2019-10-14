@@ -1,8 +1,9 @@
-﻿using System;
-using JetBrains.Annotations;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+
+    using JetBrains.Annotations;
+
     internal static class Exceptions
     {
         [ContractAnnotation("=> halt")]

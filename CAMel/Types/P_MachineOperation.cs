@@ -1,16 +1,20 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using CAMel.Types.Machine;
-using CAMel.Types.MaterialForm;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using CAMel.Types.Machine;
+    using CAMel.Types.MaterialForm;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     // List of toolpaths forming a general Operation of the machine,
     // from the complex to the simple
     // creating a surface, drilling a whole, cutting out an object...
@@ -18,7 +22,7 @@ namespace CAMel.Types
     // step downs with be completed, then the second and so on.
     public class MachineOperation : IList<ToolPath>, IToolPointContainer
     {
-        [ItemNotNull, NotNull] private List<ToolPath> _tPs;
+        [ItemNotNull, NotNull] private List<ToolPath> tPs;
 
         public ToolPoint firstP => this.FirstOrDefault(a => a?.firstP != null)?.lastP;
         public ToolPoint lastP => this.LastOrDefault(a => a?.lastP != null)?.lastP;
@@ -30,7 +34,7 @@ namespace CAMel.Types
         // Default Constructor
         public MachineOperation()
         {
-            this._tPs = new List<ToolPath>();
+            this.tPs = new List<ToolPath>();
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
@@ -38,7 +42,7 @@ namespace CAMel.Types
         // From list of toolpaths
         public MachineOperation([NotNull] List<ToolPath> tPs)
         {
-            this._tPs = tPs;
+            this.tPs = tPs;
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
@@ -46,7 +50,7 @@ namespace CAMel.Types
         // From toolpath
         public MachineOperation([NotNull] ToolPath tP)
         {
-            this._tPs = new List<ToolPath> {tP};
+            this.tPs = new List<ToolPath> {tP};
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
@@ -55,7 +59,7 @@ namespace CAMel.Types
         public MachineOperation([NotNull] string name, [NotNull] List<ToolPath> tPs)
         {
             this.name = name;
-            this._tPs = tPs;
+            this.tPs = tPs;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
@@ -65,7 +69,7 @@ namespace CAMel.Types
             this.name = string.Copy(mO.name);
             this.preCode = string.Copy(mO.preCode);
             this.postCode = string.Copy(mO.postCode);
-            this._tPs = new List<ToolPath>();
+            this.tPs = new List<ToolPath>();
             foreach (ToolPath tP in mO) { Add(tP?.deepClone()); }
         }
         [NotNull] public MachineOperation deepClone() => new MachineOperation(this);
@@ -75,12 +79,12 @@ namespace CAMel.Types
         public MachineOperation deepCloneWithNewPaths([NotNull] List<ToolPath> procPaths)
         {
             MachineOperation outOp = new MachineOperation
-            {
-                preCode = this.preCode,
-                postCode = this.postCode,
-                name = this.name,
-                _tPs = procPaths
-            };
+                {
+                    preCode = this.preCode,
+                    postCode = this.postCode,
+                    name = this.name,
+                    tPs = procPaths
+                };
 
             return outOp;
         }
@@ -223,63 +227,66 @@ namespace CAMel.Types
                     break;
             }
 
-            switch (scraps) {
+            switch (scraps)
+            {
                 // Otherwise process mixed up any other sort of list by term.
                 case MaterialTool mT:
                     oMOs.Add(new MachineOperation(new ToolPath(mT)));
                     break;
-                case IEnumerable sc: {
-                    bool tpPath = false;
-                    ToolPath tempTP = new ToolPath();
-                    foreach (object oB in sc)
+                case IEnumerable sc:
                     {
-                        switch (oB) {
-                            case Point3d pt:
-                                tpPath = true;
-                                tempTP.Add(new ToolPoint(pt));
-                                break;
-                            case ToolPoint tPt:
-                                tpPath = true;
-                                tempTP.Add(tPt);
-                                break;
-                            default: {
-                                if (tpPath)
-                                {
-                                    oMOs.Add(new MachineOperation(new List<ToolPath> {tempTP}));
-                                    tpPath = false;
-                                    tempTP = new ToolPath();
-                                }
-                                switch (oB) {
-                                    case ToolPath tP:
-                                        oMOs.Add(new MachineOperation(new List<ToolPath> {tP}));
+                        bool tpPath = false;
+                        ToolPath tempTP = new ToolPath();
+                        foreach (object oB in sc)
+                        {
+                            switch (oB)
+                            {
+                                case Point3d pt:
+                                    tpPath = true;
+                                    tempTP.Add(new ToolPoint(pt));
+                                    break;
+                                case ToolPoint tPt:
+                                    tpPath = true;
+                                    tempTP.Add(tPt);
+                                    break;
+                                default:
+                                    {
+                                        if (tpPath)
+                                        {
+                                            oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP }));
+                                            tpPath = false;
+                                            tempTP = new ToolPath();
+                                        }
+                                        switch (oB)
+                                        {
+                                            case ToolPath tP:
+                                                oMOs.Add(new MachineOperation(new List<ToolPath> { tP }));
+                                                break;
+                                            case MachineOperation mO:
+                                                oMOs.Add(mO);
+                                                break;
+                                            case MachineInstruction mI:
+                                                oMOs.AddRange(mI);
+                                                break;
+                                            case IMaterialForm uMF:
+                                                oMOs.Add(new MachineOperation(new ToolPath(uMF)));
+                                                break;
+                                            case MaterialTool uMT:
+                                                oMOs.Add(new MachineOperation(new ToolPath(uMT)));
+                                                break;
+                                            default:
+                                                ignores++;
+                                                break;
+                                        }
                                         break;
-                                    case MachineOperation mO:
-                                        oMOs.Add(mO);
-                                        break;
-                                    case MachineInstruction mI:
-                                        oMOs.AddRange(mI);
-                                        break;
-                                    case IMaterialForm uMF:
-                                        oMOs.Add(new MachineOperation(new ToolPath(uMF)));
-                                        break;
-                                    case MaterialTool uMT:
-                                        oMOs.Add(new MachineOperation(new ToolPath(uMT)));
-                                        break;
-                                    default:
-                                        ignores++;
-                                        break;
-                                }
-                                break;
+                                    }
                             }
                         }
+                        if (tpPath) { oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP })); }
+                        break;
                     }
-                    if (tpPath)
-                    {
-                        oMOs.Add(new MachineOperation(new List<ToolPath> {tempTP}));
-                    }
-                    break;
-                }
             }
+
             return oMOs;
         }
 
@@ -351,26 +358,28 @@ namespace CAMel.Types
 
         #region List Functions
 
-        public int Count => this._tPs.Count;
-        public bool IsReadOnly => ((IList<ToolPath>) this._tPs).IsReadOnly;
-        [NotNull] public ToolPath this[int index] { get => this._tPs[index]; set => this._tPs[index] = value; }
-        public int IndexOf(ToolPath item) => this._tPs.IndexOf(item);
+        public int Count => this.tPs.Count;
+        public bool IsReadOnly => ((IList<ToolPath>) this.tPs).IsReadOnly;
+
+        [NotNull] public ToolPath this[int index] { get => this.tPs[index]; set => this.tPs[index] = value; }
+
+        public int IndexOf(ToolPath item) => this.tPs.IndexOf(item);
         public void Insert(int index, ToolPath item)
         {
-            if (item != null) { this._tPs.Insert(index, item); }
+            if (item != null) { this.tPs.Insert(index, item); }
         }
-        public void RemoveAt(int index) => this._tPs.RemoveAt(index);
+        public void RemoveAt(int index) => this.tPs.RemoveAt(index);
         public void Add(ToolPath item)
         {
-            if (item != null) { this._tPs.Add(item); }
+            if (item != null) { this.tPs.Add(item); }
         }
-        [PublicAPI] public void AddRange([NotNull] IEnumerable<ToolPath> items) => this._tPs.AddRange(items.Where(x => x != null));
-        public void Clear() => this._tPs.Clear();
-        public bool Contains(ToolPath item) => this._tPs.Contains(item);
-        public void CopyTo(ToolPath[] array, int arrayIndex) => this._tPs.CopyTo(array, arrayIndex);
-        public bool Remove(ToolPath item) => this._tPs.Remove(item);
-        public IEnumerator<ToolPath> GetEnumerator() => this._tPs.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => this._tPs.GetEnumerator();
+        [PublicAPI] public void AddRange([NotNull] IEnumerable<ToolPath> items) => this.tPs.AddRange(items.Where(x => x != null));
+        public void Clear() => this.tPs.Clear();
+        public bool Contains(ToolPath item) => this.tPs.Contains(item);
+        public void CopyTo(ToolPath[] array, int arrayIndex) => this.tPs.CopyTo(array, arrayIndex);
+        public bool Remove(ToolPath item) => this.tPs.Remove(item);
+        public IEnumerator<ToolPath> GetEnumerator() => this.tPs.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => this.tPs.GetEnumerator();
 
         #endregion
     }
@@ -379,11 +388,11 @@ namespace CAMel.Types
     public sealed class GH_MachineOperation : CAMel_Goo<MachineOperation>, IGH_PreviewData
     {
         // Default Constructor
-        [UsedImplicitly] public GH_MachineOperation() { this.Value = new MachineOperation(); }
+        [UsedImplicitly] public GH_MachineOperation() => this.Value = new MachineOperation();
         // Construct from value alone
-        public GH_MachineOperation([CanBeNull] MachineOperation mO) { this.Value = mO; }
+        public GH_MachineOperation([CanBeNull] MachineOperation mO) => this.Value = mO;
         // Copy Constructor.
-        public GH_MachineOperation([CanBeNull] GH_MachineOperation mO) { this.Value = mO?.Value?.deepClone(); }
+        public GH_MachineOperation([CanBeNull] GH_MachineOperation mO) => this.Value = mO?.Value?.deepClone();
         // Duplicate
         [NotNull] public override IGH_Goo Duplicate() => new GH_MachineOperation(this);
 

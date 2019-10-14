@@ -1,16 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-using CAMel.Types;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Expressions;
-using Grasshopper.Kernel.Parameters;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Windows.Forms;
+
+    using CAMel.Types;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Expressions;
+    using Grasshopper.Kernel.Parameters;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_Trace : GH_Component
     {
@@ -19,12 +23,10 @@ namespace CAMel.GH
         /// Initializes a new instance of the CreateToolPath class.
         /// </summary>
         public C_Trace()
-            : base("Trace hand drawn path", "Trace",
+            : base(
+                "Trace hand drawn path", "Trace",
                 "Trace a path from a photo of a hand drawn image",
-                "CAMel", " Photos")
-        {
-            this._times = new List<string>();
-        }
+                "CAMel", " Photos") => this.times = new List<string>();
 
         /// <inheritdoc />
         /// <summary>
@@ -48,20 +50,20 @@ namespace CAMel.GH
             pManager.AddCurveParameter("Polyline", "P", "Polyline of points along traced curve, for more creative processing.", GH_ParamAccess.list);
         }
 
-        private int _jump = 15, _blur, _maxFile = 3;
-        private bool _debug;
+        private int jump = 15, blur, maxFile = 3;
+        private bool debugging;
 
         private bool debug
         {
-            get => this._debug;
+            get => this.debugging;
             set
             {
-                this._debug = value;
-                this.Message = this._debug ? "Showing work..." : string.Empty;
+                this.debugging = value;
+                this.Message = this.debugging ? "Showing work..." : string.Empty;
             }
         }
 
-        [NotNull] private List<string> _times;
+        [NotNull] private List<string> times;
 
         /// <inheritdoc />
         /// <summary>
@@ -84,7 +86,7 @@ namespace CAMel.GH
             eP.CacheSymbols(exp);
 
             // Read photo into raw curves list
-            List<Curve> jCurves = ReadPhoto.trace(filename, this._blur, this._jump, this.debug, out this._times);
+            List<Curve> jCurves = ReadPhoto.trace(filename, this.blur, this.jump, this.debug, out this.times);
 
             // Add height to paths using expression
             for (int i = 0; i < jCurves.Count; i++)
@@ -145,7 +147,7 @@ namespace CAMel.GH
 
             if (!this.debug) { return; }
 
-            foreach (string s in this._times) { Menu_AppendItem(menu, s); }
+            foreach (string s in this.times) { Menu_AppendItem(menu, s); }
             Menu_AppendItem(menu, "Copy Data", copyDataClicked);
         }
 
@@ -154,24 +156,24 @@ namespace CAMel.GH
         private NumericUpDown menuAppendNumber([NotNull] ToolStrip menu, [CanBeNull] string name, int val, [CanBeNull] string desc)
         {
             Panel mI = new FlowLayoutPanel
-            {
-                Text = name,
-                AutoSize = true,
-                BackColor = Color.White
-            };
+                {
+                    Text = name,
+                    AutoSize = true,
+                    BackColor = Color.White
+                };
 
             NumericUpDown uD = new NumericUpDown
-            {
-                Value = val,
-                Name = name
-            };
+                {
+                    Value = val,
+                    Name = name
+                };
             uD.ValueChanged += traceSettings;
             uD.Width = 50;
 
             Label l = new Label
-            {
-                Text = name
-            };
+                {
+                    Text = name
+                };
 
             mI.Controls.Add(l);
             mI.Controls.Add(uD);
@@ -179,9 +181,9 @@ namespace CAMel.GH
             mI.Height = uD.Height + 6;
 
             ToolStripItem tSi = new ToolStripControlHost(mI)
-            {
-                ToolTipText = desc
-            };
+                {
+                    ToolTipText = desc
+                };
 
             menu.Items.Add(tSi);
 
@@ -191,7 +193,7 @@ namespace CAMel.GH
         {
             System.Text.StringBuilder traceData = new System.Text.StringBuilder();
 
-            foreach (string s in this._times) { traceData.AppendLine(s); }
+            foreach (string s in this.times) { traceData.AppendLine(s); }
 
             Clipboard.SetText(traceData.ToString());
         }
@@ -208,13 +210,13 @@ namespace CAMel.GH
             switch (ud.Name)
             {
                 case "Blur":
-                    this._blur = (int) ud.Value;
+                    this.blur = (int) ud.Value;
                     break;
                 case "Jump":
-                    this._jump = (int) ud.Value;
+                    this.jump = (int) ud.Value;
                     break;
                 case "Mega Pixels":
-                    this._maxFile = (int) ud.Value;
+                    this.maxFile = (int) ud.Value;
                     break;
             }
         }
@@ -224,9 +226,9 @@ namespace CAMel.GH
         {
             if (writer == null) { return base.Write(null); }
             // First add our own fields.
-            writer.SetInt32("MaxFile", this._maxFile);
-            writer.SetInt32("Jump", this._jump);
-            writer.SetInt32("Blur", this._blur);
+            writer.SetInt32("MaxFile", this.maxFile);
+            writer.SetInt32("Jump", this.jump);
+            writer.SetInt32("Blur", this.blur);
             writer.SetBoolean("Debug", this.debug);
             // Then call the base class implementation.
             return base.Write(writer);
@@ -237,11 +239,11 @@ namespace CAMel.GH
 
             // First read our own fields.
             if (reader.ItemExists("MaxFile"))
-            { this._maxFile = reader.GetInt32("MaxFile"); }
+            { this.maxFile = reader.GetInt32("MaxFile"); }
             if (reader.ItemExists("Jump"))
-            { this._jump = reader.GetInt32("Jump"); }
+            { this.jump = reader.GetInt32("Jump"); }
             if (reader.ItemExists("Blur"))
-            { this._blur = reader.GetInt32("Blur"); }
+            { this.blur = reader.GetInt32("Blur"); }
             if (reader.ItemExists("Debug"))
             { this.debug = reader.GetBoolean("Debug"); }
 

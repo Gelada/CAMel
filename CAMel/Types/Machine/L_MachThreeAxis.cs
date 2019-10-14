@@ -1,11 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types.MaterialForm;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types.Machine
+﻿namespace CAMel.Types.Machine
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types.MaterialForm;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public class ThreeAxisFactory
     {
         [NotNull] public string name { get; set; }
@@ -73,7 +76,7 @@ namespace CAMel.Types.Machine
         public string footer { get; }
         public string commentStart { get; }
         public string commentEnd { get; }
-        [NotNull] private readonly List<char> _terms;
+        [NotNull] private readonly List<char> terms;
         public List<MaterialTool> mTs { get; }
 
         public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
@@ -93,7 +96,7 @@ namespace CAMel.Types.Machine
             this.fileStart = ta.fileStart;
             this.fileEnd = ta.fileEnd;
             this.mTs = ta.mTs;
-            this._terms = new List<char> {'X', 'Y', 'Z', 'S', 'F'};
+            this.terms = new List<char> {'X', 'Y', 'Z', 'S', 'F'};
         }
 
         public string TypeDescription => @"Instructions for a 3-Axis machine";
@@ -116,7 +119,7 @@ namespace CAMel.Types.Machine
 
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) => 0;
 
-        public MachineInstruction readCode(string code) => GCode.gcRead(this, this.mTs, code, this._terms);
+        public MachineInstruction readCode(string code) => GCode.gcRead(this, this.mTs, code, this.terms);
         public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT) => new ToolPoint(new Point3d(values['X'], values['Y'], values['Z']), new Vector3d(0, 0, 0), values['S'], values['F']);
 
         public Vector3d toolDir(ToolPoint tP) => Vector3d.ZAxis;

@@ -1,24 +1,29 @@
 ﻿// Heavily influenced by the click-able preview from https://github.com/mazhuravlev/grasshopper-addons
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using CAMel.Types;
-using GH_IO.Serialization;
-using Grasshopper;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Parameters;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino;
-using Rhino.Display;
-using Rhino.DocObjects;
-using Rhino.Geometry;
-using Rhino.Input;
-using Rhino.Input.Custom;
-
 namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using CAMel.Types;
+
+    using GH_IO.Serialization;
+
+    using Grasshopper;
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Parameters;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino;
+    using Rhino.Display;
+    using Rhino.DocObjects;
+    using Rhino.Geometry;
+    using Rhino.Input;
+    using Rhino.Input.Custom;
+
     [UsedImplicitly]
     public class C_OrganisePaths : GH_Component // locally implements IGH_PreviewObject
     {
@@ -38,26 +43,30 @@ namespace CAMel.GH
             }
         }
 
-        private bool _inActiveDocument;
-        private bool _enabled;
+        private bool inActiveDocument;
+        private bool enabled;
 
-        internal bool clickQ() => this._enabled && this._inActiveDocument;
+        internal bool clickQ() => this.enabled && this.inActiveDocument;
 
-        [UsedImplicitly] private readonly PathClick _click;
-        private GH_Document _doc;
+        [UsedImplicitly] private readonly PathClick click;
+        private GH_Document doc;
 
-        [ItemNotNull, NotNull] private List<AugCurve> _curves;
-        [NotNull] private SortedSet<double> _allKeys;
+        [ItemNotNull, NotNull] private List<AugCurve> curves;
+        [NotNull] private SortedSet<double> allKeys;
 
         /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
-        public C_OrganisePaths() : base("Organise Paths", "OrgPth", "Reorder a collection of curves", "CAMel", " ToolPaths")
+        public C_OrganisePaths()
+            : base(
+                "Organise Paths", "OrgPth",
+                "Reorder a collection of curves",
+                "CAMel", " ToolPaths")
         {
-            this._click = new PathClick(this);
-            this._curves = new List<AugCurve>();
-            this._allKeys = new SortedSet<double>();
+            this.click = new PathClick(this);
+            this.curves = new List<AugCurve>();
+            this.allKeys = new SortedSet<double>();
         }
 
         /// <inheritdoc />
@@ -83,11 +92,11 @@ namespace CAMel.GH
 
         protected override void BeforeSolveInstance()
         {
-            this._doc = OnPingDocument();
+            this.doc = OnPingDocument();
             if (Instances.ActiveCanvas?.Document != null)
             {
-                this._inActiveDocument = Instances.ActiveCanvas.Document == this._doc &&
-                                         Instances.ActiveCanvas.Document.Context == GH_DocumentContext.Loaded;
+                this.inActiveDocument = Instances.ActiveCanvas.Document == this.doc &&
+                                        Instances.ActiveCanvas.Document.Context == GH_DocumentContext.Loaded;
 
                 Instances.ActiveCanvas.Document.ContextChanged -= contextChanged;
                 Instances.ActiveCanvas.Document.ContextChanged += contextChanged;
@@ -99,7 +108,7 @@ namespace CAMel.GH
         private void contextChanged([CanBeNull] object sender, [NotNull] GH_DocContextEventArgs e)
         {
             if (e == null) { throw new ArgumentNullException(); }
-            this._inActiveDocument = e.Document == this._doc && e.Context == GH_DocumentContext.Loaded;
+            this.inActiveDocument = e.Document == this.doc && e.Context == GH_DocumentContext.Loaded;
         }
         /// <inheritdoc />
         /// <summary>
@@ -111,34 +120,36 @@ namespace CAMel.GH
             if (da == null) { throw new ArgumentNullException(); }
 
             List<GH_Curve> paths = new List<GH_Curve>();
-            this._enabled = false;
+            this.enabled = false;
             RhinoDoc uDoc = RhinoDoc.ActiveDoc;
             if (!da.GetDataList("Paths", paths) || paths.Count == 0 || uDoc?.Objects == null) { return; }
 
             // Insist on reference curves
-            if (paths.Any(p => p?.IsReferencedGeometry == false)) {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error,
+            if (paths.Any(p => p?.IsReferencedGeometry == false))
+            {
+                AddRuntimeMessage(
+                    GH_RuntimeMessageLevel.Error,
                     "Only referenced curves can be organised with this component. If you wish to organise grasshopper curves, first bake.");
                 return;
             }
 
             // Check for current keys stored in the rhino file
             // set the keys for the curves read in
-            this._allKeys = new SortedSet<double>();
-            this._curves = new List<AugCurve>();
+            this.allKeys = new SortedSet<double>();
+            this.curves = new List<AugCurve>();
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (GH_Curve curve in paths)
             {
-                if (curve?.Value != null) { this._curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
+                if (curve?.Value != null) { this.curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
             }
 
             foreach (RhinoObject ro in uDoc.Objects)
             {
                 double key = ro.getKey();
                 if (double.IsNaN(key)) { continue; }
-                this._allKeys.Add(key);
+                this.allKeys.Add(key);
 
-                foreach (AugCurve c in this._curves.Where(c => c != null && c.id == ro.Id))
+                foreach (AugCurve c in this.curves.Where(c => c != null && c.id == ro.Id))
                 {
                     c.key = key;
                     c.side = ro.Attributes.getSide();
@@ -146,17 +157,17 @@ namespace CAMel.GH
             }
 
             // restore sanity if no values were found.
-            if (this._allKeys.Count == 0) { this._allKeys.Add(0); }
+            if (this.allKeys.Count == 0) { this.allKeys.Add(0); }
 
             // Add keys to new paths with open paths at the start and closed paths at the end
-            foreach (AugCurve c in this._curves.Where(c => c != null))
+            foreach (AugCurve c in this.curves.Where(c => c != null))
             {
-                this._enabled = true;
+                this.enabled = true;
                 if (!double.IsNaN(c.key)) { continue; }
                 if (c.c.IsClosed)
                 {
-                    c.key = this._allKeys.Max + 1;
-                    this._allKeys.Add(this._allKeys.Max + 1);
+                    c.key = this.allKeys.Max + 1;
+                    this.allKeys.Add(this.allKeys.Max + 1);
                     RhinoObject ro = uDoc.Objects.Find(c.id);
                     ro?.setKey(c.key);
                     ro?.CommitChanges();
@@ -164,19 +175,19 @@ namespace CAMel.GH
                 else
                 {
                     c.side = 0;
-                    c.key = this._allKeys.Min - 1;
-                    this._allKeys.Add(this._allKeys.Min - 1);
+                    c.key = this.allKeys.Min - 1;
+                    this.allKeys.Add(this.allKeys.Min - 1);
                     RhinoObject ro = uDoc.Objects.Find(c.id);
                     ro?.setKey(c.key);
                     ro?.CommitChanges();
                 }
             }
 
-            this._curves.Sort(_CurveC);
+            this.curves.Sort(_CurveC);
 
             List<double> offSets = new List<double>();
             List<Curve> sorted = new List<Curve>();
-            foreach (AugCurve c in this._curves)
+            foreach (AugCurve c in this.curves)
             {
                 double os = 0;
                 if (c != null) { os = c.side; }
@@ -195,7 +206,7 @@ namespace CAMel.GH
         private static readonly CurveComp _CurveC = new CurveComp();
 
         private const int _DotSize = 11;
-        private readonly Vector3d _dotShift = new Vector3d(1, 1, 1);
+        private readonly Vector3d dotShift = new Vector3d(1, 1, 1);
         internal bool find(Line l, [NotNull] RhinoViewport vP)
         {
             if (vP == null) { throw new ArgumentNullException(); }
@@ -206,14 +217,14 @@ namespace CAMel.GH
             int clicked = -1;
 
             List<int> sel = new List<int>();
-            for (int i = 0; i < this._curves.Count; i++)
+            for (int i = 0; i < this.curves.Count; i++)
             {
-                AugCurve c = this._curves[i];
+                AugCurve c = this.curves[i];
                 RhinoObject ro = uDoc.Objects.Find(c.id);
                 if ((ro?.IsSelected(true) ?? 0) > 0) { sel.Add(i); }
 
                 vP.GetWorldToScreenScale(c.c.PointAtStart, out double pixelsPerUnit);
-                double dist = l.DistanceTo(c.c.PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, false);
+                double dist = l.DistanceTo(c.c.PointAtStart + _DotSize / pixelsPerUnit * this.dotShift, false);
                 if (dist * pixelsPerUnit < _DotSize) { clicked = i; }
             }
 
@@ -225,7 +236,7 @@ namespace CAMel.GH
             double side;
             if (sel.Count <= 1 || !sel.Contains(clicked))
             {
-                AugCurve c = this._curves[clicked];
+                AugCurve c = this.curves[clicked];
                 side = c.side;
                 if (c.c.IsClosed)
                 {
@@ -337,7 +348,7 @@ namespace CAMel.GH
                 }
                 if (getR == GetResult.Number || getR == GetResult.Nothing)
                 {
-                    foreach (AugCurve c in sel.Select(i => this._curves[i]))
+                    foreach (AugCurve c in sel.Select(i => this.curves[i]))
                     {
                         switch (side)
                         {
@@ -395,19 +406,19 @@ namespace CAMel.GH
         {
             if (newPos == i + 1) { return; }
             double newKey;
-            if (newPos <= 1) { newKey = this._allKeys.Min - 1.0; }
-            else if (newPos >= this._curves.Count) { newKey = this._allKeys.Max + 1.0; }
+            if (newPos <= 1) { newKey = this.allKeys.Min - 1.0; }
+            else if (newPos >= this.curves.Count) { newKey = this.allKeys.Max + 1.0; }
             else
             {
                 int uPos = newPos;
                 if (newPos - 1 > i) { uPos++; }
-                double aboveKey = this._curves[uPos - 1].key;
-                double belowKey = this._allKeys
+                double aboveKey = this.curves[uPos - 1].key;
+                double belowKey = this.allKeys
                     .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
                 newKey = (aboveKey + belowKey) / 2.0;
             }
 
-            this._allKeys.Add(newKey);
+            this.allKeys.Add(newKey);
             c.key = newKey;
         }
 
@@ -417,20 +428,20 @@ namespace CAMel.GH
             Interval newKeys;
             int count = sel.Count;
             int uPos = newPos + count - sel.Count(x => x >= newPos + count);
-            if (uPos <= count) { newKeys = new Interval(this._allKeys.Min - sel.Count - 1, this._allKeys.Min); }
-            else if (uPos >= this._curves.Count) { newKeys = new Interval(this._allKeys.Max, this._allKeys.Max + sel.Count + 1); }
+            if (uPos <= count) { newKeys = new Interval(this.allKeys.Min - sel.Count - 1, this.allKeys.Min); }
+            else if (uPos >= this.curves.Count) { newKeys = new Interval(this.allKeys.Max, this.allKeys.Max + sel.Count + 1); }
             else
             {
-                double aboveKey = this._curves[uPos].key;
-                double belowKey = this._allKeys
+                double aboveKey = this.curves[uPos].key;
+                double belowKey = this.allKeys
                     .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
                 newKeys = new Interval(belowKey, aboveKey);
             }
             for (int i = 0; i < sel.Count; i++)
             {
                 double newKey = newKeys.ParameterAt((i + 1) / (double) (sel.Count + 1));
-                this._curves[sel[i]].key = newKey;
-                this._allKeys.Add(newKey);
+                this.curves[sel[i]].key = newKey;
+                this.allKeys.Add(newKey);
             }
         }
 
@@ -495,7 +506,14 @@ namespace CAMel.GH
             gi.SetCommandPromptDefault("");
             List<string> dir = new List<string> {"Leave", "CounterClockAll", "ClockAll"};
             gi.AddOptionList("Direction", dir, 0);
-            List<string> side = new List<string> {"Leave", "InsideAll", "OutsideAll", "LeftAll", "RightAll"};
+            List<string> side = new List<string>
+                {
+                    "Leave",
+                    "InsideAll",
+                    "OutsideAll",
+                    "LeftAll",
+                    "RightAll"
+                };
             gi.AddOptionList("Side", side, 0);
 
             return gi;
@@ -506,7 +524,7 @@ namespace CAMel.GH
             RhinoDoc uDoc = RhinoDoc.ActiveDoc;
             if (uDoc?.Objects == null) { return; }
 
-            foreach (AugCurve c in this._curves)
+            foreach (AugCurve c in this.curves)
             {
                 RhinoObject ro = uDoc.Objects.Find(c.id);
 
@@ -551,20 +569,20 @@ namespace CAMel.GH
             if (args?.Viewport == null) { return; }
             base.DrawViewportWires(args);
 
-            if (!this._enabled || args.Viewport == null || args.Display == null) { return; }
+            if (!this.enabled || args.Viewport == null || args.Display == null) { return; }
 
-            for (int i = 0; i < this._curves.Count; i++)
+            for (int i = 0; i < this.curves.Count; i++)
             {
-                if (this._curves[i]?.c == null) { continue; }
-                args.Viewport.GetWorldToScreenScale(this._curves[i].c.PointAtStart, out double pixelsPerUnit);
+                if (this.curves[i]?.c == null) { continue; }
+                args.Viewport.GetWorldToScreenScale(this.curves[i].c.PointAtStart, out double pixelsPerUnit);
 
                 System.Drawing.Color lineC = args.WireColour;
                 if (this.Attributes?.Selected == true) { lineC = args.WireColour_Selected; }
-                args.Display.DrawCurve(this._curves[i].c, lineC);
+                args.Display.DrawCurve(this.curves[i].c, lineC);
 
-                args.Display.DrawDot(this._curves[i].c.PointAtStart + _DotSize / pixelsPerUnit * this._dotShift, (i + 1).ToString());
+                args.Display.DrawDot(this.curves[i].c.PointAtStart + _DotSize / pixelsPerUnit * this.dotShift, (i + 1).ToString());
 
-                Line dir = new Line(this._curves[i].c.PointAtStart, this._curves[i].c.TangentAtStart * 50.0 / pixelsPerUnit);
+                Line dir = new Line(this.curves[i].c.PointAtStart, this.curves[i].c.TangentAtStart * 50.0 / pixelsPerUnit);
                 args.Display.DrawArrow(dir, System.Drawing.Color.AntiqueWhite);
             }
         }
@@ -577,13 +595,13 @@ namespace CAMel.GH
             if (p?.PersistentData == null || this.Params.Input[0].SourceCount != 0) { return base.Write(writer); }
 
             p.PersistentData.ClearData();
-            p.SetPersistentData(this._curves);
+            p.SetPersistentData(this.curves);
             return base.Write(writer);
         }
 
         public override void RemovedFromDocument([CanBeNull] GH_Document document)
         {
-            this._enabled = false;
+            this.enabled = false;
             ExpirePreview(true);
             base.RemovedFromDocument(document);
         }

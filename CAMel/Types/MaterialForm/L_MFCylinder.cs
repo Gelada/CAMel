@@ -1,10 +1,13 @@
-﻿using System;
-using CAMel.Types.Machine;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types.MaterialForm
+﻿namespace CAMel.Types.MaterialForm
 {
+    using System;
+
+    using CAMel.Types.Machine;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public class MFCylinder : IMaterialForm
     {
         public MFCylinder(Cylinder cy, double matTol, double safeD)
@@ -173,7 +176,7 @@ namespace CAMel.Types.MaterialForm
 
         public ToolPath refine(ToolPath tP, IMachine m) => MFDefault.refine(this, tP, m);
 
-        private Mesh _myMesh;
+        private Mesh myMesh;
 
         [NotNull]
         private Mesh setMesh() => Mesh.CreateFromCylinder(
@@ -182,9 +185,9 @@ namespace CAMel.Types.MaterialForm
                                           (this.centre.To - this.centre.From).Length
                                       ), 1, 360) ?? new Mesh();
 
-        public Mesh getMesh() => this._myMesh ?? (this._myMesh = setMesh());
+        public Mesh getMesh() => this.myMesh ?? (this.myMesh = setMesh());
 
-        private Brep _myBrep;
+        private Brep myBrep;
         [NotNull]
         private Brep setBrep() => Brep.CreateFromCylinder(
                                       new Cylinder(
@@ -192,11 +195,11 @@ namespace CAMel.Types.MaterialForm
                                           (this.centre.To - this.centre.From).Length
                                       ), true, true) ?? new Brep();
 
-        [NotNull] public Brep getBrep() => this._myBrep ?? (this._myBrep = setBrep());
+        [NotNull] public Brep getBrep() => this.myBrep ?? (this.myBrep = setBrep());
         public BoundingBox getBoundingBox()
         {
-            this._myMesh = this._myMesh ?? (this._myMesh = setMesh());
-            return this._myMesh.GetBoundingBox(false);
+            this.myMesh = this.myMesh ?? (this.myMesh = setMesh());
+            return this.myMesh.GetBoundingBox(false);
         }
     }
 }

@@ -1,10 +1,13 @@
-﻿using System;
-using CAMel.Types;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+
+    using CAMel.Types;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_CreateMaterialTool : GH_Component
     {
@@ -13,7 +16,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_CreateMaterialTool()
-            : base("Create Material Tool", "MaterialTool",
+            : base(
+                "Create Material Tool", "MaterialTool",
                 "Give details of the material to cut and the tool cutting it",
                 "CAMel", " Hardware") { }
 
@@ -39,8 +43,7 @@ namespace CAMel.GH
             pManager.AddNumberParameter("Tool Length", "TL", "Length of tool from last pivot (not needed for 3 Axis).", GH_ParamAccess.item, 0);
             pManager.AddTextParameter("Tool Shape", "TS", "End shape of tool (Ball, Square, V, Other).", GH_ParamAccess.item, "Other");
             pManager.AddNumberParameter("Side Load", "SL", "Fraction of the tool to engage with the material when surfacing.", GH_ParamAccess.item, 1);
-            pManager.AddNumberParameter("Path Jump", "PJ", "Maximum distance allowed between toolPaths in material.",
-                GH_ParamAccess.item, -1);
+            pManager.AddNumberParameter("Path Jump", "PJ", "Maximum distance allowed between toolPaths in material.", GH_ParamAccess.item, -1);
         }
 
         /// <inheritdoc />
@@ -90,7 +93,8 @@ namespace CAMel.GH
 
             if (eS == EndShape.Error)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                AddRuntimeMessage(
+                    GH_RuntimeMessageLevel.Warning,
                     "End Shape not recognised. Options are \"Ball\", \"Square\", \"V\" use \"Other\" to avoid warning.");
                 eS = EndShape.Other;
             }

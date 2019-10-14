@@ -1,12 +1,16 @@
-﻿using System;
-using CAMel.Types;
-using CAMel.Types.MaterialForm;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+
+    using CAMel.Types;
+    using CAMel.Types.MaterialForm;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     [UsedImplicitly]
     public class C_Surfacing : GH_Component
     {
@@ -15,7 +19,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the WriteCode class.
         /// </summary>
         public C_Surfacing()
-            : base("Surfacing Operation", "Surface",
+            : base(
+                "Surfacing Operation", "Surface",
                 "Create a Machine Operations to create a surface.",
                 "CAMel", " Operations") { }
 
@@ -64,30 +69,30 @@ namespace CAMel.GH
             if (!da.GetData("Material Form", ref mF)) { return; }
 
             ToolPathAdditions addRough = new ToolPathAdditions
-            {
-                // Additions for Roughing toolpath
-                insert = true,
-                retract = true,
-                stepDown = true,
-                sdDropStart = true,
-                sdDropMiddle = -1,
-                sdDropEnd = true,
-                threeAxisHeightOffset = false
-            };
+                {
+                    // Additions for Roughing toolpath
+                    insert = true,
+                    retract = true,
+                    stepDown = true,
+                    sdDropStart = true,
+                    sdDropMiddle = -1,
+                    sdDropEnd = true,
+                    threeAxisHeightOffset = false
+                };
 
             roughP = roughP.changeFinishDepth(roughP.mT.cutDepth); // ignore finish depth for roughing
 
             ToolPathAdditions addFinish = new ToolPathAdditions
-            {
-                // Additions for Finishing toolpath
-                insert = true,
-                retract = true,
-                stepDown = false,
-                sdDropStart = false,
-                sdDropMiddle = 0.0,
-                sdDropEnd = false,
-                threeAxisHeightOffset = false
-            };
+                {
+                    // Additions for Finishing toolpath
+                    insert = true,
+                    retract = true,
+                    stepDown = false,
+                    sdDropStart = false,
+                    sdDropMiddle = 0.0,
+                    sdDropEnd = false,
+                    threeAxisHeightOffset = false
+                };
 
             MachineOperation roughO;
             MachineOperation finishO;

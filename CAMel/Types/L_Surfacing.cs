@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+    using System.Collections.Generic;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     // Functions to generate operations
     public static class Surfacing
     {
@@ -60,13 +62,14 @@ namespace CAMel.Types
 
             double zMin = 0, zMax = 0;
             int i;
-            const double addAngle = 90;
+            const double Angle = 90;
             if (c == null)
             {
-                for (i = 0; i < addAngle; i++)
+                for (i = 0; i < Angle; i++)
                 {
-                    cTp.Add(new ToolPoint(new Point3d(outerRadius, 2 * Math.PI * i / addAngle, 0)));
+                    cTp.Add(new ToolPoint(new Point3d(outerRadius, 2 * Math.PI * i / Angle, 0)));
                 }
+
                 zMin = zMax = 0;
             }
             else
@@ -117,7 +120,7 @@ namespace CAMel.Types
                 else
                 { startPt.Y = startPt.Y + turns - 2.0 * Math.PI; }
 
-                int shiftL = (int) Math.Ceiling(addAngle * Math.Abs((startPt.Y - endPt.Y) / (2.0 * Math.PI)));
+                int shiftL = (int) Math.Ceiling(Angle * Math.Abs((startPt.Y - endPt.Y) / (2.0 * Math.PI)));
                 for (i = 1; i < shiftL; i++)
                 {
                     cTp.Add(new ToolPoint(
@@ -158,9 +161,9 @@ namespace CAMel.Types
             }
 
             List<Curve> paths = new List<Curve>
-            {
-                Curve.CreateInterpolatedCurve(spiralPath, 3)
-            };
+                {
+                    Curve.CreateInterpolatedCurve(spiralPath, 3)
+                };
 
             LineCurve cc = new LineCurve(
                 dir.PointAt(bb.Center.X, bb.Center.Y, bb.Min.Z),
@@ -170,8 +173,7 @@ namespace CAMel.Types
         }
         // TODO make work for planes and with a boundary curve to spiral to
         [NotNull]
-        public static SurfacePath spiral([CanBeNull] Curve c, Plane dir, double r, double stepOver, SurfToolDir sTd,
-            BoundingBox bb, [NotNull] MaterialTool mT)
+        public static SurfacePath spiral([CanBeNull] Curve c, Plane dir, double r, double stepOver, SurfToolDir sTd, BoundingBox bb, [NotNull] MaterialTool mT)
         {
             double raisePer = stepOver * mT.toolWidth;
             // find radius of sphere containing bounding box centered on origin.
@@ -201,9 +203,9 @@ namespace CAMel.Types
             }
 
             List<Curve> paths = new List<Curve>
-            {
-                Curve.CreateInterpolatedCurve(spiralPath, 3)
-            };
+                {
+                    Curve.CreateInterpolatedCurve(spiralPath, 3)
+                };
 
             return new SurfacePath(paths, mT, dir.Origin, sTd);
         }

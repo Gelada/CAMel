@@ -1,15 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using CAMel.Types.MaterialForm;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types.Machine
+﻿namespace CAMel.Types.Machine
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Text.RegularExpressions;
+
+    using CAMel.Types.MaterialForm;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     // Some standards to help develop GCode based machines
     public interface IGCodeMachine : IMachine
     {
@@ -664,7 +667,7 @@ namespace CAMel.Types.Machine
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
 
             PolylineCurve toolL = tP.getLine();
-            const double wiggle = 2.5 * Math.PI / 180.0; // Angles from orthogonal in radians
+            const double Wiggle = 2.5 * Math.PI / 180.0; // Angles from orthogonal in radians
             if (tP.additions.insert)
             {
                 ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
@@ -672,8 +675,8 @@ namespace CAMel.Types.Machine
                 iTp.label = PathLabel.Insert;
                 if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
 
-                double r = Math.PI / 2.0 + wiggle;
-                if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 - wiggle; } // cut to the right
+                double r = Math.PI / 2.0 + Wiggle;
+                if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 - Wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtStart;
                 tan.Rotate(r, Vector3d.ZAxis);
                 if (tP.firstP == null) { Exceptions.emptyPathException(); }
@@ -695,8 +698,8 @@ namespace CAMel.Types.Machine
 
                 if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
 
-                double r = Math.PI / 2.0 - wiggle;
-                if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 + wiggle; } // cut to the right
+                double r = Math.PI / 2.0 - Wiggle;
+                if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 + Wiggle; } // cut to the right
                 Vector3d tan = toolL.TangentAtEnd;
                 tan.Rotate(r, Vector3d.ZAxis);
                 if (tP.lastP == null) { Exceptions.emptyPathException(); }
@@ -1085,8 +1088,7 @@ namespace CAMel.Types.Machine
         }
 
         // Check travel between toolpaths
-        internal static void jumpCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP,
-            [NotNull] ToolPath tP)
+        internal static void jumpCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
             // check if there is a problem moving between paths
             double length = jumpCheck(m, fP, tP);

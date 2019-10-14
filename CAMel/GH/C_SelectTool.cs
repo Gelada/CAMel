@@ -1,14 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using CAMel.Types;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Special;
-using JetBrains.Annotations;
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using CAMel.Types;
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Special;
+
+    using JetBrains.Annotations;
+
     [UsedImplicitly]
     public class C_SelectTool : GH_Component
     {
@@ -17,7 +20,8 @@ namespace CAMel.GH
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_SelectTool()
-            : base("Select Tool", "FindMT",
+            : base(
+                "Select Tool", "FindMT",
                 "Find a Material Tool from a list",
                 "CAMel", " Hardware") { }
 
@@ -117,7 +121,8 @@ namespace CAMel.GH
                 if (imT.toolName != toolName || imT.matName != matName) { continue; }
                 if (found)
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                    AddRuntimeMessage(
+                        GH_RuntimeMessageLevel.Warning,
                         "More than one material tool combination found, using first.");
                 }
                 else

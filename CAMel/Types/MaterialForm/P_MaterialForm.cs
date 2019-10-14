@@ -1,13 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types.MaterialForm
+﻿namespace CAMel.Types.MaterialForm
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+    using Grasshopper.Kernel.Types;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public struct MFintersection
     {
         public MFintersection(Point3d pt, Vector3d away, double lineP)
@@ -28,6 +32,7 @@ namespace CAMel.Types.MaterialForm
 
     public class MFintersects
     {
+        private Vector3d midOut1;
         public MFintersects()
         {
             this.inters = new List<MFintersection>();
@@ -46,16 +51,14 @@ namespace CAMel.Types.MaterialForm
 
         public Point3d mid => (1.5 * this.first.point + this.through.point) / 2.5; // midpoint through material
 
-        private Vector3d _midOut;
-
+        // direction to head to surface from the middle of middle of the line
         public Vector3d midOut
         {
-            // direction to head to surface from the middle of middle of the line
-            get => this._midOut;
+            get => this.midOut1;
             set
             {
                 value.Unitize();
-                this._midOut = value;
+                this.midOut1 = value;
             }
         }
 
@@ -244,14 +247,14 @@ namespace CAMel.Types.MaterialForm
         }
     }
 
-// Grasshopper Type Wrapper
+    // Grasshopper Type Wrapper
     public sealed class GH_MaterialForm : CAMel_Goo<IMaterialForm>, IGH_PreviewData
     {
-        [UsedImplicitly] public GH_MaterialForm() { this.Value = null; }
+        [UsedImplicitly] public GH_MaterialForm() => this.Value = null;
         // Construct from unwrapped object
-        public GH_MaterialForm([CanBeNull] IMaterialForm mF) { this.Value = mF; }
+        public GH_MaterialForm([CanBeNull] IMaterialForm mF) => this.Value = mF;
         // Copy Constructor (just reference as MaterialForm is Immutable)
-        public GH_MaterialForm([CanBeNull] GH_MaterialForm mF) { this.Value = mF?.Value; }
+        public GH_MaterialForm([CanBeNull] GH_MaterialForm mF) => this.Value = mF?.Value;
         // Duplicate
         [NotNull] public override IGH_Goo Duplicate() => new GH_MaterialForm(this);
 
@@ -310,7 +313,7 @@ namespace CAMel.Types.MaterialForm
         }
     }
 
-// Grasshopper Parameter Wrapper
+    // Grasshopper Parameter Wrapper
     public class GH_MaterialFormPar : GH_Param<GH_MaterialForm>, IGH_PreviewObject
     {
         public GH_MaterialFormPar() :

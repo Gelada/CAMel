@@ -1,18 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using Emgu.CV;
-using Emgu.CV.CvEnum;
-using Emgu.CV.Structure;
-using Emgu.CV.Util;
-using Emgu.CV.XImgproc;
-using JetBrains.Annotations;
-using Rhino.Geometry;
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Drawing;
+    using System.Linq;
+
+    using Emgu.CV;
+    using Emgu.CV.CvEnum;
+    using Emgu.CV.Structure;
+    using Emgu.CV.Util;
+    using Emgu.CV.XImgproc;
+
+    using JetBrains.Annotations;
+
+    using Rhino.Geometry;
+
     public static class ReadPhoto
     {
         [NotNull]
@@ -101,8 +104,8 @@ namespace CAMel.Types
             // Now remove triple points to cut off branches
             Mat thinF = new Mat();
             System.Drawing.Point an = new System.Drawing.Point(-1, -1);
-            const ElementShape sh = ElementShape.Rectangle;
-            Mat element = CvInvoke.GetStructuringElement(sh, new Size(3, 3), an);
+            const ElementShape Sh = ElementShape.Rectangle;
+            Mat element = CvInvoke.GetStructuringElement(Sh, new Size(3, 3), an);
 
             Mat thrPts = new Mat(thin.Size, DepthType.Cv8U, 1);
 
@@ -166,11 +169,11 @@ namespace CAMel.Types
             // possible curves, then deletes everything under a threshold.
 
             curves.Sort((x, y) =>
-            {
-                if (x == null) { throw new ArgumentNullException(nameof(x)); }
-                if (y == null) { throw new ArgumentNullException(nameof(y)); }
-                return y.GetLength().CompareTo(x.GetLength());
-            });
+                {
+                    if (x == null) { throw new ArgumentNullException(nameof(x)); }
+                    if (y == null) { throw new ArgumentNullException(nameof(y)); }
+                    return y.GetLength().CompareTo(x.GetLength());
+                });
 
             List<Curve> tCurves = new List<Curve>();
 

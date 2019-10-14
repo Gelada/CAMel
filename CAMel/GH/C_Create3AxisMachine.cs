@@ -1,12 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using CAMel.Types;
-using CAMel.Types.Machine;
-using Grasshopper.Kernel;
-using JetBrains.Annotations;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="C_Create3AxisMachine.cs" company="">
+//   
+// </copyright>
+// <summary>
+//   Defines the C_Create3AxisMachine type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace CAMel.GH
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
+
+    using CAMel.Types;
+    using CAMel.Types.Machine;
+
+    using Grasshopper.Kernel;
+
+    using JetBrains.Annotations;
+
+    /// <inheritdoc />
+    /// <summary>TODO The c_ create 3 axis machine.</summary>
     [UsedImplicitly]
     public class C_Create3AxisMachine : GH_Component
     {
@@ -15,17 +30,21 @@ namespace CAMel.GH
         /// Initializes a new instance of the Create3AxisMachine class.
         /// </summary>
         public C_Create3AxisMachine()
-            : base("Create 3 Axis Machine", "3Axis",
+            : base(
+                "Create 3 Axis Machine", "3Axis",
                 "Create 3 Axis Machine",
                 "CAMel", " Hardware") { }
 
         // put this item in the second batch (Machines)
+
+        /// <inheritdoc />
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <inheritdoc />
         /// <summary>
         /// Registers all the input parameters for this component.
         /// </summary>
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1305:FieldNamesMustNotUseHungarianNotation", Justification = "Reviewed. Suppression is OK here."),SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1012:OpeningCurlyBracketsMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here.")]
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
@@ -104,20 +123,20 @@ namespace CAMel.GH
             da.GetDataList("Material Tools", uMTs);
 
             ThreeAxisFactory threeAxis = new ThreeAxisFactory
-            {
-                name = uName,
-                extension = ext,
-                mTs = uMTs,
-                header = head,
-                footer = foot,
-                speedChangeCommand = speed,
-                toolChangeCommand = tool,
-                commentStart = uCommentStart,
-                commentEnd = uCommentEnd,
-                sectionBreak = uSectionBreak,
-                fileStart = uFileStart,
-                fileEnd = uFileEnd
-            };
+                {
+                    name = uName,
+                    extension = ext,
+                    mTs = uMTs,
+                    header = head,
+                    footer = foot,
+                    speedChangeCommand = speed,
+                    toolChangeCommand = tool,
+                    commentStart = uCommentStart,
+                    commentEnd = uCommentEnd,
+                    sectionBreak = uSectionBreak,
+                    fileStart = uFileStart,
+                    fileEnd = uFileEnd
+                };
 
             IGCodeMachine m = new ThreeAxis(threeAxis);
 
