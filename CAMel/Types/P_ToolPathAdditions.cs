@@ -224,7 +224,7 @@ namespace CAMel.Types
             writer.SetBoolean("insert", this.Value.insert);
             writer.SetBoolean("retract", this.Value.retract);
             writer.SetInt32("activate", this.Value.activate);
-            writer.SetPoint3D("offset", new GH_Point3D(this.Value.offset.X, this.Value.offset.Y, this.Value.offset.Z));
+            writer.SetPoint3D("offset", CAMel_Goo.toIO(this.Value.offset));
             writer.SetBoolean("stepDown", this.Value.stepDown);
             writer.SetBoolean("sdDropStart", this.Value.sdDropStart);
             writer.SetDouble("sdDropMiddle", this.Value.sdDropMiddle);
@@ -252,7 +252,7 @@ namespace CAMel.Types
                 if (reader.ItemExists("offset"))
                 {
                     GH_Point3D pt = reader.GetPoint3D("offset");
-                    tPa.offset = new Vector3d(pt.x, pt.y, pt.z);
+                    tPa.offset = (Vector3d) CAMel_Goo.fromIO(pt);
                 }
                 if (reader.ItemExists("activate")) { tPa.activate = reader.GetInt32("activate"); }
                 if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetBoolean("stepDown"); }

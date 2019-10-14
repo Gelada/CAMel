@@ -12,23 +12,25 @@ using Rhino.Commands;
 using Rhino.Geometry;
 using Rhino.Input;
 using Rhino.Input.Custom;
+using GH_Plane = GH_IO.Types.GH_Plane;
 
 namespace CAMel.Types
 {
     // One position of the machine
     public class ToolPoint : IToolPointContainer
     {
-        public Point3d pt { get; set; } // Tool Tip position
-        private Vector3d _dir;
+        public Plane tDir; // Tool position and Orientation
+        public Plane mDir; // Material position and Orientation
+        public Point3d pt // Tool Tip position
+        {
+            get => this.tDir.Origin;
+            set => this.tDir.Origin = value;
+        }
 
         public Vector3d dir // Tool Direction (away from position)
         {
-            get => this._dir;
-            set
-            {
-                this._dir = value;
-                this._dir.Unitize();
-            }
+            get => this.tDir.ZAxis;
+            set => this.tDir = new Plane(this.pt, value);
         }
 
         [NotNull] public ToolPoint firstP => this;
@@ -50,8 +52,8 @@ namespace CAMel.Types
         // Default Constructor, set up at the origin with direction set to 0 vector.
         public ToolPoint()
         {
-            this.pt = new Point3d(0, 0, 0);
-            this.dir = new Vector3d(0, 0, 1);
+            this.tDir = Plane.WorldXY;
+            this.mDir = Plane.WorldXY;
             this.speed = -1;
             this.feed = -1;
             this.error = new List<string>();
@@ -63,8 +65,9 @@ namespace CAMel.Types
         // Just a point, set direction to Z vector.
         public ToolPoint(Point3d pt)
         {
+            this.tDir = Plane.WorldXY;
             this.pt = pt;
-            this.dir = new Vector3d(0, 0, 1);
+            this.mDir = Plane.WorldXY;
             this.speed = -1;
             this.feed = -1;
             this.error = new List<string>();
@@ -76,8 +79,8 @@ namespace CAMel.Types
         // Use point and direction
         public ToolPoint(Point3d pt, Vector3d d)
         {
-            this.pt = pt;
-            this.dir = d;
+            this.tDir = new Plane(pt, d);
+            this.mDir = Plane.WorldXY;
             this.speed = -1;
             this.feed = -1;
             this.error = new List<string>();
@@ -89,8 +92,7 @@ namespace CAMel.Types
         // Use point direction and override speed and feed
         public ToolPoint(Point3d pt, Vector3d d, double speed, double feed)
         {
-            this.pt = pt;
-            this.dir = d;
+            this.tDir = new Plane(pt, d);
             this.speed = speed;
             this.feed = feed;
             this.error = new List<string>();
@@ -102,8 +104,7 @@ namespace CAMel.Types
         // Use point direction, override speed and feed and add extra Code
         public ToolPoint(Point3d pt, Vector3d d, [CanBeNull] string preCode, [CanBeNull] string postCode, double speed, double feed)
         {
-            this.pt = pt;
-            this.dir = d;
+            this.tDir = new Plane(pt, d);
             this.preCode = preCode ?? string.Empty;
             this.postCode = postCode ?? string.Empty;
             this.speed = speed;
@@ -115,8 +116,8 @@ namespace CAMel.Types
         // Copy Constructor
         private ToolPoint([NotNull] ToolPoint tP)
         {
-            this.pt = tP.pt;
-            this.dir = tP.dir;
+            this.tDir = tP.tDir;
+            this.mDir = tP.mDir;
             this.preCode = string.Copy(tP.preCode);
             this.postCode = string.Copy(tP.postCode);
             this.speed = tP.speed;
@@ -131,7 +132,6 @@ namespace CAMel.Types
         [NotNull]
         public ToolPoint deepClone() => new ToolPoint(this);
 
-        [PublicAPI]
         public void addError([CanBeNull] string err)
         {
             if (err != null) { this.error.Add(err); }
@@ -194,10 +194,8 @@ namespace CAMel.Types
             if (this.Value == null || writer == null) { return base.Write(writer); }
 
             writer.SetString("name", this.Value.name);
-            Point3d pt = this.Value.pt;
-            writer.SetPoint3D("pt", new GH_Point3D(pt.X, pt.Y, pt.Z));
-            Vector3d dir = this.Value.dir;
-            writer.SetPoint3D("dir", new GH_Point3D(dir.X, dir.Y, dir.Z));
+            writer.SetPlane("tDir", CAMel_Goo.toIO(this.Value.tDir));
+            writer.SetPlane("mDir", CAMel_Goo.toIO(this.Value.mDir));
             writer.SetDouble("speed", this.Value.speed);
             writer.SetDouble("feed", this.Value.feed);
             writer.SetString("preCode", this.Value.preCode);
@@ -217,12 +215,22 @@ namespace CAMel.Types
                 if (reader.ItemExists("pt"))
                 {
                     GH_Point3D pt = reader.GetPoint3D("pt");
-                    tPt.pt = new Point3d(pt.x, pt.y, pt.z);
+                    tPt.pt = CAMel_Goo.fromIO(pt);
                 }
                 if (reader.ItemExists("dir"))
                 {
                     GH_Point3D pt = reader.GetPoint3D("dir");
-                    tPt.dir = new Vector3d(pt.x, pt.y, pt.z);
+                    tPt.tDir = new Plane(tPt.pt, (Vector3d) CAMel_Goo.fromIO(pt));
+                }
+                if (reader.ItemExists("tDir"))
+                {
+                    GH_Plane pl = reader.GetPlane("tDir");
+                    tPt.tDir = CAMel_Goo.fromIO(pl);
+                }
+                if (reader.ItemExists("mDir"))
+                {
+                    GH_Plane pl = reader.GetPlane("tDir");
+                    tPt.tDir = CAMel_Goo.fromIO(pl);
                 }
                 if (reader.ItemExists("feed")) { tPt.feed = reader.GetDouble("feed"); }
                 if (reader.ItemExists("speed")) { tPt.speed = reader.GetDouble("speed"); }
