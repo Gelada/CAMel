@@ -312,6 +312,7 @@ namespace CAMel.Types.Machine
 
             double cutDepth = tP.matTool.cutDepth <= 0 ? double.PositiveInfinity : tP.matTool.cutDepth;
 
+            // ReSharper disable once AssignNullToNotNullAttribute
             foreach (MFintersection inter in refPath.TakeWhile(tPt => tPt != null).Select(tPt => tP.matForm.intersect(tPt, 0).through))
             {
                 matDist.Add(inter.lineP); // distance to material surface
@@ -482,6 +483,7 @@ namespace CAMel.Types.Machine
             PointContainment incorrectSide = PointContainment.Inside;
             CurveOrientation orient = toolL.ClosedCurveOrientation(-Vector3d.ZAxis);
 
+            // ReSharper disable twice ArrangeRedundantParentheses
             if ((orient == CurveOrientation.Clockwise && leadCurve > 0) || (orient == CurveOrientation.CounterClockwise && leadCurve < 0))
             { incorrectSide = PointContainment.Outside; }
 
@@ -564,7 +566,7 @@ namespace CAMel.Types.Machine
 
             irTps.Add(newTP);
 
-            double leadCurve = tP.additions.leadParam()[0];
+            double leadCurve = tP.additions.leadComm[0];
 
             // If leadCurve == 0 or path is open can now return
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return irTps; }
@@ -645,7 +647,7 @@ namespace CAMel.Types.Machine
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
             newTP.additions.retract = false;
-            newTP.additions.leadCurvature = String.Empty;
+            newTP.additions.leadCurvature = string.Empty;
 
             // Add activation code to main path if tool not activated for insert/retract
             if (tP.additions.activate != 0 && irActivate == 0)
@@ -856,7 +858,7 @@ namespace CAMel.Types.Machine
                 rTp.Add(tempTPt);
 
                 // point out at safe distance
-                tempTPt = newTP.lastP.deepClone();
+                tempTPt = newTP.lastP?.deepClone() ?? new ToolPoint();
                 tempTPt.pt = inter.point;
                 tempTPt.feed = 0; // we can use a rapid move
                 rTp.Add(tempTPt);
@@ -1135,13 +1137,13 @@ namespace CAMel.Types.Machine
             if (mI.name != string.Empty) { co.appendComment(mI.name); }
             co.appendComment("");
             co.appendComment(" Machine Instructions Created " + thisDay.ToString("f"));
-            System.Reflection.AssemblyName CAMel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
+            System.Reflection.AssemblyName camel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
             DateTime buildTime = new DateTime(2000, 1, 1)
-                                 + new TimeSpan(CAMel.Version?.Build ?? 0, 0, 0, 0)
-                                 + TimeSpan.FromSeconds((CAMel.Version?.Revision ?? 0) * 2);
+                                 + new TimeSpan(camel.Version?.Build ?? 0, 0, 0, 0)
+                                 + TimeSpan.FromSeconds((camel.Version?.Revision ?? 0) * 2);
 
-            co.appendComment("  by " + CAMel.Name + " "
-                             + CAMel.Version?.ToString(2)
+            co.appendComment("  by " + camel.Name + " "
+                             + camel.Version?.ToString(2)
                              + " built " + buildTime.ToString("U"));
             if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
             co.appendComment(" Starting with: ");

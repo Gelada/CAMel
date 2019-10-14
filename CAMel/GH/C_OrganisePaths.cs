@@ -126,9 +126,10 @@ namespace CAMel.GH
             // set the keys for the curves read in
             this._allKeys = new SortedSet<double>();
             this._curves = new List<AugCurve>();
-            foreach (GH_Curve curve in paths.Where(curve => curve?.Value != null))
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (GH_Curve curve in paths)
             {
-                this._curves.Add(new AugCurve(curve.Value, curve.ReferenceID));
+                if (curve?.Value != null) { this._curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
             }
 
             foreach (RhinoObject ro in uDoc.Objects)
@@ -341,7 +342,7 @@ namespace CAMel.GH
                         switch (side)
                         {
                             case 1:
-                                if (c.c.IsClosed)
+                                if (c?.c.IsClosed ?? false)
                                 {
                                     if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise)
                                     { c.side = -1; }
@@ -349,7 +350,7 @@ namespace CAMel.GH
                                 }
                                 break;
                             case 2:
-                                if (c.c.IsClosed)
+                                if (c?.c.IsClosed ?? false)
                                 {
                                     if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis) != CurveOrientation.CounterClockwise
                                     ) { c.side = -1; }
@@ -357,16 +358,16 @@ namespace CAMel.GH
                                 }
                                 break;
                             case 3:
-                                c.side = -1;
+                                if (c != null) { c.side = -1; }
                                 break;
                             case 4:
-                                c.side = 1;
+                                if (c != null) { c.side = 1; }
                                 break;
                         }
                         switch (direction)
                         {
                             case 1:
-                                if (c.c.IsClosed && c.c.ClosedCurveOrientation(-Vector3d.ZAxis) ==
+                                if ((c?.c.IsClosed ?? false) && c.c.ClosedCurveOrientation(-Vector3d.ZAxis) ==
                                     CurveOrientation.Clockwise)
                                 {
                                     c.c.Reverse();
@@ -374,7 +375,7 @@ namespace CAMel.GH
                                 }
                                 break;
                             case 2:
-                                if (c.c.IsClosed && c.c.ClosedCurveOrientation(-Vector3d.ZAxis) ==
+                                if ((c?.c.IsClosed ?? false) && c.c.ClosedCurveOrientation(-Vector3d.ZAxis) ==
                                     CurveOrientation.CounterClockwise)
                                 {
                                     c.c.Reverse();

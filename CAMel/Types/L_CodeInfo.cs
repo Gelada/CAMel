@@ -158,6 +158,7 @@ namespace CAMel.Types
         [NotNull]
         internal string getRangesString()
         {
+            // ReSharper disable once AssignNullToNotNullAttribute
             return this._ranges.Keys.Aggregate(string.Empty, (current, k) => current + "\n" + k + ": " + this._ranges[k].T0.ToString("0.00") + " to " + this._ranges[k].T1.ToString("0.00"));
         }
 

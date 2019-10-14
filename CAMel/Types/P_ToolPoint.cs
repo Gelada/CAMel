@@ -21,6 +21,7 @@ namespace CAMel.Types
     {
         public Plane tDir; // Tool position and Orientation
         public Plane mDir; // Material position and Orientation
+
         public Point3d pt // Tool Tip position
         {
             get => this.tDir.Origin;

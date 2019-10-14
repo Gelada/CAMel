@@ -48,10 +48,11 @@ namespace CAMel.GH
             string selected = string.Empty;
             bool newList = false;
             if (vL.ListItems == null) { return; }
-            foreach (GH_ValueListItem vLi in vL.ListItems.Where(vLi => vLi?.Name != null))
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (GH_ValueListItem vLi in vL.ListItems)
             {
-                if (vLi.Name != "One" && vLi.Name != "Two" && vLi.Name != "Three" && vLi.Name != "Four")
-                { items.Add(vLi.Name); }
+                if (vLi?.Name == null) { continue; }
+                if (vLi.Name != "One" && vLi.Name != "Two" && vLi.Name != "Three" && vLi.Name != "Four") { items.Add(vLi.Name); }
                 else { newList = true; }
                 if (vLi.Selected) { selected = vLi.Name; }
             }

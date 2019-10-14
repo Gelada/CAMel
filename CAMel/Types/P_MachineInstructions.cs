@@ -89,7 +89,7 @@ namespace CAMel.Types
 
         public override string ToString()
         {
-            int totalTP = this.SelectMany(mO => mO).Sum(tP => tP.Count);
+            int totalTP = this.SelectMany(mO => mO).Sum(tP => tP?.Count ?? 0);
             return "Machine Instruction: " + this.name + ", " + this.Count + " operations, " + totalTP + " total points.";
         }
 
@@ -215,13 +215,13 @@ namespace CAMel.Types
         [NotNull, PublicAPI]
         public List<List<List<Point3d>>> getPoints()
         {
-            return this.Select(mO => mO.getPoints()).ToList();
+            return this.Select(mO => mO?.getPoints()).ToList();
         }
         // Get the list of tool directions
         [NotNull, PublicAPI]
         public List<List<List<Vector3d>>> getDirs()
         {
-            return this.Select(mO => mO.getDirs()).ToList();
+            return this.Select(mO => mO?.getDirs()).ToList();
         }
         // Create a path with the points
         [NotNull, PublicAPI]

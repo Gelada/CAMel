@@ -18,30 +18,30 @@ namespace CAMel.Types
                 this.command = string.Empty;
                 this.values = new List<double>();
             }
-            List<string> terms = new List<string>();
-            terms.AddRange(comm.Split(' '));
-
-            this.values = new List<double>();
-            if (terms.Count > 0)
+            else
             {
-                if (double.TryParse(terms[0], out double val))
+                List<string> terms = new List<string>();
+                terms.AddRange(comm.Split(' '));
+
+                this.values = new List<double>();
+                if (terms.Count > 0)
                 {
-                    this.values.Add(val);
-                    this.command = string.Empty;
+                    if (double.TryParse(terms[0], out double val))
+                    {
+                        this.values.Add(val);
+                        this.command = string.Empty;
+                    }
+                    else { this.command = terms[0] ?? string.Empty; }
                 }
-                else { this.command = terms[0] ?? string.Empty; }
-            }
-            else { this.command = string.Empty; }
+                else { this.command = string.Empty; }
 
-            for (int i = 1; i < terms.Count; i++)
-            {
-                if (double.TryParse(terms[i], out double val))
-                { this.values.Add(val);}
-                else { this.values.Add(0); }
+                for (int i = 1; i < terms.Count; i++)
+                {
+                    if (double.TryParse(terms[i], out double val)) { this.values.Add(val); }
+                    else { this.values.Add(0); }
+                }
             }
         }
-
-        [NotNull]
         public override string ToString()
         {
             string str = this.command;
@@ -50,7 +50,6 @@ namespace CAMel.Types
 
         #region List Functions
 
-        [NotNull]
         public double this[int index]
         {
             get
@@ -80,12 +79,12 @@ namespace CAMel.Types
             split.AddRange(commandString.Split(','));
             this._commands.AddRange(split.Select(s => new BpCommand(s)).ToList());
         }
-        [NotNull]
         public override string ToString()
         {
             return this._commands.Aggregate(string.Empty, (current, comm) => current + comm) ?? string.Empty;
         }
 
+        [UsedImplicitly]
         public bool contains([NotNull] string command, out BpCommand c)
         {
             foreach (BpCommand bpC in this._commands.Where(bpC => bpC?.command == command))

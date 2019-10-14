@@ -71,7 +71,7 @@ namespace CAMel.Types
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
             this.leadComm = new BpCommand(string.Empty);
-            this.machineOptions = string.Empty;
+            this._mOptions = new BasicParser(string.Empty);
         }
         private ToolPathAdditions([NotNull] ToolPathAdditions tPa)
         {
@@ -89,7 +89,7 @@ namespace CAMel.Types
             this.onion.AddRange(tPa.onion);
             this.threeAxisHeightOffset = tPa.threeAxisHeightOffset;
             this.tabbing = tPa.tabbing;
-            this.machineOptions = tPa.machineOptions;
+            this._mOptions = tPa._mOptions;
         }
 
         [NotNull]
@@ -192,11 +192,6 @@ namespace CAMel.Types
             this.leadComm = tPa.leadComm;
             this.machineOptions = tPa.machineOptions;
         }
-
-        [NotNull] public List<double> leadParam() => this.leadComm.values;
-
-        [NotNull]
-        public string leadType([NotNull] string standard) => this.leadComm.command == string.Empty ? standard : this.leadComm.command;
     }
 
     // Grasshopper Type Wrapper
@@ -273,9 +268,9 @@ namespace CAMel.Types
                     double val = 0;
                     tPa.leadCurvature = reader.TryGetDouble("leadCurve", ref val)
                         ? val.ToString(CultureInfo.InvariantCulture)
-                        : reader?.GetString("leadCurve") ?? string.Empty;
+                        : reader.GetString("leadCurve") ?? string.Empty;
                 }
-                if (reader.ItemExists("machineOptions")) { tPa.machineOptions = reader.GetString("machineOptions"); }
+                if (reader.ItemExists("machineOptions")) { tPa.machineOptions = reader.GetString("machineOptions") ?? string.Empty; }
                 this.Value = tPa;
                 bool m = base.Read(reader);
 
@@ -542,7 +537,7 @@ namespace CAMel.Types
                 if (this.Owner == null) { throw new NullReferenceException(); }
                 if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
-                tPa.leadCurvature = value;
+                tPa.leadCurvature = value ?? string.Empty;
                 this.Owner.Value = tPa;
             }
         }
@@ -556,7 +551,7 @@ namespace CAMel.Types
                 if (this.Owner == null) { throw new NullReferenceException(); }
                 if (this.Owner.Value == null) { this.Owner.Value = new ToolPathAdditions(); }
                 ToolPathAdditions tPa = this.Owner.Value;
-                tPa.machineOptions = value;
+                tPa.machineOptions = value ?? string.Empty;
                 this.Owner.Value = tPa;
             }
         }

@@ -38,7 +38,7 @@ namespace CAMel.Types.Machine
         public string comment(string l) => string.Empty;
         public string lineNumber(string l, int line) => l;
 
-        public ToolPath refine(ToolPath tP) => tP.matForm.refine(tP, this);
+        public ToolPath refine(ToolPath tP) => tP.matForm?.refine(tP, this) ?? tP;
         public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> {tP};
         public List<ToolPath> insertRetract(ToolPath tP)
         {
@@ -332,8 +332,8 @@ namespace CAMel.Types.Machine
 
             return gPtBd.ToString();
         }
-        
-        [NotNull]
+
+        [NotNull, UsedImplicitly]
         private static string omxTiltPt23(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality, Vector3d os)
         {
             StringBuilder gPtBd = new StringBuilder("[0],");
@@ -391,13 +391,13 @@ namespace CAMel.Types.Machine
             co.append("[Reserved]");
             co.append("[COMMENT]");
             co.append(" Machine Instructions Created " + thisDay.ToString("f"));
-            System.Reflection.AssemblyName CAMel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
+            System.Reflection.AssemblyName camel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
             DateTime buildTime = new DateTime(2000, 1, 1)
-                                 + new TimeSpan(CAMel.Version?.Build ?? 0, 0, 0, 0)
-                                 + TimeSpan.FromSeconds((CAMel.Version?.Revision ?? 0) * 2);
+                                 + new TimeSpan(camel.Version?.Build ?? 0, 0, 0, 0)
+                                 + TimeSpan.FromSeconds((camel.Version?.Revision ?? 0) * 2);
 
-            co.append("  by " + CAMel.Name + " "
-                      + CAMel.Version?.ToString(2)
+            co.append("  by " + camel.Name + " "
+                      + camel.Version?.ToString(2)
                       + " built " + buildTime.ToString("U"));
             if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
             co.append("[END]");

@@ -95,7 +95,7 @@ namespace CAMel.Types
         // find radius of smallest sphere with given origin containing a bounding box
         public static double boundSphere(BoundingBox bb, Point3d c) => c.DistanceTo(bb.FurthestPoint(c));
 
-        public static Point3d fromIO (GH_IO.Types.GH_Point3D pt) => new Point3d(pt.x, pt.y, pt.z);
+        public static Point3d fromIO(GH_IO.Types.GH_Point3D pt) => new Point3d(pt.x, pt.y, pt.z);
         public static Plane fromIO(GH_IO.Types.GH_Plane pl) =>
             new Plane(fromIO(pl.Origin), fromIO(pl.XAxis), fromIO(pl.YAxis));
         public static GH_IO.Types.GH_Point3D toIO(Point3d pt) =>
