@@ -39,6 +39,7 @@
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // From list of toolpaths
         public MachineOperation([NotNull] List<ToolPath> tPs)
         {
@@ -47,14 +48,16 @@
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // From toolpath
         public MachineOperation([NotNull] ToolPath tP)
         {
-            this.tPs = new List<ToolPath> {tP};
+            this.tPs = new List<ToolPath> { tP };
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // Name and ToolPaths
         public MachineOperation([NotNull] string name, [NotNull] List<ToolPath> tPs)
         {
@@ -63,6 +66,7 @@
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // Copy Constructor
         private MachineOperation([NotNull] MachineOperation mO)
         {
@@ -72,6 +76,7 @@
             this.tPs = new List<ToolPath>();
             foreach (ToolPath tP in mO) { Add(tP?.deepClone()); }
         }
+
         [NotNull] public MachineOperation deepClone() => new MachineOperation(this);
 
         // Return with new paths.
@@ -114,7 +119,6 @@
             // We started with a list of toolpaths (1st level)
             // We create this block and then order it so we do
             // all preparation a level at a time and then do a final pass of all paths
-
             List<List<List<ToolPath>>> newPaths = new List<List<List<ToolPath>>>();
 
             // Store finishing paths separately
@@ -134,7 +138,8 @@
             List<ToolPath> levelPaths; // all paths on one level
 
             // Find path with most levels
-            int levels = newPaths.Select(lTp => lTp?.Count ?? 0).Concat(new[] {0}).Max();
+            int levels = newPaths.Select(lTp => lTp?.Count ?? 0).Concat(new[] { 0 }).Max();
+
             // do the roughing layers
             for (int i = 0; i < levels; i++)
             {
@@ -143,17 +148,18 @@
                 { levelPaths.AddRange(lTp[i] ?? new List<ToolPath>()); }
 
                 // sort here (remember to only move chunks that are outside the material!)
-
                 procPaths.AddRange(levelPaths);
             }
+
             // finishing cuts
             // find path with most levels
-            levels = finishPaths.Select(lTp => lTp?.Count ?? 0).Concat(new[] {0}).Max();
-            // add finishing paths
+            levels = finishPaths.Select(lTp => lTp?.Count ?? 0).Concat(new[] { 0 }).Max();
 
+            // add finishing paths
             for (int i = 0; i < levels; i++)
             {
                 levelPaths = new List<ToolPath>();
+
                 // ReSharper disable once LoopCanBePartlyConvertedToQuery
                 foreach (List<ToolPath> lTp in finishPaths.Where(lTp => i < lTp?.Count))
                 {
@@ -173,10 +179,12 @@
                 {
                     // Calculate transition
                     ToolPath trP = m.transition(frP, tP);
+
                     // Remove last point of previous path
                     transPaths[transPaths.Count - 1]?.removeLast();
                     transPaths.Add(trP);
                 }
+
                 transPaths.Add(tP);
                 frP = tP;
             }
@@ -257,6 +265,7 @@
                                             tpPath = false;
                                             tempTP = new ToolPath();
                                         }
+
                                         switch (oB)
                                         {
                                             case ToolPath tP:
@@ -278,10 +287,12 @@
                                                 ignores++;
                                                 break;
                                         }
+
                                         break;
                                     }
                             }
                         }
+
                         if (tpPath) { oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP })); }
                         break;
                     }
@@ -304,18 +315,21 @@
 
             return oP;
         }
+
         // Get the list of tooltip locations
         [NotNull]
         public List<List<Point3d>> getPoints()
         {
             return this.Select(tP => tP?.getPoints()).ToList();
         }
+
         // Get the list of tool directions
         [NotNull]
         public List<List<Vector3d>> getDirs()
         {
             return this.Select(tP => tP?.getDirs()).ToList();
         }
+
         // Create a path with the points
         [NotNull, PublicAPI]
         public List<List<Point3d>> getPointsAndDirs([CanBeNull] out List<List<Vector3d>> dirs)
@@ -327,8 +341,10 @@
                 ptsOut.Add(tP.getPointsAndDirs(out List<Vector3d> tPDirs));
                 dirs.Add(tPDirs);
             }
+
             return ptsOut;
         }
+
         // Bounding Box for previews
         public BoundingBox getBoundingBox()
         {
@@ -337,14 +353,17 @@
             { bb.Union(this[i].getBoundingBox()); }
             return bb;
         }
+
         // Create single polyline
         [NotNull] public PolylineCurve getLine() => getSinglePath().getLine();
+
         // Create polylines
         [NotNull]
         public IEnumerable<PolylineCurve> getLines()
         {
             return this.Select(tP => tP?.getLine()).ToList();
         }
+
         // Lines for each toolpoint
         [NotNull]
         public IEnumerable<Line> toolLines()
@@ -359,7 +378,7 @@
         #region List Functions
 
         public int Count => this.tPs.Count;
-        public bool IsReadOnly => ((IList<ToolPath>) this.tPs).IsReadOnly;
+        public bool IsReadOnly => ((IList<ToolPath>)this.tPs).IsReadOnly;
 
         [NotNull] public ToolPath this[int index] { get => this.tPs[index]; set => this.tPs[index] = value; }
 
@@ -368,11 +387,13 @@
         {
             if (item != null) { this.tPs.Insert(index, item); }
         }
+
         public void RemoveAt(int index) => this.tPs.RemoveAt(index);
         public void Add(ToolPath item)
         {
             if (item != null) { this.tPs.Add(item); }
         }
+
         [PublicAPI] public void AddRange([NotNull] IEnumerable<ToolPath> items) => this.tPs.AddRange(items.Where(x => x != null));
         public void Clear() => this.tPs.Clear();
         public bool Contains(ToolPath item) => this.tPs.Contains(item);
@@ -389,10 +410,13 @@
     {
         // Default Constructor
         [UsedImplicitly] public GH_MachineOperation() => this.Value = new MachineOperation();
+
         // Construct from value alone
         public GH_MachineOperation([CanBeNull] MachineOperation mO) => this.Value = mO;
+
         // Copy Constructor.
         public GH_MachineOperation([CanBeNull] GH_MachineOperation mO) => this.Value = mO?.Value?.deepClone();
+
         // Duplicate
         [NotNull] public override IGH_Goo Duplicate() => new GH_MachineOperation(this);
 
@@ -402,39 +426,44 @@
             if (typeof(T).IsAssignableFrom(typeof(MachineOperation)))
             {
                 object ptr = this.Value;
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(ToolPath)))
             {
                 object ptr = this.Value.getSinglePath();
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(GH_ToolPath)))
             {
                 object ptr = new GH_ToolPath(this.Value.getSinglePath());
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(Curve)))
             {
-                target = (T) (object) this.Value.getLine();
+                target = (T)(object)this.Value.getLine();
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Curve)))
             {
-                target = (T) (object) new GH_Curve(this.Value.getLine());
+                target = (T)(object)new GH_Curve(this.Value.getLine());
                 return true;
             }
 
             return false;
         }
+
         public override bool CastFrom([CanBeNull] object source)
         {
             switch (source) {
                 case null: return false;
+
                 //Cast from unwrapped MO
                 case MachineOperation value:
                     this.Value = value;
@@ -452,16 +481,21 @@
             {
                 args.Pipeline.DrawCurve(l, args.Color);
             }
+
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
+
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
     public class GH_MachineOperationPar : GH_Param<GH_MachineOperation>, IGH_PreviewObject
     {
-        public GH_MachineOperationPar() :
-            base("Operation", "MachOp", "Contains a collection of Machine Operations", "CAMel", "  Params", GH_ParamAccess.item) { }
+        public GH_MachineOperationPar()
+            : base(
+                "Operation", "MachOp",
+                "Contains a collection of Machine Operations",
+                "CAMel", "  Params", GH_ParamAccess.item) { }
         public override Guid ComponentGuid => new Guid("e0dfd958-f0fb-46b7-b743-04e071ea25fd");
 
         public bool Hidden { get; set; }

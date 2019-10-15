@@ -183,7 +183,7 @@ namespace CAMel.GH
                 }
             }
 
-            this.curves.Sort(_CurveC);
+            this.curves.Sort(CurveC);
 
             List<double> offSets = new List<double>();
             List<Curve> sorted = new List<Curve>();
@@ -194,6 +194,7 @@ namespace CAMel.GH
                 sorted.Add(c?.c);
                 offSets.Add(os);
             }
+
             da.SetDataList(0, sorted);
             da.SetDataList(1, offSets);
         }
@@ -203,9 +204,9 @@ namespace CAMel.GH
             public int Compare(AugCurve x, AugCurve y) => x?.key.CompareTo(y?.key) ?? 0;
         }
 
-        private static readonly CurveComp _CurveC = new CurveComp();
+        private static readonly CurveComp CurveC = new CurveComp();
 
-        private const int _DotSize = 11;
+        private const int DotSize = 11;
         private readonly Vector3d dotShift = new Vector3d(1, 1, 1);
         internal bool find(Line l, [NotNull] RhinoViewport vP)
         {
@@ -224,14 +225,15 @@ namespace CAMel.GH
                 if ((ro?.IsSelected(true) ?? 0) > 0) { sel.Add(i); }
 
                 vP.GetWorldToScreenScale(c.c.PointAtStart, out double pixelsPerUnit);
-                double dist = l.DistanceTo(c.c.PointAtStart + _DotSize / pixelsPerUnit * this.dotShift, false);
-                if (dist * pixelsPerUnit < _DotSize) { clicked = i; }
+                double dist = l.DistanceTo(c.c.PointAtStart + DotSize / pixelsPerUnit * this.dotShift, false);
+                if (dist * pixelsPerUnit < DotSize) { clicked = i; }
             }
 
             // return if click did not attach to a path
             if (clicked < 0) { return false; }
 
             GetInteger gi;
+
             // if the clicked path is not selected or is the only thing selected, just deal with that.
             double side;
             if (sel.Count <= 1 || !sel.Contains(clicked))
@@ -272,10 +274,13 @@ namespace CAMel.GH
                                             else { side = -1; }
                                             break;
                                     }
+
                                     break;
                             }
+
                             continue;
                         }
+
                         if (getR != GetResult.Number && getR != GetResult.Nothing) { return true; }
                         c.side = side;
                         if (cC != counterClock.CurrentValue)
@@ -283,12 +288,13 @@ namespace CAMel.GH
                             c.c.Reverse();
                             c.side = -c.side;
                         }
+
                         reOrder(c, clicked, gi.Number());
                         return true;
                     }
                 }
-                // the path is not closed
 
+                // the path is not closed
                 gi = getOpen(clicked, c.side, out OptionToggle flip);
                 while (true)
                 {
@@ -310,10 +316,13 @@ namespace CAMel.GH
                                         side = 1;
                                         break;
                                 }
+
                                 break;
                         }
+
                         continue;
                     }
+
                     if (getR != GetResult.Number && getR != GetResult.Nothing) { return true; }
                     c.side = side;
                     if (flip.CurrentValue)
@@ -321,12 +330,13 @@ namespace CAMel.GH
                         c.c.Reverse();
                         c.side = -c.side;
                     }
+
                     reOrder(c, clicked, gi.Number());
                     return true;
                 }
             }
-            // Now deal with a larger selection
 
+            // Now deal with a larger selection
             gi = getMultiple(clicked);
             side = 0;
             double direction = 0;
@@ -344,8 +354,10 @@ namespace CAMel.GH
                             direction = gi.Option()?.CurrentListOptionIndex ?? 0;
                             break;
                     }
+
                     continue;
                 }
+
                 if (getR == GetResult.Number || getR == GetResult.Nothing)
                 {
                     foreach (AugCurve c in sel.Select(i => this.curves[i]))
@@ -359,6 +371,7 @@ namespace CAMel.GH
                                     { c.side = -1; }
                                     else { c.side = 1; }
                                 }
+
                                 break;
                             case 2:
                                 if (c?.c.IsClosed ?? false)
@@ -367,6 +380,7 @@ namespace CAMel.GH
                                     ) { c.side = -1; }
                                     else { c.side = 1; }
                                 }
+
                                 break;
                             case 3:
                                 if (c != null) { c.side = -1; }
@@ -375,6 +389,7 @@ namespace CAMel.GH
                                 if (c != null) { c.side = 1; }
                                 break;
                         }
+
                         switch (direction)
                         {
                             case 1:
@@ -384,6 +399,7 @@ namespace CAMel.GH
                                     c.c.Reverse();
                                     c.side = -c.side;
                                 }
+
                                 break;
                             case 2:
                                 if ((c?.c.IsClosed ?? false) && c.c.ClosedCurveOrientation(-Vector3d.ZAxis) ==
@@ -392,6 +408,7 @@ namespace CAMel.GH
                                     c.c.Reverse();
                                     c.side = -c.side;
                                 }
+
                                 break;
                         }
                     }
@@ -437,9 +454,10 @@ namespace CAMel.GH
                     .GetViewBetween(double.NegativeInfinity, aboveKey - CAMel_Goo.Tolerance).Max;
                 newKeys = new Interval(belowKey, aboveKey);
             }
+
             for (int i = 0; i < sel.Count; i++)
             {
-                double newKey = newKeys.ParameterAt((i + 1) / (double) (sel.Count + 1));
+                double newKey = newKeys.ParameterAt((i + 1) / (double)(sel.Count + 1));
                 this.curves[sel[i]].key = newKey;
                 this.allKeys.Add(newKey);
             }
@@ -473,7 +491,7 @@ namespace CAMel.GH
             GetInteger gi = setUp(i);
             counterClock = new OptionToggle(cC, "Clockwise", "CounterClockwise");
             gi.AddOptionToggle("Direction", ref counterClock);
-            List<string> sideL = new List<string> {"Centre", "Inside", "Outside"};
+            List<string> sideL = new List<string> { "Centre", "Inside", "Outside" };
             int dVal = 0;
             if (cC && side < 0 || !cC && side > 0) { dVal = 1; } // cutting inside
             if (cC && side > 0 || !cC && side < 0) { dVal = 2; } // cutting outside
@@ -489,7 +507,7 @@ namespace CAMel.GH
             GetInteger gi = setUp(i);
             flip = new OptionToggle(false, "Leave", "Flip");
             gi.AddOptionToggle("Direction", ref flip);
-            List<string> sideL = new List<string> {"Centre", "Left", "Right"};
+            List<string> sideL = new List<string> { "Centre", "Left", "Right" };
             int dVal = 0;
             if (side < 0) { dVal = 1; } // cutting left
             if (side > 0) { dVal = 2; } // cutting right
@@ -504,7 +522,7 @@ namespace CAMel.GH
             GetInteger gi = setUp(i);
             gi.ClearDefault();
             gi.SetCommandPromptDefault("");
-            List<string> dir = new List<string> {"Leave", "CounterClockAll", "ClockAll"};
+            List<string> dir = new List<string> { "Leave", "CounterClockAll", "ClockAll" };
             gi.AddOptionList("Direction", dir, 0);
             List<string> side = new List<string>
                 {
@@ -553,6 +571,7 @@ namespace CAMel.GH
                         if (c.c.PointAtStart != co.CurveGeometry.PointAtStart) { co.CurveGeometry.Reverse(); }
                     }
                 }
+
                 ro?.CommitChanges();
             }
         }
@@ -580,7 +599,7 @@ namespace CAMel.GH
                 if (this.Attributes?.Selected == true) { lineC = args.WireColour_Selected; }
                 args.Display.DrawCurve(this.curves[i].c, lineC);
 
-                args.Display.DrawDot(this.curves[i].c.PointAtStart + _DotSize / pixelsPerUnit * this.dotShift, (i + 1).ToString());
+                args.Display.DrawDot(this.curves[i].c.PointAtStart + DotSize / pixelsPerUnit * this.dotShift, (i + 1).ToString());
 
                 Line dir = new Line(this.curves[i].c.PointAtStart, this.curves[i].c.TangentAtStart * 50.0 / pixelsPerUnit);
                 args.Display.DrawArrow(dir, System.Drawing.Color.AntiqueWhite);

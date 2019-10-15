@@ -67,14 +67,14 @@
             string matName = string.Empty;
             string toolName = string.Empty;
 
-            int T = 1;
+            int t = 1;
             double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW = 0, tL = 0, sL = 1, pJ = -1;
 
             string toolShape = string.Empty;
 
             if (!da.GetData("Material Name", ref matName)) { return; }
             if (!da.GetData("Tool Name", ref toolName)) { return; }
-            if (!da.GetData("Tool Number", ref T)) { return; }
+            if (!da.GetData("Tool Number", ref t)) { return; }
             if (!da.GetData("Speed", ref s)) { return; }
             if (!da.GetData("Cut Feed", ref cf)) { return; }
             if (!da.GetData("Plunge Feed", ref pf)) { return; }
@@ -99,7 +99,7 @@
                 eS = EndShape.Other;
             }
 
-            MaterialTool mT = new MaterialTool(matName, toolName, T, s, cf, pf, cd, fd, tW, iW, tL, eS, to, mS, sL, pJ);
+            MaterialTool mT = new MaterialTool(matName, toolName, t, s, cf, pf, cd, fd, tW, iW, tL, eS, to, mS, sL, pJ);
 
             da.SetData(0, new GH_MaterialTool(mT));
         }

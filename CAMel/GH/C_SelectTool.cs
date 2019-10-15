@@ -70,6 +70,7 @@
                     if (mat == selected) { vLi.Selected = true; }
                     vL.ListItems.Add(vLi);
                 }
+
                 vL.ExpireSolution(true);
             }
         }
@@ -92,7 +93,7 @@
             da.GetData(1, ref matName);
             da.GetData(2, ref toolName);
 
-            oMTs = (List<object>) CAMel_Goo.cleanGooList(oMTs) ?? new List<object>();
+            oMTs = (List<object>)CAMel_Goo.cleanGooList(oMTs) ?? new List<object>();
 
             HashSet<MaterialTool> readMTs = new HashSet<MaterialTool>();
 

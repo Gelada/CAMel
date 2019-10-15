@@ -19,7 +19,6 @@
 
         private double tiltMax { get; }
         public bool toolLengthCompensation { get; }
-        //TODO
         public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
         public Omax5([NotNull] string name, [NotNull] List<MaterialTool> mTs, double tiltMax)
@@ -41,7 +40,7 @@
         public string lineNumber(string l, int line) => l;
 
         public ToolPath refine(ToolPath tP) => tP.matForm?.refine(tP, this) ?? tP;
-        public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> {tP};
+        public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> { tP };
         public List<ToolPath> insertRetract(ToolPath tP)
         {
             switch (tP.additions.leadComm.command)
@@ -56,6 +55,7 @@
                     return Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
             }
         }
+
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
@@ -63,7 +63,7 @@
         // Use spherical interpolation (as the range of angles is rather small)
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
         {
-            ToolPoint iPt = new ToolPoint {pt = (1 - par) * fP.pt + par * tP.pt};
+            ToolPoint iPt = new ToolPoint { pt = (1 - par) * fP.pt + par * tP.pt };
             Vector3d cr = Vector3d.CrossProduct(fP.dir, tP.dir);
             double an = Vector3d.VectorAngle(fP.dir, tP.dir);
             iPt.dir = fP.dir;
@@ -101,7 +101,7 @@
                         else
                         {
                             mI.Add(new MachineOperation(tP));
-                            tP = new ToolPath {additions = {activate = quality}};
+                            tP = new ToolPath { additions = { activate = quality } };
                         }
                     }
 
@@ -116,9 +116,11 @@
                     oldEndPt = endPt;
                 }
             }
+
             mI.Add(new MachineOperation(tP));
             return mI;
         }
+
         // Try to read a line of omx code. Add an error to the toolpoint if there are problems
         [CanBeNull]
         private static ToolPoint readTP([NotNull] string l, [NotNull] out ToolPoint endPt, out int quality)
@@ -131,14 +133,17 @@
             endPt = new ToolPoint();
             int fm = 0;
             bool badRead = false;
+
             // Read position
             if (items.Length < 4) { return null; }
             if (double.TryParse(items[1], out double x) &&
                 double.TryParse(items[2], out double y) &&
                 double.TryParse(items[3], out double z)) { tPt.pt = new Point3d(x, y, z); }
             else { badRead = true; }
+
             // read quality
             if (items.Length < 8 || !int.TryParse(items[7], out quality)) { badRead = true; }
+
             // check format of XData
             if (items.Length > 15 && int.TryParse(items[14], out fm) && fm == 27)
             {
@@ -177,7 +182,7 @@
 
             Point3d lastPt = new Point3d(co.machineState["X"], co.machineState["Y"], co.machineState["Z"]);
             Vector3d lastDir = new Vector3d(co.machineState["dX"], co.machineState["dY"], co.machineState["dZ"]);
-            int lastQ = (int) co.machineState["Q"];
+            int lastQ = (int)co.machineState["Q"];
             bool first = co.machineState["Fi"] > 0;
 
             foreach (ToolPoint tPt in tP.Where(tPt => tPt != null))
@@ -203,7 +208,6 @@
             }
 
             // Pass machine state information
-
             co.machineState.Clear();
             co.machineState.Add("X", lastPt.X);
             co.machineState.Add("Y", lastPt.Y);
@@ -220,7 +224,6 @@
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
-
             ToolPoint fPt = mI.startPath.firstP;
             if (fPt == null) { Exceptions.nullPanic(); }
 
@@ -241,6 +244,7 @@
 
             OMXCode.omxInstStart(this, ref co, mI);
         }
+
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => OMXCode.omxInstEnd(this, ref co, mI);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpEnd(this, ref co, mO);
@@ -272,23 +276,22 @@
     internal static class OMXCode
     {
         [NotNull]
-        public static string omxTiltPt([NotNull] CodeInfo co, Point3d lastPt,
-                                       Vector3d lastDir, [NotNull] ToolPoint tPt,
-                                       int lastQ, double tiltMax, Vector3d os)
+        public static string omxTiltPt(
+            [NotNull] CodeInfo co, Point3d lastPt,
+            Vector3d lastDir, [NotNull] ToolPoint tPt,
+            int lastQ, double tiltMax, Vector3d os)
         {
             // Work on tilts
             double tiltStart = Vector3d.VectorAngle(Vector3d.ZAxis, lastDir);
             double tiltEnd = Vector3d.VectorAngle(Vector3d.ZAxis, tPt.dir);
 
             // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
-
             if (Math.Abs(tiltStart) > tiltMax || Math.Abs(tiltEnd) > tiltMax)
             {
                 co.addError("Tilt too large");
             }
 
             // Adjust ranges
-
             co.growRange("X", lastPt.X);
             co.growRange("Y", lastPt.Y);
             co.growRange("Z", lastPt.Z);
@@ -321,14 +324,15 @@
             gPtBd.Append("R, R, R, R, R, 27, "); // Reserved items and XType
 
             // flip tool directions
-
             Vector3d uS = -tiltS;
             Vector3d uE = -tiltE;
 
-            gPtBd.Append(uS.X.ToString("0.0000") + "|" + uS.Y.ToString("0.0000") + "|" + uS.Z.ToString("0.0000") +
-                         "|"); // start tool direction
-            gPtBd.Append(uE.X.ToString("0.0000") + "|" + uE.Y.ToString("0.0000") + "|" +
-                         uE.Z.ToString("0.0000")); // end tool direction
+            gPtBd.Append(
+                uS.X.ToString("0.0000") + "|" + uS.Y.ToString("0.0000") + "|" + uS.Z.ToString("0.0000") +
+                "|"); // start tool direction
+            gPtBd.Append(
+                uE.X.ToString("0.0000") + "|" + uE.Y.ToString("0.0000") + "|" +
+                uE.Z.ToString("0.0000")); // end tool direction
 
             gPtBd.Append(",[END]");
 
@@ -352,9 +356,9 @@
             gPtBd.Append("R, R, R, R, R, 23, "); // Reserved items and XType
 
             // flip tool directions
-
             Vector3d uS = -tiltS;
             Vector3d uE = -tiltE;
+
             // TODO set up for positive vs negative using atan2
             double tiltStartX = Vector3d.VectorAngle(-Vector3d.ZAxis, new Vector3d(uS.X, 0, uS.Z));
             double tiltStartY = Vector3d.VectorAngle(-Vector3d.ZAxis, new Vector3d(0, uS.Y, uS.Z));
@@ -369,8 +373,9 @@
             return gPtBd.ToString();
         }
 
-        public static void omxInstStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-                                        [NotNull] MachineInstruction mI)
+        public static void omxInstStart(
+            [NotNull] IMachine m, [NotNull] ref CodeInfo co,
+            [NotNull] MachineInstruction mI)
         {
             if (mI[0].Count == 0) { Exceptions.noToolPathException(); }
             if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
@@ -398,22 +403,25 @@
                                  + new TimeSpan(camel.Version?.Build ?? 0, 0, 0, 0)
                                  + TimeSpan.FromSeconds((camel.Version?.Revision ?? 0) * 2);
 
-            co.append("  by " + camel.Name + " "
-                      + camel.Version?.ToString(2)
-                      + " built " + buildTime.ToString("U"));
+            co.append(
+                "  by " + camel.Name + " "
+                + camel.Version?.ToString(2)
+                + " built " + buildTime.ToString("U"));
             if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
             co.append("[END]");
 
             co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
         }
         // ReSharper disable once UnusedParameter.Global
-        public static void omxInstEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-                                      [NotNull] MachineInstruction mI)
+        public static void omxInstEnd(
+            [NotNull] IMachine m, [NotNull] ref CodeInfo co,
+            [NotNull] MachineInstruction mI)
             => co.append(mI.postCode);
 
         // ReSharper disable once UnusedParameter.Global
-        public static void omxOpStart([NotNull] IMachine m, [NotNull] ref CodeInfo co,
-                                      [NotNull] MachineOperation mO)
+        public static void omxOpStart(
+            [NotNull] IMachine m, [NotNull] ref CodeInfo co,
+            [NotNull] MachineOperation mO)
             => co.append(mO.preCode);
 
         // ReSharper disable once UnusedParameter.Global

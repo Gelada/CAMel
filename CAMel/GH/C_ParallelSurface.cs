@@ -83,7 +83,6 @@
             if (stepOver > mT.sideLoad) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
 
             // process the bounding box
-
             if (!geom.CastTo(out BoundingBox bb))
             {
                 if (geom.CastTo(out Surface s))

@@ -37,7 +37,7 @@
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            List<string> ig = new List<string> {"Nothing to Ignore."};
+            List<string> ig = new List<string> { "Nothing to Ignore." };
             pManager.AddParameter(new GH_MachineInstructionPar(), "Machine Instructions", "MI", "Complete set of machine instructions to convert to Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list, ig);
             pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, string.Empty);
@@ -107,6 +107,7 @@
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warn);
                 da.SetData(2, warn);
             }
+
             string fPath = string.Empty;
 
             // Write Code to file
@@ -121,6 +122,7 @@
                     for (int i = 0; i < saveCode.Length; i += 40000)
                     { sW.Write(saveCode.ToString(i, 40000)); }
                 }
+
                 FileInfo file = new FileInfo(fPath);
                 if (file.Exists) { this.bytesWritten += file.Length; }
             }

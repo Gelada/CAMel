@@ -21,7 +21,6 @@
     // Parallel is along a single direction
     // Cylindrical points towards a path along a direction
     // Spherical points towards a point
-
     public enum SurfProj
     {
         Parallel,
@@ -58,7 +57,6 @@
         [NotNull] public MaterialTool mT { get; }
 
         // private storage when processing a model
-
         private Mesh m; // Mesh
 
         // Parallel constructor
@@ -70,6 +68,7 @@
             this.dir = dir;
             this.surfToolDir = sTd;
         }
+
         // Cylindrical constructor
         public SurfacePath([NotNull] List<Curve> paths, [NotNull] MaterialTool mT, Vector3d dir, [NotNull] Curve cc, SurfToolDir surfToolDir)
         {
@@ -80,6 +79,7 @@
             this.cylOnto = cc;
             this.surfToolDir = surfToolDir;
         }
+
         // Spherical constructor
         public SurfacePath([NotNull] List<Curve> paths, [NotNull] MaterialTool mT, Point3d cen, SurfToolDir surfToolDir)
         {
@@ -89,6 +89,7 @@
             this.cen = cen;
             this.surfToolDir = surfToolDir;
         }
+
         [NotNull]
         public SurfacePath changeFinishDepth(double cutDepth)
         {
@@ -126,11 +127,11 @@
                     op += " Spherical Projection";
                     break;
             }
+
             return op;
         }
 
         // Different calls to Generate a Machine Operation from different surfaces
-
         [NotNull]
         public MachineOperation generateOperation([NotNull] Brep b, double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
@@ -145,6 +146,7 @@
 
             return generateOperation_(offset, mF, tPa);
         }
+
         [NotNull]
         public MachineOperation generateOperation([NotNull] Mesh mIn, double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
@@ -154,11 +156,13 @@
 
             return generateOperation_(offset, mF, tPa);
         }
+
         // actual code to generate the operation
         [NotNull]
         private MachineOperation generateOperation_(double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
             if (this.m == null) { throw new NullReferenceException("Trying to generate a surfacing path with no mesh set. "); }
+
             // create unprojected toolpath (mainly to convert the curve into a list of points)
             List<ToolPath> tPs = new List<ToolPath>();
 
@@ -180,10 +184,11 @@
                 foreach (ToolPoint tPt in tP) //initialise dictionary
                 { intersectInfo[tPt] = new FirstIntersectResponse(); }
 
-                Parallel.ForEach(tP, tPtP =>
-                    {
-                        if (tPtP != null) { intersectInfo[tPtP] = firstIntersect(tPtP); }
-                    });
+                Parallel.ForEach(
+                    tP, tPtP =>
+                        {
+                            if (tPtP != null) { intersectInfo[tPtP] = firstIntersect(tPtP); }
+                        });
 
                 ToolPath tempTP = new ToolPath(string.Empty, this.mT, mF, tPa);
                 List<Vector3d> tempN = new List<Vector3d>();
@@ -204,16 +209,19 @@
                                     newTPs.Add(tempTP);
                                     norms.Add(tempN);
                                 }
+
                                 tempTP = new ToolPath(string.Empty, this.mT, mF, tPa);
                                 tempN = new List<Vector3d>();
                             }
                         }
+
                         tempTP.Add(fIr.tP);
                         tempN.Add(fIr.norm);
                         missed = false;
                     }
                     else if (tempTP.Count > 0) { missed = true; }
                 }
+
                 if (tempTP.Count <= 1) { continue; }
                 newTPs.Add(tempTP);
                 norms.Add(tempN);
@@ -253,12 +261,14 @@
                             if (norms[j]?[i] == null) { break; }
                             Vector3d stNorm = Vector3d.CrossProduct(norms[j][i], tangent);
                             Vector3d pNplaneN = Vector3d.CrossProduct(newTPs[j][i].dir, stNorm);
+
                             // find vector normal to the surface in the line orthogonal to the tangent
                             newTPs[j][i].dir = Vector3d.CrossProduct(stNorm, pNplaneN);
                             break;
                         case SurfToolDir.PathTangent:
                             // get normal to proj and tangent
                             Vector3d pTplaneN = Vector3d.CrossProduct(tangent, newTPs[j][i].dir);
+
                             // find vector normal to tangent and in the plane of tangent and projection
                             newTPs[j][i].dir = Vector3d.CrossProduct(pTplaneN, tangent);
 
@@ -281,10 +291,10 @@
                     newTPs[j][i].pt += this.mT.cutOffset(newTPs[j][i].dir, norms[j][i]);
 
                     // Move to offset using normal
-
                     newTPs[j][i].pt += offset * norms[j][i];
                 }
             }
+
             // make the machine operation
             MachineOperation mO = new MachineOperation(ToString(), newTPs);
             return mO;
@@ -320,7 +330,7 @@
 
         private FirstIntersectResponse firstIntersect([NotNull] ToolPoint tP)
         {
-            FirstIntersectResponse fIr = new FirstIntersectResponse {hit = false};
+            FirstIntersectResponse fIr = new FirstIntersectResponse { hit = false };
             if (this.m?.FaceNormals == null) { return fIr; }
 
             Vector3d proj = projDir(tP.pt);
@@ -336,7 +346,8 @@
             lFaces.AddRange(faces);
             MeshFace mF = this.m.Faces[lFaces[0]];
 
-            Vector3d bary = barycentric(fIr.tP.pt,
+            Vector3d bary = barycentric(
+                fIr.tP.pt,
                 this.m.Vertices[mF.A], this.m.Vertices[mF.B], this.m.Vertices[mF.C]);
 
             fIr.norm = this.m.NormalAt(lFaces[0], bary.Z, bary.X, bary.Y, 0.0);
@@ -345,6 +356,7 @@
 
             return fIr;
         }
+
         // Give the direction of projection for a specific point based on the projection type.
         [Pure]
         private Vector3d projDir(Point3d pt)
@@ -377,17 +389,21 @@
                         {
                             throw new InvalidOperationException("Short Cylinder:  The cylinder centre curve is shorter than the model.");
                         }
+
                         if (ci.Count > 1 || ci[0]?.IsOverlap != false)
                         {
                             throw new InvalidOperationException("Cylinder double cut: The cylinder centre curve has multiple intersections with a projection plane.");
                         }
+
                         pd = ci[0].PointA - pt;
                     }
+
                     break;
                 case SurfProj.Spherical:
                     pd = this.cen - pt;
                     break;
             }
+
             return pd;
         }
 
@@ -401,8 +417,8 @@
 
         #region List Functions
 
-        public int Count => ((IList<Curve>) this.paths).Count;
-        public bool IsReadOnly => ((IList<Curve>) this.paths).IsReadOnly;
+        public int Count => ((IList<Curve>)this.paths).Count;
+        public bool IsReadOnly => ((IList<Curve>)this.paths).IsReadOnly;
 
         [CanBeNull]
         public Curve this[int index]
@@ -420,7 +436,7 @@
         public void Clear() => this.paths.Clear();
         public bool Contains(Curve item) => this.paths.Contains(item);
         public void CopyTo(Curve[] array, int arrayIndex) => this.paths.CopyTo(array, arrayIndex);
-        public bool Remove(Curve item) => ((IList<Curve>) this.paths).Remove(item);
+        public bool Remove(Curve item) => ((IList<Curve>)this.paths).Remove(item);
         public IEnumerator<Curve> GetEnumerator() => this.paths.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => this.paths.GetEnumerator();
 
@@ -461,10 +477,13 @@
         // Default Constructor
         [UsedImplicitly]
         public GH_SurfacePath() => this.Value = null;
+
         // From Unwrapped
         public GH_SurfacePath([CanBeNull] SurfacePath sP) => this.Value = sP;
+
         // Copy Constructor (just reference as SurfacePath is Immutable)
         public GH_SurfacePath([CanBeNull] GH_SurfacePath sP) => this.Value = sP?.Value;
+
         // Duplicate
         [NotNull]
         public override IGH_Goo Duplicate() => new GH_SurfacePath(this);
@@ -474,26 +493,30 @@
             if (this.Value == null) { return false; }
             if (typeof(TQ).IsAssignableFrom(typeof(SurfacePath)))
             {
-                target = (TQ) (object) this.Value;
+                target = (TQ)(object)this.Value;
                 return true;
             }
+
             if (typeof(TQ).IsAssignableFrom(typeof(Curve)))
             {
-                target = (TQ) (object) this.Value.getCurve();
+                target = (TQ)(object)this.Value.getCurve();
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(TQ).IsAssignableFrom(typeof(GH_Curve)))
             {
-                target = (TQ) (object) new GH_Curve(this.Value.getCurve());
+                target = (TQ)(object)new GH_Curve(this.Value.getCurve());
                 return true;
             }
+
             return false;
         }
+
         public override bool CastFrom([CanBeNull] object source)
         {
             switch (source) {
                 case null: return false;
+
                 // From unwrapped
                 case SurfacePath sP:
                     this.Value = sP;
@@ -507,14 +530,18 @@
             if (this.Value == null || args?.Pipeline == null) { return; }
             foreach (Curve l in this.Value) { args.Pipeline.DrawCurve(l, args.Color); }
         }
+
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
     public class GH_SurfacePathPar : GH_Param<GH_SurfacePath>, IGH_PreviewObject
     {
-        public GH_SurfacePathPar() :
-            base("Surfacing Path", "SurfacePath", "Contains the information to project a path onto a surface", "CAMel", "  Params", GH_ParamAccess.item) { }
+        public GH_SurfacePathPar()
+            : base(
+                "Surfacing Path", "SurfacePath",
+                "Contains the information to project a path onto a surface",
+                "CAMel", "  Params", GH_ParamAccess.item) { }
         public override Guid ComponentGuid => new Guid("FCB36AFC-195B-4DFA-825B-A986875A3A86");
 
         public bool Hidden { get; set; }

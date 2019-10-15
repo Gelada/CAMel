@@ -41,6 +41,7 @@
             this.toolChangeCommand = GCode.DefaultToolChangeCommand;
             this.mTs = new List<MaterialTool>();
         }
+
         [PublicAPI]
         // ReSharper disable once SuggestBaseTypeForParameter
         public ThreeAxisFactory([NotNull] ThreeAxis ta)
@@ -96,7 +97,7 @@
             this.fileStart = ta.fileStart;
             this.fileEnd = ta.fileEnd;
             this.mTs = ta.mTs;
-            this.terms = new List<char> {'X', 'Y', 'Z', 'S', 'F'};
+            this.terms = new List<char> { 'X', 'Y', 'Z', 'S', 'F' };
         }
 
         public string TypeDescription => @"Instructions for a 3-Axis machine";
@@ -127,6 +128,7 @@
         public void writeCode(ref CodeInfo co, [ItemNotNull] ToolPath tP)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
+
             // Double check tP does not have additions.
             if (tP.additions.any) { Exceptions.additionsException(); }
 
@@ -144,6 +146,7 @@
                 feed = tP.matTool.feedCut;
                 fChange = true;
             }
+
             if (speed < 0)
             {
                 speed = tP.matTool.speed;
@@ -189,6 +192,7 @@
                     if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
                     else { ptCode = "G01 " + ptCode + " F" + feed.ToString("0"); }
                 }
+
                 fChange = false;
 
                 // Act if speed has changed
@@ -196,6 +200,7 @@
                 {
                     ptCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + ptCode;
                 }
+
                 sChange = false;
 
                 if (tPt.name != string.Empty) { ptCode = ptCode + " " + comment(tPt.name); }
@@ -205,11 +210,11 @@
                 co.append(ptCode);
 
                 // Adjust ranges
-
                 co.growRange("X", tPt.pt.X);
                 co.growRange("Y", tPt.pt.Y);
                 co.growRange("Z", tPt.pt.Z);
             }
+
             // Pass machine state information
             if (tP.lastP == null) { Exceptions.nullPanic(); }
             co.machineState.Clear();
@@ -221,10 +226,10 @@
 
             GCode.gcPathEnd(this, ref co, tP);
         }
+
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
-
             if (mI.firstP == null) { Exceptions.noToolPathException(); }
 
             co.machineState.Clear();
@@ -236,6 +241,7 @@
 
             GCode.gcInstStart(this, ref co, mI);
         }
+
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => GCode.gcInstEnd(this, ref co, mI);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
@@ -252,8 +258,7 @@
             // Start with a straight line, see how close it
             // comes to danger. If its too close add a new
             // point and try again.
-
-            List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
+            List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
 
             int i;
 

@@ -38,6 +38,7 @@
         void writeOpStart([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
         void writeOpEnd([NotNull] ref CodeInfo co, [NotNull] MachineOperation mO);
         void writeCode([NotNull] ref CodeInfo co, [NotNull] ToolPath tP);
+
         //void writeTransition([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool first);
         void toolChange([NotNull] ref CodeInfo co, int toolNumber);
         [UsedImplicitly] double jumpCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP);
@@ -66,10 +67,13 @@
         // Default constructor
         [UsedImplicitly]
         public GH_Machine() => this.Value = null;
+
         // Unwrapped type
         public GH_Machine([CanBeNull] IMachine m) => this.Value = m;
+
         // Copy Constructor (just reference as Machine is Immutable)
         public GH_Machine([CanBeNull] GH_Machine m) => this.Value = m?.Value;
+
         // Duplicate
         [NotNull]
         public override IGH_Goo Duplicate() => new GH_Machine(this);
@@ -79,7 +83,7 @@
             if (!typeof(T).IsAssignableFrom(typeof(IMachine))) { return false; }
 
             object ptr = this.Value;
-            target = (T) ptr;
+            target = (T)ptr;
             return true;
         }
 
@@ -98,8 +102,11 @@
     // Grasshopper Parameter Wrapper
     public class GH_MachinePar : GH_Param<GH_Machine>
     {
-        public GH_MachinePar() :
-            base("Machine", "Machine", "Contains a collection of information on CNC machines", "CAMel", "  Params", GH_ParamAccess.item) { }
+        public GH_MachinePar()
+            : base(
+                "Machine", "Machine",
+                "Contains a collection of information on CNC machines",
+                "CAMel", "  Params", GH_ParamAccess.item) { }
         public override Guid ComponentGuid => new Guid("df6dcfa2-510e-4613-bdae-3685b094e7d7");
         /// <inheritdoc />
         /// <summary>

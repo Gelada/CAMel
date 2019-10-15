@@ -35,10 +35,11 @@
 
         public string extension => "ngc";
 
-        public PocketNC([NotNull] string name, [NotNull] string header,
-                        [NotNull] string footer, Vector3d pivot, double aMin,
-                        double aMax, double bMax, bool tLc,
-                        [NotNull] List<MaterialTool> mTs)
+        public PocketNC(
+            [NotNull] string name, [NotNull] string header,
+            [NotNull] string footer, Vector3d pivot, double aMin,
+            double aMax, double bMax, bool tLc,
+            [NotNull] List<MaterialTool> mTs)
         {
             this.name = name;
             this.toolLengthCompensation = tLc;
@@ -56,7 +57,7 @@
             this.aMin = aMin;
             this.aMax = aMax;
             this.bMax = bMax;
-            this.terms = new List<char> {'X', 'Y', 'Z', 'A', 'B', 'S', 'F'};
+            this.terms = new List<char> { 'X', 'Y', 'Z', 'A', 'B', 'S', 'F' };
         }
 
         public string TypeDescription => "Instructions for a PocketNC machine";
@@ -68,13 +69,14 @@
         public string comment(string l) => GCode.comment(this, l);
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
-        private const double _RefineAngle = 2.0 * Math.PI / 180.0;
+        private const double RefineAngle = 2.0 * Math.PI / 180.0;
         public ToolPath refine(ToolPath tP)
         {
             if (tP.matForm == null) { Exceptions.matFormException(); }
-            ToolPath refined = Kinematics.angleRefine(this, tP, _RefineAngle);
+            ToolPath refined = Kinematics.angleRefine(this, tP, RefineAngle);
             return tP.matForm.refine(refined, this);
         }
+
         public List<ToolPath> offSet(ToolPath tP) =>
             tP.planarOffset(out Vector3d dir)
                 ? Utility.planeOffset(tP, dir)
@@ -89,6 +91,7 @@
             double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
             return Kinematics.interpolateFiveAxisABTable(this.pivot, toolLength, fP, tP, par, lng);
         }
+
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng)
         {
             double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
@@ -100,6 +103,7 @@
             if (this.mTs.Count == 0) { Exceptions.noToolException(); }
             return GCode.gcRead(this, this.mTs, code, this.terms);
         }
+
         public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT)
         {
             Point3d machPt = new Point3d(values['X'], values['Y'], values['Z']);
@@ -118,7 +122,7 @@
 
         public Vector3d toolDir(ToolPoint tP) => tP.dir;
 
-        private const double _AngleAcc = 0.0001; // accuracy of angles to assume we lie on the cusp.
+        private const double AngleAcc = 0.0001; // accuracy of angles to assume we lie on the cusp.
 
         public void writeCode(ref CodeInfo co, ToolPath tP)
         {
@@ -135,7 +139,6 @@
             // Manual unwinding Grrrr!
 
             // work out initial values of feed.
-
             bool fChange = false;
             bool sChange = false;
 
@@ -146,6 +149,7 @@
                 feed = tP.matTool.feedCut;
                 fChange = true;
             }
+
             if (speed < 0)
             {
                 speed = tP.matTool.speed;
@@ -201,11 +205,9 @@
                 newAB.Y += 2.0 * Math.PI * Math.Round((ab.Y - newAB.Y) / (2.0 * Math.PI));
 
                 // set A to 90 if it is close (to avoid a lot of messing with B for no real reason)
-
-                if (Math.Abs(newAB.X - Math.PI / 2.0) < _AngleAcc) { newAB.X = Math.PI / 2.0; }
+                if (Math.Abs(newAB.X - Math.PI / 2.0) < AngleAcc) { newAB.X = Math.PI / 2.0; }
 
                 // adjust through cusp
-
                 if (Math.Abs(newAB.X - Math.PI / 2.0) < CAMel_Goo.Tolerance) // already set if nearly there.
                 {
                     // detect that we are already moving
@@ -221,19 +223,20 @@
                         while (j < tP.Count - 1 &&
                                Math.Abs(
                                    Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X
-                                   - Math.PI / 2.0) < _AngleAcc) { j++; }
+                                   - Math.PI / 2.0) < AngleAcc) { j++; }
 
                         // If we are at the start of a path and vertical then we can just use the first non-vertical
                         // position for the whole run.
-                        if (Math.Abs(ab.X - Math.PI / 2.0) < _AngleAcc)
+                        if (Math.Abs(ab.X - Math.PI / 2.0) < AngleAcc)
                         {
                             bTo = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
                             bSteps = j - i;
                             newAB.Y = bTo;
                         }
+
                         // if we get to the end and it is still vertical we do not need to rotate.
                         else if (Math.Abs(Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X) <
-                                 _AngleAcc)
+                                 AngleAcc)
                         {
                             bTo = ab.X;
                             bSteps = j - i;
@@ -253,7 +256,6 @@
                 // that region, but can rotate out of it if necessary.
                 // This will mean some cutable paths become impossible.
                 // This assumes only a double stance in positive position.
-
                 if (newAB.X > Math.PI - this.aMax) // check if double stance is possible
                 {
                     if (newAB.Y - ab.Y > Math.PI) // check for big rotation in B
@@ -269,16 +271,13 @@
                 }
 
                 // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
-
                 if (Math.Abs(newAB.Y) > this.bMax) { co.addError("Out of bounds on B"); }
                 if (newAB.X > this.aMax || newAB.X < this.aMin) { co.addError("Out of bounds on A"); }
 
                 // update AB value
-
                 ab = newAB;
 
                 // Add the position information
-
                 string ptCode = GCode.gcFiveAxisAB(machPt, ab);
 
                 // Act if feed has changed
@@ -287,6 +286,7 @@
                     if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
                     else { ptCode = "G01 " + ptCode + " F" + feed.ToString("0.00"); }
                 }
+
                 fChange = false;
 
                 // Act if speed has changed
@@ -294,6 +294,7 @@
                 {
                     ptCode = this.speedChangeCommand + " S" + speed.ToString("0") + "\n" + ptCode;
                 }
+
                 sChange = false;
 
                 if (tPt.name != string.Empty) { ptCode = ptCode + " " + comment(tPt.name); }
@@ -301,8 +302,8 @@
                 ptCode = tPt.preCode + ptCode + tPt.postCode;
 
                 co.append(ptCode);
-                // Adjust ranges
 
+                // Adjust ranges
                 co.growRange("X", machPt.X);
                 co.growRange("Y", machPt.Y);
                 co.growRange("Z", machPt.Z);
@@ -311,7 +312,6 @@
             }
 
             // Pass machine state information
-
             co.machineState.Clear();
             co.machineState.Add("X", machPt.X);
             co.machineState.Add("Y", machPt.Y);
@@ -327,7 +327,6 @@
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
-
             if (mI.firstP == null) { Exceptions.emptyPathException(); }
             if (mI[0][0].matTool == null) { Exceptions.matToolException(); }
 
@@ -346,6 +345,7 @@
 
             GCode.gcInstStart(this, ref co, mI);
         }
+
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => GCode.gcInstEnd(this, ref co, mI);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
@@ -365,7 +365,6 @@
             if (jumpCheck(fP, tP) > 0) { Exceptions.transitionException(); }
 
             // Safely move from one safe point to another.
-
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = "Transition";
             move.label = PathLabel.Transition;
@@ -389,24 +388,23 @@
             }
 
             // add extra points if the angle change between steps is too large (pi/30)
-
             bool lng = false;
+
             // work out how far angle needs to move
             double angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, false);
 
-            int steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
+            int steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
             if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0
 
             // Try to build a path with angles.
             // If a tool line hits the material
             // switch to the longer rotate and try again
-
             for (i = 0; i < route.Count - 1; i++)
             {
                 // add new points at speed 0 to describe rapid move.
                 for (int j = 0; j < steps; j++)
                 {
-                    double shift = (steps * i + j) / (double) (steps * (route.Count - 1));
+                    double shift = (steps * i + j) / (double)(steps * (route.Count - 1));
                     Vector3d mixDir = interpolate(fP.lastP, tP.firstP, fP.matTool, shift, lng).dir;
 
                     ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
@@ -421,13 +419,13 @@
                             throw new Exception(
                                 "Safe Route failed to find a safe path from the end of one toolpath to the next.");
                         }
-                        // start again with the longer angle change
 
+                        // start again with the longer angle change
                         lng = true;
                         i = 0;
                         j = 0;
                         angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, true);
-                        steps = (int) Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
+                        steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                         move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                         move.name = "Transition";
                         move.label = PathLabel.Transition;
@@ -435,6 +433,7 @@
                     else { move.Add(newTP); }
                 }
             }
+
             return move;
         }
     }

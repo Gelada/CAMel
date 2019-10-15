@@ -12,23 +12,22 @@
     // Functions to generate operations
     public static class Operations
     {
-        private const double _PlaneTolerance = 0.5;
+        private const double PlaneTolerance = 0.5;
         [NotNull]
         public static MachineOperation opIndex2DCut([NotNull] Curve c, Vector3d d, double oS, [NotNull] ToolPathAdditions tPa, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
             // Shift curve to XY plane
-
             Plane p = new Plane(Point3d.Origin, d);
-            if (c.IsPlanar(_PlaneTolerance))
+            if (c.IsPlanar(PlaneTolerance))
             {
-                c.TryGetPlane(out p, _PlaneTolerance);
+                c.TryGetPlane(out p, PlaneTolerance);
             }
+
             double uOS = oS;
             if (d * p.ZAxis > 0) { uOS = -uOS; }
 
             // create Operation
-
-            MachineOperation mO = new MachineOperation {name = "2d Cut "};
+            MachineOperation mO = new MachineOperation { name = "2d Cut " };
 
             ToolPath tP = new ToolPath("", mT, mF, tPa);
             tP.convertCurve(c, d);
@@ -62,11 +61,11 @@
                 tP.additions = tPa;
 
                 // Turn Curve into path
-
                 if (tP.convertCurve(c, dir)) { mO.Add(tP); }
                 else { invalidCurves++; }
                 i++;
             }
+
             return mO;
         }
 
@@ -92,20 +91,19 @@
                         }
                 };
 
-            // Additions for toolpath
-            // we will handle this with peck
+            /* Additions for toolpath
+            // we will handle this with peck*/
 
             tP.Add(new ToolPoint(d.Center, d.Normal, -1, mT.feedPlunge));
 
             // calculate the number of pecks we need to do
-
             int steps;
-            if (peck > 0) { steps = (int) Math.Ceiling(d.Radius / peck); }
+            if (peck > 0) { steps = (int)Math.Ceiling(d.Radius / peck); }
             else { steps = 1; }
 
             for (int j = 1; j <= steps; j++)
             {
-                tP.Add(new ToolPoint(d.Center - j / (double) steps * d.Radius * d.Normal, d.Normal, -1, mT.feedPlunge));
+                tP.Add(new ToolPoint(d.Center - j / (double)steps * d.Radius * d.Normal, d.Normal, -1, mT.feedPlunge));
                 tP.Add(new ToolPoint(d.Center, d.Normal, -1, mT.feedPlunge));
             }
 

@@ -23,16 +23,16 @@
             List<Curve> paths = new List<Curve>(); // Curves to use
             Curve tempC = uC.DuplicateCurve();
             if (tempC == null) { throw new NullReferenceException("Rhino.Geometry.Curve.DuplicateCurve failed."); }
-            tempC.Translate((Vector3d) dir.PointAt(0, bb.Min.Y - bbc.Max.Y, bb.Max.Z - bbc.Min.Z + 0.1));
+            tempC.Translate((Vector3d)dir.PointAt(0, bb.Min.Y - bbc.Max.Y, bb.Max.Z - bbc.Min.Z + 0.1));
 
             // create enough curves to guarantee covering surface
-
             for (double width = 0; width <= bb.Max.Y - bb.Min.Y + bbc.Max.Y - bbc.Min.Y; width += stepOver * mT.toolWidth)
             {
-                tempC.Translate((Vector3d) dir.PointAt(0, stepOver * mT.toolWidth, 0));
+                tempC.Translate((Vector3d)dir.PointAt(0, stepOver * mT.toolWidth, 0));
                 paths.Add(tempC.DuplicateCurve());
                 if (zZ) { tempC.Reverse(); }
             }
+
             // Join paths for zigzag
             if (!zZ) { return new SurfacePath(paths, mT, -dir.ZAxis, sTD); }
 
@@ -45,7 +45,7 @@
                 joined.Append(paths[i]);
             }
 
-            paths = new List<Curve> {joined};
+            paths = new List<Curve> { joined };
 
             return new SurfacePath(paths, mT, -dir.ZAxis, sTD);
         }
@@ -78,6 +78,7 @@
                 bool first = true;
                 double turns = 0;
                 double angle = 0;
+
                 // convert to cylindrical coordinates
                 foreach (ToolPoint tp in cTp)
                 {
@@ -103,6 +104,7 @@
                     {
                         turns -= 2.0 * Math.PI;
                     }
+
                     angle = tp.pt.Y;
                     temp = tp.pt;
                     temp.Y += turns;
@@ -120,14 +122,16 @@
                 else
                 { startPt.Y = startPt.Y + turns - 2.0 * Math.PI; }
 
-                int shiftL = (int) Math.Ceiling(Angle * Math.Abs((startPt.Y - endPt.Y) / (2.0 * Math.PI)));
+                int shiftL = (int)Math.Ceiling(Angle * Math.Abs((startPt.Y - endPt.Y) / (2.0 * Math.PI)));
                 for (i = 1; i < shiftL; i++)
                 {
-                    cTp.Add(new ToolPoint(
-                        new Point3d(outerRadius,
-                            (i * startPt.Y + (shiftL - i) * endPt.Y) / shiftL,
-                            (i * startPt.Z + (shiftL - i) * endPt.Z) / shiftL)
-                    ));
+                    cTp.Add(
+                        new ToolPoint(
+                            new Point3d(
+                                outerRadius,
+                                (i * startPt.Y + (shiftL - i) * endPt.Y) / shiftL,
+                                (i * startPt.Z + (shiftL - i) * endPt.Z) / shiftL)
+                        ));
                 }
             }
 
@@ -151,10 +155,11 @@
                     if (h < 0) { h = 0; } // do a first loop on the top
                     if (h > roth) { h = roth; } // do the final loop at the bottom
                     h = h + bb.Min.Z - zMax + tPt.pt.Z;
-                    Point3d tempPt = CAMel_Goo.fromCyl(new Point3d(
-                        outerRadius,
-                        -tPt.pt.Y,
-                        h));
+                    Point3d tempPt = CAMel_Goo.fromCyl(
+                        new Point3d(
+                            outerRadius,
+                            -tPt.pt.Y,
+                            h));
                     tempPt = dir.PointAt(tempPt.X, tempPt.Y, tempPt.Z);
                     spiralPath.Add(tempPt);
                 }
@@ -171,13 +176,14 @@
 
             return new SurfacePath(paths, mT, dir.ZAxis, cc, sTD);
         }
+
         // TODO make work for planes and with a boundary curve to spiral to
         [NotNull]
         public static SurfacePath spiral([CanBeNull] Curve c, Plane dir, double r, double stepOver, SurfToolDir sTd, BoundingBox bb, [NotNull] MaterialTool mT)
         {
             double raisePer = stepOver * mT.toolWidth;
-            // find radius of sphere containing bounding box centered on origin.
 
+            // find radius of sphere containing bounding box centered on origin.
             double radius = CAMel_Goo.boundSphere(bb, Point3d.Origin);
 
             List<Point3d> spiralPath = new List<Point3d>();

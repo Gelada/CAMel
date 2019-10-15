@@ -98,13 +98,13 @@
             MachineOperation finishO;
             if (geom.GetType() == typeof(Mesh))
             {
-                Mesh m = (Mesh) geom;
+                Mesh m = (Mesh)geom;
                 roughO = roughP.generateOperation(m, finalP.mT.finishDepth, mF, addRough);
                 finishO = finalP.generateOperation(m, 0.0, mF, addFinish);
             }
             else if (geom.GetType() == typeof(Brep))
             {
-                Brep b = (Brep) geom;
+                Brep b = (Brep)geom;
                 roughO = roughP.generateOperation(b, finalP.mT.finishDepth, mF, addRough);
                 finishO = finalP.generateOperation(b, 0.0, mF, addFinish);
             }

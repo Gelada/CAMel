@@ -43,12 +43,11 @@
             exB.Inflate(tolerance + this.materialTolerance); // expand to tolerance
 
             // convert to Box coordinates
-            this.box.Plane.RemapToPlaneSpace((Point3d) dirIn, out Point3d pt);
-            Vector3d dir = (Vector3d) pt;
+            this.box.Plane.RemapToPlaneSpace((Point3d)dirIn, out Point3d pt);
+            Vector3d dir = (Vector3d)pt;
             this.box.Plane.RemapToPlaneSpace(ptIn, out pt);
 
             // test to hit each face (could stop after 2, if efficiency worth it)
-
             MFintersects inters = new MFintersects();
             if (testFace(exB.X.Max, exB.Y, exB.Z, pt, dir, out double dist))
             { inters.add(fromPlane(pt + dir * dist), this.box.Plane.XAxis, dist); }
@@ -67,8 +66,8 @@
 
             return inters;
         }
-        // test the X faces, for other faces reorder point and direction.
 
+        // test the X faces, for other faces reorder point and direction.
         private static bool testFace(double face, Interval odi1, Interval odi2, Point3d pt, Vector3d dir, out double dist)
         {
             double intDist;
@@ -84,13 +83,15 @@
                 dist = 0;
                 return false;
             }
-            Vector3d inter = (Vector3d) (pt + shift * dir);
+
+            Vector3d inter = (Vector3d)(pt + shift * dir);
             if (odi1.Min < inter.Y && inter.Y < odi1.Max &&
                 odi2.Min < inter.Z && inter.Z < odi2.Max) // hit plane
             {
                 dist = intDist;
                 return true;
             }
+
             dist = 0;
             return false;
         }
@@ -100,6 +101,7 @@
         private Vector3d midOutDir(Point3d pt, double tolerance)
         {
             double uTol = this.materialTolerance + tolerance;
+
             // check how close to each face, return normal of closest
             double closeD = this.box.X.Max + uTol - pt.X;
             Vector3d outD = this.box.Plane.XAxis;
@@ -108,26 +110,31 @@
                 closeD = pt.X - this.box.X.Min + uTol;
                 outD = -this.box.Plane.XAxis;
             }
+
             if (closeD > this.box.Y.Max + uTol - pt.Y)
             {
                 closeD = this.box.Y.Max + uTol - pt.Y;
                 outD = this.box.Plane.YAxis;
             }
+
             if (closeD > pt.Y - this.box.Y.Min + uTol)
             {
                 closeD = pt.Y - this.box.Y.Min + uTol;
                 outD = -this.box.Plane.YAxis;
             }
+
             if (closeD > this.box.Z.Max + uTol - pt.Z)
             {
                 closeD = this.box.Z.Max + uTol - pt.Z;
                 outD = this.box.Plane.ZAxis;
             }
+
             if (closeD > pt.Z - this.box.Z.Min + uTol)
             {
                 closeD = pt.Z - this.box.Z.Min + uTol;
                 outD = -this.box.Plane.ZAxis;
             }
+
             if (closeD < -2 * uTol) { throw new FormatException("MidOutDir in MFBox called for point outside the Box."); }
             return outD;
         }

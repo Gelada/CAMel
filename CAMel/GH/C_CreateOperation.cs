@@ -72,6 +72,7 @@
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations");
                 return;
             }
+
             List<GH_MachineOperation> ghMOs = mOs.Select(mO => new GH_MachineOperation(mO)).ToList();
 
             da.SetDataList(0, ghMOs);

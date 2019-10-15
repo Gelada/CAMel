@@ -40,6 +40,7 @@
             this.first = new MFintersection(); // creates and unset value
             this.midOut = new Vector3d();
         }
+
         [NotNull]
         private List<MFintersection> inters { get; } // List of intersections
 
@@ -70,6 +71,7 @@
             if (!this.through.isSet || this.through.lineP < inter.lineP) { this.through = inter; }
             if (!this.first.isSet || this.first.lineP > inter.lineP) { this.first = inter; }
         }
+
         public void add(Point3d pt, Vector3d away, double lineP)
         {
             add(new MFintersection(pt, away, lineP));
@@ -96,22 +98,20 @@
         internal static ToolPath refine([NotNull] IMaterialForm mF, [NotNull] ToolPath tP, [NotNull] IMachine m)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
+
             // for each line check if it intersects
             // the MF and add those points.
             // also add the midpoint if going more than half way through
             // TODO problem of long lines getting deep
-
             ToolPath refined = tP.deepCloneWithNewPoints(new List<ToolPoint>());
 
             // Add the first ToolPoint
-
             if (tP.Count > 0) { refined.Add(tP.firstP); }
 
             // TODO refine on significant changes of direction
             for (int i = 0; i < tP.Count - 1; i++)
             {
                 // for every line between points check if we leave or enter the material
-
                 if (mF.intersect(tP[i].pt, tP[i + 1].pt, 0, out MFintersects inters))
                 {
                     double lineLen = (tP[i + 1].pt - tP[i].pt).Length;
@@ -125,11 +125,13 @@
                     {
                         refined.Add(m.interpolate(tP[i], tP[i + 1], tP.matTool, (inters.firstDist + inters.thrDist) / (2.0 * lineLen), false));
                     }
+
                     if (lineLen > inters.thrDist) // add last intersection if on line
                     {
                         refined.Add(m.interpolate(tP[i], tP[i + 1], tP.matTool, inters.thrDist / lineLen, false));
                     }
                 }
+
                 refined.Add(tP[i + 1]);
             }
 
@@ -163,26 +165,31 @@
                 mF = create(boxT, tolerance, safeD);
                 return true;
             }
+
             if (inputGeometry.CastTo(out Cylinder cyT))
             {
                 mF = create(cyT, tolerance, safeD);
                 return true;
             }
+
             if (inputGeometry.CastTo(out Mesh meshT))
             {
                 mF = create(meshT, tolerance, safeD);
                 return true;
             }
+
             if (inputGeometry.CastTo(out Surface surfT))
             {
                 mF = create(surfT, tolerance, safeD);
                 return true;
             }
+
             if (inputGeometry.CastTo(out Brep brepT))
             {
                 mF = create(brepT, tolerance, safeD);
                 return true;
             }
+
             mF = null;
             return false;
         }
@@ -194,6 +201,7 @@
             {
                 return create(inputGeometry.GetBoundingBox(false), tolerance, safeD);
             }
+
             // Cope with rhinoBug in TryGetCylinder
             BoundingBox bb = inputGeometry.GetBoundingBox(cy.CircleAt(0).Plane);
             cy.Height1 = bb.Min.Z;
@@ -209,6 +217,7 @@
             {
                 return create(iG.GetBoundingBox(false), tolerance, safeD);
             }
+
             // Cope with rhinoBug in TryGetCylinder
             BoundingBox bb = iG.GetBoundingBox(cy.CircleAt(0).Plane);
             cy.Height1 = bb.Min.Z;
@@ -251,32 +260,38 @@
     public sealed class GH_MaterialForm : CAMel_Goo<IMaterialForm>, IGH_PreviewData
     {
         [UsedImplicitly] public GH_MaterialForm() => this.Value = null;
+
         // Construct from unwrapped object
         public GH_MaterialForm([CanBeNull] IMaterialForm mF) => this.Value = mF;
+
         // Copy Constructor (just reference as MaterialForm is Immutable)
         public GH_MaterialForm([CanBeNull] GH_MaterialForm mF) => this.Value = mF?.Value;
+
         // Duplicate
         [NotNull] public override IGH_Goo Duplicate() => new GH_MaterialForm(this);
 
         public override bool CastTo<T>(ref T target)
         {
             if (this.Value == null) { return false; }
+
             // Trivial base case, we already have a IMaterialForm, the cast is safe
             if (typeof(T).IsAssignableFrom(typeof(IMaterialForm)))
             {
                 object ptr = this.Value;
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(GH_Brep)))
             {
                 Brep b = this.Value.getBrep();
                 if (b?.IsValid != true) { return false; }
 
                 object gHm = new GH_Brep(b);
-                target = (T) gHm;
+                target = (T)gHm;
                 return true;
             }
+
             // Cast to a Mesh if that is asked for.
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Mesh)))
@@ -285,9 +300,10 @@
                 if (!m.IsValid) { return false; }
 
                 object gHm = new GH_Mesh(m);
-                target = (T) gHm;
+                target = (T)gHm;
                 return true;
             }
+
             return false;
         }
 
@@ -316,8 +332,8 @@
     // Grasshopper Parameter Wrapper
     public class GH_MaterialFormPar : GH_Param<GH_MaterialForm>, IGH_PreviewObject
     {
-        public GH_MaterialFormPar() :
-            base("Material Form", "MatForm", "Contains a collection of Material Forms", "CAMel", "  Params", GH_ParamAccess.item) { }
+        public GH_MaterialFormPar()
+            : base("Material Form", "MatForm", "Contains a collection of Material Forms", "CAMel", "  Params", GH_ParamAccess.item) { }
 
         public override Guid ComponentGuid => new Guid("01d791bb-d6b8-42e3-a1ba-6aec037cacc3");
 

@@ -37,7 +37,6 @@
 
         // 2-Axis and 3-Axis don't need any work, so they just need writing functions
         // in the GCode library, plus a general purpose linear interpolation.
-
         [NotNull]
         public static ToolPoint interpolateLinear([NotNull] ToolPoint fP, [NotNull] ToolPoint tP, double p)
         {
@@ -51,7 +50,6 @@
         // that can rotate fully, so need non-trivial K and IK functions
         //
         // Should really output a machine state type, but not much use for that yet.
-
         public static Vector3d ikFiveAxisABTable([NotNull] ToolPoint tP, Vector3d pivot, double toolLength, out Point3d machPt)
         {
             // Always gives B from -pi to pi and A from -pi/2 to pi/2.
@@ -89,6 +87,7 @@
         public static ToolPoint kFiveAxisABTable([NotNull] ToolPoint tP, Vector3d pivot, double toolLength, Point3d machPt, Vector3d ab)
         {
             Point3d oPt = machPt;
+
             // translate from the tooltip at machine origin origin to pivot at origin
             oPt = oPt + pivot - Vector3d.ZAxis * toolLength;
 
@@ -97,6 +96,7 @@
             oPt.Transform(Transform.Rotation(-ab.Y, Vector3d.YAxis, Point3d.Origin));
 
             Vector3d dir = Vector3d.ZAxis;
+
             // rotate from machine orientation to material orientation
             dir.Transform(Transform.Rotation(-ab.X, Vector3d.XAxis, Point3d.Origin));
             dir.Transform(Transform.Rotation(-ab.Y, Vector3d.YAxis, Point3d.Origin));
@@ -111,7 +111,6 @@
         // Interpolate the machine axes linearly between two positions.
         // If both axes have full rotation then there are four ways to do this.
         // If lng is true then reverse the direction on the B axis (for PocketNC)
-
         [NotNull]
         public static ToolPoint interpolateFiveAxisABTable(Vector3d pivot, double toolLength, [NotNull] ToolPoint from, [NotNull] ToolPoint to, double p, bool lng)
         {
@@ -120,6 +119,7 @@
 
             Point3d outPt = (1 - p) * fromMachPt + p * toMachPt;
             Vector3d outAB = (1 - p) * fromAB + p * toAB;
+
             // switch to long way round or short way round depending on gap between angles
             if ((!lng || !(Math.Abs(fromAB.Y - toAB.Y) <= Math.PI)) && (lng || !(Math.Abs(fromAB.Y - toAB.Y) > Math.PI))
             ) { return kFiveAxisABTable(from, pivot, toolLength, outPt, outAB); }
@@ -145,6 +145,7 @@
                 diff.X = Math.Abs(ang1.X - ang2.X);
                 diff.Y = Math.Min(Math.Min(Math.Abs(ang1.Y - ang2.Y), Math.Abs(2 * Math.PI + ang1.Y - ang2.Y)), Math.Abs(2 * Math.PI - ang1.Y + ang2.Y));
             }
+
             return Math.Max(diff.X, diff.Y);
         }
 
@@ -162,14 +163,16 @@
                 double angCh = m.angDiff(tP[i - 1], tP[i], tP.matTool, false);
                 if (angCh > maxAngle)
                 {
-                    int newSt = (int) Math.Ceiling(angCh / maxAngle);
+                    int newSt = (int)Math.Ceiling(angCh / maxAngle);
                     for (int j = 1; j < newSt; j++)
                     {
-                        sRef.Add(m.interpolate(tP[i - 1], tP[i], tP.matTool, j / (double) newSt, false));
+                        sRef.Add(m.interpolate(tP[i - 1], tP[i], tP.matTool, j / (double)newSt, false));
                     }
                 }
+
                 sRef.Add(tP[i]);
             }
+
             return sRef;
         }
     }
@@ -182,9 +185,11 @@
         [NotNull]
         public static List<ToolPath> planeOffset([NotNull] ToolPath tP, Vector3d toolDir)
         {
-            if (tP.additions.offset.SquareLength < CAMel_Goo.Tolerance) { return new List<ToolPath> {tP}; }
+            if (tP.additions.offset.SquareLength < CAMel_Goo.Tolerance) { return new List<ToolPath> { tP }; }
+
             // if the path is open localOffset will do well enough
             if (!tP.isClosed()) { return localOffset(tP); }
+
             // Shift curve to XY plane
             Vector3d d = tP.additions.offset;
             double uOS = d.Length;
@@ -211,13 +216,11 @@
             double useZ = (bb.Max.Z + bb.Min.Z) / 2.0;
 
             // offSet
-
             List<PolylineCurve> osC = Offsetting.offset(uC, uOS);
 
             if (Math.Abs(uOS) > CAMel_Goo.Tolerance && !reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
 
             // create Operation
-
             List<ToolPath> tPs = new List<ToolPath>();
 
             int i = 1;
@@ -232,7 +235,6 @@
                 i++;
 
                 // return to original orientation
-
                 osPl.Translate(new Vector3d(0, 0, -useZ));
                 osPl.Transform(Transform.PlaneToPlane(Plane.WorldXY, p));
 
@@ -240,6 +242,7 @@
                 osTP.convertCurve(osPl, toolDir);
                 tPs.Add(osTP);
             }
+
             return tPs;
         }
 
@@ -252,7 +255,7 @@
             os.Unitize();
 
             // Check if there is enough to offset
-            if (osL < CAMel_Goo.Tolerance || tP.Count < 2 || tP.firstP == null || tP.lastP == null) { return new List<ToolPath> {tP}; }
+            if (osL < CAMel_Goo.Tolerance || tP.Count < 2 || tP.firstP == null || tP.lastP == null) { return new List<ToolPath> { tP }; }
 
             // Start with first point unless the ToolPath is closed.
             ToolPoint lPt = tP.firstP, uTPt;
@@ -262,6 +265,7 @@
             for (int i = 0; i < tP.Count - 1; i++)
             {
                 uTPt = tP[i].deepClone();
+
                 // offset direction given by tangent and offset Plane
                 osD = Vector3d.CrossProduct(os, tP[i + 1].pt - lPt.pt);
                 osD.Unitize();
@@ -284,7 +288,7 @@
 
             oTP.additions.offset = Vector3d.Zero;
 
-            return new List<ToolPath> {oTP};
+            return new List<ToolPath> { oTP };
         }
 
         // Step down into material
@@ -293,6 +297,7 @@
         {
             if (tP.matForm == null) { Exceptions.matFormException(); }
             if (tP.matTool == null) { Exceptions.matToolException(); }
+
             // Give default value for negative DropMiddle
             if (tP.additions.sdDropMiddle < 0) { tP.additions.sdDropMiddle = 8.0 * tP.matForm.safeDistance; }
 
@@ -306,7 +311,6 @@
 
             // ask the material form to refine the path
             // (the path is now refined at the start of processing
-
             ToolPath refPath = tP;
 
             double finishDepth;
@@ -322,14 +326,13 @@
                 if (matDist[matDist.Count - 1] < 0) { matDist[matDist.Count - 1] = 0; } // avoid negative distances (outside material)
 
                 // calculate maximum number of cutDepth height steps down to finishDepth above material
-                numSteps.Add((int) Math.Ceiling((matDist[matDist.Count - 1] - finishDepth) / cutDepth));
+                numSteps.Add((int)Math.Ceiling((matDist[matDist.Count - 1] - finishDepth) / cutDepth));
                 if (numSteps[numSteps.Count - 1] > maxSteps) { maxSteps = numSteps[numSteps.Count - 1]; }
             }
 
             // make a list of depths to cut at.
             // This just steps down right now, but makes it easier to add fancier leveling, if ever worthwhile.
             // Note that max steps currently assumes only stepping down by cutDepth.
-
             List<double> cutLevel = new List<double>();
             for (int i = 0; i < maxSteps; i++) { cutLevel.Add((i + 1) * cutDepth); }
 
@@ -345,7 +348,7 @@
                 ToolPath tempTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 tempTP.name = tP.name + " Pass " + (i + 1);
                 tempTP.additions.stepDown = false;
-                tempTP.additions.onion = new List<double> {0};
+                tempTP.additions.onion = new List<double> { 0 };
                 tempTP.label = PathLabel.RoughCut;
 
                 bool start = true;
@@ -369,6 +372,7 @@
 
                             tempTP.Add(tPt);
                         }
+
                         height = matDist[j] - cutLevel[i];
                         if (height < finishDepth) { height = finishDepth; } // stay finishDepth above final path
                         tPt = refPath[j].deepClone();
@@ -428,6 +432,7 @@
                                     for (l = j; dropLength < tP.additions.sdDropMiddle && l < k; l++)
                                     { dropLength += refPath[l].pt.DistanceTo(refPath[l + 1].pt); }
                                 }
+
                                 if (dropLength > tP.additions.sdDropMiddle)
                                 {
                                     // add point, as previous point was in material
@@ -435,9 +440,9 @@
                                     height = finishDepth;
                                     tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                     tempTP.Add(tPt);
+
                                     // leap forward cut path and start a new one
                                     // giving settings to add inserts and retracts
-
                                     tempTP.additions.retract = true;
                                     newPaths[newPaths.Count - 1]?.Add(tempTP); // add path and create a new one
 
@@ -445,7 +450,7 @@
                                     tempTP.name = tP.name + " Continuing Pass " + (i + 1);
                                     tempTP.additions.insert = true;
                                     tempTP.additions.stepDown = false;
-                                    tempTP.additions.onion = new List<double> {0};
+                                    tempTP.additions.onion = new List<double> { 0 };
                                     tempTP.label = PathLabel.RoughCut;
 
                                     // add k-1 point as k is deep
@@ -467,8 +472,10 @@
                         }
                     }
                 }
+
                 newPaths[newPaths.Count - 1]?.Add(tempTP);
             }
+
             return newPaths;
         }
 
@@ -478,6 +485,7 @@
         {
             // work out the rotation to get the desired normal
             double normAng = Math.PI / 2.0;
+
             // take into account the orientation of the path
             //if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
             // now we have the internal normal, flip if we want external.
@@ -493,6 +501,7 @@
             double uLeadCurve = Math.Abs(leadCurve);
 
             Point3d startPt = toolL.PointAtStart;
+
             // Get tangents and the Normal pointing in the direction we want the lead.
             Vector3d startTan = toolL.TangentAtStart;
             Vector3d startNorm = startTan;
@@ -514,8 +523,8 @@
                 uTan = startTan;
                 uNorm = startNorm;
             }
-            // Start by using the end version, we will choose the start version
 
+            // Start by using the end version, we will choose the start version
             ArcCurve leadCirc = new ArcCurve(new Arc(startPt, uTan, startPt + uLeadCurve * (uNorm + uTan)));
 
             // step along the arc trying to find a point more that insert distance from the path
@@ -533,7 +542,6 @@
             }
 
             // Now try to keep going straight
-
             for (double i = insertWidth / 10.0; i < 2 * insertWidth; i += insertWidth / 10.0)
             {
                 Point3d testPt = leadCirc.PointAtEnd + uNorm * i;
@@ -544,6 +552,7 @@
                 testDist = testPt.DistanceTo(toolL.PointAt(testDist));
                 if (testDist > insertWidth * 0.52) { return new PolylineCurve(outP); }
             }
+
             return null;
         }
 
@@ -579,6 +588,7 @@
             if (tP.additions.insert)
             {
                 PolylineCurve leadIn = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, true);
+
                 // If no suitable curve found throw an error
                 if (leadIn == null) { newTP.firstP?.addWarning("No suitable curve for lead in found."); }
                 else
@@ -607,6 +617,7 @@
             {
                 PolylineCurve leadOut = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, false);
                 if (leadOut == null) { newTP.lastP?.addWarning("No suitable curve for lead out found."); }
+
                 // If no suitable curve found throw an error
                 else
                 {
@@ -639,6 +650,7 @@
 
             return irTps;
         }
+
         [NotNull]
         public static List<ToolPath> leadInOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
         {
@@ -684,8 +696,6 @@
                 tPt.pt += tan * tP.matTool.insertWidth;
 
                 iTp.Add(tPt);
-                //tPt = tP.firstP.deepClone();
-                //iTp.Add(tPt);
 
                 irTps.Insert(0, iTp);
             }
@@ -709,8 +719,8 @@
                 tPt.pt += tan * tP.matTool.insertWidth;
 
                 rTp.Add(tPt);
-                // Remove last point of toolpath to avoid point repeat
 
+                // Remove last point of toolpath to avoid point repeat
                 irTps[irTps.Count - 1]?.removeLast();
 
                 irTps.Add(rTp);
@@ -762,7 +772,6 @@
                 iTp.label = PathLabel.Insert;
 
                 //note we do this backwards adding points to the start of the path.
-
                 if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
                 if (irActivate != 0 && activate != string.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
 
@@ -774,7 +783,6 @@
                 if (inter.isSet)
                 {
                     // point on material surface
-
                     tempTPt = newTP.firstP.deepClone();
                     tempTPt.pt = inter.point;
                     tempTPt.feed = tP.matTool.feedPlunge;
@@ -812,7 +820,6 @@
             rTp.label = PathLabel.Retract;
 
             //note we do this backwards adding points to the start of the path.
-
             if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
             if (irActivate != 0 && activate != string.Empty) { rTp.preCode = activate + "\n" + newTP.preCode; }
 
@@ -837,7 +844,6 @@
                 rTp.Add(tempTPt);
 
                 // Pull away to safe distance
-
                 if (rTp.lastP == null) { Exceptions.emptyPathException(); }
 
                 tempTPt = rTp.lastP.deepClone();
@@ -891,7 +897,7 @@
 
             ToolPoint point = tP.matTool.threeAxisHeightOffset(m, tP[0], travel, uOrth);
 
-            List<Line> osLines = new List<Line> {new Line(point.pt, travel)};
+            List<Line> osLines = new List<Line> { new Line(point.pt, travel) };
 
             bool changeDirection = false; // Has tool direction changed?
 
@@ -899,7 +905,6 @@
 
             // loop through the lines of the toolpath finding their offset path
             // and then traveling to the closest point to the next offset path
-
             for (int i = 1; i < tP.Count - 1; i++)
             {
                 // Keep track of tool point direction to warn if it changes (but only once)
@@ -908,6 +913,7 @@
                     tP[i].addWarning("Height offsetting is not designed for 5-Axis motion, it may be unpredictable.");
                     changeDirection = true;
                 }
+
                 // Find the next offset line
                 travel = tP[i + 1].pt - tP[i].pt;
                 orth = Vector3d.CrossProduct(travel, m.toolDir(tP[0]));
@@ -924,6 +930,7 @@
 
                 // intersect the new line with the last line we used
                 Rhino.Geometry.Intersect.Intersection.LineLine(osLines[osLines.Count - 2], osLines[osLines.Count - 1], out double inter, out double nextInter);
+
                 // find the orientation of the new path
                 ToolPoint osP = offsetPath[offsetPath.Count - 1];
                 if (osP == null) { Exceptions.nullPanic(); }
@@ -936,8 +943,10 @@
                 {
                     // remove the reversing line
                     osLines.RemoveAt(osLines.Count - 2);
+
                     // remove the last point on the offsetPath, which were given by the intersection we are removing
                     offsetPath.RemoveRange(offsetPath.Count - 1, 1);
+
                     // find the new intersection and orientation
                     Rhino.Geometry.Intersect.Intersection.LineLine(osLines[osLines.Count - 2], osLines[osLines.Count - 1], out inter, out nextInter);
                     osP = offsetPath[offsetPath.Count - 1];
@@ -976,12 +985,10 @@
                     startCp.pt = (startCp.pt + endCp.pt) / 2;
 
                     offsetPath.Add(startCp);
-                    //offsetPath.Add(endCP);
                 }
             }
 
             // add the final point.
-
             if (tP.lastP == null) { Exceptions.emptyPathException(); }
             orth = Vector3d.CrossProduct(travel, m.toolDir(tP.lastP));
             if (Math.Abs(orth.Length) > CAMel_Goo.Tolerance) { uOrth = orth; }
@@ -1012,6 +1019,7 @@
         public static List<ToolPath> finishPaths([NotNull] ToolPath tP, [NotNull] IMachine m)
         {
             List<ToolPath> fP = new List<ToolPath>();
+
             // get the sorted list of onion cuts
             IOrderedEnumerable<double> onionSort = tP.additions.sortOnion;
 
@@ -1022,7 +1030,7 @@
                 newTP.name = newTP.name + "Finish at height " + height.ToString("0.###");
                 newTP.label = PathLabel.FinishCut;
                 newTP.additions.stepDown = false;
-                newTP.additions.onion = new List<double> {0};
+                newTP.additions.onion = new List<double> { 0 };
                 fP.Add(newTP);
             }
 
@@ -1031,10 +1039,11 @@
             {
                 ToolPath newTP = tP.deepClone();
                 newTP.additions.stepDown = false;
-                newTP.additions.onion = new List<double> {0};
+                newTP.additions.onion = new List<double> { 0 };
                 newTP.label = PathLabel.FinishCut;
                 fP.Add(newTP);
             }
+
             return fP;
         }
 
@@ -1044,9 +1053,9 @@
         {
             ToolPath newTP = tP.deepClone();
             newTP.additions.stepDown = false;
-            newTP.additions.onion = new List<double> {0};
+            newTP.additions.onion = new List<double> { 0 };
             newTP.label = PathLabel.FinishCut;
-            return new List<ToolPath> {newTP};
+            return new List<ToolPath> { newTP };
         }
 
         // Check for jumps in material, return
@@ -1073,7 +1082,6 @@
                 && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
             {
                 // We trust insert and retract moves and retract to transitions.
-
                 if (fP.label == PathLabel.Insert
                     || tP.label == PathLabel.Retract
                     || fP.label == PathLabel.Retract && tP.label == PathLabel.Transition)
@@ -1084,6 +1092,7 @@
 
                 return length;
             }
+
             return 0;
         }
 
@@ -1094,9 +1103,10 @@
             double length = jumpCheck(m, fP, tP);
             if (length > fP.matTool?.pathJump)
             {
-                co.addError("Long Transition between paths in material. \n"
-                            + "To remove this error, don't use ignore, instead change PathJump for the material/tool from: "
-                            + fP.matTool.pathJump + " to at least: " + (length + .01).ToString("0.00"));
+                co.addError(
+                    "Long Transition between paths in material. \n"
+                    + "To remove this error, don't use ignore, instead change PathJump for the material/tool from: "
+                    + fP.matTool.pathJump + " to at least: " + (length + .01).ToString("0.00"));
             }
         }
 
@@ -1107,7 +1117,6 @@
     public static class GCode
     {
         // Standard terms
-
         [NotNull] internal const string DefaultCommentStart = "(";
         [NotNull] internal const string DefaultCommentEnd = ")";
         [NotNull] internal const string DefaultSectionBreak = "------------------------------------------";
@@ -1120,7 +1129,6 @@
         [NotNull] internal const string DefaultExtension = "nc";
 
         // Formatting structure for GCode
-
         [NotNull]
         public static string gcLineNumber([NotNull] string l, int line) => "N" + line.ToString("0000") + "0 " + l;
 
@@ -1144,9 +1152,10 @@
                                  + new TimeSpan(camel.Version?.Build ?? 0, 0, 0, 0)
                                  + TimeSpan.FromSeconds((camel.Version?.Revision ?? 0) * 2);
 
-            co.appendComment("  by " + camel.Name + " "
-                             + camel.Version?.ToString(2)
-                             + " built " + buildTime.ToString("U"));
+            co.appendComment(
+                "  by " + camel.Name + " "
+                + camel.Version?.ToString(2)
+                + " built " + buildTime.ToString("U"));
             if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
             co.appendComment(" Starting with: ");
             co.appendComment("  Tool: " + mI[0][0].matTool.toolName);
@@ -1157,6 +1166,7 @@
             co.append(mI.preCode);
             co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
         }
+
         public static void gcInstEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI)
         {
             co.appendComment(m.sectionBreak);
@@ -1192,15 +1202,18 @@
                 co.appendComment(" ToolPath: " + tP.name);
                 preamble = true;
             }
+
             if (tP.matTool != null && tP.matTool.toolName != co.currentMT.toolName)
             {
                 co.appendComment(" using: " + tP.matTool.toolName + " into " + tP.matTool.matName);
                 if (tP.matTool.toolNumber != co.currentMT.toolNumber) {
                     m.toolChange(ref co, tP.matTool.toolNumber);
                 }
+
                 co.currentMT = tP.matTool;
                 preamble = true;
             }
+
             if (tP.matForm != null && tP.matForm.ToString() != co.currentMF.ToString())
             {
                 co.appendComment(" material: " + tP.matForm.ToString());
@@ -1227,6 +1240,7 @@
 
             return gPoint;
         }
+
         [NotNull]
         public static string gcThreeAxis([NotNull] ToolPoint tP)
         {
@@ -1236,6 +1250,7 @@
 
             return gPoint;
         }
+
         [NotNull]
         public static string gcFiveAxisAB(Point3d machPt, Vector3d ab)
         {
@@ -1250,7 +1265,7 @@
         }
 
         // GCode reading
-        [NotNull] private static readonly Regex _NumbPattern = new Regex(@"^([0-9\-.]+)", RegexOptions.Compiled);
+        [NotNull] private static readonly Regex NumbPattern = new Regex(@"^([0-9\-.]+)", RegexOptions.Compiled);
 
         private static double getValue([NotNull] string line, char split, double old, ref bool changed)
         {
@@ -1259,12 +1274,13 @@
             if (splitLine.Length < 2) { return val; }
 
             // ReSharper disable once AssignNullToNotNullAttribute
-            Match monkey = _NumbPattern.Match(splitLine[1]);
+            Match monkey = NumbPattern.Match(splitLine[1]);
             if (monkey.Success)
             { val = double.Parse(monkey.Value); }
             if (Math.Abs(val - old) > CAMel_Goo.Tolerance) { changed = true; }
             return val;
         }
+
         // TODO detect tool changes and new paths
         [NotNull]
         public static MachineInstruction gcRead([NotNull] IGCodeMachine m, [NotNull, ItemNotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
@@ -1281,6 +1297,7 @@
                     bool changed = false;
                     foreach (char t in terms)
                     { values[t] = getValue(line, t, values[t], ref changed); }
+
                     //interpret a G0 command.
                     if (line.Contains(@"G00") || line.Contains(@"G0 "))
                     {
@@ -1290,12 +1307,14 @@
                             values['F'] = 0;
                         }
                     }
+
                     MaterialTool uMT = MaterialTool.Empty;
                     if (mTs.Count > 0) { uMT = mTs[0]; }
                     if (changed) { tP.Add(m.readTP(values, uMT)); }
                 }
             }
-            return new MachineInstruction(m) {new MachineOperation(tP)};
+
+            return new MachineInstruction(m) { new MachineOperation(tP) };
         }
 
         [NotNull]
@@ -1304,6 +1323,7 @@
             if (l == "" || l == " ") { return " "; }
 
             string uL = l;
+
             // Avoid "nested comments"
             if (m.commentStart != "(") { return m.commentStart + " " + uL + " " + m.commentEnd; }
 
@@ -1314,7 +1334,7 @@
 
         internal static void toolChange([NotNull] IGCodeMachine m, ref CodeInfo co, int toolNumber)
         {
-            string[] lines = m.toolChangeCommand.Split(new[] {"\\n"}, StringSplitOptions.RemoveEmptyEntries);
+            string[] lines = m.toolChangeCommand.Split(new[] { "\\n" }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (string line in lines)
             {

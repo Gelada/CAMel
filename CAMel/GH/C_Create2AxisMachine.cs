@@ -50,15 +50,15 @@ namespace CAMel.GH
             pManager[1].Optional = true;
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
             pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
-            List<string> ccDefault = new List<string> { GCode.DefaultCommentStart, GCode.DefaultCommentEnd, GCode.DefaultSectionBreak};
+            List<string> ccDefault = new List<string> { GCode.DefaultCommentStart, GCode.DefaultCommentEnd, GCode.DefaultSectionBreak };
             pManager.AddTextParameter("Comment", "C", "String for start and end of comments, as well as section breaks.", GH_ParamAccess.list, ccDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[4].Optional = true;
-            List<string> irDefault = new List<string> { GCode.DefaultSpeedChangeCommand, GCode.DefaultActivateCommand, GCode.DefaultDeActivateCommand};
+            List<string> irDefault = new List<string> { GCode.DefaultSpeedChangeCommand, GCode.DefaultActivateCommand, GCode.DefaultDeActivateCommand };
             pManager.AddTextParameter("Speed/Insert/Retract/ToolChange", "SIRT", "Commands to change speed, insert and retract tool, and change tool", GH_ParamAccess.list, irDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[5].Optional = true;
-            List<string> fileDefault = new List<string> {GCode.DefaultFileStart, GCode.DefaultFileEnd};
+            List<string> fileDefault = new List<string> { GCode.DefaultFileStart, GCode.DefaultFileEnd };
             pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[6].Optional = true;

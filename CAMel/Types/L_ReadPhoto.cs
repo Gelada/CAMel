@@ -88,7 +88,6 @@
             }
 
             // Thin the region to get the center of the curve, with some small branches
-
             Mat thin = new Mat();
             XImgprocInvoke.Thinning(contourBm, thin, ThinningTypes.GuoHall);
             contourBm.Dispose();
@@ -124,14 +123,12 @@
             }
 
             // Now we have a collection of 1 pixel thick curves, we can vectorise
-
             contours = new VectorOfVectorOfPoint();
             CvInvoke.FindContours(thin, contours, null, RetrType.External, ChainApproxMethod.ChainApproxNone);
 
             // The contours are loops and there are small paths we want to ignore.
             // We run ApproxPolyDP to simplify the curve
             // Finally we convert to a Rhino curve
-
             for (int i = 0; i < contours.Size; i++)
             {
                 VectorOfPoint sco = new VectorOfPoint();
@@ -140,17 +137,18 @@
                 VectorOfPoint cont = new VectorOfPoint();
                 int j = 1;
                 while (contours[i][j - 1] != contours[i][j + 1] && j < contours[i].Size - 1) { j++; }
-                System.Drawing.Point[] pt = {contours[i][j], contours[i][j + 1]};
+                System.Drawing.Point[] pt = { contours[i][j], contours[i][j + 1] };
                 cont.Push(pt);
                 j += 2;
                 while (j < contours[i].Size && contours[i][j - 2] != contours[i][j])
                 {
-                    pt = new[] {contours[i][j]};
+                    pt = new[] { contours[i][j] };
                     cont.Push(pt);
                     j++;
                 }
+
                 CvInvoke.ApproxPolyDP(cont, sco, 1, false);
-                //sco = cont;
+
                 List<Point3d> c = new List<Point3d>();
                 for (j = 0; j < sco.Size; j++) { c.Add(pt2R(sco[j])); }
                 curves.Add(new PolylineCurve(c));
@@ -167,13 +165,13 @@
             // Hopefully ending up with something close to the intended result.
             // This should be replaced with an algorithm that creates the longest
             // possible curves, then deletes everything under a threshold.
-
-            curves.Sort((x, y) =>
-                {
-                    if (x == null) { throw new ArgumentNullException(nameof(x)); }
-                    if (y == null) { throw new ArgumentNullException(nameof(y)); }
-                    return y.GetLength().CompareTo(x.GetLength());
-                });
+            curves.Sort(
+                (x, y) =>
+                    {
+                        if (x == null) { throw new ArgumentNullException(nameof(x)); }
+                        if (y == null) { throw new ArgumentNullException(nameof(y)); }
+                        return y.GetLength().CompareTo(x.GetLength());
+                    });
 
             List<Curve> tCurves = new List<Curve>();
 
@@ -189,7 +187,6 @@
             }
 
             // Find centre at 0, remove short curves and do final join.
-
             tCurves = jCurves;
             jCurves = new List<Curve>();
 
@@ -199,18 +196,20 @@
                 jCurves.Add(c);
                 bb.Union(c.GetBoundingBox(false));
             }
+
             tCurves = jCurves;
             jCurves = new List<Curve>();
             jCurves.AddRange(Curve.JoinCurves(tCurves, jump, false) ?? new Curve[0]);
 
             // Move to centre.
-            foreach (Curve c in jCurves) { c.Translate(-(Vector3d) bb.Center); }
+            foreach (Curve c in jCurves) { c.Translate(-(Vector3d)bb.Center); }
 
             if (debug)
             {
                 watch.Stop();
                 times.Add("Join Curves: " + watch.ElapsedMilliseconds + " ms");
             }
+
             watch.Stop();
 
             return jCurves;

@@ -24,8 +24,10 @@
         // TODO change back to replaceable, but remove replaceable flag when any value is changed.
         [UsedImplicitly]
         public GH_ToolPathAdditions() => this.Value = new ToolPathAdditions();
+
         // Create from unwrapped version
         public GH_ToolPathAdditions([CanBeNull] ToolPathAdditions tP) => this.Value = tP;
+
         // Copy Constructor
         public GH_ToolPathAdditions([CanBeNull] GH_ToolPathAdditions tP) => this.Value = tP?.Value;
         public override bool CastFrom([CanBeNull] object source)
@@ -33,6 +35,7 @@
             switch (source)
             {
                 case null: return false;
+
                 //Cast from unwrapped TPA
                 case ToolPathAdditions tPa:
                     this.Value = tPa;
@@ -50,6 +53,7 @@
                 target = (T)ptr;
                 return true;
             }
+
             return false;
         }
 
@@ -74,6 +78,7 @@
                     GH_Point3D pt = reader.GetPoint3D("offset");
                     tPa.offset = (Vector3d)CAMel_Goo.fromIO(pt);
                 }
+
                 if (reader.ItemExists("activate")) { tPa.activate = reader.GetInt32("activate"); }
                 if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetBoolean("stepDown"); }
                 if (reader.ItemExists("sdDropStart")) { tPa.sdDropStart = reader.GetBoolean("sdDropStart"); }
@@ -86,6 +91,7 @@
                     for (int i = 0; i < count; i++)
                     { tPa.onion.Add(reader.GetDouble("onion", i)); }
                 }
+
                 if (reader.ItemExists("threeAxisHeightOffset")) { tPa.threeAxisHeightOffset = reader.GetBoolean("threeAxisHeightOffset"); }
                 if (reader.ItemExists("tabbing")) { tPa.tabbing = reader.GetBoolean("tabbing"); }
                 if (reader.ItemExists("leadCurve"))
@@ -96,6 +102,7 @@
                             ? val.ToString(CultureInfo.InvariantCulture)
                             : reader.GetString("leadCurve") ?? string.Empty;
                 }
+
                 if (reader.ItemExists("machineOptions")) { tPa.machineOptions = reader.GetString("machineOptions") ?? string.Empty; }
                 this.Value = tPa;
                 bool m = base.Read(reader);
@@ -135,21 +142,17 @@
     // Grasshopper Parameter Wrapper
     public class GH_ToolPathAdditionsPar : GH_PersistentParam<GH_ToolPathAdditions>
     {
-        public GH_ToolPathAdditionsPar() :
-            base("Tool Path Additions",
-                "ToolPathAdditions",
+        public GH_ToolPathAdditionsPar()
+            : base(
+                "Tool Path Additions", "ToolPathAdditions",
                 "Extra work that a ToolPath can do as it is processed for cutting.",
-                "CAMel",
-                "  Params")
-        { }
+                "CAMel", "  Params") { }
         public override Guid ComponentGuid => new Guid("421A7CE5-4206-4628-964F-1A3810899556");
 
         /// <inheritdoc />
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        // You can add image files to your project resources and access them like this:
-        // return Resources.IconForThisComponent;
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpathadditions;
 
@@ -157,7 +160,6 @@
         {
             // Do our own thing as we do not really implement
             // set 1 and set multiple.
-
             Menu_AppendWireDisplay(menu);
             Menu_AppendDisconnectWires(menu);
             Menu_AppendPrincipalParameter(menu);
@@ -186,11 +188,12 @@
 
     public class GH_ToolPathAdditionsProxy : GH_GooProxy<GH_ToolPathAdditions>
     {
-        public GH_ToolPathAdditionsProxy([CanBeNull] GH_ToolPathAdditions obj) : base(obj) { }
+        public GH_ToolPathAdditionsProxy([CanBeNull] GH_ToolPathAdditions obj)
+            : base(obj) { }
 
         [Category(" General"),
          Description("Activate the tool, at the start of end of the path (0 off !0 on) or specify the quality of cutting (machine dependant)."),
-         DisplayName(" Activate/Quality"), RefreshProperties(RefreshProperties.All), 
+         DisplayName(" Activate/Quality"), RefreshProperties(RefreshProperties.All),
          UsedImplicitly]
         public int activate
         {
@@ -221,8 +224,8 @@
             }
         }
 
-        [CanBeNull, Category(" General"), 
-         Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."), 
+        [CanBeNull, Category(" General"),
+         Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."),
          DisplayName("Lead Curvature"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string leadCurve
         {
@@ -237,8 +240,8 @@
             }
         }
 
-        [CanBeNull, Category(" General"), 
-         Description("Specific options for a machine, be careful might not be standard between machines."), 
+        [CanBeNull, Category(" General"),
+         Description("Specific options for a machine, be careful might not be standard between machines."),
          DisplayName("Machine Options"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string machineOptions
         {
@@ -265,6 +268,7 @@
                 if (Math.Abs(os.SquareLength) < CAMel_Goo.Tolerance) { return "0"; }
                 return os.X + ", " + os.Y + ", " + os.Z;
             }
+
             set
             {
                 if (this.Owner == null) { return; }
@@ -279,8 +283,8 @@
             }
         }
 
-        [CanBeNull, Category(" Step Down"), 
-         Description("Height above toolpath to cut the finish path, for onion skinning. Can be a comma separated list. "), 
+        [CanBeNull, Category(" Step Down"),
+         Description("Height above toolpath to cut the finish path, for onion skinning. Can be a comma separated list. "),
          DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string onion
         {

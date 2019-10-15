@@ -55,6 +55,7 @@
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // Copy Constructor
         private MachineInstruction([NotNull] MachineInstruction mI)
         {
@@ -114,13 +115,13 @@
             validTP = valid.startPath;
 
             // process and validate all Operations
-
             ToolPath fP = new ToolPath();
+
             // If there is a start path use it.
             MachineOperation pMo;
             if (valid.startPath.Count > 0)
             {
-                pMo = new MachineOperation {valid.startPath};
+                pMo = new MachineOperation { valid.startPath };
                 valid.Add(pMo.processAdditions(this.m, ref validTP));
                 fP = valid.startPath;
             }
@@ -134,18 +135,20 @@
                     pMo.Insert(0, this.m.transition(fP, pMo[0]));
                     valid.removeLastPoint();
                 }
+
                 if (pMo.Count > 0) { fP = pMo[pMo.Count - 1]; }
                 valid.Add(pMo);
             }
 
             // Transition to end path
-            pMo = new MachineOperation {valid.endPath};
+            pMo = new MachineOperation { valid.endPath };
             pMo = pMo.processAdditions(this.m, ref validTP);
             if (fP.Count > 0 && pMo.Count > 0)
             {
                 pMo.Insert(0, this.m.transition(fP, pMo[0]));
                 valid.removeLastPoint();
             }
+
             valid.Add(pMo);
 
             return valid;
@@ -182,6 +185,7 @@
             bool mFFound = false;
 
             ToolPath valid = new ToolPath();
+
             // scan through the paths looking for info
             foreach (ToolPath tP in this.SelectMany(mO => mO))
             {
@@ -190,19 +194,23 @@
                     mTFound = true;
                     valid.matTool = tP.matTool;
                 }
+
                 if (!mFFound && tP.matForm != null)
                 {
                     mFFound = true;
                     valid.matForm = tP.matForm;
                 }
+
                 if (mTFound && mFFound) { return valid; }
             }
+
             // if the machine has one tool use that.
             if (this.m.mTs.Count != 1 || !mFFound)
             {
                 throw new InvalidOperationException(
                     "Cannot validate Machine Instructions, there are either no ToolPaths with a MaterialTool or no ToolPaths with a MaterialForm.");
             }
+
             valid.matTool = this.m.mTs[0];
             return valid; // if we go through the whole thing without finding all the valid pieces
         }
@@ -215,18 +223,21 @@
             for (int i = 1; i < this.Count; i++) { oP.AddRange(this[i].getSinglePath()); }
             return oP;
         }
+
         // Get the list of tooltip locations
         [NotNull, PublicAPI]
         public List<List<List<Point3d>>> getPoints()
         {
             return this.Select(mO => mO?.getPoints()).ToList();
         }
+
         // Get the list of tool directions
         [NotNull, PublicAPI]
         public List<List<List<Vector3d>>> getDirs()
         {
             return this.Select(mO => mO?.getDirs()).ToList();
         }
+
         // Create a path with the points
         [NotNull, PublicAPI]
         public List<List<List<Point3d>>> getPointsAndDirs([NotNull] out List<List<List<Vector3d>>> dirs)
@@ -243,8 +254,10 @@
             { bb.Union(this[i].getBoundingBox()); }
             return bb;
         }
+
         // Create single polyline
         [NotNull] public PolylineCurve getLine() => getSinglePath().getLine();
+
         // Create polylines
         [NotNull]
         public IEnumerable<PolylineCurve> getLines()
@@ -253,6 +266,7 @@
             foreach (MachineOperation mO in this) { lines.AddRange(mO.getLines()); }
             return lines;
         }
+
         // Lines for each toolpoint
         [NotNull]
         public IEnumerable<Line> toolLines()
@@ -267,7 +281,7 @@
         #region List Functions 
 
         public int Count => this.mOs.Count;
-        public bool IsReadOnly => ((IList<MachineOperation>) this.mOs).IsReadOnly;
+        public bool IsReadOnly => ((IList<MachineOperation>)this.mOs).IsReadOnly;
 
         [NotNull] public MachineOperation this[int index] { get => this.mOs[index]; set => this.mOs[index] = value; }
 
@@ -276,11 +290,13 @@
         {
             if (item != null) { this.mOs.Insert(index, item); }
         }
+
         public void RemoveAt(int index) => this.mOs.RemoveAt(index);
         public void Add(MachineOperation item)
         {
             if (item != null) { this.mOs.Add(item); }
         }
+
         [PublicAPI] public void AddRange([NotNull] IEnumerable<MachineOperation> items) => this.mOs.AddRange(items.Where(x => x != null));
         public void Clear() => this.mOs.Clear();
         public bool Contains(MachineOperation item) => this.mOs.Contains(item);
@@ -297,10 +313,13 @@
     {
         // Default Constructor;
         [UsedImplicitly] public GH_MachineInstruction() => this.Value = null;
+
         // Construct from value alone
         public GH_MachineInstruction([CanBeNull] MachineInstruction mI) => this.Value = mI;
+
         // Copy Constructor.
         public GH_MachineInstruction([CanBeNull] GH_MachineInstruction mI) => this.Value = mI?.Value?.deepClone();
+
         // Duplicate
         [NotNull] public override IGH_Goo Duplicate() => new GH_MachineInstruction(this);
 
@@ -310,51 +329,58 @@
             if (typeof(T).IsAssignableFrom(typeof(MachineInstruction)))
             {
                 object ptr = this.Value;
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(ToolPath)))
             {
                 object ptr = this.Value.getSinglePath();
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(GH_ToolPath)))
             {
                 object ptr = new GH_ToolPath(this.Value.getSinglePath());
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(Curve)))
             {
-                target = (T) (object) this.Value.getLine();
+                target = (T)(object)this.Value.getLine();
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(GH_Curve)))
             {
-                target = (T) (object) new GH_Curve(this.Value.getLine());
+                target = (T)(object)new GH_Curve(this.Value.getLine());
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(IMachine)))
             {
                 object ptr = this.Value.m;
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Machine)))
             {
                 object ptr = new GH_Machine(this.Value.m);
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
 
             return false;
         }
+
         public override bool CastFrom([CanBeNull] object source)
         {
             switch (source) {
                 case null: return false;
+
                 // Cast from unwrapped MachineInstruction
                 case MachineInstruction mI:
                     this.Value = mI;
@@ -372,16 +398,18 @@
             {
                 args.Pipeline.DrawCurve(l, args.Color);
             }
+
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
+
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
     public class GH_MachineInstructionPar : GH_Param<GH_MachineInstruction>, IGH_PreviewObject
     {
-        public GH_MachineInstructionPar() :
-            base("Instructions", "MachInst", "Contains a collection of Machine Instructions", "CAMel", "  Params", GH_ParamAccess.item) { }
+        public GH_MachineInstructionPar()
+            : base("Instructions", "MachInst", "Contains a collection of Machine Instructions", "CAMel", "  Params", GH_ParamAccess.item) { }
         public override Guid ComponentGuid => new Guid("7ded80e7-6a29-4534-a848-f9d1b897098f");
 
         public bool Hidden { get; set; }

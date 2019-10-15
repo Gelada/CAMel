@@ -14,7 +14,7 @@
     // library for doing offsetting
     public static class Offsetting
     {
-        private const double _ScF = 2000000000.0;
+        private const double ScF = 2000000000.0;
         [NotNull]
         public static List<PolylineCurve> offset([NotNull] PolylineCurve p, double d)
         {
@@ -24,12 +24,11 @@
             if (bb.Max.Y > md) { md = bb.Max.Y; }
             if (-bb.Min.X > md) { md = -bb.Min.X; }
             if (-bb.Min.Y > md) { md = -bb.Min.Y; }
-            double sc = _ScF / md;
+            double sc = ScF / md;
 
             List<List<IntPoint>> iPs = pLtoInt(p, sc);
 
             // Offset the paths.
-
             EndType et = p.IsClosed ? EndType.etClosedPolygon : EndType.etOpenRound;
 
             ClipperOffset co = new ClipperOffset();
@@ -38,12 +37,11 @@
             co.Execute(ref oPf, d * sc);
 
             // Clean the paths.
-
             List<List<IntPoint>> oP = oPf.Select(iP => Clipper.CleanPolygon(iP)).ToList();
 
             List<PolylineCurve> oPl = intToPl(oP, sc);
-            // find point closest to first of original curve
 
+            // find point closest to first of original curve
             int cp = -1;
             double pos = 0;
             double dist = 1000000000000000000;
@@ -64,7 +62,7 @@
             return oPl;
         }
 
-        private static IntPoint dToi(Point3d p, double sc) => new IntPoint((long) Math.Round(p.X * sc), (long) Math.Round(p.Y * sc));
+        private static IntPoint dToi(Point3d p, double sc) => new IntPoint((long)Math.Round(p.X * sc), (long)Math.Round(p.Y * sc));
         private static Point3d iTod(IntPoint p, double sc) => new Point3d(p.X / sc, p.Y / sc, 0);
 
         [NotNull]
@@ -73,8 +71,8 @@
         {
             pc.TryGetPolyline(out Polyline p);
             List<IntPoint> intP = p.Select(pt => dToi(pt, sc)).ToList();
-            //List<List<IntPoint>> IntPL = Clipper.SimplifyPolygon(IntP,);
-            List<List<IntPoint>> intPl = new List<List<IntPoint>> {intP};
+
+            List<List<IntPoint>> intPl = new List<List<IntPoint>> { intP };
 
             return intPl;
         }

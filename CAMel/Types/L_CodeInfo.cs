@@ -79,13 +79,14 @@ namespace CAMel.Types
         public void addWarning([NotNull] string warn)
         {
             if (this.warnings.ContainsKey(warn) && this.warnings[warn] != null) { this.warnings[warn].Add(this.lines); }
-            else { this.warnings.Add(warn, new List<int> {this.lines}); }
+            else { this.warnings.Add(warn, new List<int> { this.lines }); }
             appendComment(warn);
         }
+
         public void addError([NotNull] string err)
         {
             if (this.errors.ContainsKey(err) && this.errors[err] != null) { this.errors[err].Add(this.lines); }
-            else { this.errors.Add(err, new List<int> {this.lines}); }
+            else { this.errors.Add(err, new List<int> { this.lines }); }
             appendComment(err);
         }
 
@@ -115,6 +116,7 @@ namespace CAMel.Types
                 first = false;
                 lN += i;
             }
+
             return lN;
         }
 
@@ -139,8 +141,10 @@ namespace CAMel.Types
                     first = false;
                     outP.AppendLine("Ignored Errors: (on lines)");
                 }
+
                 outP.AppendLine(k + ": " + this.errors[k]?.Count + " (" + lineNumbers(this.errors[k]) + ")");
             }
+
             return outP.ToString();
         }
 
@@ -170,6 +174,7 @@ namespace CAMel.Types
                     first = false;
                     outP.AppendLine("Errors: (on lines)");
                 }
+
                 outP.AppendLine(k + ": " + this.errors[k]?.Count + " (" + lineNumbers(this.errors[k]) + ")");
             }
 
@@ -204,6 +209,7 @@ namespace CAMel.Types
             // files between OSX and Windows.
             if (l.Length > 0) { this.code.Append(l + "\r\n"); }
         }
+
         private void appendLine([NotNull] string l)
         {
             if (l.Length <= 0) { return; }
@@ -212,12 +218,13 @@ namespace CAMel.Types
             this.lines++;
             appendLineNoNum(line);
         }
+
         public void appendComment([NotNull] string l) => appendLineNoNum(this.m.comment(l));
         public void append([NotNull] string l)
         {
             if (l == string.Empty) { return; }
 
-            char[] seps = {'\n', '\r'};
+            char[] seps = { '\n', '\r' };
             string[] newLines = l.Split(seps, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (string line in newLines) { appendLine(line); }

@@ -72,7 +72,8 @@
 
             if (!da.GetDataList("Paths", paths)) { return; }
             if (!da.GetData("Tool Direction", ref tDd)) { return; }
-            int tD = (int) tDd;
+            int tD = (int)tDd;
+
             // set Surfacing direction
             SurfToolDir sTD = SurfacePath.getSurfDir(tD);
             if (sTD == SurfToolDir.Error)
@@ -86,7 +87,7 @@
 
             // find the projection type (will effect the information we wish to use)
             if (!da.GetData("Projection", ref prD)) { return; }
-            int prT = (int) prD;
+            int prT = (int)prD;
             switch (prT)
             {
                 case 0: // Parallel

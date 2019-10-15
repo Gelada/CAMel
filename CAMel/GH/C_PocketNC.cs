@@ -81,6 +81,7 @@
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Only two version of the PocketNC known. Use 0 for old spindle.");
                 return;
             }
+
             if (v != 2) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "All testing done on a V2 machine, please be careful."); }
 
             if (!da.GetData(1, ref bT)) { return; }
@@ -133,6 +134,7 @@
                         pivot = new Vector3d(0, 0, 0);
                         break;
                 }
+
                 uFoot = "G49 (Clear tool length compensation)\n" + foot;
             }
             else

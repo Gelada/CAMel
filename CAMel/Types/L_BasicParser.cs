@@ -43,6 +43,7 @@
                 }
             }
         }
+
         public override string ToString()
         {
             string str = this.command;
@@ -63,7 +64,7 @@
         /// <inheritdoc />
         public IEnumerator<double> GetEnumerator() => this.values.GetEnumerator();
         /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable) this.values).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)this.values).GetEnumerator();
 
         #endregion
     }
@@ -80,6 +81,7 @@
             split.AddRange(commandString.Split(','));
             this.commands.AddRange(split.Select(s => new BpCommand(s)).ToList());
         }
+
         public override string ToString()
         {
             return this.commands.Aggregate(string.Empty, (current, comm) => current + comm) ?? string.Empty;
@@ -93,6 +95,7 @@
                 c = bpC;
                 return true;
             }
+
             c = null;
             return false;
         }
@@ -100,6 +103,6 @@
         /// <inheritdoc />
         public IEnumerator<BpCommand> GetEnumerator() => this.commands.GetEnumerator();
         /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable) this.commands).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)this.commands).GetEnumerator();
     }
 }

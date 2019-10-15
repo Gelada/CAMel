@@ -102,6 +102,7 @@
                     double h = eP.Evaluate()?._Double ?? 0.0;
                     pl[j] = new Point3d(pl[j].X, pl[j].Y, h);
                 }
+
                 jCurves[i] = new PolylineCurve(pl);
             }
 
@@ -117,13 +118,16 @@
                     {
                         op.Add(0.5 * pl[j - 1] + 0.5 * pl[j]);
                     }
+
                     if (j < pl.Count - 1)
                     {
                         double ang = Vector3d.VectorAngle(pl[j] - pl[j - 1], pl[j + 1] - pl[j]);
                         if (ang > Math.PI / 2.1) { op.Add(pl[j]); }
                     }
+
                     op.Add(pl[j]);
                 }
+
                 tCurves.Add(Curve.CreateControlPointCurve(op));
             }
 
@@ -139,9 +143,9 @@
             Menu_AppendSeparator(menu);
 
             Menu_AppendItem(menu, "Tracing Settings");
+
             //Menu_AppendNumber(menu, "Jump", this.Jump,"Distance to connect edges (in pixels)");
             //Menu_AppendNumber(menu, "Blur", this.Blur,"Radius of blur (in pixels)");
-
             Menu_AppendSeparator(menu);
             Menu_AppendItem(menu, "Debug", debugClicked, true, this.debug);
 
@@ -189,6 +193,7 @@
 
             return uD;
         }
+
         private void copyDataClicked([NotNull] object sender, [CanBeNull] EventArgs e)
         {
             System.Text.StringBuilder traceData = new System.Text.StringBuilder();
@@ -197,26 +202,28 @@
 
             Clipboard.SetText(traceData.ToString());
         }
+
         private void debugClicked([NotNull] object sender, [CanBeNull] EventArgs e)
         {
             RecordUndoEvent("Trace_Debug");
             this.debug = !this.debug;
             ExpireSolution(true);
         }
+
         private void traceSettings([NotNull] object sender, [CanBeNull] EventArgs e)
         {
-            NumericUpDown ud = (NumericUpDown) sender;
+            NumericUpDown ud = (NumericUpDown)sender;
             RecordUndoEvent(ud.Name);
             switch (ud.Name)
             {
                 case "Blur":
-                    this.blur = (int) ud.Value;
+                    this.blur = (int)ud.Value;
                     break;
                 case "Jump":
-                    this.jump = (int) ud.Value;
+                    this.jump = (int)ud.Value;
                     break;
                 case "Mega Pixels":
-                    this.maxFile = (int) ud.Value;
+                    this.maxFile = (int)ud.Value;
                     break;
             }
         }
@@ -225,14 +232,17 @@
         public override bool Write([CanBeNull] GH_IO.Serialization.GH_IWriter writer)
         {
             if (writer == null) { return base.Write(null); }
+
             // First add our own fields.
             writer.SetInt32("MaxFile", this.maxFile);
             writer.SetInt32("Jump", this.jump);
             writer.SetInt32("Blur", this.blur);
             writer.SetBoolean("Debug", this.debug);
+
             // Then call the base class implementation.
             return base.Write(writer);
         }
+
         public override bool Read([CanBeNull] GH_IO.Serialization.GH_IReader reader)
         {
             if (reader == null) { return false; }

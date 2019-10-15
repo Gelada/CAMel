@@ -16,7 +16,6 @@
     using JetBrains.Annotations;
 
     // Mappings for csv helper
-
     [UsedImplicitly]
     public sealed class MaterialToolMap : CsvClassMap<MaterialToolBuilder>
     {

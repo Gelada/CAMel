@@ -43,7 +43,6 @@
         public static string doubleToCsv([CanBeNull] IEnumerable<double> values, [NotNull] string format)
         {
             // Adapted from https://www.dotnetperls.com/convert-list-string
-
             if (values == null) { return string.Empty; }
 
             StringBuilder builder = new StringBuilder();
@@ -58,10 +57,12 @@
 
             return result;
         }
+
         [NotNull]
         public static List<double> cSvToDouble([CanBeNull] string values)
         {
             List<double> result = new List<double>();
+
             // Adapted from https://www.dotnetperls.com/convert-list-string
             if (values == null) { return result; }
 
@@ -80,6 +81,7 @@
                     }
                 }
             }
+
             return result;
         }
 
@@ -122,8 +124,10 @@
                             if (obj is IGH_Goo ghGoo) { oP.Add(ghGoo.ScriptVariable()); }
                             else { oP.Add(obj); }
                         }
+
                         return oP;
                     }
+
                 default:
                     return gooey;
             }

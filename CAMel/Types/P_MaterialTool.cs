@@ -61,7 +61,6 @@
         public double pathJump { get; } // maximum jump between toolpaths in material
 
         // settings for curve approximation
-
         public double tolerance { get; } // The maximum permitted distance of approximation from curve
         public double minStep { get; } // shortest path permitted
 
@@ -72,7 +71,9 @@
         //  Add to create Material Tool
 
         // Everything, with defaults
-        public MaterialTool([CanBeNull] string mat, [CanBeNull] string tool, int toolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = -1, double iWidth = -1, double tL = 0, EndShape eS = EndShape.Other, double tol = 0, double mS = 0, double sideLoad = 0.7, double pathJump = -1.0)
+        public MaterialTool(
+            [CanBeNull] string mat, [CanBeNull] string tool, int toolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = -1, double iWidth = -1,
+            double tL = 0, EndShape eS = EndShape.Other, double tol = 0, double mS = 0, double sideLoad = 0.7, double pathJump = -1.0)
         {
             this.matName = mat ?? string.Empty;
             this.toolName = tool ?? string.Empty;
@@ -152,6 +153,7 @@
 
             return osTp;
         }
+
         // Find the path offset so the cutting surface of the tool is on the path
         public Vector3d cutOffset(Vector3d dir, Vector3d norm)
         {
@@ -174,9 +176,11 @@
                     {
                         // find the normal to the plane give by the tool direction and the norm
                         Vector3d plN = Vector3d.CrossProduct(uNorm, uDir);
+
                         // Now want a vector on that plane orthogonal to tool direction
                         os = this.toolWidth * Vector3d.CrossProduct(uDir, plN) / 2;
                     }
+
                     break;
                 case EndShape.V:
                     // Just use the tip. Beyond a certain angle this will not work
@@ -190,8 +194,10 @@
                     os = new Vector3d(0, 0, 0);
                     break;
             }
+
             return os;
         }
+
         public static EndShape getToolShape([CanBeNull] string toolShape)
         {
             switch (toolShape)
@@ -215,10 +221,13 @@
     {
         [UsedImplicitly]
         public GH_MaterialTool() => this.Value = null;
+
         // construct from unwrapped type
         public GH_MaterialTool([CanBeNull] MaterialTool mT) => this.Value = mT;
+
         // Copy Constructor (just reference as MaterialTool is Immutable)
         public GH_MaterialTool([CanBeNull] GH_MaterialTool mT) => this.Value = mT?.Value;
+
         // Duplicate
         [CanBeNull]
         public override IGH_Goo Duplicate() => new GH_MaterialTool(this);
@@ -229,9 +238,10 @@
             if (typeof(T).IsAssignableFrom(typeof(MaterialTool)))
             {
                 object ptr = this.Value;
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             return false;
         }
 
@@ -239,6 +249,7 @@
         {
             switch (source) {
                 case null: return false;
+
                 // Cast From Unwrapped MT
                 case MaterialTool mT:
                     this.Value = mT;
@@ -251,8 +262,11 @@
     // Grasshopper Parameter Wrapper
     public class GH_MaterialToolPar : GH_Param<GH_MaterialTool>
     {
-        public GH_MaterialToolPar() :
-            base("Material/Tool", "MatTool", "Contains a collection of Material Tool Pairs", "CAMel", "  Params", GH_ParamAccess.item) { }
+        public GH_MaterialToolPar()
+            : base(
+                "Material/Tool", "MatTool",
+                "Contains a collection of Material Tool Pairs",
+                "CAMel", "  Params", GH_ParamAccess.item) { }
         public override Guid ComponentGuid => new Guid("147c0724-2d2b-4316-a889-d59fbe748b58");
 
         /// <inheritdoc />

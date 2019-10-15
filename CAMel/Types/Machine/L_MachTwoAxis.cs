@@ -41,6 +41,7 @@
             this.toolChangeCommand = GCode.DefaultToolChangeCommand;
             this.mTs = new List<MaterialTool>();
         }
+
         [PublicAPI]
         public TwoAxisFactory([NotNull] TwoAxis ta)
         {
@@ -100,7 +101,7 @@
             this.fileEnd = ta.fileEnd;
             this.toolChangeCommand = ta.toolChangeCommand;
             this.mTs = ta.mTs;
-            this.terms = new List<char> {'X', 'Y', 'S', 'F'};
+            this.terms = new List<char> { 'X', 'Y', 'S', 'F' };
         }
 
         public string TypeDescription => @"Instructions for a 2-Axis machine";
@@ -126,6 +127,7 @@
                     return Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
             }
         }
+
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
@@ -142,6 +144,7 @@
         public void writeCode(ref CodeInfo co, [ItemNotNull] ToolPath tP)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
+
             // Double check tP does not have additions.
             if (tP.additions.any) { Exceptions.additionsException(); }
 
@@ -159,6 +162,7 @@
                 feed = tP.matTool.feedCut;
                 fChange = true;
             }
+
             if (speed < 0)
             {
                 speed = tP.matTool.speed;
@@ -207,6 +211,7 @@
                         if (feed > 0) { ptCode = ptCode + " F" + feed.ToString("0"); }
                     }
                 }
+
                 fChange = false;
 
                 // Act if speed has changed
@@ -221,12 +226,11 @@
                 co.append(ptCode);
 
                 // Adjust ranges
-
                 co.growRange("X", tPt.pt.X);
                 co.growRange("Y", tPt.pt.Y);
             }
-            // Pass machine state information
 
+            // Pass machine state information
             if (tP.lastP == null) { Exceptions.nullPanic(); }
             co.machineState.Clear();
             co.machineState.Add("X", tP.lastP.pt.X);
@@ -240,7 +244,6 @@
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
-
             if (mI.firstP == null) { Exceptions.nullPanic(); }
             co.machineState.Clear();
             co.machineState.Add("X", mI.firstP.pt.X);
@@ -250,6 +253,7 @@
 
             GCode.gcInstStart(this, ref co, mI);
         }
+
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => GCode.gcInstEnd(this, ref co, mI);
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
@@ -263,7 +267,7 @@
             if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
 
-            List<Point3d> route = new List<Point3d> {fP.lastP.pt, tP.firstP.pt};
+            List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = "Transition";
@@ -276,6 +280,7 @@
                 // add new point at speed 0 to describe rapid move.
                 move.Add(new ToolPoint(pt, new Vector3d(), -1, 0));
             }
+
             return move;
         }
     }

@@ -68,6 +68,7 @@
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // Just a point, set direction to Z vector.
         public ToolPoint(Point3d pt)
         {
@@ -82,6 +83,7 @@
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // Use point and direction
         public ToolPoint(Point3d pt, Vector3d d)
         {
@@ -95,6 +97,7 @@
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // Use point direction and override speed and feed
         public ToolPoint(Point3d pt, Vector3d d, double speed, double feed)
         {
@@ -107,6 +110,7 @@
             this.preCode = string.Empty;
             this.postCode = string.Empty;
         }
+
         // Use point direction, override speed and feed and add extra Code
         public ToolPoint(Point3d pt, Vector3d d, [CanBeNull] string preCode, [CanBeNull] string postCode, double speed, double feed)
         {
@@ -119,6 +123,7 @@
             this.warning = new List<string>();
             this.name = string.Empty;
         }
+
         // Copy Constructor
         private ToolPoint([NotNull] ToolPoint tP)
         {
@@ -171,11 +176,11 @@
             return outP;
         }
 
-        private const double _PreviewLength = .5;
-        internal Line toolLine() => new Line(this.pt, this.pt + this.dir * _PreviewLength);
-        public ToolPath getSinglePath() => new ToolPath {this};
+        private const double PreviewLength = .5;
+        internal Line toolLine() => new Line(this.pt, this.pt + this.dir * PreviewLength);
+        public ToolPath getSinglePath() => new ToolPath { this };
 
-        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> {this.pt, this.pt + this.dir * _PreviewLength});
+        public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * PreviewLength });
     }
 
     // Grasshopper Type Wrapper
@@ -184,10 +189,13 @@
         // Default Constructor, set up at the origin with direction set to 0 vector.
         [UsedImplicitly]
         public GH_ToolPoint() => this.Value = new ToolPoint();
+
         // Create from unwrapped version
         public GH_ToolPoint([CanBeNull] ToolPoint tP) => this.Value = tP?.deepClone();
+
         // Copy Constructor
         public GH_ToolPoint([CanBeNull] GH_ToolPoint tP) => this.Value = tP?.Value?.deepClone();
+
         // Duplicate
         [NotNull]
         public override IGH_Goo Duplicate() => new GH_ToolPoint(this);
@@ -223,21 +231,25 @@
                     GH_Point3D pt = reader.GetPoint3D("pt");
                     tPt.pt = CAMel_Goo.fromIO(pt);
                 }
+
                 if (reader.ItemExists("dir"))
                 {
                     GH_Point3D pt = reader.GetPoint3D("dir");
-                    tPt.tDir = new Plane(tPt.pt, (Vector3d) CAMel_Goo.fromIO(pt));
+                    tPt.tDir = new Plane(tPt.pt, (Vector3d)CAMel_Goo.fromIO(pt));
                 }
+
                 if (reader.ItemExists("tDir"))
                 {
                     GH_Plane pl = reader.GetPlane("tDir");
                     tPt.tDir = CAMel_Goo.fromIO(pl);
                 }
+
                 if (reader.ItemExists("mDir"))
                 {
                     GH_Plane pl = reader.GetPlane("tDir");
                     tPt.tDir = CAMel_Goo.fromIO(pl);
                 }
+
                 if (reader.ItemExists("feed")) { tPt.feed = reader.GetDouble("feed"); }
                 if (reader.ItemExists("speed")) { tPt.speed = reader.GetDouble("speed"); }
                 if (reader.ItemExists("preCode")) { tPt.name = reader.GetString("preCode") ?? string.Empty; }
@@ -258,34 +270,38 @@
             if (typeof(T).IsAssignableFrom(typeof(ToolPoint)))
             {
                 object ptr = this.Value;
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(Point3d)))
             {
                 object ptr = this.Value.pt;
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(GH_Point)))
             {
                 object ptr = new GH_Point(this.Value.pt);
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             if (typeof(T).IsAssignableFrom(typeof(Vector3d)))
             {
                 object ptr = this.Value.dir;
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
             // ReSharper disable once InvertIf
             if (typeof(T).IsAssignableFrom(typeof(GH_Vector)))
             {
                 object ptr = new GH_Vector(this.Value.dir);
-                target = (T) ptr;
+                target = (T)ptr;
                 return true;
             }
+
             return false;
         }
 
@@ -312,14 +328,18 @@
             args.Pipeline.DrawPoint(this.Value.pt, args.Color);
             args.Pipeline.DrawArrow(this.Value.toolLine(), args.Color);
         }
+
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
     public class GH_ToolPointPar : GH_PersistentParam<GH_ToolPoint>, IGH_PreviewObject
     {
-        public GH_ToolPointPar() :
-            base("ToolPoint", "ToolPt", "Contains a collection of Tool Points", "CAMel", "  Params") { }
+        public GH_ToolPointPar()
+            : base(
+                "ToolPoint", "ToolPt",
+                "Contains a collection of Tool Points",
+                "CAMel", "  Params") { }
         public override Guid ComponentGuid => new Guid("0bbed7c1-88a9-4d61-b7cb-e0dfe82b1b86");
 
         public bool Hidden { get; set; }
@@ -343,6 +363,7 @@
             value = new GH_ToolPoint(tPt);
             return GH_GetterResult.success;
         }
+
         protected override GH_GetterResult Prompt_Plural([NotNull] ref List<GH_ToolPoint> values)
         {
             if (values == null) { values = new List<GH_ToolPoint>(); }
@@ -367,12 +388,14 @@
                         {
                             return GH_GetterResult.success;
                         }
+
                         tPt = new ToolPoint(point, dir);
                         values.Add(new GH_ToolPoint(tPt));
                         preView.AddPoint(tPt.pt);
                         preView.AddVector(tPt.toolLine());
                         continue;
                     }
+
                     tPt = getToolPoint(true, ref useForRemainder);
                     if (tPt == null) { return GH_GetterResult.success; }
                     preView.AddPoint(tPt.pt);
@@ -412,6 +435,7 @@
                         useForRemainder = gTd.useForRemainder;
                         return null;
                 }
+
                 useForRemainder = gTd.useForRemainder;
                 return new ToolPoint(point, dir);
             }
@@ -436,6 +460,7 @@
                     this.useToggle = new OptionToggle(false, "Once", "ForRemainder");
                     AddOptionToggle("Use", ref this.useToggle);
                 }
+
                 AddOption("X");
                 AddOption("Y");
                 AddOption("Z");
@@ -461,7 +486,8 @@
 
     public class GH_ToolPointProxy : GH_GooProxy<GH_ToolPoint>
     {
-        public GH_ToolPointProxy([CanBeNull] GH_ToolPoint obj) : base(obj) { }
+        public GH_ToolPointProxy([CanBeNull] GH_ToolPoint obj)
+            : base(obj) { }
 
         [CanBeNull, Category(" General"), Description("Optional Name attached to point."), DisplayName(" Name"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string name

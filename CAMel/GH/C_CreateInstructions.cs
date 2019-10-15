@@ -90,6 +90,7 @@
             {
                 object cleanSP = CAMel_Goo.cleanGooList(sP);
                 object cleanEP = CAMel_Goo.cleanGooList(eP);
+
                 // The start and end paths should be rapid moves
                 ToolPath startP = ToolPath.toPath(cleanSP);
                 foreach (ToolPoint tPt in startP) { tPt.feed = 0; }

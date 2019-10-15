@@ -55,7 +55,6 @@
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddParameter(new GH_SurfacePathPar(), "SurfacePath", "SP", "Surfacing Path", GH_ParamAccess.item);
-            //pManager.AddCurveParameter("Paths", "P", "Paths", GH_ParamAccess.list);
         }
 
         /// <inheritdoc />
@@ -87,7 +86,6 @@
             if (stepOver > mT.sideLoad) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
 
             // process the bounding box
-
             if (!geom.CastTo(out BoundingBox bb))
             {
                 if (geom.CastTo(out Surface s))
@@ -124,7 +122,6 @@
 
             SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTD, bb, mT);
             da.SetData(0, new GH_SurfacePath(sP));
-            //DA.SetDataList(1, Paths);
         }
 
         /// <inheritdoc />

@@ -37,6 +37,7 @@
             this.Bounds = rec0;
             this.progressBounds = rec1;
         }
+
         private Rectangle progressBounds { get; set; }
 
         protected override void Render([CanBeNull] GH_Canvas canvas, [CanBeNull] Graphics graphics, GH_CanvasChannel channel)
@@ -47,7 +48,7 @@
 
             if (this.Owner == null) { return; }
 
-            string message = totalFiles(((C_WriteCode) this.Owner).bytesWritten);
+            string message = totalFiles(((C_WriteCode)this.Owner).bytesWritten);
 
             GH_Capsule textCap = GH_Capsule.CreateTextCapsule(
                 this.progressBounds,
