@@ -11,6 +11,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ create surface path.</summary>
     [UsedImplicitly]
     public class C_CreateSurfacePath : GH_Component
     {

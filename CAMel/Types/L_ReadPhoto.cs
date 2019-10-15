@@ -16,8 +16,20 @@
 
     using Rhino.Geometry;
 
+    /// <summary>TODO The read photo.</summary>
     public static class ReadPhoto
     {
+        /// <summary>TODO The trace.</summary>
+        /// <param name="filename">TODO The filename.</param>
+        /// <param name="blur">TODO The blur.</param>
+        /// <param name="jump">TODO The jump.</param>
+        /// <param name="debug">TODO The debug.</param>
+        /// <param name="times">TODO The times.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        ///     .</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         [NotNull]
         public static List<Curve> trace([CanBeNull] string filename, int blur, int jump, bool debug, [NotNull] out List<string> times)
         {
@@ -215,6 +227,9 @@
             return jCurves;
         }
 
+        /// <summary>TODO The pt 2 r.</summary>
+        /// <param name="p">TODO The p.</param>
+        /// <returns>The <see cref="Point3d"/>.</returns>
         private static Point3d pt2R(System.Drawing.Point p) => new Point3d(p.X, -p.Y, 0);
     }
 }

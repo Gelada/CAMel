@@ -12,6 +12,8 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ select tool.</summary>
     [UsedImplicitly]
     public class C_SelectTool : GH_Component
     {
@@ -47,6 +49,9 @@
             pManager.AddParameter(new GH_MaterialToolPar(), "MaterialTools", "MT", "Correct from the .csv file", GH_ParamAccess.item);
         }
 
+        /// <summary>TODO The vl update.</summary>
+        /// <param name="vL">TODO The v l.</param>
+        /// <param name="items">TODO The items.</param>
         private static void vlUpdate([NotNull] GH_ValueList vL, [NotNull] ref SortedSet<string> items)
         {
             string selected = string.Empty;

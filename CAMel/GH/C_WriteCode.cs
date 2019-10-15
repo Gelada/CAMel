@@ -10,10 +10,13 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ write code.</summary>
     [UsedImplicitly]
     public class C_WriteCode : GH_Component
     {
-        internal long bytesWritten;
+        /// <summary>Gets or sets the bytes written.</summary>
+        internal long bytesWritten { get; set; }
 
         /// <inheritdoc />
         /// <summary>
@@ -25,6 +28,7 @@
                 "Write CNC Code",
                 "CAMel", "CNC Code") => this.bytesWritten = 0;
 
+        /// <inheritdoc />
         public override void CreateAttributes()
         {
             this.m_attributes = new WriteCodeAttributes(this);
@@ -55,6 +59,7 @@
             pManager.AddTextParameter("Warnings and Errors", "E", "Warnings and Errors reported by the code", GH_ParamAccess.item);
         }
 
+        /// <inheritdoc />
         protected override void BeforeSolveInstance()
         {
             base.BeforeSolveInstance();

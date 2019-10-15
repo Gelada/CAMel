@@ -12,6 +12,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ index 3 axis.</summary>
     [UsedImplicitly]
     public class C_Index3Axis : GH_Component
     {

@@ -11,6 +11,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ surfacing.</summary>
     [UsedImplicitly]
     public class C_Surfacing : GH_Component
     {

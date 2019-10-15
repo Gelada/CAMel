@@ -16,9 +16,12 @@
     using JetBrains.Annotations;
 
     // Mappings for csv helper
+    /// <inheritdoc />
+    /// <summary>TODO The material tool map.</summary>
     [UsedImplicitly]
     public sealed class MaterialToolMap : CsvClassMap<MaterialToolBuilder>
     {
+        /// <summary>Initializes a new instance of the <see cref="MaterialToolMap"/> class.</summary>
         public MaterialToolMap()
         {
             Map(m => m.matName)?.Name("Material");
@@ -40,6 +43,8 @@
         }
     }
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ read tool file.</summary>
     [UsedImplicitly]
     public class C_ReadToolFile : GH_Component
     {

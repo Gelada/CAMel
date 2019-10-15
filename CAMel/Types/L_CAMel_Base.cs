@@ -12,33 +12,57 @@
 
     using Rhino.Geometry;
 
+    /// <summary>TODO The CAMelBase interface.</summary>
     public interface ICAMelBase
     {
-        [NotNull] string TypeDescription { get; }
-        [NotNull, PublicAPI] string TypeName { get; }
+        /// <summary>Gets the type description.</summary>
+        [NotNull]
+        string TypeDescription { get; }
+        /// <summary>Gets the type name.</summary>
+        [NotNull, PublicAPI]
+        string TypeName { get; }
 
-        [NotNull] string ToString();
+        /// <summary>TODO The to string.</summary>
+        /// <returns>The <see cref="string"/>.</returns>
+        [NotNull]
+        string ToString();
     }
 
-    // Add a little more standard stuff to GH_Goo
+    /// <inheritdoc />
+    /// <summary>Add a little more standard stuff to GH_Goo.</summary>
+    /// <typeparam name="T"></typeparam>
     public class CAMel_Goo<T> : GH_Goo<T> where T : class, ICAMelBase
     {
         // Valid if not null
+        /// <inheritdoc />
         public override bool IsValid => this.Value != null;
 
+        /// <inheritdoc />
         public override IGH_Goo Duplicate() => throw new NotImplementedException("Camel_Base object has not implemented its duplicate command.");
 
-        [NotNull] public override string TypeDescription => this.Value?.TypeDescription ?? "Value of CAMel Grasshopper wrapper currently set to null.";
+        /// <inheritdoc />
+        [NotNull]
+        public override string TypeDescription => this.Value?.TypeDescription ?? "Value of CAMel Grasshopper wrapper currently set to null.";
 
-        [NotNull] public override string TypeName => typeof(T).Name;
+        /// <inheritdoc />
+        [NotNull]
+        public override string TypeName => typeof(T).Name;
 
+        /// <inheritdoc />
         public override string ToString() => this.Value?.ToString() ?? "CAMel type currently set to null.";
 
-        [CanBeNull] public override object ScriptVariable() => this.Value;
+        /// <inheritdoc />
+        [CanBeNull]
+        public override object ScriptVariable() => this.Value;
     }
 
+    /// <summary>TODO The ca mel_ goo.</summary>
     internal static class CAMel_Goo
     {
+        /// <summary>TODO The double to csv.</summary>
+        /// <param name="values">TODO The values.</param>
+        /// <param name="format">TODO The format.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         public static string doubleToCsv([CanBeNull] IEnumerable<double> values, [NotNull] string format)
         {
@@ -58,6 +82,12 @@
             return result;
         }
 
+        /// <summary>TODO The c sv to double.</summary>
+        /// <param name="values">TODO The values.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         public static List<double> cSvToDouble([CanBeNull] string values)
         {
@@ -86,6 +116,9 @@
         }
 
         // convert to cylindrical coordinate
+        /// <summary>TODO The to cyl.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <returns>The <see cref="Point3d"/>.</returns>
         public static Point3d toCyl(Point3d pt)
         {
             Vector3d plPt = new Vector3d(pt.X, pt.Y, 0);
@@ -95,20 +128,45 @@
         }
 
         // convert from cylindrical coordinate
+        /// <summary>TODO The from cyl.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <returns>The <see cref="Point3d"/>.</returns>
         public static Point3d fromCyl(Point3d pt) => new Point3d(pt.X * Math.Cos(pt.Y), pt.X * Math.Sin(pt.Y), pt.Z);
 
         // find radius of smallest sphere with given origin containing a bounding box
+        /// <summary>TODO The bound sphere.</summary>
+        /// <param name="bb">TODO The bb.</param>
+        /// <param name="c">TODO The c.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         public static double boundSphere(BoundingBox bb, Point3d c) => c.DistanceTo(bb.FurthestPoint(c));
 
+        /// <summary>TODO The from io.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <returns>The <see cref="Point3d"/>.</returns>
         public static Point3d fromIO(GH_IO.Types.GH_Point3D pt) => new Point3d(pt.x, pt.y, pt.z);
+        /// <summary>TODO The from io.</summary>
+        /// <param name="pl">TODO The pl.</param>
+        /// <returns>The <see cref="Plane"/>.</returns>
         public static Plane fromIO(GH_IO.Types.GH_Plane pl) =>
             new Plane(fromIO(pl.Origin), fromIO(pl.XAxis), fromIO(pl.YAxis));
+        /// <summary>TODO The to io.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <returns>The <see cref="GH_IO.Types.GH_Point3D"/>.</returns>
         public static GH_IO.Types.GH_Point3D toIO(Point3d pt) =>
             new GH_IO.Types.GH_Point3D(pt.X, pt.Y, pt.Z);
+        /// <summary>TODO The to io.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <returns>The <see cref="GH_IO.Types.GH_Point3D"/>.</returns>
         public static GH_IO.Types.GH_Point3D toIO(Vector3d pt) =>
             new GH_IO.Types.GH_Point3D(pt.X, pt.Y, pt.Z);
+        /// <summary>TODO The to io.</summary>
+        /// <param name="pl">TODO The pl.</param>
+        /// <returns>The <see cref="GH_Plane"/>.</returns>
         public static GH_IO.Types.GH_Plane toIO(Plane pl) =>
             new GH_IO.Types.GH_Plane(toIO(pl.Origin), toIO(pl.XAxis), toIO(pl.YAxis));
+        /// <summary>TODO The clean goo list.</summary>
+        /// <param name="gooey">TODO The gooey.</param>
+        /// <returns>The <see cref="object"/>.</returns>
         [CanBeNull]
         public static object cleanGooList([CanBeNull] object gooey)
         {
@@ -133,6 +191,7 @@
             }
         }
 
+        /// <summary>TODO The tolerance.</summary>
         public const double Tolerance = 0.000000001;
     }
 }

@@ -11,6 +11,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ drill operation.</summary>
     [UsedImplicitly]
     public class C_DrillOperation : GH_Component
     {

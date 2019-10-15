@@ -12,16 +12,24 @@ namespace CAMel.Types
     using Rhino.Geometry;
     using Rhino.UI;
 
+    /// <inheritdoc />
+    /// <summary>TODO The path click.</summary>
     public class PathClick : MouseCallback
     {
+        /// <summary>TODO The op.</summary>
         private readonly C_OrganisePaths op;
 
+        /// <summary>Initializes a new instance of the <see cref="PathClick"/> class.</summary>
+        /// <param name="op">TODO The op.</param>
         public PathClick([NotNull] C_OrganisePaths op)
         {
             this.op = op;
             this.Enabled = true;
         }
 
+        /// <summary>TODO The on mouse down.</summary>
+        /// <param name="e">TODO The e.</param>
+        /// <exception cref="ArgumentNullException"></exception>
         protected override void OnMouseDown([NotNull] MouseCallbackEventArgs e)
         {
             if (e.View?.ActiveViewport == null) { throw new ArgumentNullException(); }

@@ -14,29 +14,59 @@
     using Rhino.Geometry;
 
     // Some standards to help develop GCode based machines
+    /// <summary>TODO The GCodeMachine interface.</summary>
     public interface IGCodeMachine : IMachine
     {
-        [NotNull] string header { get; }
-        [NotNull] string footer { get; }
+        /// <summary>Gets the header.</summary>
+        [NotNull]
+        string header { get; }
+        /// <summary>Gets the footer.</summary>
+        [NotNull]
+        string footer { get; }
 
-        [NotNull, UsedImplicitly] string speedChangeCommand { get; }
-        [NotNull] string toolChangeCommand { get; }
+        /// <summary>Gets the speed change command.</summary>
+        [NotNull, UsedImplicitly]
+        string speedChangeCommand { get; }
+        /// <summary>Gets the tool change command.</summary>
+        [NotNull]
+        string toolChangeCommand { get; }
 
-        [NotNull] string sectionBreak { get; }
-        [NotNull] string fileStart { get; }
-        [NotNull] string fileEnd { get; }
-        [NotNull] string commentStart { get; }
-        [NotNull] string commentEnd { get; }
+        /// <summary>Gets the section break.</summary>
+        [NotNull]
+        string sectionBreak { get; }
+        /// <summary>Gets the file start.</summary>
+        [NotNull]
+        string fileStart { get; }
+        /// <summary>Gets the file end.</summary>
+        [NotNull]
+        string fileEnd { get; }
+        /// <summary>Gets the comment start.</summary>
+        [NotNull]
+        string commentStart { get; }
+        /// <summary>Gets the comment end.</summary>
+        [NotNull]
+        string commentEnd { get; }
 
-        [NotNull] ToolPoint readTP([NotNull] Dictionary<char, double> values, [NotNull] MaterialTool mT);
+        /// <summary>TODO The read tp.</summary>
+        /// <param name="values">TODO The values.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
+        [NotNull]
+        ToolPoint readTP([NotNull] Dictionary<char, double> values, [NotNull] MaterialTool mT);
     }
 
+    /// <summary>TODO The kinematics.</summary>
     public static class Kinematics
     {
         // Collection of Inverse Kinematics
 
         // 2-Axis and 3-Axis don't need any work, so they just need writing functions
         // in the GCode library, plus a general purpose linear interpolation.
+        /// <summary>TODO The interpolate linear.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="p">TODO The p.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         [NotNull]
         public static ToolPoint interpolateLinear([NotNull] ToolPoint fP, [NotNull] ToolPoint tP, double p)
         {
@@ -50,6 +80,12 @@
         // that can rotate fully, so need non-trivial K and IK functions
         //
         // Should really output a machine state type, but not much use for that yet.
+        /// <summary>TODO The ik five axis ab table.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="pivot">TODO The pivot.</param>
+        /// <param name="toolLength">TODO The tool length.</param>
+        /// <param name="machPt">TODO The mach pt.</param>
+        /// <returns>The <see cref="Vector3d"/>.</returns>
         public static Vector3d ikFiveAxisABTable([NotNull] ToolPoint tP, Vector3d pivot, double toolLength, out Point3d machPt)
         {
             // Always gives B from -pi to pi and A from -pi/2 to pi/2.
@@ -83,6 +119,13 @@
             return new Vector3d(ao, bo, 0);
         }
 
+        /// <summary>TODO The k five axis ab table.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="pivot">TODO The pivot.</param>
+        /// <param name="toolLength">TODO The tool length.</param>
+        /// <param name="machPt">TODO The mach pt.</param>
+        /// <param name="ab">TODO The ab.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         [NotNull]
         public static ToolPoint kFiveAxisABTable([NotNull] ToolPoint tP, Vector3d pivot, double toolLength, Point3d machPt, Vector3d ab)
         {
@@ -111,6 +154,14 @@
         // Interpolate the machine axes linearly between two positions.
         // If both axes have full rotation then there are four ways to do this.
         // If lng is true then reverse the direction on the B axis (for PocketNC)
+        /// <summary>TODO The interpolate five axis ab table.</summary>
+        /// <param name="pivot">TODO The pivot.</param>
+        /// <param name="toolLength">TODO The tool length.</param>
+        /// <param name="from">TODO The from.</param>
+        /// <param name="to">TODO The to.</param>
+        /// <param name="p">TODO The p.</param>
+        /// <param name="lng">TODO The lng.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         [NotNull]
         public static ToolPoint interpolateFiveAxisABTable(Vector3d pivot, double toolLength, [NotNull] ToolPoint from, [NotNull] ToolPoint to, double p, bool lng)
         {
@@ -129,6 +180,13 @@
             return kFiveAxisABTable(from, pivot, toolLength, outPt, outAB);
         }
 
+        /// <summary>TODO The ang diff five axis ab table.</summary>
+        /// <param name="pivot">TODO The pivot.</param>
+        /// <param name="toolLength">TODO The tool length.</param>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="lng">TODO The lng.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         public static double angDiffFiveAxisABTable(Vector3d pivot, double toolLength, [NotNull] ToolPoint fP, [NotNull] ToolPoint tP, bool lng)
         {
             Vector3d ang1 = ikFiveAxisABTable(fP, pivot, toolLength, out Point3d _);
@@ -149,6 +207,11 @@
             return Math.Max(diff.X, diff.Y);
         }
 
+        /// <summary>TODO The angle refine.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="maxAngle">TODO The max angle.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         [NotNull]
         public static ToolPath angleRefine([NotNull] IMachine m, [NotNull] ToolPath tP, double maxAngle)
         {
@@ -177,11 +240,19 @@
         }
     }
 
+    /// <summary>TODO The utility.</summary>
     public static class Utility
     {
         // planeOffset works with self-intersection of a closed curve
         // It looses possible toolpoint information and uses toolDir
         // for all points
+        /// <summary>TODO The plane offset.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="toolDir">TODO The tool dir.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         public static List<ToolPath> planeOffset([NotNull] ToolPath tP, Vector3d toolDir)
         {
@@ -246,6 +317,12 @@
             return tPs;
         }
 
+        /// <summary>TODO The local offset.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         public static List<ToolPath> localOffset([NotNull] ToolPath tP)
         {
@@ -292,6 +369,13 @@
         }
 
         // Step down into material
+        /// <summary>TODO The step down.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="m">TODO The m.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         public static List<List<ToolPath>> stepDown([NotNull] ToolPath tP, [NotNull] IMachine m)
         {
@@ -479,6 +563,13 @@
             return newPaths;
         }
 
+        /// <summary>TODO The find lead.</summary>
+        /// <param name="toolL">TODO The tool l.</param>
+        /// <param name="leadCurve">TODO The lead curve.</param>
+        /// <param name="insertWidth">TODO The insert width.</param>
+        /// <param name="v">TODO The v.</param>
+        /// <param name="start">TODO The start.</param>
+        /// <returns>The <see cref="PolylineCurve"/>.</returns>
         [CanBeNull]
         // ReSharper disable once SuggestBaseTypeForParameter
         private static PolylineCurve findLead([NotNull] PolylineCurve toolL, double leadCurve, double insertWidth, int v, bool start)
@@ -556,6 +647,15 @@
             return null;
         }
 
+        /// <summary>TODO The lead in out u.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="activate">TODO The activate.</param>
+        /// <param name="deActivate">TODO The de activate.</param>
+        /// <param name="irActivate">TODO The ir activate.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         public static List<ToolPath> leadInOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
         {
@@ -651,6 +751,15 @@
             return irTps;
         }
 
+        /// <summary>TODO The lead in out v.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="activate">TODO The activate.</param>
+        /// <param name="deActivate">TODO The de activate.</param>
+        /// <param name="irActivate">TODO The ir activate.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         public static List<ToolPath> leadInOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
         {
@@ -737,6 +846,15 @@
             return irTps;
         }
 
+        /// <summary>TODO The insert retract.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="activate">TODO The activate.</param>
+        /// <param name="deActivate">TODO The de activate.</param>
+        /// <param name="irActivate">TODO The ir activate.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         internal static List<ToolPath> insertRetract([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 1)
         {
@@ -881,6 +999,10 @@
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
         // TODO make this guarantee that it does not gouge locally. There is a problem
         // with paths that are steep down, followed by some bottom moves followed by steep out.
+        /// <summary>TODO The three axis height offset.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="m">TODO The m.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         [NotNull]
         public static ToolPath threeAxisHeightOffset([NotNull] ToolPath tP, [NotNull] IMachine m)
         {
@@ -1006,6 +1128,9 @@
         }
 
         // Clear the addition but don't do anything
+        /// <summary>TODO The clear three axis height offset.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         [NotNull]
         public static ToolPath clearThreeAxisHeightOffset([NotNull] ToolPath tP)
         {
@@ -1015,6 +1140,13 @@
         }
 
         // Add a finishing versions of the path (including onion Skinning)
+        /// <summary>TODO The finish paths.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="m">TODO The m.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         public static List<ToolPath> finishPaths([NotNull] ToolPath tP, [NotNull] IMachine m)
         {
@@ -1048,6 +1180,12 @@
         }
 
         // The finish path is just the toolpath
+        /// <summary>TODO The one finish path.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         internal static List<ToolPath> oneFinishPath([NotNull] ToolPath tP)
         {
@@ -1062,6 +1200,11 @@
         // 0 if not in material
         // positive if in material
         // -1 if one of the paths has 0 points
+        /// <summary>TODO The jump check.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         internal static double jumpCheck([NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
@@ -1097,6 +1240,11 @@
         }
 
         // Check travel between toolpaths
+        /// <summary>TODO The jump check.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
         internal static void jumpCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
             // check if there is a problem moving between paths
@@ -1111,27 +1259,51 @@
         }
 
         // Assume all moves are fine
+        /// <summary>TODO The no check.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
         internal static void noCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP) { }
     }
 
+    /// <summary>TODO The g code.</summary>
     public static class GCode
     {
         // Standard terms
+        /// <summary>TODO The default comment start.</summary>
         [NotNull] internal const string DefaultCommentStart = "(";
+        /// <summary>TODO The default comment end.</summary>
         [NotNull] internal const string DefaultCommentEnd = ")";
+        /// <summary>TODO The default section break.</summary>
         [NotNull] internal const string DefaultSectionBreak = "------------------------------------------";
+        /// <summary>TODO The default speed change command.</summary>
         [NotNull] internal const string DefaultSpeedChangeCommand = "M03";
+        /// <summary>TODO The default tool change command.</summary>
         [NotNull] internal const string DefaultToolChangeCommand = "G43H#";
+        /// <summary>TODO The default activate command.</summary>
         [NotNull] internal const string DefaultActivateCommand = "M61";
+        /// <summary>TODO The default de activate command.</summary>
         [NotNull] internal const string DefaultDeActivateCommand = "M62";
+        /// <summary>TODO The default file start.</summary>
         [NotNull] internal const string DefaultFileStart = "";
+        /// <summary>TODO The default file end.</summary>
         [NotNull] internal const string DefaultFileEnd = "";
+        /// <summary>TODO The default extension.</summary>
         [NotNull] internal const string DefaultExtension = "nc";
 
         // Formatting structure for GCode
+        /// <summary>TODO The gc line number.</summary>
+        /// <param name="l">TODO The l.</param>
+        /// <param name="line">TODO The line.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         public static string gcLineNumber([NotNull] string l, int line) => "N" + line.ToString("0000") + "0 " + l;
 
+        /// <summary>TODO The gc inst start.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mI">TODO The m i.</param>
         public static void gcInstStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI)
         {
             if (mI[0].Count == 0) { Exceptions.noToolPathException(); }
@@ -1145,7 +1317,7 @@
             co.appendLineNoNum(m.fileStart);
             co.appendComment(m.sectionBreak);
             if (mI.name != string.Empty) { co.appendComment(mI.name); }
-            co.appendComment("");
+            co.appendComment(string.Empty);
             co.appendComment(" Machine Instructions Created " + thisDay.ToString("f"));
             System.Reflection.AssemblyName camel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
             DateTime buildTime = new DateTime(2000, 1, 1)
@@ -1160,13 +1332,17 @@
             co.appendComment(" Starting with: ");
             co.appendComment("  Tool: " + mI[0][0].matTool.toolName);
             co.appendComment("  in " + mI[0][0].matTool.matName + " with shape " + mI[0][0].matForm.ToString());
-            co.appendComment("");
+            co.appendComment(string.Empty);
             co.appendComment(m.sectionBreak);
             co.append(m.header);
             co.append(mI.preCode);
             co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
         }
 
+        /// <summary>TODO The gc inst end.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mI">TODO The m i.</param>
         public static void gcInstEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineInstruction mI)
         {
             co.appendComment(m.sectionBreak);
@@ -1178,19 +1354,31 @@
             co.appendLineNoNum(m.fileEnd);
         }
 
+        /// <summary>TODO The gc op start.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mO">TODO The m o.</param>
         public static void gcOpStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO)
         {
             co.appendComment(m.sectionBreak);
-            co.appendComment("");
+            co.appendComment(string.Empty);
             co.appendComment(" Operation: " + mO.name);
-            co.appendComment("");
+            co.appendComment(string.Empty);
             co.append(mO.preCode);
         }
 
         // ReSharper disable once UnusedParameter.Global
+        /// <summary>TODO The gc op end.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mO">TODO The m o.</param>
         public static void gcOpEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO)
             => co.append(mO.postCode);
 
+        /// <summary>TODO The gc path start.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="tP">TODO The t p.</param>
         public static void gcPathStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP)
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
@@ -1226,11 +1414,18 @@
             co.append(tP.preCode);
         }
         // ReSharper disable once UnusedParameter.Global
+        /// <summary>TODO The gc path end.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="tP">TODO The t p.</param>
         public static void gcPathEnd([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) => co.append(tP.postCode);
 
         // Toolpoint writers
         // These might be simpler to pull
         // into a single "write" command taking a dictionary?
+        /// <summary>TODO The gc two axis.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         public static string gcTwoAxis([NotNull] ToolPoint tP)
         {
@@ -1241,6 +1436,9 @@
             return gPoint;
         }
 
+        /// <summary>TODO The gc three axis.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         public static string gcThreeAxis([NotNull] ToolPoint tP)
         {
@@ -1251,6 +1449,10 @@
             return gPoint;
         }
 
+        /// <summary>TODO The gc five axis ab.</summary>
+        /// <param name="machPt">TODO The mach pt.</param>
+        /// <param name="ab">TODO The ab.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         public static string gcFiveAxisAB(Point3d machPt, Vector3d ab)
         {
@@ -1265,8 +1467,15 @@
         }
 
         // GCode reading
+        /// <summary>TODO The numb pattern.</summary>
         [NotNull] private static readonly Regex NumbPattern = new Regex(@"^([0-9\-.]+)", RegexOptions.Compiled);
 
+        /// <summary>TODO The get value.</summary>
+        /// <param name="line">TODO The line.</param>
+        /// <param name="split">TODO The split.</param>
+        /// <param name="old">TODO The old.</param>
+        /// <param name="changed">TODO The changed.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         private static double getValue([NotNull] string line, char split, double old, ref bool changed)
         {
             double val = old;
@@ -1282,6 +1491,12 @@
         }
 
         // TODO detect tool changes and new paths
+        /// <summary>TODO The gc read.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="mTs">TODO The m ts.</param>
+        /// <param name="code">TODO The code.</param>
+        /// <param name="terms">TODO The terms.</param>
+        /// <returns>The <see cref="MachineInstruction"/>.</returns>
         [NotNull]
         public static MachineInstruction gcRead([NotNull] IGCodeMachine m, [NotNull, ItemNotNull] List<MaterialTool> mTs, [NotNull] string code, [NotNull] List<char> terms)
         {
@@ -1298,7 +1513,7 @@
                     foreach (char t in terms)
                     { values[t] = getValue(line, t, values[t], ref changed); }
 
-                    //interpret a G0 command.
+                    // interpret a G0 command.
                     if (line.Contains(@"G00") || line.Contains(@"G0 "))
                     {
                         if (values.ContainsKey('F') && Math.Abs(values['F']) > CAMel_Goo.Tolerance)
@@ -1317,10 +1532,14 @@
             return new MachineInstruction(m) { new MachineOperation(tP) };
         }
 
+        /// <summary>TODO The comment.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="l">TODO The l.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         public static string comment([NotNull] IGCodeMachine m, [NotNull] string l)
         {
-            if (l == "" || l == " ") { return " "; }
+            if (l == string.Empty || l == " ") { return " "; }
 
             string uL = l;
 
@@ -1332,6 +1551,10 @@
             return m.commentStart + " " + uL + " " + m.commentEnd;
         }
 
+        /// <summary>TODO The tool change.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="toolNumber">TODO The tool number.</param>
         internal static void toolChange([NotNull] IGCodeMachine m, ref CodeInfo co, int toolNumber)
         {
             string[] lines = m.toolChangeCommand.Split(new[] { "\\n" }, StringSplitOptions.RemoveEmptyEntries);

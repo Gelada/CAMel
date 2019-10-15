@@ -15,6 +15,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ trace.</summary>
     [UsedImplicitly]
     public class C_Trace : GH_Component
     {
@@ -50,9 +52,16 @@
             pManager.AddCurveParameter("Polyline", "P", "Polyline of points along traced curve, for more creative processing.", GH_ParamAccess.list);
         }
 
-        private int jump = 15, blur, maxFile = 3;
+        /// <summary>TODO The jump.</summary>
+        private int jump = 15;
+        /// <summary>TODO The blur.</summary>
+        private int blur;
+        /// <summary>TODO The max file.</summary>
+        private int maxFile = 3;
+        /// <summary>TODO The debugging.</summary>
         private bool debugging;
 
+        /// <summary>Gets or sets a value indicating whether debug.</summary>
         private bool debug
         {
             get => this.debugging;
@@ -63,6 +72,7 @@
             }
         }
 
+        /// <summary>TODO The times.</summary>
         [NotNull] private List<string> times;
 
         /// <inheritdoc />
@@ -135,6 +145,9 @@
             da.SetDataList(1, jCurves);
         }
 
+        /// <inheritdoc />
+        /// <summary>TODO The append additional component menu items.</summary>
+        /// <param name="menu">TODO The menu.</param>
         protected override void AppendAdditionalComponentMenuItems([CanBeNull] ToolStripDropDown menu)
         {
             base.AppendAdditionalComponentMenuItems(menu);
@@ -156,6 +169,12 @@
         }
 
         // ReSharper disable once UnusedMember.Local
+        /// <summary>TODO The menu append number.</summary>
+        /// <param name="menu">TODO The menu.</param>
+        /// <param name="name">TODO The name.</param>
+        /// <param name="val">TODO The val.</param>
+        /// <param name="desc">TODO The desc.</param>
+        /// <returns>The <see cref="NumericUpDown"/>.</returns>
         [NotNull]
         private NumericUpDown menuAppendNumber([NotNull] ToolStrip menu, [CanBeNull] string name, int val, [CanBeNull] string desc)
         {
@@ -194,6 +213,9 @@
             return uD;
         }
 
+        /// <summary>TODO The copy data clicked.</summary>
+        /// <param name="sender">TODO The sender.</param>
+        /// <param name="e">TODO The e.</param>
         private void copyDataClicked([NotNull] object sender, [CanBeNull] EventArgs e)
         {
             System.Text.StringBuilder traceData = new System.Text.StringBuilder();
@@ -203,6 +225,9 @@
             Clipboard.SetText(traceData.ToString());
         }
 
+        /// <summary>TODO The debug clicked.</summary>
+        /// <param name="sender">TODO The sender.</param>
+        /// <param name="e">TODO The e.</param>
         private void debugClicked([NotNull] object sender, [CanBeNull] EventArgs e)
         {
             RecordUndoEvent("Trace_Debug");
@@ -210,6 +235,9 @@
             ExpireSolution(true);
         }
 
+        /// <summary>TODO The trace settings.</summary>
+        /// <param name="sender">TODO The sender.</param>
+        /// <param name="e">TODO The e.</param>
         private void traceSettings([NotNull] object sender, [CanBeNull] EventArgs e)
         {
             NumericUpDown ud = (NumericUpDown)sender;
@@ -229,6 +257,10 @@
         }
 
         // Need to save and recover the trace settings
+        /// <inheritdoc />
+        /// <summary>TODO The write.</summary>
+        /// <param name="writer">TODO The writer.</param>
+        /// <returns>The <see cref="T:System.Boolean" />.</returns>
         public override bool Write([CanBeNull] GH_IO.Serialization.GH_IWriter writer)
         {
             if (writer == null) { return base.Write(null); }
@@ -243,6 +275,10 @@
             return base.Write(writer);
         }
 
+        /// <inheritdoc />
+        /// <summary>TODO The read.</summary>
+        /// <param name="reader">TODO The reader.</param>
+        /// <returns>The <see cref="T:System.Boolean" />.</returns>
         public override bool Read([CanBeNull] GH_IO.Serialization.GH_IReader reader)
         {
             if (reader == null) { return false; }

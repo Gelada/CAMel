@@ -11,6 +11,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ parallel surface path.</summary>
     [UsedImplicitly]
     public class C_ParallelSurfacePath : GH_Component
     {
@@ -25,6 +27,7 @@
                 "CAMel", " ToolPaths") { }
 
         // put this item in the second batch (surfacing strategies)
+        /// <inheritdoc />
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <inheritdoc />

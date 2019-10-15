@@ -12,6 +12,8 @@
     using Rhino.Geometry;
     using Rhino.Geometry.Intersect;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ index 2 d cut.</summary>
     [UsedImplicitly]
     public class C_Index2DCut : GH_Component
     {

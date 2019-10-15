@@ -12,9 +12,18 @@
 
     // Wrapper classes and library interfaces for leveraging the clipper
     // library for doing offsetting
+    /// <summary>TODO The offsetting.</summary>
     public static class Offsetting
     {
+        /// <summary>TODO The sc f.</summary>
         private const double ScF = 2000000000.0;
+        /// <summary>TODO The offset.</summary>
+        /// <param name="p">TODO The p.</param>
+        /// <param name="d">TODO The d.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        ///     .</returns>
         [NotNull]
         public static List<PolylineCurve> offset([NotNull] PolylineCurve p, double d)
         {
@@ -62,9 +71,24 @@
             return oPl;
         }
 
+        /// <summary>TODO The d toi.</summary>
+        /// <param name="p">TODO The p.</param>
+        /// <param name="sc">TODO The sc.</param>
+        /// <returns>The <see cref="IntPoint"/>.</returns>
         private static IntPoint dToi(Point3d p, double sc) => new IntPoint((long)Math.Round(p.X * sc), (long)Math.Round(p.Y * sc));
+        /// <summary>TODO The i tod.</summary>
+        /// <param name="p">TODO The p.</param>
+        /// <param name="sc">TODO The sc.</param>
+        /// <returns>The <see cref="Point3d"/>.</returns>
         private static Point3d iTod(IntPoint p, double sc) => new Point3d(p.X / sc, p.Y / sc, 0);
 
+        /// <summary>TODO The p lto int.</summary>
+        /// <param name="pc">TODO The pc.</param>
+        /// <param name="sc">TODO The sc.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         // ReSharper disable once SuggestBaseTypeForParameter
         private static List<List<IntPoint>> pLtoInt([NotNull] PolylineCurve pc, double sc)
@@ -77,6 +101,13 @@
             return intPl;
         }
 
+        /// <summary>TODO The int to pl.</summary>
+        /// <param name="iPs">TODO The i ps.</param>
+        /// <param name="sc">TODO The sc.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull]
         private static List<PolylineCurve> intToPl([NotNull] IEnumerable<List<IntPoint>> iPs, double sc)
         {

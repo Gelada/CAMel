@@ -10,6 +10,8 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ create instructions.</summary>
     [UsedImplicitly]
     public class C_CreateInstructions : GH_Component
     {
@@ -53,8 +55,10 @@
             pManager.AddParameter(new GH_MachineInstructionPar(), "Instructions", "I", "Machine Instructions", GH_ParamAccess.item);
         }
 
+        /// <summary>TODO The name count.</summary>
         private double nameCount;
 
+        /// <inheritdoc />
         protected override void BeforeSolveInstance()
         {
             this.nameCount = 1;
@@ -114,13 +118,15 @@
             da.SetData(0, new GH_MachineInstruction(mi));
         }
 
+        /// <summary>TODO The make name.</summary>
+        /// <param name="name">TODO The name.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNullAttribute]
         private string makeName([NotNull] string name)
         {
             // Deal with tree coming in if there is one name
             // otherwise assume something sensible is happening
-            if (!(this.Params?.Input?[1]?.VolatileData?.PathCount > 1) || this.Params?.Input?[0]?.VolatileDataCount != 1
-            ) { return name; }
+            if (!(this.Params?.Input?[1]?.VolatileData?.PathCount > 1) || this.Params?.Input?[0]?.VolatileDataCount != 1) { return name; }
             string path = " " + this.nameCount;
             this.nameCount++;
             return name + path;

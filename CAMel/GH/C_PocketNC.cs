@@ -12,6 +12,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ pocket nc.</summary>
     [UsedImplicitly]
     public class C_PocketNC : GH_Component
     {
@@ -25,7 +27,7 @@
                 "PocketNC 5 Axis Machine",
                 "CAMel", " Hardware") { }
 
-        // put this item in the second batch (Machines)
+        /// <inheritdoc />
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <inheritdoc />

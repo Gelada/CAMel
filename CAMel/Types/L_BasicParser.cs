@@ -6,12 +6,19 @@
 
     using JetBrains.Annotations;
 
+    /// <summary>TODO The bp command.</summary>
     public class BpCommand : IEnumerable<double>
     {
-        [NotNull] public string command { get; }
+        /// <summary>Gets the command.</summary>
+        [NotNull]
+        public string command { get; }
 
-        [NotNull] public List<double> values { get; }
+        /// <summary>Gets the values.</summary>
+        [NotNull]
+        public List<double> values { get; }
 
+        /// <summary>Initializes a new instance of the <see cref="BpCommand"/> class.</summary>
+        /// <param name="comm">TODO The comm.</param>
         public BpCommand([CanBeNull] string comm)
         {
             if (string.IsNullOrEmpty(comm))
@@ -44,6 +51,8 @@
             }
         }
 
+        /// <summary>TODO The to string.</summary>
+        /// <returns>The <see cref="string"/>.</returns>
         public override string ToString()
         {
             string str = this.command;
@@ -52,6 +61,9 @@
 
         #region List Functions
 
+        /// <summary>TODO The this.</summary>
+        /// <param name="index">TODO The index.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         public double this[int index]
         {
             get
@@ -69,10 +81,14 @@
         #endregion
     }
 
+    /// <summary>TODO The basic parser.</summary>
     public class BasicParser : IEnumerable<BpCommand>
     {
+        /// <summary>TODO The commands.</summary>
         [NotNull] private readonly List<BpCommand> commands;
 
+        /// <summary>Initializes a new instance of the <see cref="BasicParser"/> class.</summary>
+        /// <param name="commandString">TODO The command string.</param>
         public BasicParser([CanBeNull] string commandString)
         {
             this.commands = new List<BpCommand>();
@@ -82,11 +98,17 @@
             this.commands.AddRange(split.Select(s => new BpCommand(s)).ToList());
         }
 
+        /// <summary>TODO The to string.</summary>
+        /// <returns>The <see cref="string"/>.</returns>
         public override string ToString()
         {
             return this.commands.Aggregate(string.Empty, (current, comm) => current + comm) ?? string.Empty;
         }
 
+        /// <summary>TODO The contains.</summary>
+        /// <param name="command">TODO The command.</param>
+        /// <param name="c">TODO The c.</param>
+        /// <returns>The <see cref="bool"/>.</returns>
         [UsedImplicitly]
         public bool contains([NotNull] string command, out BpCommand c)
         {

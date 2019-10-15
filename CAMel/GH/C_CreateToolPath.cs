@@ -12,6 +12,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ create tool path.</summary>
     [UsedImplicitly]
     public class C_CreateToolPath : GH_Component
     {

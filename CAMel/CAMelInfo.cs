@@ -47,9 +47,15 @@ namespace CAMel
         public override string AuthorContact => "http://www.Camel3d.com";
     }
 
+    /// <inheritdoc />
+    /// <summary>TODO The ca mel category.</summary>
     [UsedImplicitly]
     public class CAMelCategory : GH_AssemblyPriority
     {
+        /// <inheritdoc />
+        /// <summary>TODO The priority load.</summary>
+        /// <returns>The <see cref="T:Grasshopper.Kernel.GH_LoadingInstruction" />.</returns>
+        /// <exception cref="T:System.ArgumentNullException"></exception>
         public override GH_LoadingInstruction PriorityLoad()
         {
             if (Grasshopper.Instances.ComponentServer == null) { throw new ArgumentNullException(); }

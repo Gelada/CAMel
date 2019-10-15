@@ -24,16 +24,27 @@ namespace CAMel.GH
     using Rhino.Input;
     using Rhino.Input.Custom;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ organise paths.</summary>
     [UsedImplicitly]
     public class C_OrganisePaths : GH_Component // locally implements IGH_PreviewObject
     {
+        /// <summary>TODO The aug curve.</summary>
         private class AugCurve
         {
-            [NotNull] internal Curve c { get; }
+            /// <summary>Gets the c.</summary>
+            [NotNull]
+            internal Curve c { get; }
+            /// <summary>Gets or sets the key.</summary>
             internal double key { get; set; }
+            /// <summary>Gets the id.</summary>
             internal Guid id { get; }
+            /// <summary>Gets or sets the side.</summary>
             internal double side { get; set; }
 
+            /// <summary>Initializes a new instance of the <see cref="AugCurve"/> class.</summary>
+            /// <param name="c">TODO The c.</param>
+            /// <param name="id">TODO The id.</param>
             internal AugCurve([NotNull] Curve c, Guid id)
             {
                 this.c = c;
@@ -43,15 +54,23 @@ namespace CAMel.GH
             }
         }
 
+        /// <summary>TODO The in active document.</summary>
         private bool inActiveDocument;
+        /// <summary>TODO The enabled.</summary>
         private bool enabled;
 
+        /// <summary>TODO The click q.</summary>
+        /// <returns>The <see cref="bool"/>.</returns>
         internal bool clickQ() => this.enabled && this.inActiveDocument;
 
+        /// <summary>TODO The click.</summary>
         [UsedImplicitly] private readonly PathClick click;
+        /// <summary>TODO The doc.</summary>
         private GH_Document doc;
 
+        /// <summary>TODO The curves.</summary>
         [ItemNotNull, NotNull] private List<AugCurve> curves;
+        /// <summary>TODO The all keys.</summary>
         [NotNull] private SortedSet<double> allKeys;
 
         /// <inheritdoc />
@@ -90,6 +109,8 @@ namespace CAMel.GH
             pManager.AddNumberParameter("Offsets", "O", "Offsets for individual curves.", GH_ParamAccess.list);
         }
 
+        /// <inheritdoc />
+        /// <summary>TODO The before solve instance.</summary>
         protected override void BeforeSolveInstance()
         {
             this.doc = OnPingDocument();
@@ -105,6 +126,10 @@ namespace CAMel.GH
             base.BeforeSolveInstance();
         }
 
+        /// <summary>TODO The context changed.</summary>
+        /// <param name="sender">TODO The sender.</param>
+        /// <param name="e">TODO The e.</param>
+        /// <exception cref="ArgumentNullException"></exception>
         private void contextChanged([CanBeNull] object sender, [NotNull] GH_DocContextEventArgs e)
         {
             if (e == null) { throw new ArgumentNullException(); }
@@ -199,15 +224,30 @@ namespace CAMel.GH
             da.SetDataList(1, offSets);
         }
 
+        /// <inheritdoc />
+        /// <summary>TODO The curve comp.</summary>
         private class CurveComp : IComparer<AugCurve>
         {
+            /// <inheritdoc />
+            /// <summary>TODO The compare.</summary>
+            /// <param name="x">TODO The x.</param>
+            /// <param name="y">TODO The y.</param>
+            /// <returns>The <see cref="T:System.Int32" />.</returns>
             public int Compare(AugCurve x, AugCurve y) => x?.key.CompareTo(y?.key) ?? 0;
         }
 
+        /// <summary>TODO The curve c.</summary>
         private static readonly CurveComp CurveC = new CurveComp();
 
+        /// <summary>TODO The dot size.</summary>
         private const int DotSize = 11;
+        /// <summary>TODO The dot shift.</summary>
         private readonly Vector3d dotShift = new Vector3d(1, 1, 1);
+        /// <summary>TODO The find.</summary>
+        /// <param name="l">TODO The l.</param>
+        /// <param name="vP">TODO The v p.</param>
+        /// <returns>The <see cref="bool"/>.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         internal bool find(Line l, [NotNull] RhinoViewport vP)
         {
             if (vP == null) { throw new ArgumentNullException(); }
@@ -419,6 +459,10 @@ namespace CAMel.GH
             }
         }
 
+        /// <summary>TODO The re order.</summary>
+        /// <param name="c">TODO The c.</param>
+        /// <param name="i">TODO The i.</param>
+        /// <param name="newPos">TODO The new pos.</param>
         private void reOrder([NotNull] AugCurve c, int i, int newPos)
         {
             if (newPos == i + 1) { return; }
@@ -439,6 +483,9 @@ namespace CAMel.GH
             c.key = newKey;
         }
 
+        /// <summary>TODO The re order.</summary>
+        /// <param name="sel">TODO The sel.</param>
+        /// <param name="newPos">TODO The new pos.</param>
         private void reOrder([NotNull] IList<int> sel, int newPos)
         {
             if (sel.Count == 1 && sel[0] == newPos) { return; }
@@ -463,6 +510,9 @@ namespace CAMel.GH
             }
         }
 
+        /// <summary>TODO The get seam.</summary>
+        /// <param name="c">TODO The c.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         private static double getSeam([NotNull] Curve c)
         {
             GetPoint gp = new GetPoint();
@@ -474,6 +524,9 @@ namespace CAMel.GH
             return t;
         }
 
+        /// <summary>TODO The set up.</summary>
+        /// <param name="i">TODO The i.</param>
+        /// <returns>The <see cref="GetInteger"/>.</returns>
         [NotNull]
         private static GetInteger setUp(int i)
         {
@@ -485,6 +538,12 @@ namespace CAMel.GH
             return gi;
         }
 
+        /// <summary>TODO The get closed.</summary>
+        /// <param name="i">TODO The i.</param>
+        /// <param name="cC">TODO The c c.</param>
+        /// <param name="side">TODO The side.</param>
+        /// <param name="counterClock">TODO The counter clock.</param>
+        /// <returns>The <see cref="GetInteger"/>.</returns>
         [NotNull]
         private static GetInteger getClosed(int i, bool cC, double side, out OptionToggle counterClock)
         {
@@ -501,6 +560,11 @@ namespace CAMel.GH
             return gi;
         }
 
+        /// <summary>TODO The get open.</summary>
+        /// <param name="i">TODO The i.</param>
+        /// <param name="side">TODO The side.</param>
+        /// <param name="flip">TODO The flip.</param>
+        /// <returns>The <see cref="GetInteger"/>.</returns>
         [NotNull]
         private static GetInteger getOpen(int i, double side, out OptionToggle flip)
         {
@@ -516,6 +580,9 @@ namespace CAMel.GH
             return gi;
         }
 
+        /// <summary>TODO The get multiple.</summary>
+        /// <param name="i">TODO The i.</param>
+        /// <returns>The <see cref="GetInteger"/>.</returns>
         [NotNull]
         private static GetInteger getMultiple(int i)
         {
@@ -537,6 +604,7 @@ namespace CAMel.GH
             return gi;
         }
 
+        /// <summary>TODO The change ref curves.</summary>
         internal void changeRefCurves()
         {
             RhinoDoc uDoc = RhinoDoc.ActiveDoc;
@@ -576,13 +644,13 @@ namespace CAMel.GH
             }
         }
 
-        //Return a BoundingBox that contains all the geometry you are about to draw.
+        /// <inheritdoc />
         public override BoundingBox ClippingBox => BoundingBox.Empty;
 
-        //Draw all meshes in this method.
+        /// <inheritdoc />
         public override void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) { }
 
-        //Draw all wires and points in this method.
+        /// <inheritdoc />
         public override void DrawViewportWires([CanBeNull] IGH_PreviewArgs args)
         {
             if (args?.Viewport == null) { return; }
@@ -606,6 +674,7 @@ namespace CAMel.GH
             }
         }
 
+        /// <inheritdoc />
         public override bool Write([CanBeNull] GH_IWriter writer)
         {
             // If we were handling persistent data (no connecting wires) update it so it has the latest values
@@ -618,6 +687,7 @@ namespace CAMel.GH
             return base.Write(writer);
         }
 
+        /// <inheritdoc />
         public override void RemovedFromDocument([CanBeNull] GH_Document document)
         {
             this.enabled = false;
@@ -626,16 +696,10 @@ namespace CAMel.GH
         }
 
         /// <inheritdoc />
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.organisepaths;
 
         /// <inheritdoc />
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
         public override Guid ComponentGuid => new Guid("{DC9920CF-7C48-4A75-B279-89A0C132E564}");
     }
 }

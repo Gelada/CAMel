@@ -11,6 +11,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ spiral surface path.</summary>
     [UsedImplicitly]
     public class C_SpiralSurfacePath : GH_Component
     {
@@ -24,7 +26,7 @@
                 "Create a spiral surfacing recipe",
                 "CAMel", " ToolPaths") { }
 
-        // put this item in the second batch (surfacing strategies)
+        /// <inheritdoc />
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <inheritdoc />

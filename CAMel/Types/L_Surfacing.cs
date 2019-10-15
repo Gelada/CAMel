@@ -8,8 +8,19 @@
     using Rhino.Geometry;
 
     // Functions to generate operations
+    /// <summary>TODO The surfacing.</summary>
     public static class Surfacing
     {
+        /// <summary>TODO The parallel.</summary>
+        /// <param name="c">TODO The c.</param>
+        /// <param name="dir">TODO The dir.</param>
+        /// <param name="stepOver">TODO The step over.</param>
+        /// <param name="zZ">TODO The z z.</param>
+        /// <param name="sTD">TODO The s td.</param>
+        /// <param name="bb">TODO The bb.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <returns>The <see cref="SurfacePath"/>.</returns>
+        /// <exception cref="NullReferenceException"></exception>
         [NotNull]
         public static SurfacePath parallel([CanBeNull] Curve c, Plane dir, double stepOver, bool zZ, SurfToolDir sTD, BoundingBox bb, [CanBeNull] MaterialTool mT)
         {
@@ -17,7 +28,10 @@
 
             Curve uC = c;
             if (c == null) // default to curve running along X-direction on Plane.
-            { uC = new LineCurve(dir.PointAt(bb.Min.X, bb.Min.Y), dir.PointAt(bb.Max.X, bb.Min.Y)); }
+            {
+                uC = new LineCurve(dir.PointAt(bb.Min.X, bb.Min.Y), dir.PointAt(bb.Max.X, bb.Min.Y));
+            }
+
             BoundingBox bbc = uC.GetBoundingBox(dir); // bounding box for curve
 
             List<Curve> paths = new List<Curve>(); // Curves to use
@@ -50,6 +64,15 @@
             return new SurfacePath(paths, mT, -dir.ZAxis, sTD);
         }
 
+        /// <summary>TODO The helix.</summary>
+        /// <param name="c">TODO The c.</param>
+        /// <param name="dir">TODO The dir.</param>
+        /// <param name="stepOver">TODO The step over.</param>
+        /// <param name="sTD">TODO The s td.</param>
+        /// <param name="bb">TODO The bb.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <returns>The <see cref="SurfacePath"/>.</returns>
+        /// <exception cref="NullReferenceException"></exception>
         [NotNull]
         public static SurfacePath helix([CanBeNull] Curve c, Plane dir, double stepOver, SurfToolDir sTD, BoundingBox bb, [CanBeNull] MaterialTool mT)
         {
@@ -178,6 +201,15 @@
         }
 
         // TODO make work for planes and with a boundary curve to spiral to
+        /// <summary>TODO The spiral.</summary>
+        /// <param name="c">TODO The c.</param>
+        /// <param name="dir">TODO The dir.</param>
+        /// <param name="r">TODO The r.</param>
+        /// <param name="stepOver">TODO The step over.</param>
+        /// <param name="sTd">TODO The s td.</param>
+        /// <param name="bb">TODO The bb.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <returns>The <see cref="SurfacePath"/>.</returns>
         [NotNull]
         public static SurfacePath spiral([CanBeNull] Curve c, Plane dir, double r, double stepOver, SurfToolDir sTd, BoundingBox bb, [NotNull] MaterialTool mT)
         {

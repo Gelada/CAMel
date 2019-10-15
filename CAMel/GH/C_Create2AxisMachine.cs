@@ -20,6 +20,8 @@ namespace CAMel.GH
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ create 2 axis machine.</summary>
     [UsedImplicitly]
     public class C_Create2AxisMachine : GH_Component
     {
@@ -34,6 +36,8 @@ namespace CAMel.GH
                 "CAMel", " Hardware") { }
 
         // put this item in the second batch (Machines)
+        /// <inheritdoc />
+        /// <summary>TODO The exposure.</summary>
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <inheritdoc />

@@ -10,6 +10,8 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ omax.</summary>
     [UsedImplicitly]
     public class C_OMAX : GH_Component
     {
@@ -24,6 +26,7 @@
                 "CAMel", " Hardware") { }
 
         // put this item in the second batch (Machines)
+        /// <inheritdoc />
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <inheritdoc />

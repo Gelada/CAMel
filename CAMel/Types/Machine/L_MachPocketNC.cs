@@ -9,32 +9,71 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The pocket nc.</summary>
     public class PocketNC : IGCodeMachine
     {
+        /// <inheritdoc />
+        /// <summary>Gets the section break.</summary>
         public string sectionBreak { get; }
+        /// <inheritdoc />
+        /// <summary>Gets the speed change command.</summary>
         public string speedChangeCommand { get; }
+        /// <inheritdoc />
+        /// <summary>Gets the tool change command.</summary>
         public string toolChangeCommand { get; }
+        /// <inheritdoc />
+        /// <summary>Gets the file start.</summary>
         public string fileStart { get; }
+        /// <inheritdoc />
+        /// <summary>Gets the file end.</summary>
         public string fileEnd { get; }
+        /// <inheritdoc />
+        /// <summary>Gets the header.</summary>
         public string header { get; }
+        /// <summary>Gets the footer.</summary>
         public string footer { get; }
+        /// <summary>Gets the name.</summary>
         public string name { get; }
+        /// <inheritdoc />
+        /// <summary>Gets the comment start.</summary>
         public string commentStart { get; }
+        /// <inheritdoc />
+        /// <summary>Gets the comment end.</summary>
         public string commentEnd { get; }
+        /// <summary>TODO The terms.</summary>
         [NotNull] private readonly List<char> terms;
+        /// <summary>Gets the m ts.</summary>
         public List<MaterialTool> mTs { get; }
 
+        /// <summary>Gets the a min.</summary>
         private double aMin { get; }
+        /// <summary>Gets the a max.</summary>
         private double aMax { get; }
+        /// <summary>Gets the b max.</summary>
         private double bMax { get; }
+        /// <summary>Gets a value indicating whether tool length compensation.</summary>
         public bool toolLengthCompensation { get; }
 
+        /// <summary>Gets the pivot.</summary>
         private Vector3d pivot { get; } // Position of machine origin in design space.
 
+        /// <summary>TODO The default tpa.</summary>
         public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
+        /// <summary>TODO The extension.</summary>
         public string extension => "ngc";
 
+        /// <summary>Initializes a new instance of the <see cref="PocketNC"/> class.</summary>
+        /// <param name="name">TODO The name.</param>
+        /// <param name="header">TODO The header.</param>
+        /// <param name="footer">TODO The footer.</param>
+        /// <param name="pivot">TODO The pivot.</param>
+        /// <param name="aMin">TODO The a min.</param>
+        /// <param name="aMax">TODO The a max.</param>
+        /// <param name="bMax">TODO The b max.</param>
+        /// <param name="tLc">TODO The t lc.</param>
+        /// <param name="mTs">TODO The m ts.</param>
         public PocketNC(
             [NotNull] string name, [NotNull] string header,
             [NotNull] string footer, Vector3d pivot, double aMin,
@@ -60,16 +99,33 @@
             this.terms = new List<char> { 'X', 'Y', 'Z', 'A', 'B', 'S', 'F' };
         }
 
+        /// <inheritdoc />
+        /// <summary>TODO The type description.</summary>
         public string TypeDescription => "Instructions for a PocketNC machine";
 
+        /// <inheritdoc />
+        /// <summary>TODO The type name.</summary>
         public string TypeName => "CAMelPocketNC";
 
+        /// <summary>TODO The to string.</summary>
+        /// <returns>The <see cref="T:System.String" />.</returns>
         public override string ToString() => this.name;
 
+        /// <summary>TODO The comment.</summary>
+        /// <param name="l">TODO The l.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         public string comment(string l) => GCode.comment(this, l);
+        /// <summary>TODO The line number.</summary>
+        /// <param name="l">TODO The l.</param>
+        /// <param name="line">TODO The line.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
+        /// <summary>TODO The refine angle.</summary>
         private const double RefineAngle = 2.0 * Math.PI / 180.0;
+        /// <summary>TODO The refine.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         public ToolPath refine(ToolPath tP)
         {
             if (tP.matForm == null) { Exceptions.matFormException(); }
@@ -77,33 +133,80 @@
             return tP.matForm.refine(refined, this);
         }
 
+        /// <summary>TODO The off set.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        ///     .</returns>
         public List<ToolPath> offSet(ToolPath tP) =>
             tP.planarOffset(out Vector3d dir)
                 ? Utility.planeOffset(tP, dir)
                 : Utility.localOffset(tP);
+        /// <summary>TODO The insert retract.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         public List<ToolPath> insertRetract(ToolPath tP) => Utility.insertRetract(tP);
+        /// <summary>TODO The step down.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        ///     .</returns>
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
+        /// <summary>TODO The three axis height offset.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
+        /// <summary>TODO The finish paths.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        ///     .</returns>
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
 
+        /// <summary>TODO The interpolate.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="par">TODO The par.</param>
+        /// <param name="lng">TODO The lng.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
         {
             double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
             return Kinematics.interpolateFiveAxisABTable(this.pivot, toolLength, fP, tP, par, lng);
         }
 
+        /// <summary>TODO The ang diff.</summary>
+        /// <param name="tP1">TODO The t p 1.</param>
+        /// <param name="tP2">TODO The t p 2.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="lng">TODO The lng.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng)
         {
             double toolLength = this.toolLengthCompensation ? 0 : mT.toolLength;
             return Kinematics.angDiffFiveAxisABTable(this.pivot, toolLength, tP1, tP2, lng);
         }
 
+        /// <summary>TODO The read code.</summary>
+        /// <param name="code">TODO The code.</param>
+        /// <returns>The <see cref="MachineInstruction"/>.</returns>
         public MachineInstruction readCode(string code)
         {
             if (this.mTs.Count == 0) { Exceptions.noToolException(); }
             return GCode.gcRead(this, this.mTs, code, this.terms);
         }
 
+        /// <summary>TODO The read tp.</summary>
+        /// <param name="values">TODO The values.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         public ToolPoint readTP(Dictionary<char, double> values, MaterialTool mT)
         {
             Point3d machPt = new Point3d(values['X'], values['Y'], values['Z']);
@@ -120,10 +223,17 @@
             return Kinematics.kFiveAxisABTable(tP, this.pivot, toolLength, machPt, ab);
         }
 
+        /// <summary>TODO The tool dir.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="Vector3d"/>.</returns>
         public Vector3d toolDir(ToolPoint tP) => tP.dir;
 
+        /// <summary>TODO The angle acc.</summary>
         private const double AngleAcc = 0.0001; // accuracy of angles to assume we lie on the cusp.
 
+        /// <summary>TODO The write code.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="tP">TODO The t p.</param>
         public void writeCode(ref CodeInfo co, ToolPath tP)
         {
             // Double check tP does not have additions.
@@ -159,7 +269,7 @@
             Vector3d ab = new Vector3d(co.machineState["A"], co.machineState["B"], 0);
 
             double bTo = 0; // Allow for smooth adjustment through the cusp with A at 90.
-            int bSteps = 0; //
+            int bSteps = 0;
 
             Point3d machPt = new Point3d();
 
@@ -356,6 +466,7 @@
         // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
         // hopefully at that point there is a better understanding of safe moves!
+        /// <inheritdoc />
         public ToolPath transition(ToolPath fP, ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }

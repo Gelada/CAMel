@@ -10,9 +10,19 @@
     using Rhino.Geometry;
 
     // Functions to generate operations
+    /// <summary>TODO The operations.</summary>
     public static class Operations
     {
+        /// <summary>TODO The plane tolerance.</summary>
         private const double PlaneTolerance = 0.5;
+        /// <summary>TODO The op index 2 d cut.</summary>
+        /// <param name="c">TODO The c.</param>
+        /// <param name="d">TODO The d.</param>
+        /// <param name="oS">TODO The o s.</param>
+        /// <param name="tPa">TODO The t pa.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="mF">TODO The m f.</param>
+        /// <returns>The <see cref="MachineOperation"/>.</returns>
         [NotNull]
         public static MachineOperation opIndex2DCut([NotNull] Curve c, Vector3d d, double oS, [NotNull] ToolPathAdditions tPa, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {
@@ -29,7 +39,7 @@
             // create Operation
             MachineOperation mO = new MachineOperation { name = "2d Cut " };
 
-            ToolPath tP = new ToolPath("", mT, mF, tPa);
+            ToolPath tP = new ToolPath(string.Empty, mT, mF, tPa);
             tP.convertCurve(c, d);
             tP.additions.offset = mT.toolWidth * uOS * p.ZAxis;
 
@@ -38,6 +48,14 @@
             return mO;
         }
 
+        /// <summary>TODO The op index 3 axis.</summary>
+        /// <param name="cs">TODO The cs.</param>
+        /// <param name="dir">TODO The dir.</param>
+        /// <param name="tPa">TODO The t pa.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="mF">TODO The m f.</param>
+        /// <param name="invalidCurves">TODO The invalid curves.</param>
+        /// <returns>The <see cref="MachineOperation"/>.</returns>
         [NotNull]
         public static MachineOperation opIndex3Axis([NotNull] List<Curve> cs, Vector3d dir, [NotNull] ToolPathAdditions tPa, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, out int invalidCurves)
         {
@@ -69,6 +87,12 @@
             return mO;
         }
 
+        /// <summary>TODO The drill operation.</summary>
+        /// <param name="d">TODO The d.</param>
+        /// <param name="peck">TODO The peck.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="mF">TODO The m f.</param>
+        /// <returns>The <see cref="MachineOperation"/>.</returns>
         [NotNull]
         public static MachineOperation drillOperation(Circle d, double peck, [NotNull] MaterialTool mT, [CanBeNull] IMaterialForm mF)
         {

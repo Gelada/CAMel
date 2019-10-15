@@ -8,6 +8,8 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ create material tool.</summary>
     [UsedImplicitly]
     public class C_CreateMaterialTool : GH_Component
     {

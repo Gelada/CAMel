@@ -10,6 +10,8 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ create operation.</summary>
     [UsedImplicitly]
     public class C_CreateOperation : GH_Component
     {

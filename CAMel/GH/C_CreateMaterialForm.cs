@@ -9,6 +9,8 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ create material form.</summary>
     [UsedImplicitly]
     public class C_CreateMaterialForm : GH_Component
     {

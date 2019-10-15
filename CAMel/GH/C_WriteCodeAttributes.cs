@@ -8,11 +8,18 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The write code attributes.</summary>
     public class WriteCodeAttributes : GH_ComponentAttributes
     {
+        /// <summary>Initializes a new instance of the <see cref="WriteCodeAttributes"/> class.</summary>
+        /// <param name="owner">TODO The owner.</param>
         public WriteCodeAttributes([NotNull] IGH_Component owner)
             : base(owner) { }
 
+        /// <summary>TODO The total files.</summary>
+        /// <param name="l">TODO The l.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         private static string totalFiles(long l)
         {
@@ -22,6 +29,7 @@
             return (1000 * lMB).ToString("0") + " KB Written";
         }
 
+        /// <summary>TODO The layout.</summary>
         protected override void Layout()
         {
             base.Layout();
@@ -38,8 +46,13 @@
             this.progressBounds = rec1;
         }
 
+        /// <summary>Gets or sets the progress bounds.</summary>
         private Rectangle progressBounds { get; set; }
 
+        /// <summary>TODO The render.</summary>
+        /// <param name="canvas">TODO The canvas.</param>
+        /// <param name="graphics">TODO The graphics.</param>
+        /// <param name="channel">TODO The channel.</param>
         protected override void Render([CanBeNull] GH_Canvas canvas, [CanBeNull] Graphics graphics, GH_CanvasChannel channel)
         {
             base.Render(canvas, graphics, channel);

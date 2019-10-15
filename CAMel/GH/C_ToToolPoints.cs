@@ -10,6 +10,8 @@
 
     using JetBrains.Annotations;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ to tool points.</summary>
     [UsedImplicitly]
     public class C_ToToolPoints : GH_Component
     {

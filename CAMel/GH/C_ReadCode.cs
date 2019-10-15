@@ -12,6 +12,8 @@
 
     using Rhino.Geometry;
 
+    /// <inheritdoc />
+    /// <summary>TODO The c_ read code.</summary>
     [UsedImplicitly]
     public class C_ReadCode : GH_Component
     {
