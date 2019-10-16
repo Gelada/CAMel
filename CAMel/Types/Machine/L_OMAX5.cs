@@ -11,16 +11,27 @@
 
     using Rhino.Geometry;
 
+    /// <summary>TODO The omax 5.</summary>
     public class Omax5 : IMachine
     {
+        /// <summary>Gets the name.</summary>
         public string name { get; }
+        /// <summary>Gets the m ts.</summary>
         public List<MaterialTool> mTs { get; }
+        /// <summary>TODO The extension.</summary>
         public string extension => "omx";
 
+        /// <summary>Gets the tilt max.</summary>
         private double tiltMax { get; }
+        /// <summary>Gets a value indicating whether tool length compensation.</summary>
         public bool toolLengthCompensation { get; }
+        /// <summary>TODO The default tpa.</summary>
         public ToolPathAdditions defaultTPA => ToolPathAdditions.basicDefault;
 
+        /// <summary>Initializes a new instance of the <see cref="Omax5"/> class.</summary>
+        /// <param name="name">TODO The name.</param>
+        /// <param name="mTs">TODO The m ts.</param>
+        /// <param name="tiltMax">TODO The tilt max.</param>
         public Omax5([NotNull] string name, [NotNull] List<MaterialTool> mTs, double tiltMax)
         {
             this.name = name;
@@ -29,18 +40,44 @@
             this.mTs = mTs;
         }
 
+        /// <inheritdoc />
         public string TypeDescription => "Instructions for a OMax 5-axis waterjet";
 
+        /// <inheritdoc />
         public string TypeName => "CAMelOMax5";
 
+        /// <summary>TODO The to string.</summary>
+        /// <returns>The <see cref="string"/>.</returns>
         public override string ToString() => this.name;
 
         // TODO?
+        /// <summary>TODO The comment.</summary>
+        /// <param name="l">TODO The l.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         public string comment(string l) => string.Empty;
+        /// <summary>TODO The line number.</summary>
+        /// <param name="l">TODO The l.</param>
+        /// <param name="line">TODO The line.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         public string lineNumber(string l, int line) => l;
 
+        /// <summary>TODO The refine.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         public ToolPath refine(ToolPath tP) => tP.matForm?.refine(tP, this) ?? tP;
+        /// <summary>TODO The off set.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> { tP };
+        /// <summary>TODO The insert retract.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         public List<ToolPath> insertRetract(ToolPath tP)
         {
             switch (tP.additions.leadComm.command)
@@ -56,11 +93,33 @@
             }
         }
 
+        /// <summary>TODO The step down.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         public List<List<ToolPath>> stepDown(ToolPath tP) => new List<List<ToolPath>>();
+        /// <summary>TODO The three axis height offset.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.clearThreeAxisHeightOffset(tP);
+        /// <summary>TODO The finish paths.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.oneFinishPath(tP);
 
         // Use spherical interpolation (as the range of angles is rather small)
+        /// <summary>TODO The interpolate.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="par">TODO The par.</param>
+        /// <param name="lng">TODO The lng.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
         {
             ToolPoint iPt = new ToolPoint { pt = (1 - par) * fP.pt + par * tP.pt };
@@ -76,9 +135,18 @@
         }
 
         // Use spherical interpolation
+        /// <summary>TODO The ang diff.</summary>
+        /// <param name="tP1">TODO The t p 1.</param>
+        /// <param name="tP2">TODO The t p 2.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="lng">TODO The lng.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) =>
             Vector3d.VectorAngle(tP1.dir, tP2.dir);
 
+        /// <summary>TODO The read code.</summary>
+        /// <param name="code">TODO The code.</param>
+        /// <returns>The <see cref="MachineInstruction"/>.</returns>
         public MachineInstruction readCode(string code)
         {
             MachineInstruction mI = new MachineInstruction(this);
@@ -122,6 +190,11 @@
         }
 
         // Try to read a line of omx code. Add an error to the toolpoint if there are problems
+        /// <summary>TODO The read tp.</summary>
+        /// <param name="l">TODO The l.</param>
+        /// <param name="endPt">TODO The end pt.</param>
+        /// <param name="quality">TODO The quality.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         [CanBeNull]
         private static ToolPoint readTP([NotNull] string l, [NotNull] out ToolPoint endPt, out int quality)
         {
@@ -169,8 +242,14 @@
             return tPt;
         }
 
+        /// <summary>TODO The tool dir.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="Vector3d"/>.</returns>
         public Vector3d toolDir(ToolPoint tP) => tP.dir;
 
+        /// <summary>TODO The write code.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="tP">TODO The t p.</param>
         public void writeCode(ref CodeInfo co, ToolPath tP)
         {
             if (tP.Count == 0) { return; }
@@ -221,6 +300,9 @@
             OMXCode.omxPathEnd(this, ref co, tP);
         }
 
+        /// <summary>TODO The write file start.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mI">TODO The m i.</param>
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
@@ -245,13 +327,37 @@
             OMXCode.omxInstStart(this, ref co, mI);
         }
 
+        /// <summary>TODO The write file end.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mI">TODO The m i.</param>
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => OMXCode.omxInstEnd(this, ref co, mI);
+        /// <summary>TODO The write op start.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mO">TODO The m o.</param>
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpStart(this, ref co, mO);
+        /// <summary>TODO The write op end.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mO">TODO The m o.</param>
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => OMXCode.omxOpEnd(this, ref co, mO);
+        /// <summary>TODO The tool change.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="toolNumber">TODO The tool number.</param>
         public void toolChange(ref CodeInfo co, int toolNumber) { }
+        /// <summary>TODO The jump check.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="double"/>.</returns>
         public double jumpCheck(ToolPath fP, ToolPath tP) => 0;
+        /// <summary>TODO The jump check.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
         public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.noCheck(ref co, this, fP, tP);
 
+        /// <summary>TODO The transition.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         public ToolPath transition(ToolPath fP, ToolPath tP)
         {
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
@@ -273,8 +379,18 @@
     }
 
     // ReSharper disable once InconsistentNaming
+    /// <summary>TODO The omx code.</summary>
     internal static class OMXCode
     {
+        /// <summary>TODO The omx tilt pt.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="lastPt">TODO The last pt.</param>
+        /// <param name="lastDir">TODO The last dir.</param>
+        /// <param name="tPt">TODO The t pt.</param>
+        /// <param name="lastQ">TODO The last q.</param>
+        /// <param name="tiltMax">TODO The tilt max.</param>
+        /// <param name="os">TODO The os.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         public static string omxTiltPt(
             [NotNull] CodeInfo co, Point3d lastPt,
@@ -300,6 +416,9 @@
             return omxTiltPt27(lastPt, lastDir, tPt.dir, 0, lastQ, os);
         }
 
+        /// <summary>TODO The v to side.</summary>
+        /// <param name="v">TODO The v.</param>
+        /// <returns>The <see cref="int"/>.</returns>
         private static int vToSide(Vector3d v)
         {
             double d = v * -Vector3d.ZAxis;
@@ -307,6 +426,14 @@
             return d < -CAMel_Goo.Tolerance ? 2 : 0;
         }
 
+        /// <summary>TODO The omx tilt pt 27.</summary>
+        /// <param name="machPt">TODO The mach pt.</param>
+        /// <param name="tiltS">TODO The tilt s.</param>
+        /// <param name="tiltE">TODO The tilt e.</param>
+        /// <param name="bow">TODO The bow.</param>
+        /// <param name="quality">TODO The quality.</param>
+        /// <param name="os">TODO The os.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull]
         private static string omxTiltPt27(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality, Vector3d os)
         {
@@ -339,6 +466,14 @@
             return gPtBd.ToString();
         }
 
+        /// <summary>TODO The omx tilt pt 23.</summary>
+        /// <param name="machPt">TODO The mach pt.</param>
+        /// <param name="tiltS">TODO The tilt s.</param>
+        /// <param name="tiltE">TODO The tilt e.</param>
+        /// <param name="bow">TODO The bow.</param>
+        /// <param name="quality">TODO The quality.</param>
+        /// <param name="os">TODO The os.</param>
+        /// <returns>The <see cref="string"/>.</returns>
         [NotNull, UsedImplicitly]
         private static string omxTiltPt23(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality, Vector3d os)
         {
@@ -373,6 +508,10 @@
             return gPtBd.ToString();
         }
 
+        /// <summary>TODO The omx inst start.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mI">TODO The m i.</param>
         public static void omxInstStart(
             [NotNull] IMachine m, [NotNull] ref CodeInfo co,
             [NotNull] MachineInstruction mI)
@@ -413,25 +552,45 @@
             co.currentMT = MaterialTool.Empty; // Clear the tool information so we call a tool change.
         }
         // ReSharper disable once UnusedParameter.Global
+        /// <summary>TODO The omx inst end.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mI">TODO The m i.</param>
         public static void omxInstEnd(
             [NotNull] IMachine m, [NotNull] ref CodeInfo co,
             [NotNull] MachineInstruction mI)
             => co.append(mI.postCode);
 
         // ReSharper disable once UnusedParameter.Global
+        /// <summary>TODO The omx op start.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mO">TODO The m o.</param>
         public static void omxOpStart(
             [NotNull] IMachine m, [NotNull] ref CodeInfo co,
             [NotNull] MachineOperation mO)
             => co.append(mO.preCode);
 
         // ReSharper disable once UnusedParameter.Global
+        /// <summary>TODO The omx op end.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mO">TODO The m o.</param>
         public static void
             omxOpEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO) =>
             co.append(mO.postCode);
         // ReSharper disable once UnusedParameter.Global
+        /// <summary>TODO The omx path start.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="tP">TODO The t p.</param>
         public static void omxPathStart([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
             co.append(tP.preCode);
         // ReSharper disable once UnusedParameter.Global
+        /// <summary>TODO The omx path end.</summary>
+        /// <param name="m">TODO The m.</param>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="tP">TODO The t p.</param>
         public static void omxPathEnd([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
             co.append(tP.postCode);
     }

@@ -113,14 +113,14 @@ namespace CAMel.GH
         /// <summary>TODO The before solve instance.</summary>
         protected override void BeforeSolveInstance()
         {
-            this.doc = OnPingDocument();
+            this.doc = this.OnPingDocument();
             if (Instances.ActiveCanvas?.Document != null)
             {
                 this.inActiveDocument = Instances.ActiveCanvas.Document == this.doc &&
                                         Instances.ActiveCanvas.Document.Context == GH_DocumentContext.Loaded;
 
-                Instances.ActiveCanvas.Document.ContextChanged -= contextChanged;
-                Instances.ActiveCanvas.Document.ContextChanged += contextChanged;
+                Instances.ActiveCanvas.Document.ContextChanged -= this.contextChanged;
+                Instances.ActiveCanvas.Document.ContextChanged += this.contextChanged;
             }
 
             base.BeforeSolveInstance();
@@ -152,7 +152,7 @@ namespace CAMel.GH
             // Insist on reference curves
             if (paths.Any(p => p?.IsReferencedGeometry == false))
             {
-                AddRuntimeMessage(
+                this.AddRuntimeMessage(
                     GH_RuntimeMessageLevel.Error,
                     "Only referenced curves can be organised with this component. If you wish to organise grasshopper curves, first bake.");
                 return;
@@ -329,7 +329,7 @@ namespace CAMel.GH
                             c.side = -c.side;
                         }
 
-                        reOrder(c, clicked, gi.Number());
+                        this.reOrder(c, clicked, gi.Number());
                         return true;
                     }
                 }
@@ -371,7 +371,7 @@ namespace CAMel.GH
                         c.side = -c.side;
                     }
 
-                    reOrder(c, clicked, gi.Number());
+                    this.reOrder(c, clicked, gi.Number());
                     return true;
                 }
             }
@@ -454,7 +454,7 @@ namespace CAMel.GH
                     }
                 }
 
-                if (getR == GetResult.Number) { reOrder(sel, gi.Number() - 1); }
+                if (getR == GetResult.Number) { this.reOrder(sel, gi.Number() - 1); }
                 return true;
             }
         }
@@ -691,7 +691,7 @@ namespace CAMel.GH
         public override void RemovedFromDocument([CanBeNull] GH_Document document)
         {
             this.enabled = false;
-            ExpirePreview(true);
+            this.ExpirePreview(true);
             base.RemovedFromDocument(document);
         }
 

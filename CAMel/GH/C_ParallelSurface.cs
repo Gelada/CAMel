@@ -83,7 +83,7 @@
             if (!da.GetData(6, ref zz)) { return; }
 
             if (stepOver < 0) { stepOver = mT.sideLoad; }
-            if (stepOver > mT.sideLoad) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
+            if (stepOver > mT.sideLoad) { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
 
             // process the bounding box
             if (!geom.CastTo(out BoundingBox bb))
@@ -95,7 +95,7 @@
                 else if (geom.CastTo(out Mesh m))
                 { bb = m.GetBoundingBox(dir); } // extents of M in the coordinate system
                 else
-                { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep."); }
+                { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep."); }
                 bb.Inflate(mT.toolWidth);
             }
 
@@ -103,7 +103,7 @@
             SurfToolDir sTD = SurfacePath.getSurfDir(tD);
             if (sTD == SurfToolDir.Error)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
                 return;
             }
 

@@ -21,10 +21,14 @@
     // Parallel is along a single direction
     // Cylindrical points towards a path along a direction
     // Spherical points towards a point
+    /// <summary>TODO The surf proj.</summary>
     public enum SurfProj
     {
+        /// <summary>TODO The parallel.</summary>
         Parallel,
+        /// <summary>TODO The cylindrical.</summary>
         Cylindrical,
+        /// <summary>TODO The spherical.</summary>
         Spherical
     }
 
@@ -35,31 +39,52 @@
     // Path Tangent gives the normal to the path in the plane given by the path tangent and projection direction
     // Path Normal gives the normal to the path in the plane given by the surface tangent normal to the path and projection direction
     // Normal is surface normal
+    /// <summary>TODO The surf tool dir.</summary>
     public enum SurfToolDir
     {
+        /// <summary>TODO The projection.</summary>
         Projection,
+        /// <summary>TODO The path tangent.</summary>
         PathTangent,
+        /// <summary>TODO The path normal.</summary>
         PathNormal,
+        /// <summary>TODO The normal.</summary>
         Normal,
+        /// <summary>TODO The error.</summary>
         Error
     }
 
     // A path that will project to a surface for surfacing
     // TODO write a subclass for each projection
+    /// <summary>TODO The surface path.</summary>
     public class SurfacePath : IList<Curve>, ICAMelBase
     {
+        /// <summary>TODO The paths.</summary>
         [NotNull] private readonly List<Curve> paths; // Curves to project
+        /// <summary>Gets the surf proj.</summary>
         private SurfProj surfProj { get; } // Type of projection
+        /// <summary>Gets the cyl onto.</summary>
         private Curve cylOnto { get; } // centre line for Cylindrical projection
+        /// <summary>Gets the dir.</summary>
         private Vector3d dir { get; } // direction for parallel projection, or line direction for cylindrical
+        /// <summary>Gets the cen.</summary>
         private Point3d cen { get; } // centre for spherical projection
+        /// <summary>Gets the surf tool dir.</summary>
         private SurfToolDir surfToolDir { get; } // method to calculate tool direction
-        [NotNull] public MaterialTool mT { get; }
+        /// <summary>Gets the m t.</summary>
+        [NotNull]
+        public MaterialTool mT { get; }
 
         // private storage when processing a model
+        /// <summary>TODO The m.</summary>
         private Mesh m; // Mesh
 
         // Parallel constructor
+        /// <summary>Initializes a new instance of the <see cref="SurfacePath"/> class.</summary>
+        /// <param name="paths">TODO The paths.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="dir">TODO The dir.</param>
+        /// <param name="sTd">TODO The s td.</param>
         public SurfacePath([NotNull] List<Curve> paths, [NotNull] MaterialTool mT, Vector3d dir, SurfToolDir sTd)
         {
             this.paths = paths;
@@ -70,6 +95,12 @@
         }
 
         // Cylindrical constructor
+        /// <summary>Initializes a new instance of the <see cref="SurfacePath"/> class.</summary>
+        /// <param name="paths">TODO The paths.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="dir">TODO The dir.</param>
+        /// <param name="cc">TODO The cc.</param>
+        /// <param name="surfToolDir">TODO The surf tool dir.</param>
         public SurfacePath([NotNull] List<Curve> paths, [NotNull] MaterialTool mT, Vector3d dir, [NotNull] Curve cc, SurfToolDir surfToolDir)
         {
             this.paths = paths;
@@ -81,6 +112,11 @@
         }
 
         // Spherical constructor
+        /// <summary>Initializes a new instance of the <see cref="SurfacePath"/> class.</summary>
+        /// <param name="paths">TODO The paths.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <param name="cen">TODO The cen.</param>
+        /// <param name="surfToolDir">TODO The surf tool dir.</param>
         public SurfacePath([NotNull] List<Curve> paths, [NotNull] MaterialTool mT, Point3d cen, SurfToolDir surfToolDir)
         {
             this.paths = paths;
@@ -90,6 +126,9 @@
             this.surfToolDir = surfToolDir;
         }
 
+        /// <summary>TODO The change finish depth.</summary>
+        /// <param name="cutDepth">TODO The cut depth.</param>
+        /// <returns>The <see cref="SurfacePath"/>.</returns>
         [NotNull]
         public SurfacePath changeFinishDepth(double cutDepth)
         {
@@ -109,9 +148,13 @@
             }
         }
 
+        /// <inheritdoc />
         public string TypeDescription => "Path and projection information to generate a surfacing path";
+        /// <inheritdoc />
         public string TypeName => "SurfacePath";
 
+        /// <summary>TODO The to string.</summary>
+        /// <returns>The <see cref="string"/>.</returns>
         public override string ToString()
         {
             string op = "Surfacing:";
@@ -132,6 +175,12 @@
         }
 
         // Different calls to Generate a Machine Operation from different surfaces
+        /// <summary>TODO The generate operation.</summary>
+        /// <param name="b">TODO The b.</param>
+        /// <param name="offset">TODO The offset.</param>
+        /// <param name="mF">TODO The m f.</param>
+        /// <param name="tPa">TODO The t pa.</param>
+        /// <returns>The <see cref="MachineOperation"/>.</returns>
         [NotNull]
         public MachineOperation generateOperation([NotNull] Brep b, double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
@@ -144,9 +193,16 @@
             this.m = Mesh.CreateFromBrep(b, mP)?[0];
             this.m?.FaceNormals?.ComputeFaceNormals();
 
-            return generateOperation_(offset, mF, tPa);
+            return this.generateOperation_(offset, mF, tPa);
         }
 
+        /// <summary>TODO The generate operation.</summary>
+        /// <param name="mIn">TODO The m in.</param>
+        /// <param name="offset">TODO The offset.</param>
+        /// <param name="mF">TODO The m f.</param>
+        /// <param name="tPa">TODO The t pa.</param>
+        /// <returns>The <see cref="MachineOperation"/>.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         [NotNull]
         public MachineOperation generateOperation([NotNull] Mesh mIn, double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
@@ -154,10 +210,16 @@
             mIn.FaceNormals.ComputeFaceNormals();
             this.m = mIn;
 
-            return generateOperation_(offset, mF, tPa);
+            return this.generateOperation_(offset, mF, tPa);
         }
 
         // actual code to generate the operation
+        /// <summary>TODO The generate operation_.</summary>
+        /// <param name="offset">TODO The offset.</param>
+        /// <param name="mF">TODO The m f.</param>
+        /// <param name="tPa">TODO The t pa.</param>
+        /// <returns>The <see cref="MachineOperation"/>.</returns>
+        /// <exception cref="NullReferenceException"></exception>
         [NotNull]
         private MachineOperation generateOperation_(double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
@@ -181,13 +243,13 @@
             {
                 ConcurrentDictionary<ToolPoint, FirstIntersectResponse> intersectInfo = new ConcurrentDictionary<ToolPoint, FirstIntersectResponse>(Environment.ProcessorCount, tP.Count);
 
-                foreach (ToolPoint tPt in tP) //initialise dictionary
+                foreach (ToolPoint tPt in tP) // initialise dictionary
                 { intersectInfo[tPt] = new FirstIntersectResponse(); }
 
                 Parallel.ForEach(
                     tP, tPtP =>
                         {
-                            if (tPtP != null) { intersectInfo[tPtP] = firstIntersect(tPtP); }
+                            if (tPtP != null) { intersectInfo[tPtP] = this.firstIntersect(tPtP); }
                         });
 
                 ToolPath tempTP = new ToolPath(string.Empty, this.mT, mF, tPa);
@@ -296,22 +358,34 @@
             }
 
             // make the machine operation
-            MachineOperation mO = new MachineOperation(ToString(), newTPs);
+            MachineOperation mO = new MachineOperation(this.ToString(), newTPs);
             return mO;
         }
 
+        /// <summary>TODO The first intersect response.</summary>
         private struct FirstIntersectResponse
         {
+            /// <summary>Gets or sets the t p.</summary>
             public ToolPoint tP { get; set; }
+            /// <summary>Gets or sets the norm.</summary>
             public Vector3d norm { get; set; }
+            /// <summary>Gets or sets a value indicating whether hit.</summary>
             public bool hit { get; set; }
 
+            /// <summary>TODO The to string.</summary>
+            /// <returns>The <see cref="string"/>.</returns>
             public override string ToString() => this.hit.ToString();
         }
 
         // Transcribed from Christer Ericson's Real-Time Collision Detection
         // Compute barycentric coordinates (u, v, w) for
         // point p with respect to triangle (a, b, c)
+        /// <summary>TODO The barycentric.</summary>
+        /// <param name="p">TODO The p.</param>
+        /// <param name="a">TODO The a.</param>
+        /// <param name="b">TODO The b.</param>
+        /// <param name="c">TODO The c.</param>
+        /// <returns>The <see cref="Vector3d"/>.</returns>
         private static Vector3d barycentric(Point3d p, Point3d a, Point3d b, Point3d c)
         {
             Vector3d v0 = b - a, v1 = c - a, v2 = p - a;
@@ -328,12 +402,15 @@
             return new Vector3d(u, v, 1.0 - u - v);
         }
 
+        /// <summary>TODO The first intersect.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="FirstIntersectResponse"/>.</returns>
         private FirstIntersectResponse firstIntersect([NotNull] ToolPoint tP)
         {
             FirstIntersectResponse fIr = new FirstIntersectResponse { hit = false };
             if (this.m?.FaceNormals == null) { return fIr; }
 
-            Vector3d proj = projDir(tP.pt);
+            Vector3d proj = this.projDir(tP.pt);
             Ray3d rayL = new Ray3d(tP.pt, proj);
 
             double inter = Intersection.MeshRay(this.m, rayL, out int[] faces);
@@ -358,6 +435,11 @@
         }
 
         // Give the direction of projection for a specific point based on the projection type.
+        /// <summary>TODO The proj dir.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <returns>The <see cref="Vector3d"/>.</returns>
+        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         [Pure]
         private Vector3d projDir(Point3d pt)
         {
@@ -407,6 +489,8 @@
             return pd;
         }
 
+        /// <summary>TODO The get curve.</summary>
+        /// <returns>The <see cref="Curve"/>.</returns>
         [CanBeNull]
         public Curve getCurve()
         {
@@ -417,9 +501,12 @@
 
         #region List Functions
 
+        /// <inheritdoc />
         public int Count => ((IList<Curve>)this.paths).Count;
+        /// <inheritdoc />
         public bool IsReadOnly => ((IList<Curve>)this.paths).IsReadOnly;
 
+        /// <inheritdoc />
         [CanBeNull]
         public Curve this[int index]
         {
@@ -427,21 +514,36 @@
             set => this.paths[index] = value;
         }
 
+        /// <inheritdoc />
         public int IndexOf(Curve item) => this.paths.IndexOf(item);
+        /// <inheritdoc />
         public void Insert(int index, Curve item) => this.paths.Insert(index, item);
+        /// <inheritdoc />
         public void RemoveAt(int index) => this.paths.RemoveAt(index);
+        /// <inheritdoc />
         public void Add(Curve item) => this.paths.Add(item);
+        /// <summary>TODO The add range.</summary>
+        /// <param name="items">TODO The items.</param>
         [PublicAPI]
         public void AddRange([NotNull] IEnumerable<Curve> items) => this.paths.AddRange(items);
+        /// <inheritdoc />
         public void Clear() => this.paths.Clear();
+        /// <inheritdoc />
         public bool Contains(Curve item) => this.paths.Contains(item);
+        /// <inheritdoc />
         public void CopyTo(Curve[] array, int arrayIndex) => this.paths.CopyTo(array, arrayIndex);
+        /// <inheritdoc />
         public bool Remove(Curve item) => ((IList<Curve>)this.paths).Remove(item);
+        /// <inheritdoc />
         public IEnumerator<Curve> GetEnumerator() => this.paths.GetEnumerator();
+        /// <inheritdoc />
         IEnumerator IEnumerable.GetEnumerator() => this.paths.GetEnumerator();
 
         #endregion
 
+        /// <summary>TODO The get surf dir.</summary>
+        /// <param name="tD">TODO The t d.</param>
+        /// <returns>The <see cref="SurfToolDir"/>.</returns>
         public static SurfToolDir getSurfDir(int tD)
         {
             switch (tD)
@@ -461,8 +563,10 @@
     }
 
     // Grasshopper Type Wrapper
+    /// <summary>TODO The g h_ surface path.</summary>
     public sealed class GH_SurfacePath : CAMel_Goo<SurfacePath>, IGH_PreviewData
     {
+        /// <inheritdoc />
         public BoundingBox ClippingBox
         {
             get
@@ -474,20 +578,23 @@
             }
         }
 
-        // Default Constructor
+        /// <summary>Initializes a new instance of the <see cref="GH_SurfacePath"/> class.</summary>
         [UsedImplicitly]
         public GH_SurfacePath() => this.Value = null;
 
-        // From Unwrapped
+        /// <summary>Initializes a new instance of the <see cref="GH_SurfacePath"/> class.</summary>
+        /// <param name="sP">TODO The s p.</param>
         public GH_SurfacePath([CanBeNull] SurfacePath sP) => this.Value = sP;
 
-        // Copy Constructor (just reference as SurfacePath is Immutable)
+        /// <summary>Initializes a new instance of the <see cref="GH_SurfacePath"/> class.</summary>
+        /// <param name="sP">TODO The s p.</param>
         public GH_SurfacePath([CanBeNull] GH_SurfacePath sP) => this.Value = sP?.Value;
 
-        // Duplicate
+        /// <inheritdoc />
         [NotNull]
         public override IGH_Goo Duplicate() => new GH_SurfacePath(this);
 
+        /// <inheritdoc />
         public override bool CastTo<TQ>(ref TQ target)
         {
             if (this.Value == null) { return false; }
@@ -512,6 +619,7 @@
             return false;
         }
 
+        /// <inheritdoc />
         public override bool CastFrom([CanBeNull] object source)
         {
             switch (source) {
@@ -525,35 +633,42 @@
             }
         }
 
+        /// <inheritdoc />
         public void DrawViewportWires([CanBeNull] GH_PreviewWireArgs args)
         {
             if (this.Value == null || args?.Pipeline == null) { return; }
             foreach (Curve l in this.Value) { args.Pipeline.DrawCurve(l, args.Color); }
         }
 
+        /// <inheritdoc />
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
+    /// <summary>TODO The g h_ surface path par.</summary>
     public class GH_SurfacePathPar : GH_Param<GH_SurfacePath>, IGH_PreviewObject
     {
+        /// <summary>Initializes a new instance of the <see cref="GH_SurfacePathPar"/> class.</summary>
         public GH_SurfacePathPar()
             : base(
                 "Surfacing Path", "SurfacePath",
                 "Contains the information to project a path onto a surface",
                 "CAMel", "  Params", GH_ParamAccess.item) { }
+        /// <inheritdoc />
         public override Guid ComponentGuid => new Guid("FCB36AFC-195B-4DFA-825B-A986875A3A86");
 
+        /// <inheritdoc />
         public bool Hidden { get; set; }
+        /// <inheritdoc />
         public bool IsPreviewCapable => true;
-        public BoundingBox ClippingBox => Preview_ComputeClippingBox();
-        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => Preview_DrawWires(args);
-        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => Preview_DrawMeshes(args);
+        /// <inheritdoc />
+        public BoundingBox ClippingBox => this.Preview_ComputeClippingBox();
+        /// <inheritdoc />
+        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => this.Preview_DrawWires(args);
+        /// <inheritdoc />
+        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => this.Preview_DrawMeshes(args);
 
         /// <inheritdoc />
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.surfacepath;
     }

@@ -28,7 +28,8 @@
             : base(
                 "Trace hand drawn path", "Trace",
                 "Trace a path from a photo of a hand drawn image",
-                "CAMel", " Photos") => this.times = new List<string>();
+                "CAMel", " Photos")
+            => this.times = new List<string>();
 
         /// <inheritdoc />
         /// <summary>
@@ -152,20 +153,20 @@
         {
             base.AppendAdditionalComponentMenuItems(menu);
 
-            //Menu_AppendNumber(menu, "Mega Pixels", this.MaxFile, "Largest file to process (in megapixels)");
+            // Menu_AppendNumber(menu, "Mega Pixels", this.MaxFile, "Largest file to process (in megapixels)");
             Menu_AppendSeparator(menu);
 
             Menu_AppendItem(menu, "Tracing Settings");
 
-            //Menu_AppendNumber(menu, "Jump", this.Jump,"Distance to connect edges (in pixels)");
-            //Menu_AppendNumber(menu, "Blur", this.Blur,"Radius of blur (in pixels)");
+            // Menu_AppendNumber(menu, "Jump", this.Jump,"Distance to connect edges (in pixels)");
+            // Menu_AppendNumber(menu, "Blur", this.Blur,"Radius of blur (in pixels)");
             Menu_AppendSeparator(menu);
-            Menu_AppendItem(menu, "Debug", debugClicked, true, this.debug);
+            Menu_AppendItem(menu, "Debug", this.debugClicked, true, this.debug);
 
             if (!this.debug) { return; }
 
             foreach (string s in this.times) { Menu_AppendItem(menu, s); }
-            Menu_AppendItem(menu, "Copy Data", copyDataClicked);
+            Menu_AppendItem(menu, "Copy Data", this.copyDataClicked);
         }
 
         // ReSharper disable once UnusedMember.Local
@@ -190,7 +191,7 @@
                     Value = val,
                     Name = name
                 };
-            uD.ValueChanged += traceSettings;
+            uD.ValueChanged += this.traceSettings;
             uD.Width = 50;
 
             Label l = new Label
@@ -230,9 +231,9 @@
         /// <param name="e">TODO The e.</param>
         private void debugClicked([NotNull] object sender, [CanBeNull] EventArgs e)
         {
-            RecordUndoEvent("Trace_Debug");
+            this.RecordUndoEvent("Trace_Debug");
             this.debug = !this.debug;
-            ExpireSolution(true);
+            this.ExpireSolution(true);
         }
 
         /// <summary>TODO The trace settings.</summary>
@@ -241,7 +242,7 @@
         private void traceSettings([NotNull] object sender, [CanBeNull] EventArgs e)
         {
             NumericUpDown ud = (NumericUpDown)sender;
-            RecordUndoEvent(ud.Name);
+            this.RecordUndoEvent(ud.Name);
             switch (ud.Name)
             {
                 case "Blur":

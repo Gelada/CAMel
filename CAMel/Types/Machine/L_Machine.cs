@@ -508,7 +508,7 @@
                                 tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                 tempTP.Add(tPt);
                             }
-                            else //check length of drop
+                            else // check length of drop
                             {
                                 if (Math.Abs(dropLength) < CAMel_Goo.Tolerance) // If we are at the start of a possible drop Add the length until we hit the end or go over
                                 {
@@ -543,7 +543,7 @@
                                     height = finishDepth;
                                     tPt.pt = m.toolDir(tPt) * height + tPt.pt;
                                     tempTP.Add(tPt);
-                                    j = k - 1; //set j to k-1 so it deals with the k point next
+                                    j = k - 1; // set j to k-1 so it deals with the k point next
                                 }
                                 else // after all that we still need to add the point
                                 {
@@ -578,7 +578,7 @@
             double normAng = Math.PI / 2.0;
 
             // take into account the orientation of the path
-            //if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
+            // if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
             // now we have the internal normal, flip if we want external.
             if (leadCurve >= 0) { normAng = -normAng; }
 
@@ -889,7 +889,7 @@
                 iTp.name += " insert";
                 iTp.label = PathLabel.Insert;
 
-                //note we do this backwards adding points to the start of the path.
+                // note we do this backwards adding points to the start of the path.
                 if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
                 if (irActivate != 0 && activate != string.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
 
@@ -924,7 +924,7 @@
                         tempTPt.pt = inter.point;
                         tempTPt.feed = 0; // we can use a rapid move
                         iTp.Insert(0, tempTPt);
-                    } //  otherwise nothing needs to be added as we do not interact with material
+                    } // otherwise nothing needs to be added as we do not interact with material
                 }
 
                 if (iTp.Count > 0) { irTps.Insert(0, iTp); }
@@ -937,7 +937,7 @@
             rTp.name += " retract";
             rTp.label = PathLabel.Retract;
 
-            //note we do this backwards adding points to the start of the path.
+            // note we do this backwards adding points to the start of the path.
             if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
             if (irActivate != 0 && activate != string.Empty) { rTp.preCode = activate + "\n" + newTP.preCode; }
 
@@ -1201,11 +1201,10 @@
         // positive if in material
         // -1 if one of the paths has 0 points
         /// <summary>TODO The jump check.</summary>
-        /// <param name="m">TODO The m.</param>
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="double"/>.</returns>
-        internal static double jumpCheck([NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
+        internal static double jumpCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }
@@ -1248,7 +1247,7 @@
         internal static void jumpCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
             // check if there is a problem moving between paths
-            double length = jumpCheck(m, fP, tP);
+            double length = jumpCheck(fP, tP);
             if (length > fP.matTool?.pathJump)
             {
                 co.addError(

@@ -118,7 +118,7 @@
             }
             else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists of directions and speeds/feeds must be a single item or the same length as the list of points.");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists of directions and speeds/feeds must be a single item or the same length as the list of points.");
             }
 
             da.SetData(0, new GH_ToolPath(tP));

@@ -84,7 +84,7 @@
             try { procMI = mI.processAdditions(); }
             catch (InvalidOperationException e)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
                 da.SetData(2, e.Message);
                 return;
             }
@@ -98,7 +98,7 @@
             if (saveCode.hasErrors(ignore))
             {
                 string error = saveCode.getErrors(ignore);
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error);
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error);
                 da.SetData(2, error + warn);
                 return;
             }
@@ -109,7 +109,7 @@
             if (saveCode.hasWarnings(ignore))
             {
                 warn = saveCode.getWarnings(ignore);
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warn);
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warn);
                 da.SetData(2, warn);
             }
 
@@ -131,7 +131,7 @@
                 FileInfo file = new FileInfo(fPath);
                 if (file.Exists) { this.bytesWritten += file.Length; }
             }
-            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No path given. "); }
+            else { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No path given. "); }
         }
 
         /// <inheritdoc />

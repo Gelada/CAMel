@@ -95,7 +95,7 @@
 
             if (eS == EndShape.Error)
             {
-                AddRuntimeMessage(
+                this.AddRuntimeMessage(
                     GH_RuntimeMessageLevel.Warning,
                     "End Shape not recognised. Options are \"Ball\", \"Square\", \"V\" use \"Other\" to avoid warning.");
                 eS = EndShape.Other;

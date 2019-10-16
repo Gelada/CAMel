@@ -57,7 +57,7 @@
 
             if (!da.GetData(0, ref tP))
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Only objects containing ToolPoints can be converted.");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Only objects containing ToolPoints can be converted.");
                 return;
             }
 

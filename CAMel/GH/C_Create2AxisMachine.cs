@@ -1,13 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="C_Create2AxisMachine.cs" company="">
-//   
-// </copyright>
-// <summary>
-//   Defines the C_Create2AxisMachine type.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
-namespace CAMel.GH
+﻿namespace CAMel.GH
 {
     using System;
     using System.Collections.Generic;

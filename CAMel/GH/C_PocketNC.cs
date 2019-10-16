@@ -80,11 +80,11 @@
             if (!da.GetData(0, ref v)) { return; }
             if (v != 0 && v != 1 && v != 2)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Only two version of the PocketNC known. Use 0 for old spindle.");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Only two version of the PocketNC known. Use 0 for old spindle.");
                 return;
             }
 
-            if (v != 2) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "All testing done on a V2 machine, please be careful."); }
+            if (v != 2) { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "All testing done on a V2 machine, please be careful."); }
 
             if (!da.GetData(1, ref bT)) { return; }
             if (!da.GetData(2, ref bMax)) { return; }

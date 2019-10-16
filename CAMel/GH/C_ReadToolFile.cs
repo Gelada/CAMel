@@ -24,22 +24,22 @@
         /// <summary>Initializes a new instance of the <see cref="MaterialToolMap"/> class.</summary>
         public MaterialToolMap()
         {
-            Map(m => m.matName)?.Name("Material");
-            Map(m => m.toolName)?.Name("Tool");
-            Map(m => m.toolNumber)?.Name("Tool Number");
-            Map(m => m.toolWidth)?.Name("Tool Width");
-            Map(m => m.insertWidth)?.Name("Insert Width");
-            Map(m => m.toolLength)?.Name("Length");
-            Map(m => m.speed)?.Name("Speed");
-            Map(m => m.feedCut)?.Name("Feed Rate");
-            Map(m => m.feedPlunge)?.Name("Plunge Rate");
-            Map(m => m.cutDepth)?.Name("Cut Depth");
-            Map(m => m.finishDepth)?.Name("Finish Depth");
-            Map(m => m.tolerance)?.Name("Tolerance");
-            Map(m => m.minStep)?.Name("Min Step");
-            Map(m => m.shape)?.Name("Shape");
-            Map(m => m.sideLoad)?.Name("Side Load");
-            Map(m => m.pathJump)?.Name("PathJump");
+            this.Map(m => m.matName)?.Name("Material");
+            this.Map(m => m.toolName)?.Name("Tool");
+            this.Map(m => m.toolNumber)?.Name("Tool Number");
+            this.Map(m => m.toolWidth)?.Name("Tool Width");
+            this.Map(m => m.insertWidth)?.Name("Insert Width");
+            this.Map(m => m.toolLength)?.Name("Length");
+            this.Map(m => m.speed)?.Name("Speed");
+            this.Map(m => m.feedCut)?.Name("Feed Rate");
+            this.Map(m => m.feedPlunge)?.Name("Plunge Rate");
+            this.Map(m => m.cutDepth)?.Name("Cut Depth");
+            this.Map(m => m.finishDepth)?.Name("Finish Depth");
+            this.Map(m => m.tolerance)?.Name("Tolerance");
+            this.Map(m => m.minStep)?.Name("Min Step");
+            this.Map(m => m.shape)?.Name("Shape");
+            this.Map(m => m.sideLoad)?.Name("Side Load");
+            this.Map(m => m.pathJump)?.Name("PathJump");
         }
     }
 

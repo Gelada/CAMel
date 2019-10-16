@@ -127,7 +127,7 @@
                 if (imT.toolName != toolName || imT.matName != matName) { continue; }
                 if (found)
                 {
-                    AddRuntimeMessage(
+                    this.AddRuntimeMessage(
                         GH_RuntimeMessageLevel.Warning,
                         "More than one material tool combination found, using first.");
                 }
@@ -151,7 +151,7 @@
                 { vlUpdate(source, ref tools); }
             }
 
-            if (!found) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No material tool combination found."); }
+            if (!found) { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No material tool combination found."); }
             else { da.SetData(0, new GH_MaterialTool(mT)); }
         }
 

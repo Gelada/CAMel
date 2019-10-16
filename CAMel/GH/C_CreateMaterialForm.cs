@@ -73,7 +73,7 @@
             }
             else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Box or a Cylinder. ");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Material Form can currently only work with a Box or a Cylinder. ");
             }
         }
 

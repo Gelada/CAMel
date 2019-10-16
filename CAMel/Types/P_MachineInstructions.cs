@@ -16,23 +16,40 @@
 
     // List of toolpaths forming a complete set of instructions
     // for the machine
+    /// <summary>TODO The machine instruction.</summary>
     public class MachineInstruction : IList<MachineOperation>, IToolPointContainer
     {
+        /// <summary>TODO The m os.</summary>
         [ItemNotNull, NotNull] private List<MachineOperation> mOs;
-        [PublicAPI, NotNull] public ToolPath startPath { get; set; }
-        [PublicAPI, NotNull] public ToolPath endPath { get; set; }
+        /// <summary>Gets or sets the start path.</summary>
+        [PublicAPI, NotNull]
+        public ToolPath startPath { get; set; }
+        /// <summary>Gets or sets the end path.</summary>
+        [PublicAPI, NotNull]
+        public ToolPath endPath { get; set; }
 
+        /// <inheritdoc />
         public string name { get; set; }
+        /// <inheritdoc />
         public string preCode { get; set; }
+        /// <inheritdoc />
         public string postCode { get; set; }
 
-        [PublicAPI, NotNull] public IMachine m { get; set; }
+        /// <summary>Gets or sets the m.</summary>
+        [PublicAPI, NotNull]
+        public IMachine m { get; set; }
 
+        /// <inheritdoc />
         public ToolPoint firstP => this.FirstOrDefault(a => a?.firstP != null)?.firstP;
+        /// <inheritdoc />
         public ToolPoint lastP => this.LastOrDefault(a => a?.lastP != null)?.lastP;
-        [PublicAPI] public void removeLastPoint() { this[this.Count - 1].removeLastPoint(); }
+        /// <summary>TODO The remove last point.</summary>
+        [PublicAPI]
+        public void removeLastPoint() { this[this.Count - 1].removeLastPoint(); }
 
         // Default Constructor
+        /// <summary>Initializes a new instance of the <see cref="MachineInstruction"/> class.</summary>
+        /// <param name="m">TODO The m.</param>
         public MachineInstruction([NotNull] IMachine m)
         {
             this.m = m;
@@ -45,6 +62,12 @@
         }
 
         // Everything but the pre and post codes
+        /// <summary>Initializes a new instance of the <see cref="MachineInstruction"/> class.</summary>
+        /// <param name="name">TODO The name.</param>
+        /// <param name="mach">TODO The mach.</param>
+        /// <param name="mOs">TODO The m os.</param>
+        /// <param name="startPath">TODO The start path.</param>
+        /// <param name="endPath">TODO The end path.</param>
         public MachineInstruction([NotNull] string name, [NotNull] IMachine mach, [CanBeNull] List<MachineOperation> mOs, [CanBeNull] ToolPath startPath = null, [CanBeNull] ToolPath endPath = null)
         {
             this.name = name;
@@ -57,6 +80,8 @@
         }
 
         // Copy Constructor
+        /// <summary>Initializes a new instance of the <see cref="MachineInstruction"/> class.</summary>
+        /// <param name="mI">TODO The m i.</param>
         private MachineInstruction([NotNull] MachineInstruction mI)
         {
             this.name = string.Copy(mI.name);
@@ -69,9 +94,15 @@
             foreach (MachineOperation mO in mI) { this.mOs.Add(mO?.deepClone()); }
         }
 
-        [NotNull] public MachineInstruction deepClone() => new MachineInstruction(this);
+        /// <summary>TODO The deep clone.</summary>
+        /// <returns>The <see cref="MachineInstruction"/>.</returns>
+        [NotNull]
+        public MachineInstruction deepClone() => new MachineInstruction(this);
 
         // Copy basic information but add new paths
+        /// <summary>TODO The deep clone with new paths.</summary>
+        /// <param name="newMOs">TODO The new m os.</param>
+        /// <returns>The <see cref="MachineInstruction"/>.</returns>
         [NotNull, PublicAPI]
         public MachineInstruction deepCloneWithNewPaths([NotNull] List<MachineOperation> newMOs)
         {
@@ -88,10 +119,14 @@
             return outInst;
         }
 
+        /// <inheritdoc />
         public string TypeDescription => "Complete set of operations for a run of the machine.";
 
+        /// <inheritdoc />
         public string TypeName => "MachineInstruction";
 
+        /// <summary>TODO The to string.</summary>
+        /// <returns>The <see cref="T:System.String" />.</returns>
         public override string ToString()
         {
             int totalTP = this.SelectMany(mO => mO).Sum(tP => tP?.Count ?? 0);
@@ -103,14 +138,16 @@
         // Take the collection of paths and hints and validate it into
         // a workable system, including adding MaterialTool and MaterialForm information
         // throughout
+        /// <summary>TODO The process additions.</summary>
+        /// <returns>The <see cref="MachineInstruction"/>.</returns>
         [NotNull]
         public MachineInstruction processAdditions()
         {
-            MachineInstruction valid = deepCloneWithNewPaths(new List<MachineOperation>());
+            MachineInstruction valid = this.deepCloneWithNewPaths(new List<MachineOperation>());
 
             // Mix this.startPath and this.validStart as required to
             // give a valid startPath.
-            ToolPath validTP = validStart();
+            ToolPath validTP = this.validStart();
             valid.startPath.validate(validTP, this.m);
             validTP = valid.startPath;
 
@@ -154,6 +191,8 @@
             return valid;
         }
 
+        /// <summary>TODO The write code.</summary>
+        /// <returns>The <see cref="CodeInfo"/>.</returns>
         [NotNull]
         public CodeInfo writeCode()
         {
@@ -177,6 +216,9 @@
         }
 
         // Hunt through the ToolPaths until we find all we need
+        /// <summary>TODO The valid start.</summary>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
+        /// <exception cref="InvalidOperationException"></exception>
         [NotNull]
         private ToolPath validStart()
         {
@@ -217,6 +259,7 @@
 
         #region Point extraction and previews
 
+        /// <inheritdoc />
         public ToolPath getSinglePath()
         {
             ToolPath oP = this[0].getSinglePath();
@@ -225,6 +268,11 @@
         }
 
         // Get the list of tooltip locations
+        /// <summary>TODO The get points.</summary>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull, PublicAPI]
         public List<List<List<Point3d>>> getPoints()
         {
@@ -232,6 +280,11 @@
         }
 
         // Get the list of tool directions
+        /// <summary>TODO The get dirs.</summary>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull, PublicAPI]
         public List<List<List<Vector3d>>> getDirs()
         {
@@ -239,14 +292,21 @@
         }
 
         // Create a path with the points
+        /// <summary>TODO The get points and dirs.</summary>
+        /// <param name="dirs">TODO The dirs.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
         [NotNull, PublicAPI]
         public List<List<List<Point3d>>> getPointsAndDirs([NotNull] out List<List<List<Vector3d>>> dirs)
         {
-            dirs = getDirs();
-            return getPoints();
+            dirs = this.getDirs();
+            return this.getPoints();
         }
 
         // Bounding Box for previews
+        /// <inheritdoc />
         public BoundingBox getBoundingBox()
         {
             BoundingBox bb = BoundingBox.Unset;
@@ -256,9 +316,14 @@
         }
 
         // Create single polyline
-        [NotNull] public PolylineCurve getLine() => getSinglePath().getLine();
+        /// <summary>TODO The get line.</summary>
+        /// <returns>The <see cref="PolylineCurve"/>.</returns>
+        [NotNull]
+        public PolylineCurve getLine() => this.getSinglePath().getLine();
 
         // Create polylines
+        /// <summary>TODO The get lines.</summary>
+        /// <returns>The <see cref="IEnumerable"/>.</returns>
         [NotNull]
         public IEnumerable<PolylineCurve> getLines()
         {
@@ -268,6 +333,8 @@
         }
 
         // Lines for each toolpoint
+        /// <summary>TODO The tool lines.</summary>
+        /// <returns>The <see cref="IEnumerable"/>.</returns>
         [NotNull]
         public IEnumerable<Line> toolLines()
         {
@@ -280,49 +347,76 @@
 
         #region List Functions 
 
+        /// <inheritdoc />
         public int Count => this.mOs.Count;
+        /// <inheritdoc />
         public bool IsReadOnly => ((IList<MachineOperation>)this.mOs).IsReadOnly;
 
-        [NotNull] public MachineOperation this[int index] { get => this.mOs[index]; set => this.mOs[index] = value; }
+        /// <inheritdoc />
+        [NotNull]
+        public MachineOperation this[int index] { get => this.mOs[index]; set => this.mOs[index] = value; }
 
+        /// <inheritdoc />
         public int IndexOf(MachineOperation item) => this.mOs.IndexOf(item);
+        /// <inheritdoc />
         public void Insert(int index, MachineOperation item)
         {
             if (item != null) { this.mOs.Insert(index, item); }
         }
 
+        /// <inheritdoc />
         public void RemoveAt(int index) => this.mOs.RemoveAt(index);
+        /// <inheritdoc />
         public void Add(MachineOperation item)
         {
             if (item != null) { this.mOs.Add(item); }
         }
 
-        [PublicAPI] public void AddRange([NotNull] IEnumerable<MachineOperation> items) => this.mOs.AddRange(items.Where(x => x != null));
+        /// <summary>TODO The add range.</summary>
+        /// <param name="items">TODO The items.</param>
+        [PublicAPI]
+        public void AddRange([NotNull] IEnumerable<MachineOperation> items) => this.mOs.AddRange(items.Where(x => x != null));
+        /// <inheritdoc />
         public void Clear() => this.mOs.Clear();
+        /// <inheritdoc />
         public bool Contains(MachineOperation item) => this.mOs.Contains(item);
+        /// <inheritdoc />
         public void CopyTo(MachineOperation[] array, int arrayIndex) => this.mOs.CopyTo(array, arrayIndex);
+        /// <inheritdoc />
         public bool Remove(MachineOperation item) => this.mOs.Remove(item);
+        /// <inheritdoc />
         public IEnumerator<MachineOperation> GetEnumerator() => this.mOs.GetEnumerator();
+        /// <inheritdoc />
         IEnumerator IEnumerable.GetEnumerator() => this.mOs.GetEnumerator();
 
         #endregion
     }
 
     // Grasshopper Type Wrapper
+    /// <summary>TODO The g h_ machine instruction.</summary>
     public sealed class GH_MachineInstruction : CAMel_Goo<MachineInstruction>, IGH_PreviewData
     {
         // Default Constructor;
-        [UsedImplicitly] public GH_MachineInstruction() => this.Value = null;
+        /// <summary>Initializes a new instance of the <see cref="GH_MachineInstruction"/> class.</summary>
+        [UsedImplicitly]
+        public GH_MachineInstruction() => this.Value = null;
 
         // Construct from value alone
+        /// <summary>Initializes a new instance of the <see cref="GH_MachineInstruction"/> class.</summary>
+        /// <param name="mI">TODO The m i.</param>
         public GH_MachineInstruction([CanBeNull] MachineInstruction mI) => this.Value = mI;
 
         // Copy Constructor.
+        /// <summary>Initializes a new instance of the <see cref="GH_MachineInstruction"/> class.</summary>
+        /// <param name="mI">TODO The m i.</param>
         public GH_MachineInstruction([CanBeNull] GH_MachineInstruction mI) => this.Value = mI?.Value?.deepClone();
 
         // Duplicate
-        [NotNull] public override IGH_Goo Duplicate() => new GH_MachineInstruction(this);
+        /// <inheritdoc />
+        [NotNull]
+        public override IGH_Goo Duplicate() => new GH_MachineInstruction(this);
 
+        /// <inheritdoc />
         public override bool CastTo<T>(ref T target)
         {
             if (this.Value == null) { return false; }
@@ -376,6 +470,7 @@
             return false;
         }
 
+        /// <inheritdoc />
         public override bool CastFrom([CanBeNull] object source)
         {
             switch (source) {
@@ -389,8 +484,10 @@
             }
         }
 
+        /// <inheritdoc />
         public BoundingBox ClippingBox => this.Value?.getBoundingBox() ?? BoundingBox.Unset;
 
+        /// <inheritdoc />
         public void DrawViewportWires([CanBeNull] GH_PreviewWireArgs args)
         {
             if (this.Value == null || args?.Pipeline == null) { return; }
@@ -402,26 +499,32 @@
             args.Pipeline.DrawArrows(this.Value.toolLines(), args.Color);
         }
 
+        /// <inheritdoc />
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
     // Grasshopper Parameter Wrapper
+    /// <summary>TODO The g h_ machine instruction par.</summary>
     public class GH_MachineInstructionPar : GH_Param<GH_MachineInstruction>, IGH_PreviewObject
     {
+        /// <summary>Initializes a new instance of the <see cref="GH_MachineInstructionPar"/> class.</summary>
         public GH_MachineInstructionPar()
             : base("Instructions", "MachInst", "Contains a collection of Machine Instructions", "CAMel", "  Params", GH_ParamAccess.item) { }
+        /// <inheritdoc />
         public override Guid ComponentGuid => new Guid("7ded80e7-6a29-4534-a848-f9d1b897098f");
 
+        /// <inheritdoc />
         public bool Hidden { get; set; }
+        /// <inheritdoc />
         public bool IsPreviewCapable => true;
-        public BoundingBox ClippingBox => Preview_ComputeClippingBox();
-        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => Preview_DrawWires(args);
-        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => Preview_DrawMeshes(args);
+        /// <inheritdoc />
+        public BoundingBox ClippingBox => this.Preview_ComputeClippingBox();
+        /// <inheritdoc />
+        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => this.Preview_DrawWires(args);
+        /// <inheritdoc />
+        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => this.Preview_DrawMeshes(args);
 
         /// <inheritdoc />
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.machineinstructions;
     }

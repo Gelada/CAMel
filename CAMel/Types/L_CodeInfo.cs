@@ -1,13 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="L_CodeInfo.cs" company="">
-//   
-// </copyright>
-// <summary>
-//   Defines the CodeInfo type.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
-namespace CAMel.Types
+﻿namespace CAMel.Types
 {
     using System;
     using System.Collections.Generic;
@@ -30,7 +21,7 @@ namespace CAMel.Types
     {
         /// <summary>TODO The code.</summary>
         [NotNull] private readonly StringBuilder code;
-        /// <summary>Stores the machine state. A data version of last written instruction to use between write calls</summary>
+        /// <summary>Gets the machine state. A data version of last written instruction to use between write calls</summary>
         [NotNull]
         public Dictionary<string, double> machineState { get; }
         /// <summary>Highest and lowest value for each coordinate.</summary>
@@ -91,7 +82,7 @@ namespace CAMel.Types
         /// <returns>The <see>
         ///         <cref>Dictionary</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         [NotNull, PublicAPI]
         public Dictionary<string, Interval> getRanges() => this.ranges;
 

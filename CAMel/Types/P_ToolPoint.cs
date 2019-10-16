@@ -22,32 +22,54 @@
     using GH_Plane = GH_IO.Types.GH_Plane;
 
     // One position of the machine
+    /// <summary>TODO The tool point.</summary>
     public class ToolPoint : IToolPointContainer
     {
-        public Plane tDir; // Tool position and Orientation
-        public Plane mDir; // Material position and Orientation
+        /// <summary>The Tool position and Orientation</summary>
+        private Plane tDir1;
 
+        /// <summary>Gets or sets the Tool position and Orientation</summary>
+        public Plane tDir { get => this.tDir1; set => this.tDir1 = value; }
+
+        /// <summary>Gets or sets the Material position and Orientation</summary>
+        public Plane mDir { get; set; } // Material position and Orientation
+
+        /// <summary>Gets or sets the pt.</summary>
         public Point3d pt // Tool Tip position
         {
             get => this.tDir.Origin;
-            set => this.tDir.Origin = value;
+            set => this.tDir1.Origin = value;
         }
 
+        /// <summary>Gets or sets the dir.</summary>
         public Vector3d dir // Tool Direction (away from position)
         {
             get => this.tDir.ZAxis;
             set => this.tDir = new Plane(this.pt, value);
         }
 
-        [NotNull] public ToolPoint firstP => this;
-        [NotNull] public ToolPoint lastP => this;
+        /// <inheritdoc />
+        [NotNull]
+        public ToolPoint firstP => this;
+        /// <inheritdoc />
+        [NotNull]
+        public ToolPoint lastP => this;
 
-        public double speed { get; set; } // Considered unset for negative values
-        public double feed { get; set; } // Considered unset for negative values
-        [NotNull] private List<string> error { get; }
-        [NotNull] private List<string> warning { get; }
+        /// <summary>Gets or sets the speed for the toolpoint. Considered unset for negative values.</summary>
+        public double speed { get; set; }
+        /// <summary>Gets or sets the feed for the toolpoint. Considered unset for negative values</summary>
+        public double feed { get; set; }
+        /// <summary>Gets the list of errors.</summary>
+        [NotNull]
+        private List<string> error { get; }
+        /// <summary>Gets the list of warnings.</summary>
+        [NotNull]
+        private List<string> warning { get; }
+        /// <inheritdoc />
         public string name { get; set; }
+        /// <inheritdoc />
         public string preCode { get; set; }
+        /// <inheritdoc />
         public string postCode { get; set; }
 
         // Adding anything here needs significant support:
@@ -56,6 +78,7 @@
         //  Add to Constructors
 
         // Default Constructor, set up at the origin with direction set to 0 vector.
+        /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
         public ToolPoint()
         {
             this.tDir = Plane.WorldXY;
@@ -70,6 +93,8 @@
         }
 
         // Just a point, set direction to Z vector.
+        /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
+        /// <param name="pt">TODO The pt.</param>
         public ToolPoint(Point3d pt)
         {
             this.tDir = Plane.WorldXY;
@@ -85,6 +110,9 @@
         }
 
         // Use point and direction
+        /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <param name="d">TODO The d.</param>
         public ToolPoint(Point3d pt, Vector3d d)
         {
             this.tDir = new Plane(pt, d);
@@ -99,6 +127,11 @@
         }
 
         // Use point direction and override speed and feed
+        /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <param name="d">TODO The d.</param>
+        /// <param name="speed">TODO The speed.</param>
+        /// <param name="feed">TODO The feed.</param>
         public ToolPoint(Point3d pt, Vector3d d, double speed, double feed)
         {
             this.tDir = new Plane(pt, d);
@@ -112,6 +145,13 @@
         }
 
         // Use point direction, override speed and feed and add extra Code
+        /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <param name="d">TODO The d.</param>
+        /// <param name="preCode">TODO The pre code.</param>
+        /// <param name="postCode">TODO The post code.</param>
+        /// <param name="speed">TODO The speed.</param>
+        /// <param name="feed">TODO The feed.</param>
         public ToolPoint(Point3d pt, Vector3d d, [CanBeNull] string preCode, [CanBeNull] string postCode, double speed, double feed)
         {
             this.tDir = new Plane(pt, d);
@@ -125,6 +165,8 @@
         }
 
         // Copy Constructor
+        /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
+        /// <param name="tP">TODO The t p.</param>
         private ToolPoint([NotNull] ToolPoint tP)
         {
             this.tDir = tP.tDir;
@@ -140,28 +182,40 @@
             foreach (string s in tP.warning) { this.warning.Add(string.Copy(s)); }
         }
 
+        /// <summary>Deep Clone the ToolPoint</summary>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         [NotNull]
         public ToolPoint deepClone() => new ToolPoint(this);
 
+        /// <summary>Add an error to the toolpoint. </summary>
+        /// <param name="err">Error to add.</param>
         public void addError([CanBeNull] string err)
         {
             if (err != null) { this.error.Add(err); }
         }
 
+        /// <summary>Add a warning to the toolpoint. </summary>
+        /// <param name="warn">Warning to add.</param>
         public void addWarning([CanBeNull] string warn)
         {
             if (warn != null) { this.warning.Add(warn); }
         }
 
+        /// <summary>TODO The write error and warnings.</summary>
+        /// <param name="co">TODO The co.</param>
         public void writeErrorAndWarnings([NotNull] ref CodeInfo co)
         {
             foreach (string err in this.error) { co.addError(err); }
             foreach (string warn in this.warning) { co.addWarning(warn); }
         }
 
+        /// <inheritdoc />
         public string TypeDescription => "Information about a position of the machine";
+        /// <inheritdoc />
         public string TypeName => "ToolPoint";
 
+        /// <summary>To String.</summary>
+        /// <returns>The <see cref="string"/>.</returns>
         public override string ToString()
         {
             string outP = this.name;
@@ -176,33 +230,46 @@
             return outP;
         }
 
+        /// <summary>Length of lines for toolpoint preview. </summary>
         private const double PreviewLength = .5;
+        /// <summary>A line to represent the toolpoint position and direction. </summary>
+        /// <returns>The <see cref="Line"/>.</returns>
         internal Line toolLine() => new Line(this.pt, this.pt + this.dir * PreviewLength);
+        /// <inheritdoc />
         public ToolPath getSinglePath() => new ToolPath { this };
 
+        /// <inheritdoc />
         public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * PreviewLength });
     }
 
     // Grasshopper Type Wrapper
+    /// <summary>TODO The g h_ tool point.</summary>
     public sealed class GH_ToolPoint : CAMel_Goo<ToolPoint>, IGH_PreviewData
     {
         // Default Constructor, set up at the origin with direction set to 0 vector.
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPoint"/> class.</summary>
         [UsedImplicitly]
         public GH_ToolPoint() => this.Value = new ToolPoint();
 
         // Create from unwrapped version
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPoint"/> class.</summary>
+        /// <param name="tP">TODO The t p.</param>
         public GH_ToolPoint([CanBeNull] ToolPoint tP) => this.Value = tP?.deepClone();
 
         // Copy Constructor
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPoint"/> class.</summary>
+        /// <param name="tP">TODO The t p.</param>
         public GH_ToolPoint([CanBeNull] GH_ToolPoint tP) => this.Value = tP?.Value?.deepClone();
 
-        // Duplicate
+        /// <inheritdoc />
         [NotNull]
         public override IGH_Goo Duplicate() => new GH_ToolPoint(this);
 
+        /// <inheritdoc />
         [NotNull]
         public override IGH_GooProxy EmitProxy() => new GH_ToolPointProxy(this);
 
+        /// <inheritdoc />
         public override bool Write([CanBeNull] GH_IWriter writer)
         {
             if (this.Value == null || writer == null) { return base.Write(writer); }
@@ -218,7 +285,7 @@
             return base.Write(writer);
         }
 
-        // Deserialize this instance from a Grasshopper reader object.
+        /// <inheritdoc />
         public override bool Read([CanBeNull] GH_IReader reader)
         {
             if (reader == null) { return false; }
@@ -264,6 +331,7 @@
             }
         }
 
+        /// <inheritdoc />
         public override bool CastTo<T>(ref T target)
         {
             if (this.Value == null) { return false; }
@@ -305,6 +373,7 @@
             return false;
         }
 
+        /// <inheritdoc />
         public override bool CastFrom([CanBeNull] object source)
         {
             switch (source) {
@@ -320,8 +389,10 @@
             return true;
         }
 
+        /// <inheritdoc />
         public BoundingBox ClippingBox => this.Value?.toolLine().BoundingBox ?? BoundingBox.Unset;
 
+        /// <inheritdoc />
         public void DrawViewportWires([CanBeNull] GH_PreviewWireArgs args)
         {
             if (this.Value == null || args?.Pipeline == null) { return; }
@@ -329,32 +400,39 @@
             args.Pipeline.DrawArrow(this.Value.toolLine(), args.Color);
         }
 
+        /// <inheritdoc />
         public void DrawViewportMeshes([CanBeNull] GH_PreviewMeshArgs args) { }
     }
 
-    // Grasshopper Parameter Wrapper
+    /// <summary>Grasshopper Parameter Wrapper for a ToolPoint. </summary>
     public class GH_ToolPointPar : GH_PersistentParam<GH_ToolPoint>, IGH_PreviewObject
     {
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPointPar"/> class.</summary>
         public GH_ToolPointPar()
             : base(
                 "ToolPoint", "ToolPt",
                 "Contains a collection of Tool Points",
                 "CAMel", "  Params") { }
+        /// <inheritdoc />
         public override Guid ComponentGuid => new Guid("0bbed7c1-88a9-4d61-b7cb-e0dfe82b1b86");
 
+        /// <inheritdoc />
         public bool Hidden { get; set; }
+        /// <inheritdoc />
         public bool IsPreviewCapable => true;
-        public BoundingBox ClippingBox => Preview_ComputeClippingBox();
-        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => Preview_DrawWires(args);
-        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => Preview_DrawMeshes(args);
+        /// <inheritdoc />
+        public BoundingBox ClippingBox => this.Preview_ComputeClippingBox();
+        /// <inheritdoc />
+        public void DrawViewportWires([CanBeNull] IGH_PreviewArgs args) => this.Preview_DrawWires(args);
 
         /// <inheritdoc />
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
+        public void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) => this.Preview_DrawMeshes(args);
+
+        /// <inheritdoc />
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpoint;
 
+        /// <inheritdoc />
         protected override GH_GetterResult Prompt_Singular([CanBeNull] ref GH_ToolPoint value)
         {
             bool notUsed = false;
@@ -364,6 +442,7 @@
             return GH_GetterResult.success;
         }
 
+        /// <inheritdoc />
         protected override GH_GetterResult Prompt_Plural([NotNull] ref List<GH_ToolPoint> values)
         {
             if (values == null) { values = new List<GH_ToolPoint>(); }
@@ -406,6 +485,10 @@
             }
         }
 
+        /// <summary>Create a toolPoint in Rhino. </summary>
+        /// <param name="multiple">Create multiple points/ </param>
+        /// <param name="useForRemainder">TODO The use for remainder.</param>
+        /// <returns>The <see cref="ToolPoint"/>.</returns>
         [CanBeNull]
         private static ToolPoint getToolPoint(bool multiple, ref bool useForRemainder)
         {
@@ -441,41 +524,55 @@
             }
         }
 
+        /// <summary>TODO The get tool dir.</summary>
         private class GetToolDir : GetPoint
         {
+            /// <summary>TODO The start.</summary>
             private readonly Point3d start;
+            /// <summary>TODO The dir.</summary>
             private Line dir;
+            /// <summary>TODO The use toggle.</summary>
             private readonly OptionToggle useToggle;
 
+            /// <summary>TODO The use for remainder.</summary>
             public bool useForRemainder => this.useToggle?.CurrentValue ?? false;
 
+            /// <summary>Initializes a new instance of the <see cref="T:CAMel.Types.GH_ToolPointPar.GetToolDir" /> class.</summary>
+            /// <param name="startP">TODO The start p.</param>
+            /// <param name="multiple">TODO The multiple.</param>
             public GetToolDir(Point3d startP, bool multiple)
             {
-                SetCommandPrompt("Tool Direction");
-                AcceptNothing(true);
+                this.SetCommandPrompt("Tool Direction");
+                this.AcceptNothing(true);
                 this.start = !startP.IsValid ? Point3d.Origin : startP;
-                SetBasePoint(startP, true);
+                this.SetBasePoint(startP, true);
                 if (multiple)
                 {
                     this.useToggle = new OptionToggle(false, "Once", "ForRemainder");
-                    AddOptionToggle("Use", ref this.useToggle);
+                    this.AddOptionToggle("Use", ref this.useToggle);
                 }
 
-                AddOption("X");
-                AddOption("Y");
-                AddOption("Z");
-                AddOption("-X");
-                AddOption("-Y");
-                AddOption("-Z");
-                MouseMove += moveMouse;
-                DynamicDraw += draw;
+                this.AddOption("X");
+                this.AddOption("Y");
+                this.AddOption("Z");
+                this.AddOption("-X");
+                this.AddOption("-Y");
+                this.AddOption("-Z");
+                this.MouseMove += this.moveMouse;
+                this.DynamicDraw += this.draw;
             }
 
+            /// <summary>TODO The move mouse.</summary>
+            /// <param name="sender">TODO The sender.</param>
+            /// <param name="e">TODO The e.</param>
             private void moveMouse([CanBeNull] object sender, [CanBeNull] GetPointMouseEventArgs e)
             {
                 if (e != null) { this.dir = new Line(this.start, e.Point); }
             }
 
+            /// <summary>TODO The draw.</summary>
+            /// <param name="sender">TODO The sender.</param>
+            /// <param name="e">TODO The e.</param>
             private void draw([CanBeNull] object sender, [CanBeNull] GetPointDrawEventArgs e)
             {
                 e?.Display?.DrawPoint(this.start, CentralSettings.PreviewPointStyle, 3, System.Drawing.Color.Black);
@@ -484,11 +581,16 @@
         }
     }
 
+    /// <summary>TODO The g h_ tool point proxy.</summary>
     public class GH_ToolPointProxy : GH_GooProxy<GH_ToolPoint>
     {
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPointProxy"/> class.</summary>
+        /// <param name="obj">TODO The obj.</param>
         public GH_ToolPointProxy([CanBeNull] GH_ToolPoint obj)
             : base(obj) { }
 
+        /// <summary>Gets or sets the name.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category(" General"), Description("Optional Name attached to point."), DisplayName(" Name"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string name
         {
@@ -501,6 +603,8 @@
             }
         }
 
+        /// <summary>Gets the pt.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category(" General"), Description("Position of tool tip."), DisplayName(" Point"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public GH_Point3d_Wrapper pt
         {
@@ -509,13 +613,17 @@
                 if (this.Owner == null) { throw new NullReferenceException(); }
                 if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
                 Point3d rPt = this.Owner.Value.pt;
-                GH_Point3d_Wrapper ghPoint3DWrapper = new GH_Point3d_Wrapper(ref rPt, pointChanged);
+                GH_Point3d_Wrapper ghPoint3DWrapper = new GH_Point3d_Wrapper(ref rPt, this.pointChanged);
                 if (this.Owner == null) { throw new NullReferenceException(); }
                 this.Owner.Value.pt = rPt;
                 return ghPoint3DWrapper;
             }
         }
 
+        /// <summary>TODO The point changed.</summary>
+        /// <param name="sender">TODO The sender.</param>
+        /// <param name="point">TODO The point.</param>
+        /// <exception cref="NullReferenceException"></exception>
         private void pointChanged([CanBeNull] GH_Point3d_Wrapper sender, Point3d point)
         {
             if (this.Owner == null) { throw new NullReferenceException(); }
@@ -523,6 +631,8 @@
             this.Owner.Value.pt = point;
         }
 
+        /// <summary>Gets the dir.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category(" General"), Description("Direction of tool (for rotary and 5-axis) (from tip down shaft)."), DisplayName("Direction"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public GH_Vector3d_Wrapper dir
         {
@@ -531,13 +641,17 @@
                 if (this.Owner == null) { throw new NullReferenceException(); }
                 if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
                 Vector3d rDir = this.Owner.Value.dir;
-                GH_Vector3d_Wrapper ghVector3DWrapper = new GH_Vector3d_Wrapper(ref rDir, dirChanged);
+                GH_Vector3d_Wrapper ghVector3DWrapper = new GH_Vector3d_Wrapper(ref rDir, this.dirChanged);
                 if (this.Owner == null) { throw new NullReferenceException(); }
                 this.Owner.Value.dir = rDir;
                 return ghVector3DWrapper;
             }
         }
 
+        /// <summary>TODO The dir changed.</summary>
+        /// <param name="sender">TODO The sender.</param>
+        /// <param name="rDir">TODO The r dir.</param>
+        /// <exception cref="NullReferenceException"></exception>
         private void dirChanged([CanBeNull] GH_Vector3d_Wrapper sender, Vector3d rDir)
         {
             if (this.Owner == null) { throw new NullReferenceException(); }
@@ -545,6 +659,8 @@
             this.Owner.Value.dir = rDir;
         }
 
+        /// <summary>Gets or sets the speed.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" Settings"), Description("Spindle rotation Speed (if machine needs it)."), DisplayName("Speed"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public double speed
         {
@@ -557,6 +673,8 @@
             }
         }
 
+        /// <summary>Gets or sets the feed.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" Settings"), Description("Feed Rate (if machine needs it)."), DisplayName("Feed"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public double feed
         {
@@ -569,6 +687,8 @@
             }
         }
 
+        /// <summary>Gets or sets the pre code.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category("Code"), Description("Extra Code to run before point"), DisplayName("preCode"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string preCode
         {
@@ -581,6 +701,8 @@
             }
         }
 
+        /// <summary>Gets or sets the post code.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category("Code"), Description("Extra Code to run after point"), DisplayName("postCode"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string postCode
         {

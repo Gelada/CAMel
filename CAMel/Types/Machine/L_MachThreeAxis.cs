@@ -188,7 +188,7 @@
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir) ? Utility.planeOffset(tP, dir) : Utility.localOffset(tP);
 
         /// <summary>TODO The insert retract.</summary>
@@ -196,14 +196,14 @@
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         public List<ToolPath> insertRetract(ToolPath tP) => Utility.insertRetract(tP);
         /// <summary>TODO The step down.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         /// <summary>TODO The three axis height offset.</summary>
         /// <param name="tP">TODO The t p.</param>
@@ -214,7 +214,7 @@
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
 
         /// <summary>TODO The interpolate.</summary>
@@ -294,8 +294,7 @@
                         fChange = true;
                         feed = tPt.feed;
                     }
-                    else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance
-                    ) // Default to the cut feed rate.
+                    else if (Math.Abs(feed - tP.matTool.feedCut) > CAMel_Goo.Tolerance) // Default to the cut feed rate.
                     {
                         fChange = true;
                         feed = tP.matTool.feedCut;
@@ -332,7 +331,7 @@
 
                 sChange = false;
 
-                if (tPt.name != string.Empty) { ptCode = ptCode + " " + comment(tPt.name); }
+                if (tPt.name != string.Empty) { ptCode = ptCode + " " + this.comment(tPt.name); }
 
                 ptCode = tPt.preCode + ptCode + tPt.postCode;
 
@@ -394,7 +393,7 @@
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="double"/>.</returns>
-        public double jumpCheck(ToolPath fP, ToolPath tP) => Utility.jumpCheck(this, fP, tP);
+        public double jumpCheck(ToolPath fP, ToolPath tP) => Utility.jumpCheck(fP, tP);
 
         /// <summary>TODO The jump check.</summary>
         /// <param name="co">TODO The co.</param>

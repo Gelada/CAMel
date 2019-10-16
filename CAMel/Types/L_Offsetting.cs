@@ -23,7 +23,7 @@
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         [NotNull]
         public static List<PolylineCurve> offset([NotNull] PolylineCurve p, double d)
         {

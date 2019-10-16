@@ -138,7 +138,7 @@
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         public List<ToolPath> offSet(ToolPath tP) =>
             tP.planarOffset(out Vector3d dir)
                 ? Utility.planeOffset(tP, dir)
@@ -155,7 +155,7 @@
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
         /// <summary>TODO The three axis height offset.</summary>
         /// <param name="tP">TODO The t p.</param>
@@ -166,7 +166,7 @@
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
-        ///     .</returns>
+        /// .</returns>
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
 
         /// <summary>TODO The interpolate.</summary>
@@ -407,7 +407,7 @@
 
                 sChange = false;
 
-                if (tPt.name != string.Empty) { ptCode = ptCode + " " + comment(tPt.name); }
+                if (tPt.name != string.Empty) { ptCode = ptCode + " " + this.comment(tPt.name); }
 
                 ptCode = tPt.preCode + ptCode + tPt.postCode;
 
@@ -434,6 +434,9 @@
             GCode.gcPathEnd(this, ref co, tP);
         }
 
+        /// <summary>TODO The write file start.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mI">TODO The m i.</param>
         public void writeFileStart(ref CodeInfo co, MachineInstruction mI)
         {
             // Set up Machine State
@@ -456,24 +459,49 @@
             GCode.gcInstStart(this, ref co, mI);
         }
 
+        /// <summary>TODO The write file end.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mI">TODO The m i.</param>
         public void writeFileEnd(ref CodeInfo co, MachineInstruction mI) => GCode.gcInstEnd(this, ref co, mI);
+        /// <summary>TODO The write op start.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mO">TODO The m o.</param>
         public void writeOpStart(ref CodeInfo co, MachineOperation mO) => GCode.gcOpStart(this, ref co, mO);
+        /// <summary>TODO The write op end.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="mO">TODO The m o.</param>
         public void writeOpEnd(ref CodeInfo co, MachineOperation mO) => GCode.gcOpEnd(this, ref co, mO);
+        /// <summary>TODO The tool change.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="toolNumber">TODO The tool number.</param>
         public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
-        public double jumpCheck(ToolPath fP, ToolPath tP) => Utility.jumpCheck(this, fP, tP);
+        /// <summary>TODO The jump check.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="double"/>.</returns>
+        public double jumpCheck(ToolPath fP, ToolPath tP) => Utility.jumpCheck(fP, tP);
+        /// <summary>TODO The jump check.</summary>
+        /// <param name="co">TODO The co.</param>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
         public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.jumpCheck(ref co, this, fP, tP);
 
         // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
         // hopefully at that point there is a better understanding of safe moves!
-        /// <inheritdoc />
+
+        /// <summary>TODO The transition.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
+        /// <exception cref="Exception"></exception>
         public ToolPath transition(ToolPath fP, ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.emptyPathException(); }
 
-            if (jumpCheck(fP, tP) > 0) { Exceptions.transitionException(); }
+            if (this.jumpCheck(fP, tP) > 0) { Exceptions.transitionException(); }
 
             // Safely move from one safe point to another.
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
@@ -502,7 +530,7 @@
             bool lng = false;
 
             // work out how far angle needs to move
-            double angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, false);
+            double angSpread = this.angDiff(fP.lastP, tP.firstP, fP.matTool, false);
 
             int steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
             if (steps == 0) { steps = 1; } // Need to add at least one point even if angSpread is 0
@@ -516,7 +544,7 @@
                 for (int j = 0; j < steps; j++)
                 {
                     double shift = (steps * i + j) / (double)(steps * (route.Count - 1));
-                    Vector3d mixDir = interpolate(fP.lastP, tP.firstP, fP.matTool, shift, lng).dir;
+                    Vector3d mixDir = this.interpolate(fP.lastP, tP.firstP, fP.matTool, shift, lng).dir;
 
                     ToolPoint newTP = new ToolPoint((j * route[i + 1] + (steps - j) * route[i]) / steps, mixDir, -1, 0);
                     if (fP.matForm.intersect(newTP, 0).thrDist > 0
@@ -526,7 +554,7 @@
                         {
                             // something has gone horribly wrong and
                             // both angle change directions will hit the material
-                            //break;
+                            // break;
                             throw new Exception(
                                 "Safe Route failed to find a safe path from the end of one toolpath to the next.");
                         }
@@ -535,7 +563,7 @@
                         lng = true;
                         i = 0;
                         j = 0;
-                        angSpread = angDiff(fP.lastP, tP.firstP, fP.matTool, true);
+                        angSpread = this.angDiff(fP.lastP, tP.firstP, fP.matTool, true);
                         steps = (int)Math.Ceiling(30 * angSpread / (Math.PI * route.Count));
                         move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                         move.name = "Transition";

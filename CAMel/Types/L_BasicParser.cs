@@ -15,7 +15,7 @@
 
         /// <summary>Gets the values.</summary>
         [NotNull]
-        public List<double> values { get; }
+        private List<double> values { get; }
 
         /// <summary>Initializes a new instance of the <see cref="BpCommand"/> class.</summary>
         /// <param name="comm">TODO The comm.</param>

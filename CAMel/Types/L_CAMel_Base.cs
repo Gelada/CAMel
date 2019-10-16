@@ -152,6 +152,7 @@
         /// <summary>TODO The to io.</summary>
         /// <param name="pt">TODO The pt.</param>
         /// <returns>The <see cref="GH_IO.Types.GH_Point3D"/>.</returns>
+        [UsedImplicitly]
         public static GH_IO.Types.GH_Point3D toIO(Point3d pt) =>
             new GH_IO.Types.GH_Point3D(pt.X, pt.Y, pt.Z);
         /// <summary>TODO The to io.</summary>

@@ -86,7 +86,7 @@
             CurveIntersections cI = Intersection.CurveSelf(c, 0.00000001);
             if (cI != null && cI.Count > 0)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Self-intersecting Curve");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Self-intersecting Curve");
                 return;
             }
 

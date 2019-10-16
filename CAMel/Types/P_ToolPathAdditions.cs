@@ -18,25 +18,32 @@
     using Rhino.Geometry;
 
     // Grasshopper Type Wrapper
+    /// <summary>TODO The g h_ tool path additions.</summary>
     public sealed class GH_ToolPathAdditions : CAMel_Goo<ToolPathAdditions>
     {
         // Default Constructor
         // TODO change back to replaceable, but remove replaceable flag when any value is changed.
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPathAdditions"/> class.</summary>
         [UsedImplicitly]
         public GH_ToolPathAdditions() => this.Value = new ToolPathAdditions();
 
         // Create from unwrapped version
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPathAdditions"/> class.</summary>
+        /// <param name="tP">TODO The t p.</param>
         public GH_ToolPathAdditions([CanBeNull] ToolPathAdditions tP) => this.Value = tP;
 
         // Copy Constructor
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPathAdditions"/> class.</summary>
+        /// <param name="tP">TODO The t p.</param>
         public GH_ToolPathAdditions([CanBeNull] GH_ToolPathAdditions tP) => this.Value = tP?.Value;
+        /// <inheritdoc />
         public override bool CastFrom([CanBeNull] object source)
         {
             switch (source)
             {
                 case null: return false;
 
-                //Cast from unwrapped TPA
+                // Cast from unwrapped TPA
                 case ToolPathAdditions tPa:
                     this.Value = tPa;
                     return true;
@@ -44,6 +51,7 @@
             }
         }
 
+        /// <inheritdoc />
         public override bool CastTo<T>(ref T target)
         {
             // ReSharper disable once InvertIf
@@ -57,14 +65,15 @@
             return false;
         }
 
-        // Duplicate
+        /// <inheritdoc />
         [CanBeNull]
         public override IGH_Goo Duplicate() => new GH_ToolPathAdditions(this);
 
+        /// <inheritdoc />
         [NotNull]
         public override IGH_GooProxy EmitProxy() => new GH_ToolPathAdditionsProxy(this);
 
-        // Deserialize this instance from a Grasshopper reader object.
+        /// <inheritdoc />
         public override bool Read([CanBeNull] GH_IReader reader)
         {
             if (reader == null) { return false; }
@@ -115,6 +124,7 @@
             }
         }
 
+        /// <inheritdoc />
         public override bool Write([CanBeNull] GH_IWriter writer)
         {
             if (this.Value == null || writer == null) { return base.Write(writer); }
@@ -139,45 +149,50 @@
         }
     }
 
-    // Grasshopper Parameter Wrapper
+    /// <summary>TODO The g h_ tool path additions par.</summary>
     public class GH_ToolPathAdditionsPar : GH_PersistentParam<GH_ToolPathAdditions>
     {
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPathAdditionsPar"/> class.</summary>
         public GH_ToolPathAdditionsPar()
             : base(
                 "Tool Path Additions", "ToolPathAdditions",
                 "Extra work that a ToolPath can do as it is processed for cutting.",
                 "CAMel", "  Params") { }
+
+        /// <inheritdoc />
         public override Guid ComponentGuid => new Guid("421A7CE5-4206-4628-964F-1A3810899556");
 
         /// <inheritdoc />
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         [CanBeNull]
         protected override System.Drawing.Bitmap Icon => Properties.Resources.toolpathadditions;
 
+        /// <inheritdoc />
         public override void AppendAdditionalMenuItems([CanBeNull] ToolStripDropDown menu)
         {
             // Do our own thing as we do not really implement
             // set 1 and set multiple.
-            Menu_AppendWireDisplay(menu);
-            Menu_AppendDisconnectWires(menu);
-            Menu_AppendPrincipalParameter(menu);
-            Menu_AppendReverseParameter(menu);
-            Menu_AppendFlattenParameter(menu);
-            Menu_AppendGraftParameter(menu);
-            Menu_AppendSimplifyParameter(menu);
+            this.Menu_AppendWireDisplay(menu);
+            this.Menu_AppendDisconnectWires(menu);
+            this.Menu_AppendPrincipalParameter(menu);
+            this.Menu_AppendReverseParameter(menu);
+            this.Menu_AppendFlattenParameter(menu);
+            this.Menu_AppendGraftParameter(menu);
+            this.Menu_AppendSimplifyParameter(menu);
             Menu_AppendSeparator(menu);
-            Menu_AppendManageCollection(menu);
+            this.Menu_AppendManageCollection(menu);
             Menu_AppendSeparator(menu);
-            Menu_AppendDestroyPersistent(menu);
-            Menu_AppendInternaliseData(menu);
-            Menu_AppendExtractParameter(menu);
+            this.Menu_AppendDestroyPersistent(menu);
+            this.Menu_AppendInternaliseData(menu);
+            this.Menu_AppendExtractParameter(menu);
         }
 
+        /// <inheritdoc />
         protected override GH_GetterResult Prompt_Plural(ref List<GH_ToolPathAdditions> values) => GH_GetterResult.success;
 
         // ReSharper disable once RedundantAssignment
+        /// <summary>TODO The prompt_ singular.</summary>
+        /// <param name="value">TODO The value.</param>
+        /// <returns>The <see cref="GH_GetterResult"/>.</returns>
         protected override GH_GetterResult Prompt_Singular([CanBeNull] ref GH_ToolPathAdditions value)
         {
             // Give a reasonable generic
@@ -186,11 +201,15 @@
         }
     }
 
+    /// <summary>TODO The g h_ tool path additions proxy.</summary>
     public class GH_ToolPathAdditionsProxy : GH_GooProxy<GH_ToolPathAdditions>
     {
+        /// <summary>Initializes a new instance of the <see cref="GH_ToolPathAdditionsProxy"/> class.</summary>
+        /// <param name="obj">TODO The obj.</param>
         public GH_ToolPathAdditionsProxy([CanBeNull] GH_ToolPathAdditions obj)
             : base(obj) { }
 
+        /// <summary>Gets or sets the activate.</summary>
         [Category(" General"),
          Description("Activate the tool, at the start of end of the path (0 off !0 on) or specify the quality of cutting (machine dependant)."),
          DisplayName(" Activate/Quality"), RefreshProperties(RefreshProperties.All),
@@ -208,6 +227,8 @@
             }
         }
 
+        /// <summary>Gets or sets a value indicating whether insert.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" General"),
          Description("Add an insert to the start of the toolpath to beging cutting. "),
          DisplayName(" Insert"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -224,6 +245,8 @@
             }
         }
 
+        /// <summary>Gets or sets the lead curve.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category(" General"),
          Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."),
          DisplayName("Lead Curvature"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -240,6 +263,8 @@
             }
         }
 
+        /// <summary>Gets or sets the machine options.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category(" General"),
          Description("Specific options for a machine, be careful might not be standard between machines."),
          DisplayName("Machine Options"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -256,6 +281,7 @@
             }
         }
 
+        /// <summary>Gets or sets the offset.</summary>
         [Category(" General"),
          Description("Offset, number or vector as x, y, z. Positive number offsets right going anticlockwise of XY plane. For vector, length gives the amount on right, going anticlockwise. "),
          DisplayName(" Offset"), RefreshProperties(RefreshProperties.All), UsedImplicitly, NotNull]
@@ -283,6 +309,8 @@
             }
         }
 
+        /// <summary>Gets or sets the onion.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category(" Step Down"),
          Description("Height above toolpath to cut the finish path, for onion skinning. Can be a comma separated list. "),
          DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -299,6 +327,8 @@
             }
         }
 
+        /// <summary>Gets or sets a value indicating whether retract.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" General"),
          Description("Add a retract to the end of the toolpath to finish cutting. "),
          DisplayName(" Retract"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -315,6 +345,8 @@
             }
         }
 
+        /// <summary>Gets or sets a value indicating whether sd drop end.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" Step Down"),
          Description("When stepping down drop the end of paths where roughing is complete"),
          DisplayName("Drop End"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -331,6 +363,8 @@
             }
         }
 
+        /// <summary>Gets or sets the sd drop middle.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" Step Down"),
          Description("When stepping down drop the middle of paths where roughing is complete, if longer than this. Set as negative for automatic value."),
          DisplayName("Drop Middle"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -347,6 +381,8 @@
             }
         }
 
+        /// <summary>Gets or sets a value indicating whether sd drop start.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" Step Down"),
          Description("When stepping down drop the start of paths where roughing is complete."),
          DisplayName("Drop Start"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -363,6 +399,8 @@
             }
         }
 
+        /// <summary>Gets or sets a value indicating whether stepdown.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" Step Down"),
          Description("Create a sequence of paths stepping down through the material."),
          DisplayName(" Step down"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -379,6 +417,8 @@
             }
         }
 
+        /// <summary>Gets or sets a value indicating whether tabbing.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" Tabbing"),
          Description("Add bumps to the cut (mainly useful for cutting 2d parts) NOT IMPLEMENTED"),
          DisplayName("Tabbing"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -395,6 +435,8 @@
             }
         }
 
+        /// <summary>Gets or sets a value indicating whether three axis height offset.</summary>
+        /// <exception cref="NullReferenceException"></exception>
         [Category(" General"),
          Description("Take account of tool width for 3axis cutting, ensuring the path is followed by the active cutting surface of the tool, not just the tip."),
          DisplayName("3Axis Height Offset"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
@@ -413,10 +455,14 @@
     }
 
     // Features we might add to the path
+    /// <summary>TODO The tool path additions.</summary>
     public class ToolPathAdditions : ICAMelBase
     {
+        /// <summary>TODO The replaceable.</summary>
         private bool replaceable;
+        /// <summary>TODO The m options.</summary>
         [NotNull] private BasicParser mOptions;
+        /// <summary>Initializes a new instance of the <see cref="ToolPathAdditions"/> class.</summary>
         public ToolPathAdditions()
         {
             this.replaceable = false;
@@ -442,6 +488,8 @@
         //  Add to replace
         //  Add serialization and deserialization
         //  Add to the proxy editor
+        /// <summary>Initializes a new instance of the <see cref="ToolPathAdditions"/> class.</summary>
+        /// <param name="tPa">TODO The t pa.</param>
         private ToolPathAdditions([NotNull] ToolPathAdditions tPa)
         {
             this.leadComm = tPa.leadComm;
@@ -461,6 +509,7 @@
             this.mOptions = tPa.mOptions;
         }
 
+        /// <summary>TODO The basic default.</summary>
         [NotNull]
         public static ToolPathAdditions basicDefault => new ToolPathAdditions
             {
@@ -480,6 +529,7 @@
                 machineOptions = string.Empty
             };
 
+        /// <summary>TODO The temp.</summary>
         [NotNull]
         public static ToolPathAdditions temp => new ToolPathAdditions
             {
@@ -499,6 +549,7 @@
                 machineOptions = string.Empty
             };
 
+        /// <summary>TODO The two axis default.</summary>
         [NotNull]
         public static ToolPathAdditions twoAxisDefault => new ToolPathAdditions
             {
@@ -518,7 +569,9 @@
                 machineOptions = string.Empty
             };
 
+        /// <summary>Gets or sets the activate.</summary>
         public int activate { get; set; }
+        /// <summary>TODO The any.</summary>
         public bool any =>
             this.insert ||
             this.retract ||
@@ -531,9 +584,13 @@
             this.onion.Count > 1 ||
             this.machineOptions != string.Empty;
 
+        /// <summary>Gets or sets a value indicating whether insert.</summary>
         public bool insert { get; set; }
-        [NotNull] public BpCommand leadComm { get; private set; }
+        /// <summary>Gets the lead comm.</summary>
+        [NotNull]
+        public BpCommand leadComm { get; private set; }
 
+        /// <summary>Gets or sets the lead curvature.</summary>
         [NotNull]
         public string leadCurvature // information to create leads
         {
@@ -541,6 +598,7 @@
             set => this.leadComm = new BpCommand(value);
         }
 
+        /// <summary>Gets or sets the machine options.</summary>
         [NotNull]
         public string machineOptions
         {
@@ -549,38 +607,54 @@
         }
 
         // Quality or activation information for the toolpath.
+        /// <summary>Gets or sets the offset.</summary>
         public Vector3d offset { get; set; }
 
+        /// <summary>Gets or sets the onion.</summary>
         [NotNull]
         public List<double> onion { get; set; }
 
+        /// <summary>Gets or sets a value indicating whether retract.</summary>
         public bool retract { get; set; }
+        /// <summary>Gets or sets a value indicating whether sd drop end.</summary>
         public bool sdDropEnd { get; set; }
 
+        /// <summary>Gets or sets the sd drop middle.</summary>
         public double sdDropMiddle { get; set; }
 
+        /// <summary>Gets or sets a value indicating whether sd drop start.</summary>
         public bool sdDropStart { get; set; }
 
+        /// <summary>TODO The sort onion.</summary>
         [NotNull]
         // ReSharper disable once ReturnTypeCanBeEnumerable.Global
         public IOrderedEnumerable<double> sortOnion => this.onion.OrderByDescending(d => d);
 
         // offset plane(normal to vector and amount on the right when turning clockwise.
+        /// <summary>Gets or sets a value indicating whether step down.</summary>
         public bool stepDown { get; set; }
+        /// <summary>Gets or sets a value indicating whether tabbing.</summary>
         public bool tabbing { get; set; }
 
         // How stepdown will deal with
         // points that have reached
         // the required depth (Middle is dropped if length greater than value);
         // thicknesses to leave before final cut.
+        /// <summary>Gets or sets a value indicating whether three axis height offset.</summary>
         public bool threeAxisHeightOffset { get; set; }
+        /// <inheritdoc />
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
 
+        /// <inheritdoc />
         public string TypeName => "ToolPathAdditions";
 
-        // add tabs if machine wants to.
+        /// <summary>TODO The deep clone.</summary>
+        /// <returns>The <see cref="ToolPathAdditions"/>.</returns>
         [NotNull]
         public ToolPathAdditions deepClone() => new ToolPathAdditions(this);
+
+        /// <summary>TODO The replace.</summary>
+        /// <param name="tPa">TODO The t pa.</param>
         public void replace([NotNull] ToolPathAdditions tPa)
         {
             if (!this.replaceable) { return; }
@@ -601,6 +675,8 @@
             this.machineOptions = tPa.machineOptions;
         }
 
+        /// <summary>TODO The to string.</summary>
+        /// <returns>The <see cref="string"/>.</returns>
         public override string ToString() => "Toolpath Additions";
     }
 }

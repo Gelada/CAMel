@@ -83,9 +83,9 @@
             MachineOperation mO = Operations.opIndex3Axis(c, dir, tPa, mT, mF, out int invalidCurves);
 
             if (invalidCurves > 1)
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + invalidCurves + " invalid curves (probably nulls) were ignored."); }
+            { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + invalidCurves + " invalid curves (probably nulls) were ignored."); }
             else if (invalidCurves > 0)
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored."); }
+            { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid curve (probably a null) was ignored."); }
 
             da.SetData(0, mO.Count > 0 ? new GH_MachineOperation(mO) : null);
         }

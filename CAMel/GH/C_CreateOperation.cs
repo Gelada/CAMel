@@ -65,13 +65,13 @@
             if (mOs.Count > 0)
             {
                 if (ignores > 1)
-                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores + " invalid elements (probably nulls) were ignored."); }
+                { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A total of " + ignores + " invalid elements (probably nulls) were ignored."); }
                 else if (ignores == 1)
-                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored."); }
+                { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "An invalid element (probably a null) was ignored."); }
             }
             else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations");
                 return;
             }
 

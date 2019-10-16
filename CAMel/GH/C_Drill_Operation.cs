@@ -73,7 +73,7 @@
             da.GetData(3, ref mF);
 
             if (Math.Abs(circ.Normal.Length) < CAMel_Goo.Tolerance)
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Cannot process a circle who's normal is given as the zero vector. Check for null inputs."); }
+            { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Cannot process a circle who's normal is given as the zero vector. Check for null inputs."); }
 
             MachineOperation mO = Operations.drillOperation(circ, peck, mT, mF);
 

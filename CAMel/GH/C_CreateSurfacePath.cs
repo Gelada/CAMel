@@ -80,7 +80,7 @@
             SurfToolDir sTD = SurfacePath.getSurfDir(tD);
             if (sTD == SurfToolDir.Error)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
                 return;
             }
 
@@ -106,7 +106,7 @@
                     sP = new SurfacePath(paths, mT, cen, sTD);
                     break;
                 default:
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter Pr can only have values 0,1 or 2");
+                    this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter Pr can only have values 0,1 or 2");
                     return;
             }
 
