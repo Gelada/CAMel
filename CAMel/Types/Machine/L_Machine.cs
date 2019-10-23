@@ -744,8 +744,11 @@
             // ReSharper disable once InvertIf
             if (tP.additions.activate != 0)
             {
-                if (activate != string.Empty) { irTps[0].preCode = activate + "\n" + newTP.preCode; }
-                if (deActivate != string.Empty) { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
+                if (activate != string.Empty && irTps[0] != null)
+                { irTps[0].preCode = activate + "\n" + newTP.preCode; }
+                if (deActivate != string.Empty && irTps[irTps.Count - 1] != null)
+                    // ReSharper disable once PossibleNullReferenceException
+                { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
             }
 
             return irTps;
@@ -839,8 +842,11 @@
             // ReSharper disable once InvertIf
             if (tP.additions.activate != 0)
             {
-                if (activate != string.Empty) { irTps[0].preCode = activate + "\n" + newTP.preCode; }
-                if (deActivate != string.Empty) { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
+                if (activate != string.Empty && irTps[0] != null)
+                { irTps[0].preCode = activate + "\n" + newTP.preCode; }
+                if (deActivate != string.Empty && irTps[irTps.Count - 1] != null)
+                    // ReSharper disable once PossibleNullReferenceException
+                { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
             }
 
             return irTps;
