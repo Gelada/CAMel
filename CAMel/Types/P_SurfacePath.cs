@@ -257,12 +257,13 @@
 
                 bool missed = false;
 
+                // ReSharper disable once AssignNullToNotNullAttribute
                 foreach (FirstIntersectResponse fIr in tP.Select(tPt => intersectInfo[tPt]))
                 {
                     if (fIr.hit)
                     {
                         // Check to see if a new path is needed.
-                        if (missed && tempTP.lastP != null)
+                        if (missed && tempTP.lastP != null && fIr.tP != null)
                         {
                             if (tempTP.lastP.pt.DistanceTo(fIr.tP.pt) > this.mT.pathJump)
                             {

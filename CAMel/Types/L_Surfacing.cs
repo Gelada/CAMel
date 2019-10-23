@@ -64,14 +64,14 @@
             return new SurfacePath(paths, mT, -dir.ZAxis, sTD);
         }
 
-        /// <summary>TODO The helix.</summary>
-        /// <param name="c">TODO The c.</param>
-        /// <param name="dir">TODO The dir.</param>
-        /// <param name="stepOver">TODO The step over.</param>
-        /// <param name="sTD">TODO The s td.</param>
-        /// <param name="bb">TODO The bb.</param>
-        /// <param name="mT">TODO The m t.</param>
-        /// <returns>The <see cref="SurfacePath"/>.</returns>
+        /// <summary>Create a surface path recipe as a helix on a cylinder round and object. </summary>
+        /// <param name="c">Curve round the cylinder to turn into helix.</param>
+        /// <param name="dir">Plane for base of cylinder. </param>
+        /// <param name="stepOver">Stepover between neighboring curves. </param>
+        /// <param name="sTD">The <see cref="SurfToolDir"/> describing the tool direction. </param>
+        /// <param name="bb">The bounding box for the area to mill.</param>
+        /// <param name="mT">The <see cref="MaterialTool"/> describing the material and tool used.</param>
+        /// <returns>The <see cref="SurfacePath"/> generated.</returns>
         /// <exception cref="NullReferenceException"></exception>
         [NotNull]
         public static SurfacePath helix([CanBeNull] Curve c, Plane dir, double stepOver, SurfToolDir sTD, BoundingBox bb, [CanBeNull] MaterialTool mT)
@@ -225,19 +225,20 @@
             double st = 10.0 / spiralRatio * (Math.PI / 180.0);
 
             // Apply spherical spiral
-            while (h > bb.Min.Z)
+            while (h > bb.Min.Z + 0.0001)
             {
                 h = radius * Math.Cos(th);
                 double temp = radius * Math.Sin(th);
                 spiralPath.Add(dir.PointAt(temp * Math.Cos(spiralRatio * th), temp * Math.Sin(spiralRatio * th), h));
                 th += st;
+                h = radius * Math.Cos(th);
             }
 
             // Make a final loop at the bottom
             for (double thl = 0; thl < 2 * Math.PI; thl += st)
             {
                 double temp = radius * Math.Sin(th);
-                spiralPath.Add(dir.PointAt(temp * Math.Cos(spiralRatio * th + thl), temp * Math.Sin(spiralRatio * th + thl), h));
+                spiralPath.Add(dir.PointAt(temp * Math.Cos(spiralRatio * th + thl), temp * Math.Sin(spiralRatio * th + thl), bb.Min.Z+0.0001));
             }
 
             List<Curve> paths = new List<Curve>

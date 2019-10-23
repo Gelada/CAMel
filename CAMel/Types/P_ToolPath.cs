@@ -384,6 +384,7 @@
         [NotNull, Pure]
         public List<Point3d> getPoints()
         {
+            // ReSharper disable once PossibleNullReferenceException
             return this.Select(tP => tP.pt).ToList();
         }
 

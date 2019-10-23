@@ -228,7 +228,12 @@
         internal string getRangesString()
         {
             // ReSharper disable once AssignNullToNotNullAttribute
-            return this.ranges.Keys.Aggregate(string.Empty, (current, k) => current + "\n" + k + ": " + this.ranges[k].T0.ToString("0.00") + " to " + this.ranges[k].T1.ToString("0.00"));
+            return this.ranges.Keys.Aggregate(
+                string.Empty,
+                (current, k) =>
+                    current +
+                    "\n" + k + ": " + this.ranges[k].T0.ToString("0.00")
+                    + " to " + this.ranges[k].T1.ToString("0.00"));
         }
 
         /// <summary>TODO The to string.</summary>
