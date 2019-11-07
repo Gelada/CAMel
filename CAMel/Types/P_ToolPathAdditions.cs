@@ -462,6 +462,26 @@
         private bool replaceable;
         /// <summary>TODO The m options.</summary>
         [NotNull] private BasicParser mOptions;
+        /// <summary>TODO The insert 1.</summary>
+        private bool insert1;
+        /// <summary>TODO The offset 1.</summary>
+        private Vector3d offset1;
+        /// <summary>TODO The onion 1.</summary>
+        [NotNull] private List<double> onion1;
+        /// <summary>TODO The retract 1.</summary>
+        private bool retract1;
+        /// <summary>TODO The sd drop end 1.</summary>
+        private bool sdDropEnd1;
+        /// <summary>TODO The sd drop middle 1.</summary>
+        private double sdDropMiddle1;
+        /// <summary>TODO The sd drop start 1.</summary>
+        private bool sdDropStart1;
+        /// <summary>TODO The step down 1.</summary>
+        private bool stepDown1;
+        /// <summary>TODO The tabbing 1.</summary>
+        private bool tabbing1;
+        /// <summary>TODO The three axis height offset 1.</summary>
+        private bool threeAxisHeightOffset1;
         /// <summary>Initializes a new instance of the <see cref="ToolPathAdditions"/> class.</summary>
         public ToolPathAdditions()
         {
@@ -474,7 +494,7 @@
             this.sdDropStart = false;
             this.sdDropMiddle = 0;
             this.sdDropEnd = false;
-            this.onion = new List<double> { 0 };
+            this.onion1 = new List<double> { 0 };
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
             this.leadComm = new BpCommand(string.Empty);
@@ -502,7 +522,7 @@
             this.sdDropStart = tPa.sdDropStart;
             this.sdDropMiddle = tPa.sdDropMiddle;
             this.sdDropEnd = tPa.sdDropEnd;
-            this.onion = new List<double>();
+            this.onion1 = new List<double>();
             this.onion.AddRange(tPa.onion);
             this.threeAxisHeightOffset = tPa.threeAxisHeightOffset;
             this.tabbing = tPa.tabbing;
@@ -585,7 +605,16 @@
             this.machineOptions != string.Empty;
 
         /// <summary>Gets or sets a value indicating whether insert.</summary>
-        public bool insert { get; set; }
+        public bool insert
+        {
+            get => this.insert1;
+            set
+            {
+                this.insert1 = value;
+                this.replaceable = false;
+            }
+        }
+
         /// <summary>Gets the lead comm.</summary>
         [NotNull]
         public BpCommand leadComm { get; private set; }
@@ -595,7 +624,11 @@
         public string leadCurvature // information to create leads
         {
             get => this.leadComm.ToString();
-            set => this.leadComm = new BpCommand(value);
+            set
+            {
+                this.leadComm = new BpCommand(value);
+                this.replaceable = false;
+            }
         }
 
         /// <summary>Gets or sets the machine options.</summary>
@@ -603,27 +636,80 @@
         public string machineOptions
         {
             get => this.mOptions.ToString();
-            set => this.mOptions = new BasicParser(value);
+            set
+            {
+                this.mOptions = new BasicParser(value);
+                this.replaceable = false;
+            }
         }
 
         // Quality or activation information for the toolpath.
         /// <summary>Gets or sets the offset.</summary>
-        public Vector3d offset { get; set; }
+        public Vector3d offset
+        {
+            get => this.offset1;
+            set
+            {
+                this.offset1 = value;
+                this.replaceable = false;
+            }
+        }
 
         /// <summary>Gets or sets the onion.</summary>
         [NotNull]
-        public List<double> onion { get; set; }
+        public List<double> onion
+        {
+            get => this.onion1;
+            set
+            {
+                this.onion1 = value;
+                this.replaceable = false;
+            }
+        }
 
         /// <summary>Gets or sets a value indicating whether retract.</summary>
-        public bool retract { get; set; }
+        public bool retract
+        {
+            get => this.retract1;
+            set
+            {
+                this.retract1 = value;
+                this.replaceable = false;
+            }
+        }
+
         /// <summary>Gets or sets a value indicating whether sd drop end.</summary>
-        public bool sdDropEnd { get; set; }
+        public bool sdDropEnd
+        {
+            get => this.sdDropEnd1;
+            set
+            {
+                this.sdDropEnd1 = value;
+                this.replaceable = false;
+            }
+        }
 
         /// <summary>Gets or sets the sd drop middle.</summary>
-        public double sdDropMiddle { get; set; }
+        public double sdDropMiddle
+        {
+            get => this.sdDropMiddle1;
+            set
+            {
+                this.sdDropMiddle1 = value;
+                this.replaceable = false;
+            }
+        }
 
         /// <summary>Gets or sets a value indicating whether sd drop start.</summary>
-        public bool sdDropStart { get; set; }
+        public bool sdDropStart
+        {
+            get => this.sdDropStart1;
+            set
+            {
+                this.sdDropStart1 = value;
+                this.replaceable = false;
+            }
+        }
 
         /// <summary>TODO The sort onion.</summary>
         [NotNull]
@@ -632,16 +718,42 @@
 
         // offset plane(normal to vector and amount on the right when turning clockwise.
         /// <summary>Gets or sets a value indicating whether step down.</summary>
-        public bool stepDown { get; set; }
+        public bool stepDown
+        {
+            get => this.stepDown1;
+            set
+            {
+                this.stepDown1 = value;
+                this.replaceable = false;
+            }
+        }
+
         /// <summary>Gets or sets a value indicating whether tabbing.</summary>
-        public bool tabbing { get; set; }
+        public bool tabbing
+        {
+            get => this.tabbing1;
+            set
+            {
+                this.tabbing1 = value;
+                this.replaceable = false;
+            }
+        }
 
         // How stepdown will deal with
         // points that have reached
         // the required depth (Middle is dropped if length greater than value);
         // thicknesses to leave before final cut.
         /// <summary>Gets or sets a value indicating whether three axis height offset.</summary>
-        public bool threeAxisHeightOffset { get; set; }
+        public bool threeAxisHeightOffset
+        {
+            get => this.threeAxisHeightOffset1;
+            set
+            {
+                this.threeAxisHeightOffset1 = value;
+                this.replaceable = false;
+            }
+        }
+
         /// <inheritdoc />
         public string TypeDescription => "Features that can be added to a basic ToolPath cut.";
 
