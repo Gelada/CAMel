@@ -115,9 +115,6 @@
                         }
                 };
 
-            /* Additions for toolpath
-            // we will handle this with peck*/
-
             tP.Add(new ToolPoint(d.Center, d.Normal, -1, mT.feedPlunge));
 
             // calculate the number of pecks we need to do
