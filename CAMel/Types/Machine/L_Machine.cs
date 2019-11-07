@@ -168,16 +168,24 @@
             Vector3d fromAB = ikFiveAxisABTable(from, pivot, toolLength, out Point3d fromMachPt);
             Vector3d toAB = ikFiveAxisABTable(to, pivot, toolLength, out Point3d toMachPt);
 
-            Point3d outPt = (1 - p) * fromMachPt + p * toMachPt;
+            Point3d outPt = (1 - p) * from.pt + p * to.pt;
             Vector3d outAB = (1 - p) * fromAB + p * toAB;
+            ToolPoint tP;
 
             // switch to long way round or short way round depending on gap between angles
-            if ((!lng || !(Math.Abs(fromAB.Y - toAB.Y) <= Math.PI)) && (lng || !(Math.Abs(fromAB.Y - toAB.Y) > Math.PI))
-            ) { return kFiveAxisABTable(from, pivot, toolLength, outPt, outAB); }
+            if ((!lng || !(Math.Abs(fromAB.Y - toAB.Y) <= Math.PI)) && (lng || !(Math.Abs(fromAB.Y - toAB.Y) > Math.PI)))
+            {
+                tP = kFiveAxisABTable(from, pivot, toolLength, outPt, outAB);
+                tP.pt = outPt;
+                return tP;
+            }
 
             Vector3d alt = fromAB.Y > toAB.Y ? new Vector3d(0, 2 * Math.PI, 0) : new Vector3d(0, -2 * Math.PI, 0);
             outAB = (1 - p) * fromAB + p * (toAB + alt);
-            return kFiveAxisABTable(from, pivot, toolLength, outPt, outAB);
+
+            tP = kFiveAxisABTable(from, pivot, toolLength, outPt, outAB);
+            tP.pt = outPt;
+            return tP;
         }
 
         /// <summary>TODO The ang diff five axis ab table.</summary>
@@ -237,6 +245,32 @@
             }
 
             return sRef;
+        }
+        /// <summary>Find rotation around X. </summary>
+        /// <param name="pl">Frame (Plane) to convert to angles.</param>
+        /// <param name="cen">Out parameter giving the centre of rotation. </param>
+        /// <returns>The rotation around X (X coefficient) and rotation of X axis (Y coefficient). <see cref="Vector3d"/>.</returns>
+        public static Vector3d xRotation(Plane pl, out Point3d cen)
+        {
+            Plane uPl = pl;
+
+            if (uPl.XAxis == -Vector3d.XAxis) { uPl.Rotate(Math.PI, uPl.ZAxis); }
+
+            // Check the X Axis has not changed
+            double xAng = Vector3d.VectorAngle(Vector3d.XAxis, pl.XAxis);
+
+            // Find rotation around X axis
+            double rot = Math.Atan2(-uPl.ZAxis.Y, uPl.ZAxis.Z);
+
+            Vector3d YZshift = (Vector3d)uPl.Origin;
+            YZshift.X = 0;
+            cen = Point3d.Origin;
+            if (rot != 0)
+            {
+                double radius = YZshift.Length / (2.0 * Math.Cos(rot / 2.0));
+            }
+
+            return new Vector3d(rot, xAng, 0);
         }
     }
 
