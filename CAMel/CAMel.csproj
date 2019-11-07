@@ -123,6 +123,7 @@
     <Compile Include="GH\C_ReadCode.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Types\L_Exceptions.cs" />
+    <None Include="Types\Machine\L_MachineState.cs" />
     <Compile Include="Types\Machine\L_MachPocketNC.cs" />
     <Compile Include="Types\Machine\L_MachTwoAxis.cs" />
     <Compile Include="Types\Machine\L_MachThreeAxis.cs" />
