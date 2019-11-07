@@ -255,7 +255,7 @@
                 ToolPath tempTP = new ToolPath(string.Empty, this.mT, mF, tPa);
                 List<Vector3d> tempN = new List<Vector3d>();
 
-                bool missed = false;
+                int missed = 0;
 
                 // ReSharper disable once AssignNullToNotNullAttribute
                 foreach (FirstIntersectResponse fIr in tP.Select(tPt => intersectInfo[tPt]))
@@ -263,7 +263,7 @@
                     if (fIr.hit)
                     {
                         // Check to see if a new path is needed.
-                        if (missed && tempTP.lastP != null && fIr.tP != null)
+                        if (missed > 5 && tempTP.lastP != null && fIr.tP != null)
                         {
                             if (tempTP.lastP.pt.DistanceTo(fIr.tP.pt) > this.mT.pathJump)
                             {
@@ -280,9 +280,9 @@
 
                         tempTP.Add(fIr.tP);
                         tempN.Add(fIr.norm);
-                        missed = false;
+                        missed = 0;
                     }
-                    else if (tempTP.Count > 0) { missed = true; }
+                    else if (tempTP.Count > 0) { missed++; }
                 }
 
                 if (tempTP.Count <= 1) { continue; }
