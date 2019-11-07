@@ -135,6 +135,42 @@
         public ToolPoint(Point3d pt, Vector3d d, double speed, double feed)
         {
             this.tDir = new Plane(pt, d);
+            this.mDir = Plane.WorldXY;
+            this.speed = speed;
+            this.feed = feed;
+            this.error = new List<string>();
+            this.warning = new List<string>();
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
+        }
+        /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <param name="d">TODO The d.</param>
+        /// <param name="mDir">TODO</param>
+        /// <param name="speed">TODO The speed.</param>
+        /// <param name="feed">TODO The feed.</param>
+        public ToolPoint(Point3d pt, Vector3d d, Plane mDir, double speed, double feed)
+        {
+            this.tDir = new Plane(pt, d);
+            this.mDir = mDir;
+            this.speed = speed;
+            this.feed = feed;
+            this.error = new List<string>();
+            this.warning = new List<string>();
+            this.name = string.Empty;
+            this.preCode = string.Empty;
+            this.postCode = string.Empty;
+        }
+        /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
+        /// <param name="pt">TODO The pt.</param>
+        /// <param name="mD">TODO The m d.</param>
+        /// <param name="speed">TODO The speed.</param>
+        /// <param name="feed">TODO The feed.</param>
+        public ToolPoint(Plane pt, Plane mD, double speed, double feed)
+        {
+            this.tDir = pt;
+            this.mDir = mD;
             this.speed = speed;
             this.feed = feed;
             this.error = new List<string>();
@@ -147,14 +183,15 @@
         // Use point direction, override speed and feed and add extra Code
         /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
         /// <param name="pt">TODO The pt.</param>
-        /// <param name="d">TODO The d.</param>
+        /// <param name="mD">TODO The d.</param>
         /// <param name="preCode">TODO The pre code.</param>
         /// <param name="postCode">TODO The post code.</param>
         /// <param name="speed">TODO The speed.</param>
         /// <param name="feed">TODO The feed.</param>
-        public ToolPoint(Point3d pt, Vector3d d, [CanBeNull] string preCode, [CanBeNull] string postCode, double speed, double feed)
+        public ToolPoint(Plane pt, Plane mD, [CanBeNull] string preCode, [CanBeNull] string postCode, double speed, double feed)
         {
-            this.tDir = new Plane(pt, d);
+            this.tDir = pt;
+            this.mDir = mD;
             this.preCode = preCode ?? string.Empty;
             this.postCode = postCode ?? string.Empty;
             this.speed = speed;
@@ -163,7 +200,6 @@
             this.warning = new List<string>();
             this.name = string.Empty;
         }
-
         // Copy Constructor
         /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
         /// <param name="tP">TODO The t p.</param>

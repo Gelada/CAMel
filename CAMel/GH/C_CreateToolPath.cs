@@ -34,8 +34,8 @@
         protected override void RegisterInputParams([NotNull] GH_InputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddPointParameter("Path", "P", "List of toolpoint locations", GH_ParamAccess.list);
-            pManager.AddVectorParameter("Directions", "D", "List of vectors giving tool direction", GH_ParamAccess.list, new Vector3d(0, 0, 1));
+            pManager.AddPlaneParameter("Path", "P", "List of positions and orientations for tool, as a Plane with origin at tool position and Z-Axis for tool direction. ", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Mat", "M", "List of Material Orientations (for machines that can move material and tool separately).", GH_ParamAccess.list, Plane.WorldXY);
             pManager.AddVectorParameter("Speed and Feed", "SF", "List of vectors giving speed (X) and feed (Y) at each toolpoint.", GH_ParamAccess.list, new Vector3d(-1, -1, 0));
             pManager.AddTextParameter("pre Code", "prC", "List of additional CNC codes to run before the points. The code will run on the same line. Use a newline at end to run on the previous line.", GH_ParamAccess.list, string.Empty);
             pManager.AddTextParameter("post Code", "poC", "List of additional CNC codes to run after the points. The code will run on the same line. Use a newline at start to run on the next line.", GH_ParamAccess.list, string.Empty);
@@ -74,8 +74,8 @@
         protected override void SolveInstance([NotNull] IGH_DataAccess da)
         {
             if (da == null) { throw new ArgumentNullException(); }
-            List<Point3d> pts = new List<Point3d>();
-            List<Vector3d> dirs = new List<Vector3d>();
+            List<Plane> pts = new List<Plane>();
+            List<Plane> mat = new List<Plane>();
             List<Vector3d> sF = new List<Vector3d>();
             List<string> preCode = new List<string>();
             List<string> postCode = new List<string>();
@@ -85,8 +85,8 @@
             string co = string.Empty;
             ToolPathAdditions tPa = ToolPathAdditions.temp;
 
-            if (!da.GetDataList(0, pts)) { return; }
-            if (!da.GetDataList(1, dirs)) { return; }
+            if (!da.GetDataList("Path", pts)) { return; }
+            if (!da.GetDataList("Mat", mat)) { return; }
             if (!da.GetDataList(2, sF)) { return; }
             if (!da.GetDataList(3, preCode)) { return; }
             if (!da.GetDataList(4, postCode)) { return; }
@@ -98,14 +98,14 @@
 
             ToolPath tP = new ToolPath(name, mT, mF, tPa);
 
-            if ((dirs.Count == 1 || dirs.Count == pts.Count) &&
+            if ((mat.Count == 1 || mat.Count == pts.Count) &&
                 (sF.Count == 1 || sF.Count == pts.Count) &&
                 (preCode.Count == 1 || preCode.Count == pts.Count) &&
                 (postCode.Count == 1 || postCode.Count == pts.Count))
             {
                 for (int i = 0; i < pts.Count; i++)
                 {
-                    Vector3d useDir = dirs.Count == 1 ? dirs[0] : dirs[i];
+                    Plane useMat = mat.Count == 1 ? mat[0] : mat[i];
 
                     Vector3d useSF = sF.Count == 1 ? sF[0] : sF[i];
 
@@ -113,12 +113,12 @@
 
                     string usePostCo = postCode.Count == 1 ? postCode[0] : postCode[i];
 
-                    tP.Add(new ToolPoint(pts[i], useDir, usePreCo, usePostCo, useSF.X, useSF.Y));
+                    tP.Add(new ToolPoint(pts[i], useMat, usePreCo, usePostCo, useSF.X, useSF.Y));
                 }
             }
             else
             {
-                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists of directions and speeds/feeds must be a single item or the same length as the list of points.");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists of material position and speeds/feeds must be a single item or the same length as the list of points.");
             }
 
             da.SetData(0, new GH_ToolPath(tP));
