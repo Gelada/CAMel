@@ -122,7 +122,7 @@
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
 
         /// <summary>TODO The refine angle.</summary>
-        private const double RefineAngle = 2.0 * Math.PI / 180.0;
+        private const double RefineAngle = 4.0 * Math.PI / 180.0;
         /// <summary>TODO The refine.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
