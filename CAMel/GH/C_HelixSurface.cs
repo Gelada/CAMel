@@ -1,6 +1,7 @@
 ﻿namespace CAMel.GH
 {
     using System;
+    using System.Collections.Generic;
 
     using CAMel.Types;
 
@@ -47,6 +48,7 @@
             pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Step over", "SO", "Stepover as a multiple of tool width. Default to Tools side load (for negative values).", GH_ParamAccess.item, -1);
             pManager.AddBooleanParameter("Clockwise", "CW", "Run clockwise as you rise around the piece. For a clockwise bit this gives conventional cutting. ", GH_ParamAccess.item, true);
+            pManager.AddIntegerParameter("Split", "Spl", "Split bounding box into pieces to reduce file sizes.", GH_ParamAccess.item, 1);
         }
 
         /// <inheritdoc />
@@ -75,14 +77,16 @@
             int tD = 0;
             double stepOver = 0;
             bool clockWise = true; // Go up clockwise if true.
+            int split = 1; // Number of pieces to split cutting into
 
-            if (!da.GetData(0, ref geom)) { return; }
-            da.GetData(1, ref c);
-            if (!da.GetData(2, ref dir)) { return; }
-            if (!da.GetData(3, ref mT)) { return; }
-            if (!da.GetData(4, ref tD)) { return; }
-            if (!da.GetData(5, ref stepOver)) { return; }
-            if (!da.GetData(6, ref clockWise)) { return; }
+            if (!da.GetData("Bounding Box", ref geom)) { return; }
+            da.GetData("Curve", ref c);
+            if (!da.GetData("Direction", ref dir)) { return; }
+            if (!da.GetData("Material/Tool", ref mT)) { return; }
+            if (!da.GetData("Tool Direction", ref tD)) { return; }
+            if (!da.GetData("Step over", ref stepOver)) { return; }
+            if (!da.GetData("Clockwise", ref clockWise)) { return; }
+            if (!da.GetData("Split", ref split)) { return; }
 
             if (stepOver < 0) { stepOver = mT.sideLoad; }
             if (stepOver > mT.sideLoad) { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
@@ -122,8 +126,23 @@
                 return;
             }
 
-            SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTD, bb, mT);
-            da.SetData(0, new GH_SurfacePath(sP));
+            List<GH_SurfacePath> sPs = new List<GH_SurfacePath>();
+            for (int i = 0; i < split; i++)
+            {
+                BoundingBox uBb = bb;
+                uBb.Min = new Point3d(
+                    bb.Min.X, bb.Min.Y,
+                    (i + 1) / (double)split * bb.Min.Z + (split - i - 1) / (double)split * bb.Max.Z);
+
+                uBb.Max = new Point3d(
+                    bb.Max.X, bb.Max.Y,
+                    i / (double)split * bb.Min.Z + (split - i) / (double)split * bb.Max.Z);
+
+                SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTD, uBb, mT);
+                sPs.Add(new GH_SurfacePath(sP));
+            }
+
+            da.SetDataList(0, sPs);
         }
 
         /// <inheritdoc />
