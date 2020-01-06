@@ -36,9 +36,10 @@
             pManager.AddGeometryParameter("Surface", "S", "The surface, brep or mesh to carve", GH_ParamAccess.item);
             pManager.AddParameter(new GH_SurfacePathPar(), "Rough Path", "R", "Information to create roughing path", GH_ParamAccess.item);
             pManager.AddParameter(new GH_SurfacePathPar(), "Finish Path", "F", "Information to create finishing path", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Finish Height", "FH", "Distance above surface to run finish path.", GH_ParamAccess.item, 0);
             pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
-            pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
+            pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
         }
 
         /// <inheritdoc />
@@ -63,11 +64,13 @@
             GeometryBase geom = null;
             SurfacePath roughP = null;
             SurfacePath finalP = null;
+            double finalH = 0;
             IMaterialForm mF = null;
 
             if (!da.GetData("Surface", ref geom)) { return; }
             if (!da.GetData("Rough Path", ref roughP)) { return; }
             if (!da.GetData("Finish Path", ref finalP)) { return; }
+            if (!da.GetData("Finish Height", ref finalH)) { return; }
             if (!da.GetData("Material Form", ref mF)) { return; }
 
             ToolPathAdditions addRough = new ToolPathAdditions
@@ -101,8 +104,8 @@
             if (geom.GetType() == typeof(Mesh))
             {
                 Mesh m = (Mesh)geom;
-                roughO = roughP.generateOperation(m, finalP.mT.finishDepth, mF, addRough);
-                finishO = finalP.generateOperation(m, 0.0, mF, addFinish);
+                roughO = roughP.generateOperation(m, finalP.mT.finishDepth + finalH, mF, addRough);
+                finishO = finalP.generateOperation(m, finalH, mF, addFinish);
             }
             else if (geom.GetType() == typeof(Brep))
             {
