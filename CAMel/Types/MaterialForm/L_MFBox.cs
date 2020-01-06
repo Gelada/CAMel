@@ -91,7 +91,11 @@
             if (testFace(exB.Z.Min, exB.X, exB.Y, new Point3d(pt.Z, pt.X, pt.Y), new Vector3d(dir.Z, dir.X, dir.Y), out dist))
             { inters.add(this.fromPlane(pt + dir * dist), -this.box.Plane.ZAxis, dist); }
 
-            inters.midOut = inters.count > 1 ? this.midOutDir(inters.mid, tolerance) : new Vector3d();
+            Point3d mOpL = inters.count > 1 ? (Point3d)this.midOutDir(inters.mid, dir, tolerance) : new Point3d();
+
+            inters.midOut = this.fromPlane(mOpL) - this.box.Plane.Origin;
+
+            inters.midOut.Unitize();
 
             return inters;
         }
@@ -143,45 +147,61 @@
         /// <param name="tolerance">TODO The tolerance.</param>
         /// <returns>The <see cref="Vector3d"/>.</returns>
         /// <exception cref="FormatException"></exception>
-        private Vector3d midOutDir(Point3d pt, double tolerance)
+        private Vector3d midOutDir(Point3d pt, Vector3d dir, double tolerance)
         {
             double uTol = this.materialTolerance + tolerance;
 
-            // check how close to each face, return normal of closest
-            double closeD = this.box.X.Max + uTol - pt.X;
-            Vector3d outD = this.box.Plane.XAxis;
-            if (closeD > pt.X - this.box.X.Min + uTol)
-            {
-                closeD = pt.X - this.box.X.Min + uTol;
-                outD = -this.box.Plane.XAxis;
-            }
+            // check how close to each edge, return direction to edge
+            double closeD = double.PositiveInfinity;
+            Vector3d outD = new Vector3d();
 
-            if (closeD > this.box.Y.Max + uTol - pt.Y)
-            {
-                closeD = this.box.Y.Max + uTol - pt.Y;
-                outD = this.box.Plane.YAxis;
-            }
+            this.testEdge(pt, dir, new Vector3d(1, 1, 0), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(1, -1, 0), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(-1, 1, 0), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(-1, -1, 0), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(0, 1, 1), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(0, 1, -1), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(0, -1, 1), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(0, -1, -1), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(1, 0, 1), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(1, 0, -1), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(-1, 0, 1), ref closeD, ref outD);
+            this.testEdge(pt, dir, new Vector3d(-1, 0, -1), ref closeD, ref outD);
 
-            if (closeD > pt.Y - this.box.Y.Min + uTol)
-            {
-                closeD = pt.Y - this.box.Y.Min + uTol;
-                outD = -this.box.Plane.YAxis;
-            }
-
-            if (closeD > this.box.Z.Max + uTol - pt.Z)
-            {
-                closeD = this.box.Z.Max + uTol - pt.Z;
-                outD = this.box.Plane.ZAxis;
-            }
-
-            if (closeD > pt.Z - this.box.Z.Min + uTol)
-            {
-                closeD = pt.Z - this.box.Z.Min + uTol;
-                outD = -this.box.Plane.ZAxis;
-            }
-
-            if (closeD < -2 * uTol) { throw new FormatException("MidOutDir in MFBox called for point outside the Box."); }
             return outD;
+        }
+
+        private void testEdge(Point3d pt, Vector3d dir, Vector3d edge, ref double closeD, ref Vector3d outD)
+        {
+            Vector3d uPt = (Vector3d)pt;
+
+            if (edge.X > 0) { uPt.X -= this.box.X.Max; }
+            else if (edge.X < 0) { uPt.X -= this.box.X.Min; }
+            else
+            {
+                uPt.X = 0;
+                pt.X = 0;
+            }
+
+            if (edge.Y > 0) { uPt.Y -= this.box.Y.Max; }
+            else if (edge.Y < 0) { uPt.Y -= this.box.Y.Min; }
+            else {
+                uPt.Y = 0;
+                pt.Y = 0;
+            }
+
+            if (edge.Z > 0) { uPt.Z -= this.box.Z.Max; }
+            else if (edge.Z < 0) { uPt.Z -= this.box.Z.Min; }
+            else
+            {
+                uPt.Z = 0;
+                pt.Z = 0;
+            }
+
+            if (uPt.Length >= closeD) { return; }
+
+            closeD = uPt.Length;
+            outD = (Vector3d)pt;
         }
 
         /// <summary>TODO The refine.</summary>
