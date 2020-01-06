@@ -11,7 +11,7 @@
 
     using Rhino.Geometry;
 
-    /// <summary>TODO The omax 5.</summary>
+    /// <summary>Control a 5-Axis OMAX Waterjet. </summary>
     public class Omax5 : IMachine
     {
         /// <summary>Gets the name.</summary>
@@ -80,17 +80,23 @@
         /// .</returns>
         public List<ToolPath> insertRetract(ToolPath tP)
         {
+            List<ToolPath> iRpath = new List<ToolPath>();
             switch (tP.additions.leadComm.command)
             {
                 case "V":
                 case "":
-                    return Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+                    break;
                 case "U":
-                    return Utility.leadInOutU(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInOutU(tP, string.Empty, string.Empty, 9);
+                    break;
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a V shaped lead."); }
-                    return Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+                    break;
             }
+
+            return iRpath;
         }
 
         /// <summary>TODO The step down.</summary>
@@ -159,10 +165,14 @@
             {
                 // Loop over the lines in the string.
                 string line;
+
+                double rot = 0;
                 while ((line = reader.ReadLine()) != null)
                 {
-                    ToolPoint tPt = readTP(line, out ToolPoint endPt, out int quality);
+                    ToolPoint tPt = readTP(line, rot, out ToolPoint endPt, out int quality);
                     if (tPt == null) { continue; }
+                    rot = Kinematics.xRotation(tPt.mDir, out Point3d cen).X;
+
                     if (quality != 0)
                     {
                         if (tP.additions.activate == 0) { tP.additions.activate = quality; }
@@ -189,53 +199,83 @@
             return mI;
         }
 
-        // Try to read a line of omx code. Add an error to the toolpoint if there are problems
-        /// <summary>TODO The read tp.</summary>
-        /// <param name="l">TODO The l.</param>
-        /// <param name="endPt">TODO The end pt.</param>
-        /// <param name="quality">TODO The quality.</param>
-        /// <returns>The <see cref="ToolPoint"/>.</returns>
+        /// <summary>Try to read a line of .omx code. Add an error to the toolpoint if there are problems</summary>
+        /// <param name="l">Line of code</param>
+        /// <param name="rot">Current orientation of rotary axis. </param>
+        /// <param name="endPt">A <see cref="ToolPoint"/> that returns the direction information at the end of the entity.</param>
+        /// <param name="quality">Return the quality (held at the toolpath level). </param>
+        /// <returns>The <see cref="ToolPoint"/> given by the line.</returns>
         [CanBeNull]
-        private static ToolPoint readTP([NotNull] string l, [NotNull] out ToolPoint endPt, out int quality)
+        private static ToolPoint readTP([NotNull] string l, double rot, [NotNull] out ToolPoint endPt, out int quality)
         {
-            endPt = new ToolPoint();
             quality = 0;
+            endPt = new ToolPoint();
             if (!l.StartsWith("[0]", StringComparison.Ordinal)) { return null; }
             string[] items = l.Split(',');
             ToolPoint tPt = new ToolPoint();
-            endPt = new ToolPoint();
-            int fm = 0;
             bool badRead = false;
+            Transform remRot = Transform.Rotation(-rot, Vector3d.YAxis, Point3d.Origin);
 
             // Read position
             if (items.Length < 4) { return null; }
-            if (double.TryParse(items[1], out double x) &&
-                double.TryParse(items[2], out double y) &&
-                double.TryParse(items[3], out double z)) { tPt.pt = new Point3d(x, y, z); }
+            if (double.TryParse(items[1], out double x) && double.TryParse(items[2], out double y)
+                                                        && double.TryParse(items[3], out double z))
+            {
+                tPt.pt = new Point3d(x, y, z);
+                tPt.pt.Transform(remRot);
+            }
             else { badRead = true; }
 
             // read quality
             if (items.Length < 8 || !int.TryParse(items[7], out quality)) { badRead = true; }
 
             // check format of XData
-            if (items.Length > 15 && int.TryParse(items[14], out fm) && fm == 27)
+            if (items.Length > 15 && int.TryParse(items[14], out int fm))
             {
-                if (items.Length > 16 && items[15] != null)
+                switch (fm)
                 {
-                    string[] dirs = items[15].Split('|');
-                    List<double> dirVals = new List<double>();
-                    foreach (string dir in dirs)
-                    { if (double.TryParse(dir, out double v)) { dirVals.Add(v); } }
-                    if (dirVals.Count == 6)
-                    {
-                        tPt.dir = -new Vector3d(dirVals[0], dirVals[1], dirVals[2]);
-                        endPt.dir = -new Vector3d(dirVals[3], dirVals[4], dirVals[5]);
-                    }
-                    else { badRead = true; }
+                    case 8: // Incremental Rotary
+                        if (items.Length > 16 && items[15] != null)
+                        {
+                            if (double.TryParse(items[16], out double r)) { tPt.mDir.Rotate(rot + Math.PI * r / 180.0, Vector3d.XAxis); }
+                        }
+
+                        break;
+                    case 9: // Absolute Rotary
+                        if (items.Length > 16 && items[15] != null)
+                        {
+                            if (double.TryParse(items[16], out double r)) { tPt.mDir.Rotate(Math.PI * r / 180.0, Vector3d.YAxis); }
+                        }
+
+                        break;
+                    case 27: // Jet Direction
+                        if (items.Length > 16 && items[15] != null)
+                        {
+                            string[] dirs = items[15].Split('|');
+                            List<double> dirVals = new List<double>();
+                            foreach (string dir in dirs)
+                            {
+                                if (double.TryParse(dir, out double v)) { dirVals.Add(v); }
+                            }
+
+                            if (dirVals.Count == 6)
+                            {
+                                tPt.dir = -new Vector3d(dirVals[0], dirVals[1], dirVals[2]);
+                                endPt.dir = -new Vector3d(dirVals[3], dirVals[4], dirVals[5]);
+                                tPt.dir.Transform(remRot);
+                                endPt.dir.Transform(remRot);
+                            }
+                            else { badRead = true; }
+                        }
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        badRead = true;
+                        break;
                 }
-                else { badRead = true; }
             }
-            else if (fm != 0) { badRead = true; }
+            else { badRead = true; }
 
             if (badRead) { tPt.addError("Unreadable code: " + l); }
 
@@ -286,16 +326,14 @@
                 co.append(ptCode);
             }
 
-            // Pass machine state information
-            co.machineState.Clear();
-            co.machineState.Add("X", lastPt.X);
-            co.machineState.Add("Y", lastPt.Y);
-            co.machineState.Add("Z", lastPt.Z);
-            co.machineState.Add("dX", lastDir.X);
-            co.machineState.Add("dY", lastDir.Y);
-            co.machineState.Add("dZ", lastDir.Z);
-            co.machineState.Add("Q", lastQ);
-            co.machineState.Add("Fi", first ? 1 : -1);
+            co.machineState["X"] = lastPt.X;
+            co.machineState["Y"] = lastPt.Y;
+            co.machineState["Z"] = lastPt.Z;
+            co.machineState["dX"] = lastDir.X;
+            co.machineState["dY"] = lastDir.Y;
+            co.machineState["dZ"] = lastDir.Z;
+            co.machineState["Q"] = lastQ;
+            co.machineState["Fi"] = first ? 1 : -1;
 
             OMXCode.omxPathEnd(this, ref co, tP);
         }
@@ -318,6 +356,12 @@
             co.machineState.Add("dZ", fPt.dir.Z);
             co.machineState.Add("Q", mI[0][0].additions.activate);
             co.machineState.Add("Fi", 1); // Know this is setup data not the record of a point
+
+            // Set up possible rotary axis position
+            co.machineState.Add("rA", 0);
+            co.machineState.Add("rCX", 0);
+            co.machineState.Add("rCY", 0);
+            co.machineState.Add("rCZ", 0);
 
             // HACK: (slight) repeat the final point so it gets written
             // To write omx entities we need to know the end position, so write points one behind.
@@ -369,10 +413,10 @@
             move.additions.activate = 0;
             move.label = PathLabel.Transition;
 
-            move.Add(new ToolPoint(fP.lastP.pt, fP.lastP.dir, -1, 0));
+            move.Add(new ToolPoint(fP.lastP.tDir, fP.lastP.mDir, -1, 0));
 
-            move.Add(new ToolPoint((2 * fP.lastP.pt + tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
-            move.Add(new ToolPoint((fP.lastP.pt + 2 * tP.firstP.pt) / 3, new Vector3d(0, 0, 1), -1, 0));
+            move.Add(new ToolPoint((2 * fP.lastP.pt + tP.firstP.pt) / 3, new Vector3d(0, 0, 1), fP.lastP.mDir, -1, 0));
+            move.Add(new ToolPoint((fP.lastP.pt + 2 * tP.firstP.pt) / 3, new Vector3d(0, 0, 1), fP.lastP.mDir, - 1, 0));
 
             return move;
         }
@@ -382,6 +426,8 @@
     /// <summary>TODO The omx code.</summary>
     internal static class OMXCode
     {
+        private const string rotaryMove = @"Set Rotary";
+
         /// <summary>TODO The omx tilt pt.</summary>
         /// <param name="co">TODO The co.</param>
         /// <param name="lastPt">TODO The last pt.</param>
@@ -397,9 +443,27 @@
             Vector3d lastDir, [NotNull] ToolPoint tPt,
             int lastQ, double tiltMax, Vector3d os)
         {
+            // Adjust to position of rotary
+            double rot = co.machineState["rA"];
+            Point3d origin = new Point3d(co.machineState["rCX"], co.machineState["rCY"], co.machineState["rCZ"]);
+            Transform rotary = Transform.Rotation(-rot, Vector3d.XAxis, origin);
+
+            Point3d uPt = lastPt;
+            Vector3d uS = lastDir;
+            Vector3d uE = tPt.dir;
+
+            // rotate to match the rotary axis
+            if (tPt.preCode != rotaryMove)
+            {
+                uPt.Transform(rotary);
+                uS.Transform(rotary);
+            }
+
+            uE.Transform(rotary);
+
             // Work on tilts
-            double tiltStart = Vector3d.VectorAngle(Vector3d.ZAxis, lastDir);
-            double tiltEnd = Vector3d.VectorAngle(Vector3d.ZAxis, tPt.dir);
+            double tiltStart = Vector3d.VectorAngle(Vector3d.ZAxis, uS);
+            double tiltEnd = Vector3d.VectorAngle(Vector3d.ZAxis, uE);
 
             // (throw bounds error if B goes past +-bMax degrees or A is not between aMin and aMax)
             if (Math.Abs(tiltStart) > tiltMax || Math.Abs(tiltEnd) > tiltMax)
@@ -407,11 +471,28 @@
                 co.addError("Tilt too large");
             }
 
+            // Check rotary position and throw errors if needed.
+            Vector3d xRot = Kinematics.xRotation(tPt.mDir, out Point3d cen);
+            if (Math.Abs(xRot.Y) > CAMel_Goo.Tolerance)
+            {
+                co.addError("Only the rotary axis around X can be used.");
+            }
+            else if (Math.Abs(rot - xRot.X) > CAMel_Goo.Tolerance)
+            {
+                co.addError("Each Toolpath must have a consistent rotary orientation.");
+            }
+
             // Adjust ranges
             co.growRange("X", lastPt.X);
             co.growRange("Y", lastPt.Y);
             co.growRange("Z", lastPt.Z);
             co.growRange("T", Math.Max(tiltStart, tiltEnd));
+            co.growRange("R", rot);
+
+            if (tPt.preCode == rotaryMove)
+            {
+                return omxRotPt9(lastPt, xRot.X, 0, lastQ, os);
+            }
 
             return omxTiltPt27(lastPt, lastDir, tPt.dir, 0, lastQ, os);
         }
@@ -426,21 +507,60 @@
             return d < -CAMel_Goo.Tolerance ? 2 : 0;
         }
 
-        /// <summary>TODO The omx tilt pt 27.</summary>
-        /// <param name="machPt">TODO The mach pt.</param>
-        /// <param name="tiltS">TODO The tilt s.</param>
-        /// <param name="tiltE">TODO The tilt e.</param>
-        /// <param name="bow">TODO The bow.</param>
-        /// <param name="quality">TODO The quality.</param>
-        /// <param name="os">TODO The os.</param>
-        /// <returns>The <see cref="string"/>.</returns>
+        /// <summary>OMAX Toolpoint with Absolute Rotary XData 9.</summary>
+        /// <param name="machPt">Point</param>
+        /// <param name="rot">Previous rotation</param>
+        /// <param name="newRot">New Rotation</param>
+        /// <param name="bow">Curve to path</param>
+        /// <param name="quality">Cut Quality</param>
+        /// <param name="os">Offset Side</param>
+        /// <returns>The .omx <see cref="string"/> for the toolpoint. </returns>
+        [NotNull]
+        private static string omxRotPt9(Point3d machPt, double newRot, double bow, int quality, Vector3d os)
+        {
+            Point3d uPt = machPt;
+
+            StringBuilder gPtBd = new StringBuilder("[0],");
+            gPtBd.Append(uPt.X.ToString("0.0000") + ", ");
+            gPtBd.Append(uPt.Y.ToString("0.0000") + ", ");
+            gPtBd.Append(uPt.Z.ToString("0.0000") + ", ");
+            gPtBd.Append("0, "); // tiltStart
+            gPtBd.Append("0, "); // tiltEnd
+            gPtBd.Append(bow.ToString("0.0000") + ", ");
+            int uQuality = quality;
+            gPtBd.Append(uQuality + ", ");
+
+            gPtBd.Append(vToSide(os) + ", ");
+            gPtBd.Append("R, R, R, R, R, 9, "); // Reserved items and XType
+
+            gPtBd.Append((newRot * 180.0 / Math.PI).ToString("0.0000"));
+
+            gPtBd.Append(",[END]");
+
+            return gPtBd.ToString();
+        }
+
+        /// <summary>OMAX Toolpoint with Tilt Direction for entity XData 27</summary>
+        /// <param name="machPt">Tool Position</param>
+        /// <param name="tiltS">Starting tilt direction. </param>
+        /// <param name="tiltE">End tilt direction. </param>
+        /// <param name="bow">Curve to path.</param>
+        /// <param name="quality">Cut Quality.</param>
+        /// <param name="os">Offset Side.</param>
+        /// <returns>The .omx <see cref="string"/> for the toolpoint. </returns>
         [NotNull]
         private static string omxTiltPt27(Point3d machPt, Vector3d tiltS, Vector3d tiltE, double bow, int quality, Vector3d os)
         {
+            Point3d uPt = machPt;
+
+            // flip tool directions
+            Vector3d uS = -tiltS;
+            Vector3d uE = -tiltE;
+
             StringBuilder gPtBd = new StringBuilder("[0],");
-            gPtBd.Append(machPt.X.ToString("0.0000") + ", ");
-            gPtBd.Append(machPt.Y.ToString("0.0000") + ", ");
-            gPtBd.Append(machPt.Z.ToString("0.0000") + ", ");
+            gPtBd.Append(uPt.X.ToString("0.0000") + ", ");
+            gPtBd.Append(uPt.Y.ToString("0.0000") + ", ");
+            gPtBd.Append(uPt.Z.ToString("0.0000") + ", ");
             gPtBd.Append("0, "); // tiltStart
             gPtBd.Append("0, "); // tiltEnd
             gPtBd.Append(bow.ToString("0.0000") + ", ");
@@ -449,10 +569,6 @@
 
             gPtBd.Append(vToSide(os) + ", ");
             gPtBd.Append("R, R, R, R, R, 27, "); // Reserved items and XType
-
-            // flip tool directions
-            Vector3d uS = -tiltS;
-            Vector3d uE = -tiltE;
 
             gPtBd.Append(
                 uS.X.ToString("0.0000") + "|" + uS.Y.ToString("0.0000") + "|" + uS.Z.ToString("0.0000") +
@@ -584,8 +700,30 @@
         /// <param name="m">TODO The m.</param>
         /// <param name="co">TODO The co.</param>
         /// <param name="tP">TODO The t p.</param>
-        public static void omxPathStart([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP) =>
+        public static void omxPathStart([NotNull] IMachine m, [NotNull] ref CodeInfo co, [NotNull] ToolPath tP)
+        {
+            // Work out if there are any rotary commands to give
+            string opts = tP.additions.machineOptions;
+
+            if (tP.label == PathLabel.Insert)
+            {
+                double oldR = co.machineState["rA"];
+                Point3d origin = new Point3d(co.machineState["rCX"], co.machineState["rCY"], co.machineState["rCZ"]);
+
+                double newR = Kinematics.xRotation(tP[0].mDir, out Point3d rCen).X;
+
+                if (Math.Abs(newR - oldR) > CAMel_Goo.Tolerance)
+                {
+                    tP[0].preCode = rotaryMove;
+                    co.machineState["rA"] = newR;
+                    co.machineState["rCX"] = rCen.X;
+                    co.machineState["rCY"] = rCen.Y;
+                    co.machineState["rCZ"] = rCen.Z;
+                }
+            }
+
             co.append(tP.preCode);
+        }
         // ReSharper disable once UnusedParameter.Global
         /// <summary>TODO The omx path end.</summary>
         /// <param name="m">TODO The m.</param>
