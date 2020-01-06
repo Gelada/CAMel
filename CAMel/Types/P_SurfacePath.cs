@@ -24,60 +24,53 @@
     /// <summary>TODO The surf proj.</summary>
     public enum SurfProj
     {
-        /// <summary>TODO The parallel.</summary>
+        /// <summary>Project toolpath to surface parallel to a vector. </summary>
         Parallel,
-        /// <summary>TODO The cylindrical.</summary>
+        /// <summary>Project toolpath to surface around a cylinder. </summary>
         Cylindrical,
-        /// <summary>TODO The spherical.</summary>
+        /// <summary>Project toolpath to surface via a sphere. </summary>
         Spherical
     }
 
-    // The tool direction for surfacing.
-    // Projection is along the projection direction
-    // Path Tangent and Path Normal mix the projection and
-    // surface normals.
-    // Path Tangent gives the normal to the path in the plane given by the path tangent and projection direction
-    // Path Normal gives the normal to the path in the plane given by the surface tangent normal to the path and projection direction
-    // Normal is surface normal
     /// <summary>TODO The surf tool dir.</summary>
     public enum SurfToolDir
     {
-        /// <summary>TODO The projection.</summary>
+        /// <summary>Tool Direction should be equal to projection. </summary>
         Projection,
-        /// <summary>TODO The path tangent.</summary>
+        /// <summary>Tool Direction should be normal along path tangent. </summary>
         PathTangent,
-        /// <summary>TODO The path normal.</summary>
+        /// <summary>Tool Direction should be normal orthogonal to tangent. </summary>
         PathNormal,
-        /// <summary>TODO The normal.</summary>
+        /// <summary>Tool Direction should be the surface normal. </summary>
         Normal,
-        /// <summary>TODO The error.</summary>
+        /// <summary>Tool Direction should be normal to material. </summary>
+        Material,
+        /// <summary>An error has occured. </summary>
         Error
     }
 
-    // A path that will project to a surface for surfacing
     // TODO write a subclass for each projection
-    /// <summary>TODO The surface path.</summary>
+    /// <summary>A path that will project to a surface for surfacing</summary>
     public class SurfacePath : IList<Curve>, ICAMelBase
     {
-        /// <summary>TODO The paths.</summary>
-        [NotNull] private readonly List<Curve> paths; // Curves to project
-        /// <summary>Gets the surf proj.</summary>
-        private SurfProj surfProj { get; } // Type of projection
-        /// <summary>Gets the cyl onto.</summary>
-        private Curve cylOnto { get; } // centre line for Cylindrical projection
-        /// <summary>Gets the dir.</summary>
-        private Vector3d dir { get; } // direction for parallel projection, or line direction for cylindrical
-        /// <summary>Gets the cen.</summary>
-        private Point3d cen { get; } // centre for spherical projection
-        /// <summary>Gets the surf tool dir.</summary>
-        private SurfToolDir surfToolDir { get; } // method to calculate tool direction
-        /// <summary>Gets the m t.</summary>
+        /// <summary>Curves to project. </summary>
+        [NotNull] private readonly List<Curve> paths;
+        /// <summary>Gets the type of projection.</summary>
+        private SurfProj surfProj { get; }
+        /// <summary>Gets the centre line for Cylindrical projection</summary>
+        private Curve cylOnto { get; }
+        /// <summary>Gets the direction for parallel projection, or line direction for cylindrical.</summary>
+        private Vector3d dir { get; }
+        /// <summary>Gets the centre for spherical projection.</summary>
+        private Point3d cen { get; }
+        /// <summary>Gets the method to calculate tool direction.</summary>
+        private SurfToolDir surfToolDir { get; }
+        /// <summary>Gets the Material Tool.</summary>
         [NotNull]
         public MaterialTool mT { get; }
 
-        // private storage when processing a model
-        /// <summary>TODO The m.</summary>
-        private Mesh m; // Mesh
+        /// <summary>Privately stored mesh when processing a model</summary>
+        private Mesh m;
 
         // Parallel constructor
         /// <summary>Initializes a new instance of the <see cref="SurfacePath"/> class.</summary>
@@ -231,7 +224,7 @@
             foreach (Curve p in this.paths)
             {
                 tPs.Add(new ToolPath(string.Empty, this.mT, mF, tPa));
-                tPs[tPs.Count - 1]?.convertCurve(p, new Vector3d(0, 0, 1), .5);
+                tPs[tPs.Count - 1]?.convertCurve(p, new Vector3d(0, 0, 1), .4);
             }
 
             // move points onto surface storing projection direction
@@ -340,6 +333,12 @@
                             if (norms[j]?[i] == null) { break; }
                             newTPs[j][i].dir = norms[j][i];
                             break;
+                        case SurfToolDir.Material: // set to Material Norm
+                            MFintersects mat = mF.intersect(newTPs[j][i], 0);
+
+                            // leave projection direction if miss material
+                            if (mat.hits) { newTPs[j][i].dir = -mat.first.away; }
+                            break;
                     }
                 }
             }
@@ -366,15 +365,14 @@
         /// <summary>TODO The first intersect response.</summary>
         private struct FirstIntersectResponse
         {
-            /// <summary>Gets or sets the t p.</summary>
+            /// <summary>Gets or sets the intersection ToolPoint</summary>
             public ToolPoint tP { get; set; }
-            /// <summary>Gets or sets the norm.</summary>
+            /// <summary>Gets or sets the surface norm.</summary>
             public Vector3d norm { get; set; }
             /// <summary>Gets or sets a value indicating whether hit.</summary>
             public bool hit { get; set; }
 
-            /// <summary>TODO The to string.</summary>
-            /// <returns>The <see cref="string"/>.</returns>
+            /// <inheritdoc />
             public override string ToString() => this.hit.ToString();
         }
 
@@ -557,6 +555,8 @@
                     return SurfToolDir.PathNormal;
                 case 3:
                     return SurfToolDir.Normal;
+                case 4:
+                    return SurfToolDir.Material;
                 default:
                     return SurfToolDir.Error;
             }

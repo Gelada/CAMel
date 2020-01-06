@@ -38,7 +38,7 @@
             pManager.AddCurveParameter("Centre Curve", "CC", "Central Curve for cylindrical projection", GH_ParamAccess.item);
             pManager.AddVectorParameter("Direction", "Dir", "Direction for parallel projection or orthogonal direction for cylindrical", GH_ParamAccess.item, new Vector3d(0, 0, -1));
             pManager.AddPointParameter("Centre", "C", "Centre for spherical projection", GH_ParamAccess.item, new Point3d(0, 0, 0));
-            pManager.AddNumberParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal, \n 4: Material Normal", GH_ParamAccess.item, 0);
             pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
             // ReSharper disable once PossibleNullReferenceException
             pManager[6].WireDisplay = GH_ParamWireDisplay.faint;
