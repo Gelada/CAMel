@@ -93,6 +93,7 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="GH\C_ParallelCylinderSurface.cs" />
     <Compile Include="GH\C_SpiralSurface.cs" />
     <Compile Include="GH\C_OMAX.cs" />
     <Compile Include="Types\L_BasicParser.cs" />
