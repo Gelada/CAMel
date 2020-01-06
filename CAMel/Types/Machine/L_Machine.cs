@@ -1266,7 +1266,8 @@
                 // We trust insert and retract moves and retract to transitions.
                 if (fP.label == PathLabel.Insert
                     || tP.label == PathLabel.Retract
-                    || fP.label == PathLabel.Retract && tP.label == PathLabel.Transition)
+                    || fP.label == PathLabel.Retract && tP.label == PathLabel.Transition
+                    || fP.label == PathLabel.Retract && tP.label == PathLabel.Insert)
                 { return 0; }
 
                 // return distance in material
