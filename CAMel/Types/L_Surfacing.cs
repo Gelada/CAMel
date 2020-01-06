@@ -64,7 +64,44 @@
             return new SurfacePath(paths, mT, -dir.ZAxis, sTD);
         }
 
-        /// <summary>Create a surface path recipe as a helix on a cylinder round and object. </summary>
+        /// <summary>Create a surface path recipe as zig zag on a cylinder round an object. </summary>
+        /// <param name="c">Curve up the cylinder to turn into zigzag.</param>
+        /// <param name="dir">Plane for base of cylinder. </param>
+        /// <param name="stepOver">Stepover between neighboring curves. </param>
+        /// <param name="sTD">The <see cref="SurfToolDir"/> describing the tool direction. </param>
+        /// <param name="bb">The bounding box for the area to mill.</param>
+        /// <param name="mT">The <see cref="MaterialTool"/> describing the material and tool used.</param>
+        /// <returns>The <see cref="SurfacePath"/> generated.</returns>
+        /// <exception cref="NullReferenceException"></exception>
+        [NotNull]
+        public static SurfacePath parallelCylinder([CanBeNull] Curve c, Plane dir, double stepOver, SurfToolDir sTD, BoundingBox bb, [CanBeNull] MaterialTool mT)
+        {
+            if (mT == null) { Exceptions.matToolException(); }
+
+            double outerRadius = new Vector3d(bb.Max.X - bb.Min.X, bb.Max.Y - bb.Min.Y, 0).Length / 2;
+
+            Curve uC;
+
+            if (c == null)
+            {
+                Point3d start = dir.PointAt(outerRadius, 0, bb.Min.Z);
+                Point3d end = dir.PointAt(outerRadius, 0, bb.Max.Z);
+                uC = new LineCurve(start, end);
+            }
+            else { uC = c; }
+
+            List<Curve> paths = new List<Curve>();
+
+
+
+            LineCurve cc = new LineCurve(
+                dir.PointAt(bb.Center.X, bb.Center.Y, bb.Min.Z),
+                dir.PointAt(bb.Center.X, bb.Center.Y, bb.Max.Z));
+
+            return new SurfacePath(paths, mT, dir.ZAxis, cc, sTD);
+        }
+
+        /// <summary>Create a surface path recipe as a helix on a cylinder round an object. </summary>
         /// <param name="c">Curve round the cylinder to turn into helix.</param>
         /// <param name="dir">Plane for base of cylinder. </param>
         /// <param name="stepOver">Stepover between neighboring curves. </param>
@@ -153,8 +190,7 @@
                             new Point3d(
                                 outerRadius,
                                 (i * startPt.Y + (shiftL - i) * endPt.Y) / shiftL,
-                                (i * startPt.Z + (shiftL - i) * endPt.Z) / shiftL)
-                        ));
+                                (i * startPt.Z + (shiftL - i) * endPt.Z) / shiftL)));
                 }
             }
 
