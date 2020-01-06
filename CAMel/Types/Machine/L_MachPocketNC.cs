@@ -515,7 +515,7 @@
             route.Add(tP.firstP.pt);
 
             // loop through intersecting with safe bubble and adding points
-            for (i = 0; i < route.Count - 1 && route.Count < 1000;)
+            for (i = 0; i < route.Count - 1;)
             {
                 if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out MFintersects inters))
                 {
@@ -524,6 +524,14 @@
                     route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
                 }
                 else { i++; }
+                if (route.Count > 1000)
+                {
+                    // something has gone horribly wrong and
+                    // both angle change directions will hit the material
+                    // break;
+                    throw new Exception(
+                        "Safe Route failed to find a safe path from the end of one toolpath to the next.");
+                }
             }
 
             // add extra points if the angle change between steps is too large (pi/30)
@@ -554,9 +562,9 @@
                         {
                             // something has gone horribly wrong and
                             // both angle change directions will hit the material
-                            // break;
-                            throw new Exception(
-                                "Safe Route failed to find a safe path from the end of one toolpath to the next.");
+                            break;
+                            //throw new Exception(
+                            //    "Safe Route failed to find a safe path from the end of one toolpath to the next.");
                         }
 
                         // start again with the longer angle change
