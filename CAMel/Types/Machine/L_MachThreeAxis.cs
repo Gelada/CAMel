@@ -429,8 +429,8 @@
                 else { i++; }
             }
 
-            // get rid of start and end points that are already in the paths
-            route.RemoveAt(0);
+            // get rid of end points that will remain in the to path. 
+            
             route.RemoveAt(route.Count - 1);
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
