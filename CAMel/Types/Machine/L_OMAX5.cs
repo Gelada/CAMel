@@ -651,6 +651,7 @@
             co.append("[Reserved]");
             co.append("[Reserved]");
             co.append("[Reserved]");
+            co.append("[Reserved]");
             co.append("[COMMENT]");
             co.append(" Machine Instructions Created " + thisDay.ToString("f"));
             System.Reflection.AssemblyName camel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
