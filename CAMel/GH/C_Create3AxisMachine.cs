@@ -58,7 +58,6 @@
             pManager.AddTextParameter("File Start and End", "SE", "Strings for start and end of file.", GH_ParamAccess.list, fileDefault);
             // ReSharper disable once PossibleNullReferenceException
             pManager[6].Optional = true;
-            pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
             pManager.AddTextParameter("Extension", "E", "Filename extension", GH_ParamAccess.item, GCode.DefaultExtension);
         }
 

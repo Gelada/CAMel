@@ -46,9 +46,7 @@
             pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
             pManager[4].Optional = true;
             pManager.AddTextParameter("Header", "H", "Code Header", GH_ParamAccess.item, string.Empty);
-            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty);
-            pManager.AddNumberParameter("Path Jump", "PJ", "Maximum allowed distance between paths in material", GH_ParamAccess.item, 0);
-        }
+            pManager.AddTextParameter("Footer", "F", "Code Footer", GH_ParamAccess.item, string.Empty); }
 
         /// <inheritdoc />
         /// <summary>
