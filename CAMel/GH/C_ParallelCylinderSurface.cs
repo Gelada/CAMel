@@ -19,7 +19,7 @@
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the CreateToolPath class.
+        /// Initializes a new instance of the Parallel Cyliner Path class.
         /// </summary>
         public C_ParallelCylinderPath()
             : base(
