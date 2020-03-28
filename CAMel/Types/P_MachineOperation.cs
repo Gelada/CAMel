@@ -278,55 +278,61 @@
                 case IMaterialForm mF:
                     oMOs.Add(new MachineOperation(new ToolPath(mF)));
                     break;
-            }
 
-            switch (scraps)
-            {
                 // Otherwise process mixed up any other sort of list by term.
                 case MaterialTool mT:
                     oMOs.Add(new MachineOperation(new ToolPath(mT)));
                     break;
                 case IEnumerable sc:
                     {
-                        bool tpPath = false;
                         ToolPath tempTP = new ToolPath();
+                        MachineOperation tempMO = new MachineOperation();
                         foreach (object oB in sc)
                         {
                             switch (oB)
                             {
                                 case Point3d pt:
-                                    tpPath = true;
                                     tempTP.Add(new ToolPoint(pt));
                                     break;
                                 case ToolPoint tPt:
-                                    tpPath = true;
                                     tempTP.Add(tPt);
                                     break;
                                 default:
                                     {
-                                        if (tpPath)
+                                        if (tempTP.Count > 0)
                                         {
-                                            oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP }));
-                                            tpPath = false;
+                                            tempMO.Add(tempTP);
                                             tempTP = new ToolPath();
                                         }
 
                                         switch (oB)
                                         {
                                             case ToolPath tP:
-                                                oMOs.Add(new MachineOperation(new List<ToolPath> { tP }));
+                                                tempMO.Add(tP);
                                                 break;
                                             case MachineOperation mO:
+                                                if (tempMO.Count > 0)
+                                                {
+                                                    oMOs.Add(tempMO);
+                                                    tempMO = new MachineOperation();
+                                                }
+
                                                 oMOs.Add(mO);
                                                 break;
                                             case MachineInstruction mI:
+                                                if (tempMO.Count > 0)
+                                                {
+                                                    oMOs.Add(tempMO);
+                                                    tempMO = new MachineOperation();
+                                                }
+
                                                 oMOs.AddRange(mI);
                                                 break;
                                             case IMaterialForm uMF:
-                                                oMOs.Add(new MachineOperation(new ToolPath(uMF)));
+                                                tempMO.Add(new ToolPath(uMF));
                                                 break;
                                             case MaterialTool uMT:
-                                                oMOs.Add(new MachineOperation(new ToolPath(uMT)));
+                                                tempMO.Add(new ToolPath(uMT));
                                                 break;
                                             default:
                                                 ignores++;
@@ -338,7 +344,8 @@
                             }
                         }
 
-                        if (tpPath) { oMOs.Add(new MachineOperation(new List<ToolPath> { tempTP })); }
+                        if (tempTP.Count > 0) { tempMO.Add(tempTP); }
+                        if (tempMO.Count > 0) { oMOs.Add(tempMO); }
                         break;
                     }
             }
