@@ -596,7 +596,6 @@
             this.insert ||
             this.retract ||
             this.offset.Length > 0 ||
-            this.activate != 0 ||
             this.stepDown ||
             this.threeAxisHeightOffset ||
             this.tabbing ||
