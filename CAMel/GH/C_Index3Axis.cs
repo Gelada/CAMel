@@ -35,16 +35,16 @@
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddCurveParameter("Curves", "C", "The curves for the tip of the tool to follow", GH_ParamAccess.list);
-            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
+            pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.list, new Vector3d(0, 0, 1));
             GH_ToolPathAdditionsPar tPaPar = new GH_ToolPathAdditionsPar();
             tPaPar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));
-            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" + "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.item);
+            pManager.AddParameter(tPaPar, "Additions", "TPA", "Additional operations to apply to the path before cutting. \n" + "Left click and choose \"Manage ToolPathAdditions Collection\" to create.", GH_ParamAccess.list);
             // ReSharper disable once PossibleNullReferenceException
             pManager[2].Optional = true; // ToolPathAdditions
-            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.list);
             // ReSharper disable once PossibleNullReferenceException
             pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
-            pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialFormPar(), "Material Form", "MF", "The MaterialForm giving the position of the material", GH_ParamAccess.list);
             // ReSharper disable once PossibleNullReferenceException
             pManager[4].WireDisplay = GH_ParamWireDisplay.faint;
             pManager[4].Optional = true; // MaterialForm
@@ -69,16 +69,16 @@
         {
             if (da == null) { throw new ArgumentNullException(); }
             List<Curve> c = new List<Curve>();
-            Vector3d dir = new Vector3d();
-            ToolPathAdditions tPa = null;
-            MaterialTool mT = null;
-            IMaterialForm mF = null;
+            List<Vector3d> dir = new List<Vector3d>();
+            List<ToolPathAdditions> tPa = new List<ToolPathAdditions>();
+            List<MaterialTool> mT = new List<MaterialTool>();
+            List<IMaterialForm> mF = new List<IMaterialForm>();
 
             if (!da.GetDataList(0, c)) { return; }
-            if (!da.GetData(1, ref dir)) { return; }
-            da.GetData(2, ref tPa);
-            if (!da.GetData(3, ref mT)) { return; }
-            da.GetData(4, ref mF);
+            if (!da.GetDataList(1, dir)) { return; }
+            da.GetDataList(2, tPa);
+            if (!da.GetDataList(3, mT)) { return; }
+            da.GetDataList(4, mF);
 
             MachineOperation mO = Operations.opIndex3Axis(c, dir, tPa, mT, mF, out int invalidCurves);
 
