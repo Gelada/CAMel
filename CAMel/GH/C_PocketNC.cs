@@ -68,7 +68,6 @@
             if (da == null) { throw new ArgumentNullException(); }
             string head = string.Empty;
             string foot = string.Empty;
-            double pj = 0;
             double bT = 0;
             double bMax = 0;
             bool tLc = true;
@@ -90,7 +89,6 @@
             da.GetDataList(4, mTs);
             if (!da.GetData(5, ref head)) { return; }
             if (!da.GetData(6, ref foot)) { return; }
-            if (!da.GetData(7, ref pj)) { return; }
 
             double aMin = 0, aMax = Math.PI / 2.0;
 
