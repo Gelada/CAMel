@@ -126,8 +126,8 @@
             }
 
             Vector3d inter = (Vector3d)(pt + shift * dir);
-            if (odi1.Min < inter.Y && inter.Y < odi1.Max &&
-                odi2.Min < inter.Z && inter.Z < odi2.Max) // hit plane
+            if (odi1.Min <= inter.Y && inter.Y <= odi1.Max &&
+                odi2.Min <= inter.Z && inter.Z <= odi2.Max) // hit plane
             {
                 dist = intDist;
                 return true;
