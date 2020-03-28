@@ -57,7 +57,7 @@
         /// <param name="invalidCurves">TODO The invalid curves.</param>
         /// <returns>The <see cref="MachineOperation"/>.</returns>
         [NotNull]
-        public static MachineOperation opIndex3Axis([NotNull] List<Curve> cs, Vector3d dir, [NotNull] ToolPathAdditions tPa, [CanBeNull] MaterialTool mT, [CanBeNull] IMaterialForm mF, out int invalidCurves)
+        public static MachineOperation opIndex3Axis([NotNull] List<Curve> cs, [NotNull] List<Vector3d> dir, [NotNull] List<ToolPathAdditions> tPa, [NotNull] List<MaterialTool> mT, [NotNull] List<IMaterialForm> mF, out int invalidCurves)
         {
             MachineOperation mO = new MachineOperation
                 {
@@ -65,21 +65,31 @@
                 };
             if (cs.Count > 1) { mO.name += "s"; }
 
-            int i = 1;
+            int i = 0;
 
             invalidCurves = 0; // Keep track of any invalid curves.
 
+            MaterialTool uMT = null;
+            IMaterialForm uMF = null;
+            ToolPathAdditions utPa = ToolPathAdditions.temp;
+            Vector3d uDir = Vector3d.ZAxis;
+
             foreach (Curve c in cs)
             {
+                if (i < mT.Count) { uMT = mT[i]; }
+                if (i < mF.Count) { uMF = mF[i]; }
+                if (i < tPa.Count) { utPa = tPa[i]; }
+                if (i < dir.Count) { uDir = dir[i]; }
+
                 // Create and add name, material/tool and material form
-                ToolPath tP = new ToolPath("Index 3-Axis Path", mT, mF);
-                if (cs.Count > 1) { tP.name = tP.name + " " + i; }
+                ToolPath tP = new ToolPath("Index 3-Axis Path", uMT, uMF);
+                if (cs.Count > 1) { tP.name = tP.name + " " + (i + 1); }
 
                 // Additions for toolpath
-                tP.additions = tPa;
+                tP.additions = utPa;
 
                 // Turn Curve into path
-                if (tP.convertCurve(c, dir)) { mO.Add(tP); }
+                if (tP.convertCurve(c, uDir, 1)) { mO.Add(tP); }
                 else { invalidCurves++; }
                 i++;
             }
