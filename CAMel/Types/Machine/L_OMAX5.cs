@@ -295,6 +295,9 @@
             if (tP.Count == 0) { return; }
             if (tP.matTool == null) { Exceptions.matToolException(); }
 
+            // Double check tP does not have additions.
+            if (tP.additions.any) { Exceptions.additionsException(); }
+
             OMXCode.omxPathStart(this, ref co, tP);
 
             int pathQuality = tP.additions.activate;
