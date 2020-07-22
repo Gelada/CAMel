@@ -420,12 +420,14 @@ namespace CAMel.GH
                                     ) { c.side = -1; }
                                     else { c.side = 1; }
                                 }
-
                                 break;
                             case 3:
-                                if (c != null) { c.side = -1; }
+                                if (c != null) { c.side = 0; }
                                 break;
                             case 4:
+                                if (c != null) { c.side = -1; }
+                                break;
+                            case 5:
                                 if (c != null) { c.side = 1; }
                                 break;
                         }
@@ -596,6 +598,7 @@ namespace CAMel.GH
                     "Leave",
                     "InsideAll",
                     "OutsideAll",
+                    "CentreAll",
                     "LeftAll",
                     "RightAll"
                 };
