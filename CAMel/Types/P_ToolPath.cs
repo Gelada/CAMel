@@ -253,7 +253,7 @@
 
             // add steps into material
             List<List<ToolPath>> roughPaths = new List<List<ToolPath>>();
-            if (this.additions.stepDown)
+            if (Math.Abs(this.additions.stepDown) > CAMel_Goo.Tolerance)
             {
                 foreach (List<List<ToolPath>> rPs in useTP.Select(m.stepDown))
                 {

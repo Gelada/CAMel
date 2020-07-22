@@ -89,7 +89,7 @@
                 }
 
                 if (reader.ItemExists("activate")) { tPa.activate = reader.GetInt32("activate"); }
-                if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetBoolean("stepDown"); }
+                if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetDouble("stepDown"); }
                 if (reader.ItemExists("sdDropStart")) { tPa.sdDropStart = reader.GetBoolean("sdDropStart"); }
                 if (reader.ItemExists("sdDropMiddle")) { tPa.sdDropMiddle = reader.GetDouble("sdDropMiddle"); }
                 if (reader.ItemExists("sdDropEnd")) { tPa.sdDropEnd = reader.GetBoolean("sdDropEnd"); }
@@ -133,7 +133,7 @@
             writer.SetBoolean("retract", this.Value.retract);
             writer.SetInt32("activate", this.Value.activate);
             writer.SetPoint3D("offset", CAMel_Goo.toIO(this.Value.offset));
-            writer.SetBoolean("stepDown", this.Value.stepDown);
+            writer.SetDouble("stepDown", this.Value.stepDown);
             writer.SetBoolean("sdDropStart", this.Value.sdDropStart);
             writer.SetDouble("sdDropMiddle", this.Value.sdDropMiddle);
             writer.SetBoolean("sdDropEnd", this.Value.sdDropEnd);
@@ -402,9 +402,9 @@
         /// <summary>Gets or sets a value indicating whether stepdown.</summary>
         /// <exception cref="NullReferenceException"></exception>
         [Category(" Step Down"),
-         Description("Create a sequence of paths stepping down through the material."),
+         Description("Step size for stepping down to the path, with 0 for false or negative for default."),
          DisplayName(" Step down"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
-        public bool stepdown
+        public double stepdown
         {
             get => this.Owner?.Value?.stepDown ?? ToolPathAdditions.basicDefault.stepDown;
             set
@@ -477,7 +477,7 @@
         /// <summary>TODO The sd drop start 1.</summary>
         private bool sdDropStart1;
         /// <summary>TODO The step down 1.</summary>
-        private bool stepDown1;
+        private double stepDown1;
         /// <summary>TODO The tabbing 1.</summary>
         private bool tabbing1;
         /// <summary>TODO The three axis height offset 1.</summary>
@@ -490,7 +490,7 @@
             this.retract = false;
             this.offset = new Vector3d(0, 0, 0);
             this.activate = 0;
-            this.stepDown = false;
+            this.stepDown = -1;
             this.sdDropStart = false;
             this.sdDropMiddle = 0;
             this.sdDropEnd = false;
@@ -538,7 +538,7 @@
                 retract = true,
                 offset = new Vector3d(0, 0, 0),
                 activate = 0,
-                stepDown = true,
+                stepDown = -1,
                 sdDropStart = true,
                 sdDropMiddle = -1,
                 sdDropEnd = true,
@@ -558,7 +558,7 @@
                 retract = false,
                 offset = new Vector3d(0, 0, 0),
                 activate = 0,
-                stepDown = false,
+                stepDown = 0,
                 sdDropStart = true,
                 sdDropMiddle = -1,
                 sdDropEnd = true,
@@ -578,7 +578,7 @@
                 retract = true,
                 offset = new Vector3d(0, 0, 0),
                 activate = 1,
-                stepDown = false,
+                stepDown = 0,
                 sdDropStart = true,
                 sdDropMiddle = -1,
                 sdDropEnd = true,
@@ -596,7 +596,7 @@
             this.insert ||
             this.retract ||
             this.offset.Length > 0 ||
-            this.stepDown ||
+            this.stepDown > 0 ||
             this.threeAxisHeightOffset ||
             this.tabbing ||
             this.onion.Count == 1 && Math.Abs(this.onion[0]) > CAMel_Goo.Tolerance ||
@@ -717,7 +717,7 @@
 
         // offset plane(normal to vector and amount on the right when turning clockwise.
         /// <summary>Gets or sets a value indicating whether step down.</summary>
-        public bool stepDown
+        public double stepDown
         {
             get => this.stepDown1;
             set

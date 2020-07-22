@@ -78,7 +78,7 @@
                     // Additions for Roughing toolpath
                     insert = true,
                     retract = true,
-                    stepDown = true,
+                    stepDown = -1,
                     sdDropStart = true,
                     sdDropMiddle = -1,
                     sdDropEnd = true,
@@ -92,7 +92,7 @@
                     // Additions for Finishing toolpath
                     insert = true,
                     retract = true,
-                    stepDown = false,
+                    stepDown = 0,
                     sdDropStart = false,
                     sdDropMiddle = 0.0,
                     sdDropEnd = false,
