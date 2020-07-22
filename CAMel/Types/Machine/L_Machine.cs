@@ -340,7 +340,7 @@
                 i++;
 
                 // return to original orientation
-                osPl.Translate(new Vector3d(0, 0, -useZ));
+                osPl.Translate(new Vector3d(0, 0, useZ));
                 osPl.Transform(Transform.PlaneToPlane(Plane.WorldXY, p));
 
                 // Add to Operation
@@ -465,7 +465,7 @@
                 newPaths.Add(new List<ToolPath>());
                 ToolPath tempTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 tempTP.name = tP.name + " Pass " + (i + 1);
-                tempTP.additions.stepDown = false;
+                tempTP.additions.stepDown = 0;
                 tempTP.additions.onion = new List<double> { 0 };
                 tempTP.label = PathLabel.RoughCut;
 
@@ -567,7 +567,7 @@
                                     tempTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                                     tempTP.name = tP.name + " Continuing Pass " + (i + 1);
                                     tempTP.additions.insert = true;
-                                    tempTP.additions.stepDown = false;
+                                    tempTP.additions.stepDown = 0;
                                     tempTP.additions.onion = new List<double> { 0 };
                                     tempTP.label = PathLabel.RoughCut;
 
@@ -1201,7 +1201,7 @@
                 if (newTP.name != string.Empty) { newTP.name += " "; }
                 newTP.name = newTP.name + "Finish at height " + height.ToString("0.###");
                 newTP.label = PathLabel.FinishCut;
-                newTP.additions.stepDown = false;
+                newTP.additions.stepDown = 0;
                 newTP.additions.onion = new List<double> { 0 };
                 fP.Add(newTP);
             }
@@ -1210,7 +1210,7 @@
             if (fP.Count != 0) { return fP; }
             {
                 ToolPath newTP = tP.deepClone();
-                newTP.additions.stepDown = false;
+                newTP.additions.stepDown = 0;
                 newTP.additions.onion = new List<double> { 0 };
                 newTP.label = PathLabel.FinishCut;
                 fP.Add(newTP);
@@ -1230,7 +1230,7 @@
         internal static List<ToolPath> oneFinishPath([NotNull] ToolPath tP)
         {
             ToolPath newTP = tP.deepClone();
-            newTP.additions.stepDown = false;
+            newTP.additions.stepDown = 0;
             newTP.additions.onion = new List<double> { 0 };
             newTP.label = PathLabel.FinishCut;
             return new List<ToolPath> { newTP };
@@ -1291,7 +1291,7 @@
             double length = jumpCheck(fP, tP);
             if (length > fP.matTool?.pathJump)
             {
-                co.addError(
+                co.addWarning(
                     "Long Transition between paths in material. \n"
                     + "To remove this error, don't use ignore, instead change PathJump for the material/tool from: "
                     + fP.matTool.pathJump + " to at least: " + (length + .01).ToString("0.00"));
