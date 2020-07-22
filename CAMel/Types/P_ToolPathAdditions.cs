@@ -89,7 +89,19 @@
                 }
 
                 if (reader.ItemExists("activate")) { tPa.activate = reader.GetInt32("activate"); }
-                if (reader.ItemExists("stepDown")) { tPa.stepDown = reader.GetDouble("stepDown"); }
+                if (reader.ItemExists("stepDown"))
+                {
+                    try
+                    {
+                        tPa.stepDown = reader.GetDouble("stepDown");
+                    }
+                    catch( Exception ex) when (ex is InvalidCastException)
+                    {
+                        bool osd = reader.GetBoolean("stepDown");
+                        if(osd) { tPa.stepDown = -1; }
+                        else { tPa.stepDown = 0; }
+                    }
+                }
                 if (reader.ItemExists("sdDropStart")) { tPa.sdDropStart = reader.GetBoolean("sdDropStart"); }
                 if (reader.ItemExists("sdDropMiddle")) { tPa.sdDropMiddle = reader.GetDouble("sdDropMiddle"); }
                 if (reader.ItemExists("sdDropEnd")) { tPa.sdDropEnd = reader.GetBoolean("sdDropEnd"); }
