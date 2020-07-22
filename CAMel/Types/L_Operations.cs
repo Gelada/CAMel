@@ -41,7 +41,7 @@
 
             ToolPath tP = new ToolPath(string.Empty, mT, mF, tPa);
             tP.convertCurve(c, d);
-            tP.additions.offset = mT.toolWidth * uOS * p.ZAxis;
+            tP.additions.offset = mT.toolWidth * uOS * p.ZAxis/2.0;
 
             mO.Add(tP);
 
@@ -117,7 +117,7 @@
                         {
                             insert = true,
                             retract = true,
-                            stepDown = false,
+                            stepDown = 0,
                             sdDropStart = false,
                             sdDropMiddle = 0,
                             sdDropEnd = false,
