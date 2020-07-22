@@ -76,12 +76,35 @@
             MaterialTool mT = null;
             IMaterialForm mF = null;
 
-            if (!da.GetData(0, ref c)) { return; }
-            if (!da.GetData(2, ref dir)) { return; }
-            if (!da.GetData(1, ref os)) { return; }
-            if (!da.GetData(3, ref tPa) || tPa == null) { return; }
-            if (!da.GetData(4, ref mT)) { return; }
-            da.GetData(5, ref mF);
+            if (!da.GetData(0, ref c)) {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter C failed to collect data");
+                return;
+            }
+            if (!da.GetData(2, ref dir))
+            {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter D failed to collect data");
+                return;
+            }
+            if (!da.GetData(1, ref os))
+            {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter O failed to collect data");
+                return;
+            }
+            if (!da.GetData(3, ref tPa) || tPa == null)
+            {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter TPA failed to collect data");
+                return;
+            }
+            if (!da.GetData(4, ref mT))
+            {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter mT failed to collect data");
+                return;
+            }
+            if (!da.GetData(5, ref mF))
+            {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter mF failed to collect data");
+                return;
+            }
 
             CurveIntersections cI = Intersection.CurveSelf(c, 0.00000001);
             if (cI != null && cI.Count > 0)
