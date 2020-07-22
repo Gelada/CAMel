@@ -101,6 +101,7 @@
                 if (csv.Configuration != null)
                 {
                     csv.Configuration.WillThrowOnMissingField = false;
+                    csv.Configuration.IgnoreReadingExceptions = true;
                     csv.Configuration.RegisterClassMap<MaterialToolMap>();
                     mTbs.UnionWith(csv.GetRecords<MaterialToolBuilder>() ?? new List<MaterialToolBuilder>());
                 }
