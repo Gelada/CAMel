@@ -5,6 +5,7 @@ namespace CAMel.GH
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Drawing;
 
     using CAMel.Types;
 
@@ -23,6 +24,7 @@ namespace CAMel.GH
     using Rhino.Geometry;
     using Rhino.Input;
     using Rhino.Input.Custom;
+    using System.Windows.Forms;
 
     /// <inheritdoc />
     /// <summary>TODO The c_ organise paths.</summary>
@@ -41,6 +43,8 @@ namespace CAMel.GH
             internal Guid id { get; }
             /// <summary>Gets or sets the side.</summary>
             internal double side { get; set; }
+            /// <summary> Gets or sets the depth to cut as a propotion of the overall depth. </summary>
+            internal double depth { get; set; }
 
             /// <summary>Initializes a new instance of the <see cref="AugCurve"/> class.</summary>
             /// <param name="c">TODO The c.</param>
@@ -51,6 +55,7 @@ namespace CAMel.GH
                 this.id = id;
                 this.key = double.NaN;
                 this.side = -1;
+                this.depth = 0;
             }
         }
 
@@ -59,9 +64,22 @@ namespace CAMel.GH
         /// <summary>TODO The enabled.</summary>
         private bool enabled;
 
+        /// <summary>Setting for whether the component reads all paths from the document or just the input.</summary>
+        private bool m_allPaths;
+        public bool allPaths
+        {
+            get { return this.m_allPaths; }
+            set
+            {
+                this.m_allPaths = value;
+                if (this.m_allPaths) { this.Message = "All Paths"; }
+                else { this.Message = "Input Paths"; }
+            }
+        }
+
         /// <summary>TODO The click q.</summary>
         /// <returns>The <see cref="bool"/>.</returns>
-        internal bool clickQ() => this.enabled && this.inActiveDocument;
+        internal bool clickQ() => this.enabled && this.inActiveDocument && !this.Hidden;
 
         /// <summary>TODO The click.</summary>
         [UsedImplicitly] private readonly PathClick click;
@@ -80,12 +98,13 @@ namespace CAMel.GH
         public C_OrganisePaths()
             : base(
                 "Organise Paths", "OrgPth",
-                "Reorder a collection of curves",
+                "Read and order a collection of curves",
                 "CAMel", " ToolPaths")
         {
             this.click = new PathClick(this);
             this.curves = new List<AugCurve>();
             this.allKeys = new SortedSet<double>();
+            this.allPaths = false;
         }
 
         /// <inheritdoc />
@@ -96,6 +115,9 @@ namespace CAMel.GH
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddCurveParameter("Paths", "P", "Paths to reorder", GH_ParamAccess.list);
+            pManager[0].Optional = true;
+            pManager.AddVectorParameter("Depth", "D", "Direction and Depth to cut at (set to 0 to leave paths as read), individual paths will scale this, initially by the red channel of the view colour.", GH_ParamAccess.item, Vector3d.Zero);
+            pManager.AddColourParameter("Colour", "C", "Display Colour of paths to select, will only use blue and green channels (as red is depth). Set as white to select all", GH_ParamAccess.item, Color.White);
         }
 
         /// <inheritdoc />
@@ -147,7 +169,30 @@ namespace CAMel.GH
             List<GH_Curve> paths = new List<GH_Curve>();
             this.enabled = false;
             RhinoDoc uDoc = RhinoDoc.ActiveDoc;
-            if (!da.GetDataList("Paths", paths) || paths.Count == 0 || uDoc?.Objects == null) { return; }
+            // Read paths, either all paths in document or the input
+            if (this.allPaths)
+            {
+                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                settings.ObjectTypeFilter = ObjectType.Curve;
+
+                foreach (Rhino.DocObjects.RhinoObject rhObj in uDoc.Objects.GetObjectList(settings))
+                {
+                    GH_Curve C = new GH_Curve((Curve)rhObj.Geometry);
+                    C.ReferenceID = rhObj.Id;
+                    paths.Add(C);
+                }
+            }
+            else if (!da.GetDataList("Paths", paths) || paths.Count == 0 || uDoc?.Objects == null)
+            {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter P failed to collect data");
+                return;
+            }
+
+            Color sCol = new Color();
+            da.GetData("Colour", ref sCol);
+
+            Vector3d depth = new Vector3d();
+            da.GetData("Depth", ref depth);
 
             // Insist on reference curves
             if (paths.Any(p => p?.IsReferencedGeometry == false))
@@ -165,7 +210,21 @@ namespace CAMel.GH
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (GH_Curve curve in paths)
             {
-                if (curve?.Value != null) { this.curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
+                if (curve?.Value != null)
+                {
+                    // select by color
+                    Color col = uDoc.Objects.Find(curve.ReferenceID).Attributes.ObjectColor;
+                    if (sCol.ToArgb() == Color.White.ToArgb() || col.G == sCol.G && col.B == sCol.B)
+                    {
+                        this.curves.Add(new AugCurve(curve.Value, curve.ReferenceID));
+                    }
+                }
+            }
+
+            if (this.curves.Count == 0)
+            {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No Curves matched the given criteria. ");
+                return;
             }
 
             foreach (RhinoObject ro in uDoc.Objects)
@@ -178,6 +237,8 @@ namespace CAMel.GH
                 {
                     c.key = key;
                     c.side = ro.Attributes.getSide();
+                    c.depth = ro.Attributes.getDepth();
+
                 }
             }
 
@@ -189,12 +250,20 @@ namespace CAMel.GH
             {
                 this.enabled = true;
                 if (!double.IsNaN(c.key)) { continue; }
+
+                // Use curve's color to set initial depth
+                Color col = uDoc.Objects.Find(c.id).Attributes.ObjectColor;
+
+                if( col.R < 255) { c.depth = col.R / 256.0; }
+                else { c.depth = 1; }
+                    
                 if (c.c.IsClosed)
                 {
                     c.key = this.allKeys.Max + 1;
                     this.allKeys.Add(this.allKeys.Max + 1);
                     RhinoObject ro = uDoc.Objects.Find(c.id);
                     ro?.setKey(c.key);
+                    ro?.Attributes.setDepth(c.depth);
                     ro?.CommitChanges();
                 }
                 else
@@ -204,6 +273,7 @@ namespace CAMel.GH
                     this.allKeys.Add(this.allKeys.Min - 1);
                     RhinoObject ro = uDoc.Objects.Find(c.id);
                     ro?.setKey(c.key);
+                    ro?.Attributes.setDepth(c.depth);
                     ro?.CommitChanges();
                 }
             }
@@ -216,7 +286,9 @@ namespace CAMel.GH
             {
                 double os = 0;
                 if (c != null) { os = c.side; }
-                sorted.Add(c?.c);
+                Curve opC = c?.c.DuplicateCurve();
+                opC?.Translate(depth * c.depth);
+                sorted.Add(opC);
                 offSets.Add(os);
             }
 
@@ -273,17 +345,19 @@ namespace CAMel.GH
             if (clicked < 0) { return false; }
 
             GetInteger gi;
+            OptionDouble depth;
 
             // if the clicked path is not selected or is the only thing selected, just deal with that.
             double side;
             if (sel.Count <= 1 || !sel.Contains(clicked))
             {
                 AugCurve c = this.curves[clicked];
+                depth = new OptionDouble(c.depth, -5, 5);
                 side = c.side;
                 if (c.c.IsClosed)
                 {
-                    bool cC = c.c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise;
-                    gi = getClosed(clicked, cC, c.side, out OptionToggle counterClock);
+                    bool cC = c.c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise; 
+                    gi = getClosed(clicked, cC, c.side, out OptionToggle counterClock, ref depth);
                     while (true)
                     {
                         GetResult getR = gi.Get();
@@ -299,6 +373,9 @@ namespace CAMel.GH
                                     c.c.Reverse();
                                     c.side = -c.side;
                                     return true;
+                                case "Depth":
+                                    c.depth = depth.CurrentValue;
+                                    break;
                                 case "Side":
                                     switch (gi.Option()?.CurrentListOptionIndex)
                                     {
@@ -335,7 +412,7 @@ namespace CAMel.GH
                 }
 
                 // the path is not closed
-                gi = getOpen(clicked, c.side, out OptionToggle flip);
+                gi = getOpen(clicked, c.side, out OptionToggle flip, ref depth);
                 while (true)
                 {
                     GetResult getR = gi.Get();
@@ -343,6 +420,9 @@ namespace CAMel.GH
                     {
                         switch (gi.Option()?.EnglishName)
                         {
+                            case "depth":
+                                c.depth = depth.CurrentValue;
+                                break;
                             case "Side":
                                 switch (gi.Option()?.CurrentListOptionIndex)
                                 {
@@ -356,7 +436,6 @@ namespace CAMel.GH
                                         side = 1;
                                         break;
                                 }
-
                                 break;
                         }
 
@@ -377,9 +456,11 @@ namespace CAMel.GH
             }
 
             // Now deal with a larger selection
-            gi = getMultiple(clicked);
+            depth = new OptionDouble(double.NaN, -5, 5);
+            gi = getMultiple(clicked, ref depth);
             side = 0;
             double direction = 0;
+            double depthV = double.NaN;
             while (true)
             {
                 GetResult getR = gi.Get();
@@ -392,6 +473,9 @@ namespace CAMel.GH
                             break;
                         case "Direction":
                             direction = gi.Option()?.CurrentListOptionIndex ?? 0;
+                            break;
+                        case "Depth":
+                            depthV = depth.CurrentValue;
                             break;
                     }
 
@@ -452,6 +536,9 @@ namespace CAMel.GH
                                 }
 
                                 break;
+                        }
+                        if(!double.IsNaN(depthV)) {
+                            c.depth = depthV;
                         }
                     }
                 }
@@ -547,7 +634,7 @@ namespace CAMel.GH
         /// <param name="counterClock">TODO The counter clock.</param>
         /// <returns>The <see cref="GetInteger"/>.</returns>
         [NotNull]
-        private static GetInteger getClosed(int i, bool cC, double side, out OptionToggle counterClock)
+        private static GetInteger getClosed(int i, bool cC, double side, out OptionToggle counterClock, ref OptionDouble depth)
         {
             GetInteger gi = setUp(i);
             counterClock = new OptionToggle(cC, "Clockwise", "CounterClockwise");
@@ -558,6 +645,7 @@ namespace CAMel.GH
             if (cC && side > 0 || !cC && side < 0) { dVal = 2; } // cutting outside
             gi.AddOptionList("Side", sideL, dVal);
             gi.AddOption("MoveSeam");
+            gi.AddOptionDouble("Depth", ref depth);
 
             return gi;
         }
@@ -568,7 +656,7 @@ namespace CAMel.GH
         /// <param name="flip">TODO The flip.</param>
         /// <returns>The <see cref="GetInteger"/>.</returns>
         [NotNull]
-        private static GetInteger getOpen(int i, double side, out OptionToggle flip)
+        private static GetInteger getOpen(int i, double side, out OptionToggle flip, ref OptionDouble depth)
         {
             GetInteger gi = setUp(i);
             flip = new OptionToggle(false, "Leave", "Flip");
@@ -579,6 +667,8 @@ namespace CAMel.GH
             if (side > 0) { dVal = 2; } // cutting right
             gi.AddOptionList("Side", sideL, dVal);
 
+            gi.AddOptionDouble("Depth", ref depth);
+
             return gi;
         }
 
@@ -586,7 +676,7 @@ namespace CAMel.GH
         /// <param name="i">TODO The i.</param>
         /// <returns>The <see cref="GetInteger"/>.</returns>
         [NotNull]
-        private static GetInteger getMultiple(int i)
+        private static GetInteger getMultiple(int i, ref OptionDouble depth)
         {
             GetInteger gi = setUp(i);
             gi.ClearDefault();
@@ -603,6 +693,7 @@ namespace CAMel.GH
                     "RightAll"
                 };
             gi.AddOptionList("Side", side, 0);
+            gi.AddOptionDouble("Depth", ref depth);
 
             return gi;
         }
@@ -619,6 +710,7 @@ namespace CAMel.GH
 
                 // Save side and key information
                 ro?.Attributes.setSide(c.side);
+                ro?.Attributes.setDepth(c.depth);
                 ro.setKey(c.key);
 
                 // Check for curve direction and seam
@@ -687,7 +779,32 @@ namespace CAMel.GH
 
             p.PersistentData.ClearData();
             p.SetPersistentData(this.curves);
+
+            writer.SetBoolean("allPaths", this.allPaths);
+
             return base.Write(writer);
+        }
+
+        /// <inheritdoc />
+        public override bool Read([CanBeNull] GH_IReader reader)
+        {
+            this.allPaths = reader.GetBoolean("allPaths");
+
+            return base.Read(reader);
+        }
+
+        /// <inheritdoc />
+        protected override void AppendAdditionalComponentMenuItems(ToolStripDropDown menu)
+        {
+            ToolStripMenuItem item = Menu_AppendItem(menu, "allPaths", menuAllPaths, true, this.allPaths);
+            base.AppendAdditionalComponentMenuItems(menu);
+        }
+
+        private void menuAllPaths(object sender, EventArgs e)
+        {
+            RecordUndoEvent("allPaths");
+            this.allPaths = !this.allPaths;
+            ExpireSolution(true);
         }
 
         /// <inheritdoc />

@@ -18,6 +18,8 @@
         private const string SideN = "95351F55-3489-40D1-BDBA-F49C0B84BDEG";
         /// <summary>TODO The seam n.</summary>
         private const string SeamN = "95351F55-3489-40D1-BDBA-F49C0B84BDEH";
+        /// <summary>TODO The depth n.</summary>
+        private const string DepthN = "95351F55-3489-40D1-BDBA-F49C0B84BDEI";
 
         /// <summary>TODO The get key.</summary>
         /// <param name="ro">TODO The ro.</param>
@@ -60,6 +62,23 @@
         /// <param name="value">TODO The value.</param>
         public static void setSide([CanBeNull] this CommonObject ro, double value) =>
             ro?.UserDictionary?.Set(SideN, value);
+
+        /// <summary>TODO The get depth.</summary>
+        /// <param name="ro">TODO The ro.</param>
+        /// <returns>The <see cref="double"/>.</returns>
+        public static double getDepth([CanBeNull] this CommonObject ro)
+        {
+            if (ro?.UserDictionary != null &&
+                ro.UserDictionary.TryGetDouble(DepthN, out double depth))
+            { return depth; }
+            return double.NaN;
+        }
+
+        /// <summary>TODO The set depth.</summary>
+        /// <param name="ro">TODO The ro.</param>
+        /// <param name="value">TODO The value.</param>
+        public static void setDepth([CanBeNull] this CommonObject ro, double value) =>
+            ro?.UserDictionary?.Set(DepthN, value);
 
         /// <summary>TODO The get new seam.</summary>
         /// <param name="ro">TODO The ro.</param>
