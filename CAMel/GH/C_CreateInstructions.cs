@@ -34,6 +34,7 @@
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddTextParameter("Name", "N", "name", GH_ParamAccess.item, string.Empty);
             pManager.AddGenericParameter("Operations", "MO", "Machine Operations to apply\n Will attempt to process any reasonable collection.", GH_ParamAccess.list);
+            pManager[1].Optional = true;
             pManager.AddGenericParameter("Start Point", "SP", "Starting moves, can gather data from all sorts of scraps that imply a point. Will use (0,0,1) for direction when Points are used alone.", GH_ParamAccess.list);
             // ReSharper disable once PossibleNullReferenceException
             pManager[2].Optional = true;
@@ -80,9 +81,12 @@
             IMachine m = null;
             string name = string.Empty;
 
-            if (!da.GetData(0, ref name)) { return; }
-            if (!da.GetDataList(1, tempMo)) { return; }
-            da.GetDataList(2, sP);
+            if (!da.GetData(0, ref name))
+            {
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "No name given for toolpath file, in parameter N.");
+                return;
+            }
+            da.GetDataList(1, tempMo);
             da.GetDataList(3, eP);
             if (!da.GetData(4, ref m)) { return; }
 
@@ -111,7 +115,7 @@
             }
             else
             {
-                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter MO failed to collect usable Machine Operations");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Input parameter MO failed to collect usable Machine Operations, for at least one branch.");
                 return;
             }
 
