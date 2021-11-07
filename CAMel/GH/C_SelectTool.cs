@@ -36,7 +36,9 @@
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddGenericParameter("Tool List", "L", "List of Material Tool Details or Machine with list of Material Tools", GH_ParamAccess.list);
             pManager.AddTextParameter("Material", "M", "Material to cut", GH_ParamAccess.item, "");
+            pManager[1].Optional = true;
             pManager.AddTextParameter("Tool", "T", "Tool to use", GH_ParamAccess.item, "");
+            pManager[2].Optional = true;
         }
 
         /// <inheritdoc />
@@ -46,7 +48,7 @@
         protected override void RegisterOutputParams([NotNull] GH_OutputParamManager pManager)
         {
             if (pManager == null) { throw new ArgumentNullException(); }
-            pManager.AddParameter(new GH_MaterialToolPar(), "MaterialTools", "MT", "Correct from the .csv file", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "MaterialTools", "MT", "Selected MaterialTool", GH_ParamAccess.item);
         }
 
         /// <summary>TODO The vl update.</summary>
