@@ -274,7 +274,7 @@
         }
     }
 
-    /// <summary>TODO The utility.</summary>
+    /// <summary>Collections of useful functions to create machines.</summary>
     public static class Utility
     {
         // planeOffset works with self-intersection of a closed curve
@@ -681,7 +681,7 @@
             return null;
         }
 
-        /// <summary>TODO The lead in out u.</summary>
+        /// <summary>TODO The lead in u.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <param name="activate">TODO The activate.</param>
         /// <param name="deActivate">TODO The de activate.</param>
@@ -691,7 +691,7 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadInOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
+        public static List<ToolPath> leadInU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
         {
             // Will add insert and retract paths as new ToolPaths
             List<ToolPath> irTps = new List<ToolPath>();
@@ -700,8 +700,6 @@
             ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
-            newTP.additions.retract = false;
-            newTP.additions.leadCurvature = string.Empty;
 
             // Add activation code to main path if tool not activated for insert/retract
             if (tP.additions.activate != 0 && irActivate == 0)
@@ -747,6 +745,46 @@
                 }
             }
 
+            // Add activation codes
+            // ReSharper disable once InvertIf
+            if (tP.additions.activate != 0)
+            {
+                if (activate != string.Empty && irTps[0] != null)
+                { irTps[0].preCode = activate + "\n" + newTP.preCode; }
+            }
+
+            return irTps;
+        }
+
+        /// <summary>TODO The lead out u.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="activate">TODO The activate.</param>
+        /// <param name="deActivate">TODO The de activate.</param>
+        /// <param name="irActivate">TODO The ir activate.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
+        [NotNull]
+        public static List<ToolPath> leadOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
+        {
+            // Will add insert and retract paths as new ToolPaths
+            List<ToolPath> irTps = new List<ToolPath>();
+
+            // Update the main toolpath
+            ToolPath newTP = tP.deepClone();
+            if (tP.matTool == null) { Exceptions.matToolException(); }
+            newTP.additions.retract = false;
+
+            irTps.Add(newTP);
+
+            double leadCurve = tP.additions.leadComm[0];
+
+            // If leadCurve == 0 or path is open can now return
+            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return irTps; }
+
+            PolylineCurve toolL = tP.getLine();
+
             if (tP.additions.retract)
             {
                 PolylineCurve leadOut = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, false);
@@ -778,10 +816,8 @@
             // ReSharper disable once InvertIf
             if (tP.additions.activate != 0)
             {
-                if (activate != string.Empty && irTps[0] != null)
-                { irTps[0].preCode = activate + "\n" + newTP.preCode; }
                 if (deActivate != string.Empty && irTps[irTps.Count - 1] != null)
-                    // ReSharper disable once PossibleNullReferenceException
+                // ReSharper disable once PossibleNullReferenceException
                 { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
             }
 
@@ -798,7 +834,7 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadInOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
+        public static List<ToolPath> leadInV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
         {
             // Will add insert and retract paths as new ToolPaths
             List<ToolPath> irTps = new List<ToolPath>();
@@ -807,7 +843,6 @@
             ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
-            newTP.additions.retract = false;
             newTP.additions.leadCurvature = string.Empty;
 
             // Add activation code to main path if tool not activated for insert/retract
@@ -846,6 +881,48 @@
                 irTps.Insert(0, iTp);
             }
 
+            // Add activation codes
+            // ReSharper disable once InvertIf
+            if (tP.additions.activate != 0)
+            {
+                if (activate != string.Empty && irTps[0] != null)
+                { irTps[0].preCode = activate + "\n" + newTP.preCode; }
+            }
+
+            return irTps;
+        }
+
+        /// <summary>TODO The lead out v.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="activate">TODO The activate.</param>
+        /// <param name="deActivate">TODO The de activate.</param>
+        /// <param name="irActivate">TODO The ir activate.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
+        [NotNull]
+        public static List<ToolPath> leadOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
+        {
+            // Will add insert and retract paths as new ToolPaths
+            List<ToolPath> irTps = new List<ToolPath>();
+
+            // Update the main toolpath
+            ToolPath newTP = tP.deepClone();
+            if (tP.matTool == null) { Exceptions.matToolException(); }
+            newTP.additions.retract = false;
+            newTP.additions.leadCurvature = string.Empty;
+
+            irTps.Add(newTP);
+
+            double leadCurve = tP.additions.leadComm[0];
+
+            // If leadCurve == 0 can now return
+            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
+
+            PolylineCurve toolL = tP.getLine();
+            const double Wiggle = 2.5 * Math.PI / 180.0; // Angles from orthogonal in radians
+
             if (tP.additions.retract)
             {
                 ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
@@ -876,17 +953,15 @@
             // ReSharper disable once InvertIf
             if (tP.additions.activate != 0)
             {
-                if (activate != string.Empty && irTps[0] != null)
-                { irTps[0].preCode = activate + "\n" + newTP.preCode; }
                 if (deActivate != string.Empty && irTps[irTps.Count - 1] != null)
-                    // ReSharper disable once PossibleNullReferenceException
+                // ReSharper disable once PossibleNullReferenceException
                 { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
             }
 
             return irTps;
         }
 
-        /// <summary>TODO The insert retract.</summary>
+        /// <summary>TODO The insert.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <param name="activate">TODO The activate.</param>
         /// <param name="deActivate">TODO The de activate.</param>
@@ -896,17 +971,16 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        internal static List<ToolPath> insertRetract([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 1)
+        internal static List<ToolPath> insert([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 1)
         {
             // Will add insert and retract paths as new ToolPaths
-            List<ToolPath> irTps = new List<ToolPath>();
+            List<ToolPath> iTps = new List<ToolPath>();
 
             // Update the main toolpath
             ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
             if (tP.matForm == null) { Exceptions.matFormException(); }
             newTP.additions.insert = false;
-            newTP.additions.retract = false;
 
             MFintersection inter;
 
@@ -920,12 +994,13 @@
                 if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
             }
 
-            irTps.Add(newTP);
+            iTps.Add(newTP);
 
             // check if we have something to do
             if (tP.additions.insert && newTP.Count > 0) // add insert
             {
                 ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
+                iTp.additions = new ToolPathAdditions(); // no additions needed for an insert path.
                 iTp.name += " insert";
                 iTp.label = PathLabel.Insert;
 
@@ -967,13 +1042,52 @@
                     } // otherwise nothing needs to be added as we do not interact with material
                 }
 
-                if (iTp.Count > 0) { irTps.Insert(0, iTp); }
+                if (iTp.Count > 0) { iTps.Insert(0, iTp); }
             }
 
-            if (!tP.additions.retract || newTP.Count <= 0) { return irTps; }
+            return iTps;
+        }
+
+        /// <summary>TODO The retract.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <param name="activate">TODO The activate.</param>
+        /// <param name="deActivate">TODO The de activate.</param>
+        /// <param name="irActivate">TODO The ir activate.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
+        [NotNull]
+        internal static List<ToolPath> retract([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 1)
+        {
+            // Will add insert and retract paths as new ToolPaths
+            List<ToolPath> rTps = new List<ToolPath>();
+
+            // Update the main toolpath
+            ToolPath newTP = tP.deepClone();
+            if (tP.matTool == null) { Exceptions.matToolException(); }
+            if (tP.matForm == null) { Exceptions.matFormException(); }
+            newTP.additions.retract = false;
+
+            MFintersection inter;
+
+            double uTol = tP.matForm.safeDistance * 1.05;
+            ToolPoint tempTPt;
+
+            // Add activation code to main path if tool not activated for insert/retract
+            if (tP.additions.activate != 0 && irActivate == 0)
+            {
+                if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
+                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            }
+
+            rTps.Add(newTP);
+
+            if (!tP.additions.retract || newTP.Count <= 0) { return rTps; }
             if (newTP.lastP == null) { Exceptions.emptyPathException(); }
 
             ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
+            rTp.additions = new ToolPathAdditions(); // no additions needed for an retract path.
             rTp.name += " retract";
             rTp.label = PathLabel.Retract;
 
@@ -1013,7 +1127,7 @@
             {
                 // check intersection with material extended to safe distance
                 inter = tP.matForm.intersect(newTP.lastP, uTol).through;
-                if (!inter.isSet) { return irTps; }
+                if (!inter.isSet) { return rTps; }
 
                 // Replace last point of toolpath
                 tempTPt = newTP.lastP.deepClone();
@@ -1031,9 +1145,25 @@
                 rTp.Add(tempTPt);
             }
 
-            if (rTp.Count > 0) { irTps.Add(rTp); }
+            if (rTp.Count > 0) { rTps.Add(rTp); }
 
-            return irTps;
+            return rTps;
+        }
+
+        internal static List<ToolPath> transition([NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool retractQ = true, bool insertQ = true)
+        {
+            List<ToolPath> trans = new List<ToolPath>();
+
+            List<ToolPath> retr = m.retract(fP);
+            List<ToolPath> inse = m.insert(tP);
+
+            ToolPath tr = m.transitionPath(retr[retr.Count - 1], inse[0]);
+
+            if (retractQ) {trans.AddRange(retr);}
+            trans.Add(tr);
+            if (insertQ) { trans.AddRange(inse); }
+
+            return trans;
         }
 
         // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.

@@ -191,13 +191,8 @@
         /// .</returns>
         public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir) ? Utility.planeOffset(tP, dir) : Utility.localOffset(tP);
 
-        /// <summary>TODO The insert retract.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
-        public List<ToolPath> insertRetract(ToolPath tP) => Utility.insertRetract(tP);
+        public List<ToolPath> insert(ToolPath tP) => Utility.insert(tP);
+        public List<ToolPath> retract(ToolPath tP) => Utility.retract(tP);
         /// <summary>TODO The step down.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see>
@@ -314,11 +309,15 @@
                 // Add the position information
                 string ptCode = GCode.gcThreeAxis(tPt);
 
+                // Add G00 or G01
+
+                if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
+                else { ptCode = "G01 " + ptCode; }
+
                 // Act if feed has changed
-                if (fChange && feed >= 0)
+                if (fChange && feed > CAMel_Goo.Tolerance)
                 {
-                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
-                    else { ptCode = "G01 " + ptCode + " F" + feed.ToString("0"); }
+                    ptCode = ptCode + " F" + feed.ToString("0.00");
                 }
 
                 fChange = false;
@@ -405,7 +404,13 @@
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
-        public ToolPath transition(ToolPath fP, ToolPath tP)
+        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool retractQ = true, bool insertQ = true) => Utility.transition(this, fP, tP, retractQ, insertQ);
+
+        /// <summary>TODO The transition.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
+        public ToolPath transitionPath(ToolPath fP, ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }

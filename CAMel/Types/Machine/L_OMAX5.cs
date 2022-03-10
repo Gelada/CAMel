@@ -72,27 +72,53 @@
         ///     </see>
         /// .</returns>
         public List<ToolPath> offSet(ToolPath tP) => new List<ToolPath> { tP };
-        /// <summary>TODO The insert retract.</summary>
+        /// <summary>TODO The insert.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
         /// .</returns>
-        public List<ToolPath> insertRetract(ToolPath tP)
+        public List<ToolPath> insert(ToolPath tP)
         {
             List<ToolPath> iRpath = new List<ToolPath>();
             switch (tP.additions.leadComm.command)
             {
                 case "V":
                 case "":
-                    iRpath = Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInV(tP, string.Empty, string.Empty, 9);
                     break;
                 case "U":
-                    iRpath = Utility.leadInOutU(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInU(tP, string.Empty, string.Empty, 9);
                     break;
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a V shaped lead."); }
-                    iRpath = Utility.leadInOutV(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInV(tP, string.Empty, string.Empty, 9);
+                    break;
+            }
+
+            return iRpath;
+        }
+        /// <summary>TODO The retract.</summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
+        public List<ToolPath> retract(ToolPath tP)
+        {
+            List<ToolPath> iRpath = new List<ToolPath>();
+            switch (tP.additions.leadComm.command)
+            {
+                case "V":
+                case "":
+                    iRpath = Utility.leadOutV(tP, string.Empty, string.Empty, 9);
+                    break;
+                case "U":
+                    iRpath = Utility.leadOutU(tP, string.Empty, string.Empty, 9);
+                    break;
+                default:
+                    if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a V shaped lead."); }
+                    iRpath = Utility.leadOutV(tP, string.Empty, string.Empty, 9);
                     break;
             }
 
@@ -405,7 +431,13 @@
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
-        public ToolPath transition(ToolPath fP, ToolPath tP)
+        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool retractQ = true, bool insertQ = true) => Utility.transition(this, fP, tP, retractQ, insertQ);
+
+        /// <summary>TODO The transition.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
+        public ToolPath transitionPath(ToolPath fP, ToolPath tP)
         {
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
 

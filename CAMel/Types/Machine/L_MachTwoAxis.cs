@@ -198,24 +198,48 @@
         ///     </see>
         /// .</returns>
         public List<ToolPath> offSet(ToolPath tP) => Utility.planeOffset(tP, Vector3d.ZAxis);
-        /// <summary>TODO The insert retract.</summary>
+        /// <summary>TODO The insert. </summary>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see>
         ///         <cref>List</cref>
         ///     </see>
         /// .</returns>
-        public List<ToolPath> insertRetract(ToolPath tP)
+        /// 
+        // TODO move to a utility for leads for insert and retract
+        public List<ToolPath> insert(ToolPath tP)
         {
             switch (tP.additions.leadComm.command)
             {
                 case "U":
                 case "":
-                    return Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadInU(tP, this.toolActivate, this.toolDeActivate);
                 case "V":
-                    return Utility.leadInOutV(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadInV(tP, this.toolActivate, this.toolDeActivate);
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a U shaped lead."); }
-                    return Utility.leadInOutU(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadInU(tP, this.toolActivate, this.toolDeActivate);
+            }
+        }
+        /// <summary>TODO The insert. </summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
+        /// 
+        // TODO move to a utility for leads for insert and retract
+        public List<ToolPath> retract(ToolPath tP)
+        {
+            switch (tP.additions.leadComm.command)
+            {
+                case "U":
+                case "":
+                    return Utility.leadOutU(tP, this.toolActivate, this.toolDeActivate);
+                case "V":
+                    return Utility.leadOutV(tP, this.toolActivate, this.toolDeActivate);
+                default:
+                    if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a U shaped lead."); }
+                    return Utility.leadOutU(tP, this.toolActivate, this.toolDeActivate);
             }
         }
 
@@ -421,7 +445,12 @@
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
-        public ToolPath transition(ToolPath fP, ToolPath tP)
+        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool retractQ = true, bool insertQ = true) => Utility.transition(this, fP, tP, retractQ, insertQ);
+        /// <summary>TODO The transitionPath.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
+        public ToolPath transitionPath(ToolPath fP, ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }

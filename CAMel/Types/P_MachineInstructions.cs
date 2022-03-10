@@ -169,7 +169,10 @@
                 pMo = mO.processAdditions(this.m, ref validTP);
                 if (fP.Count > 0 && pMo.Count > 0)
                 {
-                    pMo.Insert(0, this.m.transition(fP, pMo[0]));
+                    // initial insert and retract are handled in Machine operations
+                    // so just transition from end of previous operation to new 
+                    // operation. 
+                    pMo.InsertRange(0, this.m.transition(fP, pMo[0], false,false)); 
                     valid.removeLastPoint();
                 }
 
@@ -178,15 +181,20 @@
             }
 
             // Transition to end path
-            pMo = new MachineOperation { valid.endPath };
-            pMo = pMo.processAdditions(this.m, ref validTP);
-            if (fP.Count > 0 && pMo.Count > 0)
+            if (valid.endPath.Count > 0)
             {
-                pMo.Insert(0, this.m.transition(fP, pMo[0]));
-                valid.removeLastPoint();
-            }
+                pMo = new MachineOperation { valid.endPath };
+                pMo = pMo.processAdditions(this.m, ref validTP);
+                if (fP.Count > 0 && pMo.Count > 0)
+                {
+                    ToolPath pMo0 = pMo[0];
+                    pMo.RemoveAt(0); // remove toolpath in case it is changed by the transition.
+                    pMo.InsertRange(0, this.m.transition(fP, pMo0, false));
+                    valid.removeLastPoint();
+                }
 
-            valid.Add(pMo);
+                valid.Add(pMo);
+            }
 
             return valid;
         }
@@ -362,6 +370,11 @@
         public void Insert(int index, MachineOperation item)
         {
             if (item != null) { this.mOs.Insert(index, item); }
+        }
+        /// <inheritdoc />
+        public void InsertRange(int index, IEnumerable<MachineOperation> items)
+        {
+            this.mOs.InsertRange(index, items);
         }
 
         /// <inheritdoc />

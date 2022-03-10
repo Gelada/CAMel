@@ -110,14 +110,24 @@
         /// .</returns>
         [NotNull, ItemNotNull]
         List<ToolPath> offSet([NotNull] ToolPath tP);
-        /// <summary>TODO The insert retract.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see>
+
+        /// <summary>Create a path inserting into the material</summary>
+        /// <param name="tP">Toolpath to insert into.</param>
+        /// <returns>A list with the insert path and the path (that might be edited). <see>
         ///         <cref>List</cref>
         ///     </see>
         /// .</returns>
         [NotNull]
-        List<ToolPath> insertRetract([NotNull] ToolPath tP);
+        List<ToolPath> insert([NotNull] ToolPath tP);
+
+        /// <summary>Create a path retracting from the material. </summary>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>A list with the path (that might be edited) and the retract path. <see>
+        ///         <cref>List</cref>
+        ///     </see>
+        /// .</returns>
+        [NotNull]
+        List<ToolPath> retract([NotNull] ToolPath tP);
         /// <summary>TODO The step down.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see>
@@ -144,7 +154,13 @@
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
         [NotNull]
-        ToolPath transition([NotNull] ToolPath fP, [NotNull] ToolPath tP);
+        List<ToolPath> transition([NotNull] ToolPath fP, [NotNull] ToolPath tP, bool retractQ = true, bool insertQ = true);
+        /// <summary>TODO The transitionPath.</summary>
+        /// <param name="fP">TODO The f p.</param>
+        /// <param name="tP">TODO The t p.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
+        [NotNull]
+        ToolPath transitionPath([NotNull] ToolPath fP, [NotNull] ToolPath tP);
 
         // Machine movement
         /// <summary>TODO The tool dir.</summary>

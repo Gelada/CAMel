@@ -143,13 +143,8 @@
             tP.planarOffset(out Vector3d dir)
                 ? Utility.planeOffset(tP, dir)
                 : Utility.localOffset(tP);
-        /// <summary>TODO The insert retract.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
-        public List<ToolPath> insertRetract(ToolPath tP) => Utility.insertRetract(tP);
+        public List<ToolPath> insert(ToolPath tP) => Utility.insert(tP);
+        public List<ToolPath> retract(ToolPath tP) => Utility.retract(tP);
         /// <summary>TODO The step down.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see>
@@ -340,15 +335,18 @@
                         if (Math.Abs(ab.X - Math.PI / 2.0) < AngleAcc)
                         {
                             bTo = Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).Y;
+                            // adjust B to correct period
+                            bTo += 2.0 * Math.PI * Math.Round((ab.Y - bTo) / (2.0 * Math.PI));
+
                             bSteps = j - i;
                             newAB.Y = bTo;
                         }
 
                         // if we get to the end and it is still vertical we do not need to rotate.
-                        else if (Math.Abs(Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X) <
+                        else if (Math.Abs(Kinematics.ikFiveAxisABTable(tP[j], this.pivot, toolLength, out machPt).X-Math.PI/2.0) <
                                  AngleAcc)
                         {
-                            bTo = ab.X;
+                            bTo = ab.Y;
                             bSteps = j - i;
                             newAB.Y = bTo;
                         }
@@ -390,11 +388,15 @@
                 // Add the position information
                 string ptCode = GCode.gcFiveAxisAB(machPt, ab);
 
+                // Add G00 or G01
+
+                if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
+                else { ptCode = "G01 " + ptCode; }
+
                 // Act if feed has changed
-                if (fChange && feed >= 0)
+                if (fChange && feed > CAMel_Goo.Tolerance)
                 {
-                    if (Math.Abs(feed) < CAMel_Goo.Tolerance) { ptCode = "G00 " + ptCode; }
-                    else { ptCode = "G01 " + ptCode + " F" + feed.ToString("0.00"); }
+                    ptCode = ptCode + " F" + feed.ToString("0.00"); 
                 }
 
                 fChange = false;
@@ -486,22 +488,31 @@
         /// <param name="tP">TODO The t p.</param>
         public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.jumpCheck(ref co, this, fP, tP);
 
-        // This should call a utility with standard options
-        // a good time to move it is when a second 5-axis is added
-        // hopefully at that point there is a better understanding of safe moves!
-
         /// <summary>TODO The transition.</summary>
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
+        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool retractQ = true, bool insertQ = true) => Utility.transition(this, fP, tP, retractQ, insertQ);
+
+        // This should call a utility with standard options
+        // a good time to move it is when a second 5-axis is added
+        // hopefully at that point there is a better understanding of safe moves!
+
+        /// <summary>Creates a path transitioning between two toolpaths</summary>
+        /// <param name="fP">Path to transition from.</param>
+        /// <param name="tP">Path to transition to.</param>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
         /// <exception cref="Exception"></exception>
-        public ToolPath transition(ToolPath fP, ToolPath tP)
+        public ToolPath transitionPath(ToolPath fP, ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.emptyPathException(); }
 
             if (this.jumpCheck(fP, tP) > 0) { Exceptions.transitionException(); }
+
+            List<ToolPath> trans = new List<ToolPath>();
+
 
             // Safely move from one safe point to another.
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());

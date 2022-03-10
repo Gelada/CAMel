@@ -197,7 +197,9 @@
                 foreach (List<ToolPath> lTp in finishPaths.Where(lTp => i < lTp?.Count))
                 {
                     if (lTp?[i] == null) { continue; }
-                    levelPaths.AddRange(m.insertRetract(lTp[i]));
+                    // TODO: Cleanup without insert/retract
+                    //levelPaths.AddRange(m.insertRetract(lTp[i]));
+                    levelPaths.Add(lTp[i]);
                 }
 
                 procPaths.AddRange(levelPaths);
@@ -205,22 +207,37 @@
 
             List<ToolPath> transPaths = new List<ToolPath>();
             ToolPath frP = new ToolPath();
+            bool first = true;
             foreach (ToolPath tP in procPaths.Where(tP => tP?.Count > 0))
             {
-                // Check if transition is needed
-                if (frP.Count > 0 && (tP.label == PathLabel.Insert || frP.label == PathLabel.Retract))
+                if (first)
                 {
-                    // Calculate transition
-                    ToolPath trP = m.transition(frP, tP);
-
-                    // Remove last point of previous path
-                    transPaths[transPaths.Count - 1]?.removeLast();
-                    transPaths.Add(trP);
+                    List<ToolPath> trP = m.insert(tP);
+                    // separate the last path (tP with possibly alterations by insert)
+                    frP = trP[trP.Count - 1];
+                    trP.RemoveAt(trP.Count - 1);
+                    transPaths.AddRange(trP);
+                    first = false;
                 }
+                 else {
+                    if (frP.Count > 0)
+                    {
+                        // Calculate transition
+                        List<ToolPath> trP = m.transition(frP, tP);
 
-                transPaths.Add(tP);
-                frP = tP;
+                        // separate the last path (tP with possibly alterations by transition)
+                        frP = trP[trP.Count - 1];
+                        trP.RemoveAt(trP.Count - 1);
+
+                        // Remove last point of previous path
+                        if (transPaths.Count > 0) { transPaths[transPaths.Count - 1]?.removeLast(); }
+                        transPaths.AddRange(trP);
+                    }
+                }
             }
+            // Add last path and retract
+
+            transPaths.AddRange(m.retract(frP));
 
             return this.deepCloneWithNewPaths(transPaths);
         }
@@ -472,6 +489,12 @@
         public void Insert(int index, ToolPath item)
         {
             if (item != null) { this.tPs.Insert(index, item); }
+        }
+
+        /// <inheritdoc />
+        public void InsertRange(int index, IEnumerable<ToolPath> items)
+        {
+            this.tPs.InsertRange(index, items); 
         }
 
         /// <inheritdoc />

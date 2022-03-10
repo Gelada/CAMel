@@ -264,13 +264,14 @@
                     }
                 }
             }
-
+            // TODO: Cleanup without insert/retract
             // add finishing paths, processing onion
             List<ToolPath> tempFp = new List<ToolPath>();
             foreach (ToolPath tP in useTP) { tempFp.AddRange(m.finishPaths(tP)); }
 
             // add insert and retract moves
-            List<List<ToolPath>> newRp = new List<List<ToolPath>>();
+            
+            /*List<List<ToolPath>> newRp = new List<List<ToolPath>>();
 
             foreach (List<ToolPath> tPs in roughPaths)
             {
@@ -278,12 +279,14 @@
                 List<ToolPath> newTP = new List<ToolPath>();
                 foreach (ToolPath tP in tPs.Where(tP => tP != null)) { newTP.AddRange(m.insertRetract(tP)); }
                 newRp.Add(newTP);
-            }
+            }*/
 
             // Delay insert and retract for toolpaths
             fP = tempFp.Where(tP => tP != null).ToList();
 
-            return newRp;
+            //return newRp;
+
+            return roughPaths;
         }
 
         // Use a curve and direction vector to create a path of toolpoints
