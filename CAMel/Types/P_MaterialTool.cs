@@ -246,7 +246,13 @@
                     os = this.toolWidth * (uNorm - uDir) / 2;
                     break;
                 case EndShape.Square: // Cut with corner if the angle is greater than .01 radians
-                    if (Vector3d.VectorAngle(uDir, uNorm) < .01)
+                                      // magic numbers for approx zero and small angles
+                                      // magic number determining small angle
+                                      // TODO make this more transparent
+                    const double sa = 2 * Math.PI / 180.0;
+                    const double na = .1 * Math.PI / 180.0;
+                    double a = Vector3d.VectorAngle(uDir, uNorm);
+                    if (a < na)
                     {
                         os = new Vector3d(0, 0, 0);
                     }
@@ -254,9 +260,16 @@
                     {
                         // find the normal to the plane give by the tool direction and the norm
                         Vector3d plN = Vector3d.CrossProduct(uNorm, uDir);
-
+                        plN.Unitize();
                         // Now want a vector on that plane orthogonal to tool direction
-                        os = this.toolWidth * Vector3d.CrossProduct(uDir, plN) / 2;
+                        os = Vector3d.CrossProduct(uDir, plN);
+                        os.Unitize();
+                        // Need the magnitude in that direction. This should be 
+                        // tool radius, but that creates a jump away from the singularity, 
+                        // so for small angles will scale this down.
+                        double ur = this.toolWidth / 2.0;
+                        if(a < sa) { ur = ur * (a-na) / (sa-na); }
+                        os = os * ur;
                     }
 
                     break;
