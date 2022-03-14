@@ -41,7 +41,9 @@
 
             ToolPath tP = new ToolPath(string.Empty, mT, mF, tPa);
             tP.convertCurve(c, d);
-            tP.additions.offset = mT.toolWidth * uOS * p.ZAxis/2.0;
+            tP.additions.offset = mT.toolWidth * uOS * p.ZAxis / 2.0;
+            if (oS > 0) { tP.side = CutSide.Left; }
+            else { tP.side = CutSide.Right; }
 
             mO.Add(tP);
 

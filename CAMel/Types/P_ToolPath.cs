@@ -32,21 +32,38 @@
         Retract
     }
 
+    public enum CutSide
+    {
+        /// <summary>Important cut to the left of tool</summary>
+        Left,
+        /// <summary>Important cut to the right of tool</summary>
+        Right,
+        /// <summary>Important cut on both sides of tool</summary>
+        Both,
+        /// <summary>Important cut on tip tool</summary>
+        Tip,
+        /// <summary>Important cut not defined</summary>
+        Unclear
+    }
+
     // One action of the machine, such as cutting a line
     /// <summary>TODO The tool path.</summary>
     public class ToolPath : IList<ToolPoint>, IToolPointContainer
     {
-        /// <summary>TODO The pts.</summary>
+        /// <summary>The points in the toolpath.</summary>
         [ItemNotNull, NotNull] private List<ToolPoint> pts; // Positions of the machine
         /// <summary>Gets or sets the mat tool.</summary>
         public MaterialTool matTool { get; set; } // Material and tool to cut it with
         /// <summary>Gets or sets the mat form.</summary>
         public IMaterialForm matForm { get; set; } // Shape of the material
-        /// <summary>TODO The additions.</summary>
+        /// <summary>Additions to the toolpath when it is processed ready for cutting.</summary>
         [NotNull] public ToolPathAdditions additions; // Features we might add to the path
 
-        /// <summary>Gets the label.</summary>
+        /// <summary>Gets the label for the role the toolpath plays</summary>
         public PathLabel label { get; internal set; }
+
+        /// <summary>Gets the important cutting side.</summary>
+        public CutSide side { get; internal set; }
 
         /// <inheritdoc />
         public ToolPoint firstP => this.Count > 0 ? this[0] : null;
@@ -60,6 +77,7 @@
         {
             this.name = string.Empty;
             this.label = PathLabel.Unprocessed;
+            this.side = CutSide.Unclear;
             this.pts = new List<ToolPoint>();
             this.matTool = null;
             this.matForm = null;
@@ -75,6 +93,7 @@
         {
             this.name = string.Empty;
             this.label = PathLabel.Unprocessed;
+            this.side = CutSide.Unclear;
             this.pts = new List<ToolPoint>();
             this.matTool = mT;
             this.matForm = null;
@@ -90,6 +109,7 @@
         {
             this.name = string.Empty;
             this.label = PathLabel.Unprocessed;
+            this.side = CutSide.Unclear;
             this.pts = new List<ToolPoint>();
             this.matTool = null;
             this.matForm = mf;
@@ -107,6 +127,7 @@
         {
             this.name = name;
             this.label = PathLabel.Unprocessed;
+            this.side = CutSide.Unclear;
             this.pts = new List<ToolPoint>();
             this.matTool = mT;
             this.matForm = mF;
@@ -125,6 +146,7 @@
         {
             this.name = name;
             this.label = PathLabel.Unprocessed;
+            this.side = CutSide.Unclear;
             this.pts = new List<ToolPoint>();
             this.matTool = mT;
             this.matForm = mF;
@@ -140,6 +162,7 @@
         {
             this.name = string.Copy(tP.name);
             this.label = tP.label;
+            this.side = tP.side;
             this.pts = new List<ToolPoint>();
             foreach (ToolPoint pt in tP) { this.Add(pt?.deepClone()); }
             this.matTool = tP.matTool;
@@ -183,6 +206,8 @@
             ToolPath newTP = new ToolPath
                 {
                     name = string.Copy(this.name),
+                    label = this.label,
+                    side = this.side,
                     matTool = this.matTool,
                     matForm = this.matForm,
                     preCode = string.Copy(this.preCode),
@@ -312,11 +337,11 @@
             foreach (ToolPoint tPt in pL.Select(pt => new ToolPoint(pt, d))) { this.Add(tPt); }
 
             // ReSharper disable once InvertIf
-            if (c.IsClosed)
-            {
-                ToolPoint tPt = new ToolPoint(pL[0], d);
-                this.Add(tPt);
-            }
+            //if (c.IsClosed)
+            //{
+            //    ToolPoint tPt = new ToolPoint(pL[0], d);
+            //    this.Add(tPt);
+            //}
 
             return true;
         }

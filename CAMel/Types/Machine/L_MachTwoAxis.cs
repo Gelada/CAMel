@@ -212,12 +212,12 @@
             {
                 case "U":
                 case "":
-                    return Utility.leadInU(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadInU(tP, this.toolActivate);
                 case "V":
-                    return Utility.leadInV(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadInV(tP, this.toolActivate);
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a U shaped lead."); }
-                    return Utility.leadInU(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadInU(tP, this.toolActivate);
             }
         }
         /// <summary>TODO The insert. </summary>
@@ -234,12 +234,12 @@
             {
                 case "U":
                 case "":
-                    return Utility.leadOutU(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadOutU(tP, this.toolDeActivate);
                 case "V":
-                    return Utility.leadOutV(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadOutV(tP, this.toolDeActivate);
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a U shaped lead."); }
-                    return Utility.leadOutU(tP, this.toolActivate, this.toolDeActivate);
+                    return Utility.leadOutU(tP, this.toolDeActivate);
             }
         }
 

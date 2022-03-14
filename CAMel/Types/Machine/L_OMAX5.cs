@@ -85,14 +85,14 @@
             {
                 case "V":
                 case "":
-                    iRpath = Utility.leadInV(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInV(tP, string.Empty, 9);
                     break;
                 case "U":
-                    iRpath = Utility.leadInU(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInU(tP, string.Empty, 9);
                     break;
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a V shaped lead."); }
-                    iRpath = Utility.leadInV(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadInV(tP, string.Empty, 9);
                     break;
             }
 
@@ -111,14 +111,14 @@
             {
                 case "V":
                 case "":
-                    iRpath = Utility.leadOutV(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadOutV(tP, string.Empty, 9);
                     break;
                 case "U":
-                    iRpath = Utility.leadOutU(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadOutU(tP, string.Empty, 9);
                     break;
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a V shaped lead."); }
-                    iRpath = Utility.leadOutV(tP, string.Empty, string.Empty, 9);
+                    iRpath = Utility.leadOutV(tP, string.Empty, 9);
                     break;
             }
 

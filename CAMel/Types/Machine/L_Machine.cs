@@ -612,12 +612,12 @@
             double normAng = Math.PI / 2.0;
 
             // take into account the orientation of the path
-            // if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
+            //if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
             // now we have the internal normal, flip if we want external.
             if (leadCurve >= 0) { normAng = -normAng; }
 
             PointContainment incorrectSide = PointContainment.Inside;
-            CurveOrientation orient = toolL.ClosedCurveOrientation(-Vector3d.ZAxis);
+            CurveOrientation orient = toolL.ClosedCurveOrientation(Vector3d.ZAxis);
 
             // ReSharper disable twice ArrangeRedundantParentheses
             if ((orient == CurveOrientation.Clockwise && leadCurve > 0) || (orient == CurveOrientation.CounterClockwise && leadCurve < 0))
@@ -660,7 +660,7 @@
             foreach (Point3d testPt in divs.Select(d => leadCirc.PointAt(d)))
             {
                 outP.Add(testPt);
-                if (toolL.Contains(testPt) == incorrectSide) { return null; }
+                //if (toolL.Contains(testPt) == incorrectSide) { return null; }
                 toolL.ClosestPoint(testPt, out double testDist);
                 testDist = testPt.DistanceTo(toolL.PointAt(testDist));
                 if (testDist > insertWidth * 0.52) { return new PolylineCurve(outP); }
@@ -691,9 +691,9 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadInU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
+        public static List<ToolPath> leadInU([NotNull] ToolPath tP, [NotNull] string activate = "",  int irActivate = 0)
         {
-            // Will add insert and retract paths as new ToolPaths
+            // Will add insert path as new ToolPath
             List<ToolPath> irTps = new List<ToolPath>();
 
             // Update the main toolpath
@@ -701,16 +701,16 @@
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
 
-            // Add activation code to main path if tool not activated for insert/retract
+            // Add activation code to main path if tool was not activated as there was no insert.
             if (tP.additions.activate != 0 && irActivate == 0)
             {
                 if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
             }
 
             irTps.Add(newTP);
 
             double leadCurve = tP.additions.leadComm[0];
+            if(tP.side == CutSide.Right) { leadCurve = -leadCurve; }
 
             // If leadCurve == 0 or path is open can now return
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return irTps; }
@@ -739,6 +739,7 @@
                     iTp.name += " insert";
                     iTp.label = PathLabel.Insert;
                     if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
+                    iTp.additions.retract = false;
                     iTp.AddRange(tPts);
 
                     if (iTp.Count > 0) { irTps.Insert(0, iTp); }
@@ -766,9 +767,9 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadOutU([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
+        public static List<ToolPath> leadOutU([NotNull] ToolPath tP, [NotNull] string deActivate = "", int irActivate = 0)
         {
-            // Will add insert and retract paths as new ToolPaths
+            // Will add retract path as new ToolPath
             List<ToolPath> irTps = new List<ToolPath>();
 
             // Update the main toolpath
@@ -776,9 +777,16 @@
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.retract = false;
 
+            // Add deactivation code to main path if tool will not be deactivated on a retract.
+            if (tP.additions.activate != 0 && irActivate == 0)
+            {
+                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            }
+
             irTps.Add(newTP);
 
             double leadCurve = tP.additions.leadComm[0];
+            if (tP.side == CutSide.Right) { leadCurve = -leadCurve; }
 
             // If leadCurve == 0 or path is open can now return
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return irTps; }
@@ -788,9 +796,9 @@
             if (tP.additions.retract)
             {
                 PolylineCurve leadOut = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, false);
-                if (leadOut == null) { newTP.lastP?.addWarning("No suitable curve for lead out found."); }
 
                 // If no suitable curve found throw an error
+                if (leadOut == null) { newTP.lastP?.addWarning("No suitable curve for lead out found."); }
                 else
                 {
                     List<ToolPoint> tPts = new List<ToolPoint>();
@@ -812,7 +820,7 @@
                 }
             }
 
-            // Add activation codes
+            // Add deactivation codes
             // ReSharper disable once InvertIf
             if (tP.additions.activate != 0)
             {
@@ -824,7 +832,7 @@
             return irTps;
         }
 
-        /// <summary>TODO The lead in out v.</summary>
+        /// <summary>TODO The lead in v.</summary>
         /// <param name="tP">TODO The t p.</param>
         /// <param name="activate">TODO The activate.</param>
         /// <param name="deActivate">TODO The de activate.</param>
@@ -834,22 +842,20 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadInV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
+        public static List<ToolPath> leadInV([NotNull] ToolPath tP, [NotNull] string activate = "", int irActivate = 0)
         {
-            // Will add insert and retract paths as new ToolPaths
+            // Will add insert path as new ToolPath
             List<ToolPath> irTps = new List<ToolPath>();
 
             // Update the main toolpath
             ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
-            newTP.additions.leadCurvature = string.Empty;
 
-            // Add activation code to main path if tool not activated for insert/retract
+            // Add activation code to main path if not activated on a insert
             if (tP.additions.activate != 0 && irActivate == 0)
             {
                 if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
             }
 
             irTps.Add(newTP);
@@ -860,16 +866,16 @@
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
 
             PolylineCurve toolL = tP.getLine();
-            const double Wiggle = 2.5 * Math.PI / 180.0; // Angles from orthogonal in radians
             if (tP.additions.insert)
             {
                 ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                 iTp.name += " insert";
                 iTp.label = PathLabel.Insert;
                 if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
+                iTp.additions.retract = false;
 
-                double r = Math.PI / 2.0 + Wiggle;
-                if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 - Wiggle; } // cut to the right
+                double r = (180.0-leadCurve) * Math.PI / 180.0; // Angle of V in Radians;
+                if (tP.side == CutSide.Left) { r = -r; } // cut to the right
                 Vector3d tan = toolL.TangentAtStart;
                 tan.Rotate(r, Vector3d.ZAxis);
                 if (tP.firstP == null) { Exceptions.emptyPathException(); }
@@ -902,16 +908,21 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadOutV([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 0)
+        public static List<ToolPath> leadOutV([NotNull] ToolPath tP, [NotNull] string deActivate = "", int irActivate = 0)
         {
-            // Will add insert and retract paths as new ToolPaths
+            // Will add retract path as new ToolPath
             List<ToolPath> irTps = new List<ToolPath>();
 
             // Update the main toolpath
             ToolPath newTP = tP.deepClone();
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.retract = false;
-            newTP.additions.leadCurvature = string.Empty;
+
+            // Add deactivation code to main path if tool will not be deactivated on a retract.
+            if (tP.additions.activate != 0 && irActivate == 0)
+            {
+                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
+            }
 
             irTps.Add(newTP);
 
@@ -921,18 +932,15 @@
             if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
 
             PolylineCurve toolL = tP.getLine();
-            const double Wiggle = 2.5 * Math.PI / 180.0; // Angles from orthogonal in radians
-
             if (tP.additions.retract)
             {
                 ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                 rTp.name += " retract";
                 rTp.label = PathLabel.Retract;
-
                 if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
 
-                double r = Math.PI / 2.0 - Wiggle;
-                if (tP.additions.offset * -Vector3d.ZAxis < 0) { r = -Math.PI / 2.0 + Wiggle; } // cut to the right
+                double r = leadCurve * Math.PI / 180.0; // Angle of V in Radians;
+                if (tP.side == CutSide.Left) { r = -r; } // cut to the right
                 Vector3d tan = toolL.TangentAtEnd;
                 tan.Rotate(r, Vector3d.ZAxis);
                 if (tP.lastP == null) { Exceptions.emptyPathException(); }
