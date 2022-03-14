@@ -611,8 +611,6 @@
             // work out the rotation to get the desired normal
             double normAng = Math.PI / 2.0;
 
-            // take into account the orientation of the path
-            //if (toolL.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise) { normAng = -normAng; }
             // now we have the internal normal, flip if we want external.
             if (leadCurve >= 0) { normAng = -normAng; }
 

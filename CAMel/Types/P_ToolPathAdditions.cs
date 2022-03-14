@@ -510,7 +510,7 @@
             this.threeAxisHeightOffset = false;
             this.tabbing = false;
             this.leadComm = new BpCommand(string.Empty);
-            this.mOptions = new BasicParser(string.Empty);
+            this.mOptions = new BasicParser(string.Empty); // This gives a space for machine specific options
         }
 
         // Adding anything here needs significant support:
@@ -739,7 +739,7 @@
             }
         }
 
-        /// <summary>Gets or sets a value indicating whether tabbing.</summary>
+        /// <summary>Gets or sets a value indicating whether the toolpath should be tabbed (not implemented).</summary>
         public bool tabbing
         {
             get => this.tabbing1;
@@ -754,7 +754,7 @@
         // points that have reached
         // the required depth (Middle is dropped if length greater than value);
         // thicknesses to leave before final cut.
-        /// <summary>Gets or sets a value indicating whether three axis height offset.</summary>
+        /// <summary>Gets or sets a value indicating whether to add a three axis height offset to the path.</summary>
         public bool threeAxisHeightOffset
         {
             get => this.threeAxisHeightOffset1;
