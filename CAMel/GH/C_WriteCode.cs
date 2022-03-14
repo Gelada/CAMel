@@ -17,6 +17,9 @@
     {
         /// <summary>Gets or sets the bytes written.</summary>
         internal long bytesWritten { get; set; }
+        internal int version { get; set; }
+        internal int uVersion { get; set; }
+        internal bool first { get; set; }
 
         /// <inheritdoc />
         /// <summary>
@@ -45,6 +48,8 @@
             pManager.AddParameter(new GH_MachineInstructionPar(), "Machine Instructions", "MI", "Complete set of machine instructions to convert to Code for the machine", GH_ParamAccess.item);
             pManager.AddTextParameter("Ignore", "Ig", "List of strings giving errors to turn into warnings", GH_ParamAccess.list, ig);
             pManager.AddTextParameter("File Path", "FP", "File Path to save code to.", GH_ParamAccess.item, string.Empty);
+            pManager.AddBooleanParameter("Write Code", "W", "If true will write text file.", GH_ParamAccess.item, true);
+            pManager.AddBooleanParameter("Reset Saves", "R", "Reset save counter to overwrite old versions", GH_ParamAccess.item, true);
         }
 
         /// <inheritdoc />
@@ -63,7 +68,8 @@
         protected override void BeforeSolveInstance()
         {
             base.BeforeSolveInstance();
-            this.bytesWritten = 0;
+            this.first = true;
+            this.uVersion = this.version;
         }
 
         /// <inheritdoc />
@@ -75,10 +81,13 @@
         {
             if (da == null) { throw new ArgumentNullException(); }
             MachineInstruction mI = null;
-            if (!da.GetData(0, ref mI)) { return; }
+            if (!da.GetData("Machine Instructions", ref mI)) { return; }
 
             List<string> ignore = new List<string>();
-            da.GetDataList(1, ignore);
+            bool write = true, reset = true;
+            da.GetDataList("Ignore", ignore);
+            da.GetData("Write Code", ref write);
+            da.GetData("Reset Saves", ref reset);
 
             MachineInstruction procMI;
             try { procMI = mI.processAdditions(); }
@@ -120,18 +129,34 @@
             {
                 fPath = Path.GetDirectoryName(fPath) ?? string.Empty;
                 string filePath = fPath;
-                fPath = Path.Combine(filePath, mI.name + "." + mI.m.extension);
-                if (File.Exists(fPath)) { File.Delete(fPath); }
-                using (StreamWriter sW = new StreamWriter(fPath))
+                string versionS = string.Empty;
+                if(reset)
                 {
-                    for (int i = 0; i < saveCode.Length; i += 40000)
-                    { sW.Write(saveCode.ToString(i, 40000)); }
+                    version = 1;
+                } else if(uVersion > 1) {
+                    versionS = "_V" + uVersion.ToString();
                 }
 
-                FileInfo file = new FileInfo(fPath);
-                if (file.Exists) { this.bytesWritten += file.Length; }
+                fPath = Path.Combine(filePath, mI.name + versionS +"." + mI.m.extension);
+                if (File.Exists(fPath)) { File.Delete(fPath); }
+
+                if (write)
+                {
+                    if(first) { this.bytesWritten = 0; }
+                    using (StreamWriter sW = new StreamWriter(fPath))
+                    {
+                        for (int i = 0; i < saveCode.Length; i += 40000)
+                        { sW.Write(saveCode.ToString(i, 40000)); }
+                    }
+                    FileInfo file = new FileInfo(fPath);
+                    if (file.Exists) { this.bytesWritten += file.Length; }
+                    if(this.first) {
+                        version++;
+                        this.first = false;
+                    }
+                }
             }
-            else { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No path given. "); }
+            else { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No path given."); }
         }
 
         /// <inheritdoc />
