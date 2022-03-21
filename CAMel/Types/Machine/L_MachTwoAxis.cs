@@ -64,7 +64,7 @@
             this.toolDeActivate = GCode.DefaultDeActivateCommand;
             this.commentStart = GCode.DefaultCommentStart;
             this.commentEnd = GCode.DefaultCommentEnd;
-            this.sectionBreak = "---------------------------------";
+            this.sectionBreak = GCode.DefaultSectionBreak;
             this.fileStart = GCode.DefaultFileStart;
             this.fileEnd = GCode.DefaultFileEnd;
             this.speedChangeCommand = GCode.DefaultSpeedChangeCommand;
@@ -205,16 +205,18 @@
         ///     </see>
         /// .</returns>
         /// 
-        // TODO move to a utility for leads for insert and retract
         public List<ToolPath> insert(ToolPath tP)
         {
+            bool applyOpen = false;
+            if(tP.additions.leadComm[1] > 0) { applyOpen = true; }
+
             switch (tP.additions.leadComm.command)
             {
                 case "U":
                 case "":
-                    return Utility.leadInU(tP, this.toolActivate);
+                    return Utility.leadInU(tP, this.toolActivate, applyOpen);
                 case "V":
-                    return Utility.leadInV(tP, this.toolActivate);
+                    return Utility.leadInV(tP, this.toolActivate, applyOpen);
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a U shaped lead."); }
                     return Utility.leadInU(tP, this.toolActivate);
@@ -230,13 +232,15 @@
         // TODO move to a utility for leads for insert and retract
         public List<ToolPath> retract(ToolPath tP)
         {
+            bool applyOpen = false;
+            if (tP.additions.leadComm[1] > 0) { applyOpen = true; }
             switch (tP.additions.leadComm.command)
             {
                 case "U":
                 case "":
-                    return Utility.leadOutU(tP, this.toolDeActivate);
+                    return Utility.leadOutU(tP, this.toolDeActivate, applyOpen);
                 case "V":
-                    return Utility.leadOutV(tP, this.toolDeActivate);
+                    return Utility.leadOutV(tP, this.toolDeActivate, applyOpen);
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a U shaped lead."); }
                     return Utility.leadOutU(tP, this.toolDeActivate);

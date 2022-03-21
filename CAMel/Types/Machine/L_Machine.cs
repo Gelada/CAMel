@@ -280,13 +280,10 @@
         // planeOffset works with self-intersection of a closed curve
         // It looses possible toolpoint information and uses toolDir
         // for all points
-        /// <summary>TODO The plane offset.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="toolDir">TODO The tool dir.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <summary>Offset a path on a plane</summary>
+        /// <param name="tP">Toolpath to offset</param>
+        /// <param name="toolDir">Tool dorection for offset path</param>
+        /// <returns>Offset Paths</returns>
         [NotNull]
         public static List<ToolPath> planeOffset([NotNull] ToolPath tP, Vector3d toolDir)
         {
@@ -306,14 +303,11 @@
             bool reversed = false;
 
             // ensure the curve is anticlockwise
-            if (Math.Abs(uOS) > CAMel_Goo.Tolerance)
+            if (uC.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
             {
-                if (uC.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
-                {
-                    uC.Reverse();
-                    reversed = true;
-                    uOS = -uOS;
-                }
+                uC.Reverse();
+                reversed = true;
+                uOS = -uOS;
             }
 
             // record the average Z location of the curve
@@ -323,7 +317,7 @@
             // offSet
             List<PolylineCurve> osC = Offsetting.offset(uC, uOS);
 
-            if (Math.Abs(uOS) > CAMel_Goo.Tolerance && !reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
+            if (reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
 
             // create Operation
             List<ToolPath> tPs = new List<ToolPath>();
@@ -334,7 +328,7 @@
                 // Create and add name, material/tool and material form
                 ToolPath osTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
                 osTP.additions.offset = Vector3d.Zero;
-                osTP.name += " offset";
+                osTP.name += " -offset-";
 
                 if (osC.Count > 1) { osTP.name = osTP.name + " " + i; }
                 i++;
@@ -351,12 +345,9 @@
             return tPs;
         }
 
-        /// <summary>TODO The local offset.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <summary>Offset a path locally</summary>
+        /// <param name="tP">ToolPath to offset</param>
+        /// <returns>Offset paths.</returns>
         [NotNull]
         public static List<ToolPath> localOffset([NotNull] ToolPath tP)
         {
@@ -624,6 +615,7 @@
             double uLeadCurve = Math.Abs(leadCurve);
 
             Point3d startPt = toolL.PointAtStart;
+            Point3d endPt = toolL.PointAtEnd;
 
             // Get tangents and the Normal pointing in the direction we want the lead.
             Vector3d startTan = toolL.TangentAtStart;
@@ -635,20 +627,34 @@
             endNorm.Rotate(normAng, Vector3d.ZAxis);
 
             Vector3d uTan, uNorm;
+            Point3d uPt;
 
-            if (start)
+            if (toolL.IsClosed && !start) // end of closed curve
             {
-                uTan = -endTan;
-                uNorm = endNorm;
-            }
-            else
-            {
+                uPt = endPt;
                 uTan = startTan;
                 uNorm = startNorm;
             }
+            else if (toolL.IsClosed && start) // start of closed curve
+            {
+                uPt = startPt;
+                uTan = -endTan;
+                uNorm = endNorm;
+            }
+            else if (start) // start of open curve
+            {
+                uPt = startPt;
+                uTan = -startTan;
+                uNorm = -startNorm;
+            }
+            else // end of open curve
+            {
+                uPt = endPt;
+                uTan = endTan;
+                uNorm = -endNorm;
+            }
 
-            // Start by using the end version, we will choose the start version
-            ArcCurve leadCirc = new ArcCurve(new Arc(startPt, uTan, startPt + uLeadCurve * (uNorm + uTan)));
+            ArcCurve leadCirc = new ArcCurve(new Arc(uPt, uTan, uPt + uLeadCurve * (uNorm + uTan)));
 
             // step along the arc trying to find a point more that insert distance from the path
             List<double> divs = leadCirc.DivideByCount(v, true)?.ToList() ?? new List<double>();
@@ -689,7 +695,7 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadInU([NotNull] ToolPath tP, [NotNull] string activate = "",  int irActivate = 0)
+        public static List<ToolPath> leadInU([NotNull] ToolPath tP, [NotNull] string activate = "", bool applyOpen = false,  int irActivate = 0)
         {
             // Will add insert path as new ToolPath
             List<ToolPath> irTps = new List<ToolPath>();
@@ -699,24 +705,15 @@
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
 
-            // Add activation code to main path if tool was not activated as there was no insert.
-            if (tP.additions.activate != 0 && irActivate == 0)
-            {
-                if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-            }
-
             irTps.Add(newTP);
 
             double leadCurve = tP.additions.leadComm[0];
             if(tP.side == CutSide.Right) { leadCurve = -leadCurve; }
 
-            // If leadCurve == 0 or path is open can now return
-            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return irTps; }
-
-            PolylineCurve toolL = tP.getLine();
-
-            if (tP.additions.insert)
+            // add insert path if needed
+            if (tP.additions.insert && Math.Abs(leadCurve) > CAMel_Goo.Tolerance && (applyOpen || tP.isClosed()))
             {
+                PolylineCurve toolL = tP.getLine();
                 PolylineCurve leadIn = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, true);
 
                 // If no suitable curve found throw an error
@@ -746,10 +743,9 @@
 
             // Add activation codes
             // ReSharper disable once InvertIf
-            if (tP.additions.activate != 0)
+            if (tP.additions.activate != 0 && activate != string.Empty && irTps[0] != null)
             {
-                if (activate != string.Empty && irTps[0] != null)
-                { irTps[0].preCode = activate + "\n" + newTP.preCode; }
+                irTps[0].preCode = activate + "\n" + irTps[0].preCode; 
             }
 
             return irTps;
@@ -765,7 +761,7 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadOutU([NotNull] ToolPath tP, [NotNull] string deActivate = "", int irActivate = 0)
+        public static List<ToolPath> leadOutU([NotNull] ToolPath tP, [NotNull] string deActivate = "", bool applyOpen = false, int irActivate = 0)
         {
             // Will add retract path as new ToolPath
             List<ToolPath> irTps = new List<ToolPath>();
@@ -775,24 +771,15 @@
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.retract = false;
 
-            // Add deactivation code to main path if tool will not be deactivated on a retract.
-            if (tP.additions.activate != 0 && irActivate == 0)
-            {
-                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
-            }
-
             irTps.Add(newTP);
 
             double leadCurve = tP.additions.leadComm[0];
             if (tP.side == CutSide.Right) { leadCurve = -leadCurve; }
 
-            // If leadCurve == 0 or path is open can now return
-            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance || !tP.isClosed()) { return irTps; }
-
-            PolylineCurve toolL = tP.getLine();
-
-            if (tP.additions.retract)
+            // Add retract path if needed 
+            if (tP.additions.retract && Math.Abs(leadCurve) > CAMel_Goo.Tolerance && (applyOpen || tP.isClosed()))
             {
+                PolylineCurve toolL = tP.getLine();
                 PolylineCurve leadOut = findLead(toolL, leadCurve, tP.matTool.insertWidth, 15, false);
 
                 // If no suitable curve found throw an error
@@ -820,11 +807,10 @@
 
             // Add deactivation codes
             // ReSharper disable once InvertIf
-            if (tP.additions.activate != 0)
+            if (tP.additions.activate != 0 && deActivate != string.Empty && irTps[irTps.Count - 1] != null)
             {
-                if (deActivate != string.Empty && irTps[irTps.Count - 1] != null)
                 // ReSharper disable once PossibleNullReferenceException
-                { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
+                irTps[irTps.Count - 1].postCode = irTps[irTps.Count - 1].postCode + "\n" + deActivate;
             }
 
             return irTps;
@@ -840,7 +826,7 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadInV([NotNull] ToolPath tP, [NotNull] string activate = "", int irActivate = 0)
+        public static List<ToolPath> leadInV([NotNull] ToolPath tP, [NotNull] string activate = "", bool applyOpen = false, int irActivate = 0)
         {
             // Will add insert path as new ToolPath
             List<ToolPath> irTps = new List<ToolPath>();
@@ -850,22 +836,14 @@
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.insert = false;
 
-            // Add activation code to main path if not activated on a insert
-            if (tP.additions.activate != 0 && irActivate == 0)
-            {
-                if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-            }
-
             irTps.Add(newTP);
 
             double leadCurve = tP.additions.leadComm[0];
 
-            // If leadCurve == 0 can now return
-            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
-
-            PolylineCurve toolL = tP.getLine();
-            if (tP.additions.insert)
+            // add insert path if needed
+            if (tP.additions.insert && Math.Abs(leadCurve) > CAMel_Goo.Tolerance && (applyOpen || tP.isClosed()))
             {
+                PolylineCurve toolL = tP.getLine();
                 ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                 iTp.name += " insert";
                 iTp.label = PathLabel.Insert;
@@ -873,7 +851,7 @@
                 iTp.additions.retract = false;
 
                 double r = (180.0-leadCurve) * Math.PI / 180.0; // Angle of V in Radians;
-                if (tP.side == CutSide.Left) { r = -r; } // cut to the right
+                if (tP.side == CutSide.Right) { r = -r; } // cut to the right
                 Vector3d tan = toolL.TangentAtStart;
                 tan.Rotate(r, Vector3d.ZAxis);
                 if (tP.firstP == null) { Exceptions.emptyPathException(); }
@@ -887,10 +865,9 @@
 
             // Add activation codes
             // ReSharper disable once InvertIf
-            if (tP.additions.activate != 0)
+            if (tP.additions.activate != 0 && activate != string.Empty && irTps[0] != null)
             {
-                if (activate != string.Empty && irTps[0] != null)
-                { irTps[0].preCode = activate + "\n" + newTP.preCode; }
+                irTps[0].preCode = activate + "\n" + irTps[0].preCode; 
             }
 
             return irTps;
@@ -906,7 +883,7 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<ToolPath> leadOutV([NotNull] ToolPath tP, [NotNull] string deActivate = "", int irActivate = 0)
+        public static List<ToolPath> leadOutV([NotNull] ToolPath tP, [NotNull] string deActivate = "", bool applyOpen = false, int irActivate = 0)
         {
             // Will add retract path as new ToolPath
             List<ToolPath> irTps = new List<ToolPath>();
@@ -916,29 +893,21 @@
             if (tP.matTool == null) { Exceptions.matToolException(); }
             newTP.additions.retract = false;
 
-            // Add deactivation code to main path if tool will not be deactivated on a retract.
-            if (tP.additions.activate != 0 && irActivate == 0)
-            {
-                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
-            }
-
             irTps.Add(newTP);
 
             double leadCurve = tP.additions.leadComm[0];
 
-            // If leadCurve == 0 can now return
-            if (Math.Abs(leadCurve) < CAMel_Goo.Tolerance) { return irTps; }
-
-            PolylineCurve toolL = tP.getLine();
-            if (tP.additions.retract)
+            // Add retract path if needed 
+            if (tP.additions.retract && Math.Abs(leadCurve) > CAMel_Goo.Tolerance && (applyOpen || tP.isClosed()))
             {
+                PolylineCurve toolL = tP.getLine();
                 ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
                 rTp.name += " retract";
                 rTp.label = PathLabel.Retract;
                 if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
 
                 double r = leadCurve * Math.PI / 180.0; // Angle of V in Radians;
-                if (tP.side == CutSide.Left) { r = -r; } // cut to the right
+                if (tP.side == CutSide.Right) { r = -r; } // cut to the right
                 Vector3d tan = toolL.TangentAtEnd;
                 tan.Rotate(r, Vector3d.ZAxis);
                 if (tP.lastP == null) { Exceptions.emptyPathException(); }
@@ -949,19 +918,16 @@
 
                 rTp.Add(tPt);
 
-                // Remove last point of toolpath to avoid point repeat
-                irTps[irTps.Count - 1]?.removeLast();
 
                 irTps.Add(rTp);
             }
 
             // Add activation codes
             // ReSharper disable once InvertIf
-            if (tP.additions.activate != 0)
+            if (tP.additions.activate != 0 && deActivate != string.Empty && irTps[irTps.Count - 1] != null)
             {
-                if (deActivate != string.Empty && irTps[irTps.Count - 1] != null)
                 // ReSharper disable once PossibleNullReferenceException
-                { irTps[irTps.Count - 1].postCode = newTP.postCode + "\n" + deActivate; }
+                irTps[irTps.Count - 1].postCode = irTps[irTps.Count - 1].postCode + "\n" + deActivate; 
             }
 
             return irTps;
@@ -977,9 +943,9 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        internal static List<ToolPath> insert([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 1)
+        internal static List<ToolPath> insert([NotNull] ToolPath tP, [NotNull] string activate = "", int irActivate = 0)
         {
-            // Will add insert and retract paths as new ToolPaths
+            // Will add insert path as new ToolPath
             List<ToolPath> iTps = new List<ToolPath>();
 
             // Update the main toolpath
@@ -993,13 +959,6 @@
             double uTol = tP.matForm.safeDistance * 1.05;
             ToolPoint tempTPt;
 
-            // Add activation code to main path if tool not activated for insert/retract
-            if (tP.additions.activate != 0 && irActivate == 0)
-            {
-                if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
-            }
-
             iTps.Add(newTP);
 
             // check if we have something to do
@@ -1012,7 +971,6 @@
 
                 // note we do this backwards adding points to the start of the path.
                 if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
-                if (irActivate != 0 && activate != string.Empty) { iTp.preCode = activate + "\n" + newTP.preCode; }
 
                 // get distance to surface and insert direction
                 if (newTP.firstP == null) { Exceptions.emptyPathException(); }
@@ -1051,6 +1009,12 @@
                 if (iTp.Count > 0) { iTps.Insert(0, iTp); }
             }
 
+            // add activation codes
+            if (tP.additions.activate != 0 && activate != string.Empty && iTps[0] != null)
+            {
+                iTps[0].preCode = activate + "\n" + iTps[0].preCode;
+            }
+
             return iTps;
         }
 
@@ -1064,7 +1028,7 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        internal static List<ToolPath> retract([NotNull] ToolPath tP, [NotNull] string activate = "", [NotNull] string deActivate = "", int irActivate = 1)
+        internal static List<ToolPath> retract([NotNull] ToolPath tP, [NotNull] string deActivate = "", int irActivate = 1)
         {
             // Will add insert and retract paths as new ToolPaths
             List<ToolPath> rTps = new List<ToolPath>();
@@ -1080,13 +1044,6 @@
             double uTol = tP.matForm.safeDistance * 1.05;
             ToolPoint tempTPt;
 
-            // Add activation code to main path if tool not activated for insert/retract
-            if (tP.additions.activate != 0 && irActivate == 0)
-            {
-                if (activate != string.Empty) { newTP.preCode = activate + "\n" + newTP.preCode; }
-                if (deActivate != string.Empty) { newTP.postCode = newTP.postCode + "\n" + deActivate; }
-            }
-
             rTps.Add(newTP);
 
             if (!tP.additions.retract || newTP.Count <= 0) { return rTps; }
@@ -1099,7 +1056,6 @@
 
             // note we do this backwards adding points to the start of the path.
             if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
-            if (irActivate != 0 && activate != string.Empty) { rTp.preCode = activate + "\n" + newTP.preCode; }
 
             // get distance to surface and retract direction
             inter = tP.matForm.intersect(newTP.lastP, 0).through;
@@ -1153,6 +1109,13 @@
 
             if (rTp.Count > 0) { rTps.Add(rTp); }
 
+            // Add deactivation codes
+            // ReSharper disable once InvertIf
+            if (tP.additions.activate != 0 && deActivate != string.Empty && rTps[rTps.Count - 1] != null)
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                rTps[rTps.Count - 1].postCode = rTps[rTps.Count - 1].postCode + "\n" + deActivate;
+            }
             return rTps;
         }
 
@@ -1452,7 +1415,7 @@
         /// <summary>TODO The default comment end.</summary>
         [NotNull] internal const string DefaultCommentEnd = ")";
         /// <summary>TODO The default section break.</summary>
-        [NotNull] internal const string DefaultSectionBreak = "------------------------------------------";
+        [NotNull] internal const string DefaultSectionBreak = "";
         /// <summary>TODO The default speed change command.</summary>
         [NotNull] internal const string DefaultSpeedChangeCommand = "M03";
         /// <summary>TODO The default tool change command.</summary>
@@ -1491,9 +1454,7 @@
 
             DateTime thisDay = DateTime.Now;
             co.appendLineNoNum(m.fileStart);
-            co.appendComment(m.sectionBreak);
             if (mI.name != string.Empty) { co.appendComment(mI.name); }
-            co.appendComment(string.Empty);
             co.appendComment(" Machine Instructions Created " + thisDay.ToString("f"));
             System.Reflection.AssemblyName camel = System.Reflection.Assembly.GetExecutingAssembly().GetName();
             DateTime buildTime = new DateTime(2000, 1, 1)
@@ -1506,9 +1467,8 @@
                 + " built " + buildTime.ToString("U"));
             if (m.name != string.Empty) { co.appendComment("  for " + m.name); }
             co.appendComment(" Starting with: ");
-            co.appendComment("  Tool: " + mI[0][0].matTool.toolName);
-            co.appendComment("  in " + mI[0][0].matTool.matName + " with shape " + mI[0][0].matForm.ToString());
-            co.appendComment(string.Empty);
+            co.appendComment("  Tool: " + mI[0][0].matTool.toolName+ " in " + mI[0][0].matTool.matName);
+            co.appendComment("  with shape " + mI[0][0].matForm.ToString());
             co.appendComment(m.sectionBreak);
             co.append(m.header);
             co.append(mI.preCode);
@@ -1537,9 +1497,9 @@
         public static void gcOpStart([NotNull] IGCodeMachine m, [NotNull] ref CodeInfo co, [NotNull] MachineOperation mO)
         {
             co.appendComment(m.sectionBreak);
-            co.appendComment(string.Empty);
-            co.appendComment(" Operation: " + mO.name);
-            co.appendComment(string.Empty);
+            if (mO.name == String.Empty) { co.appendComment(" Operation"); }
+            else { co.appendComment(" Operation: " + mO.name); }
+            co.appendComment(m.sectionBreak);
             co.append(mO.preCode);
         }
 
@@ -1559,13 +1519,9 @@
         {
             if (tP.matTool == null) { Exceptions.matToolException(); }
             if (tP.matForm == null) { Exceptions.matFormException(); }
-            co.appendComment(m.sectionBreak);
-            bool preamble = false;
-            if (tP.name != string.Empty)
-            {
-                co.appendComment(" ToolPath: " + tP.name);
-                preamble = true;
-            }
+
+            if (tP.name == string.Empty) { co.appendComment("ToolPath"); }
+            else { co.appendComment(" ToolPath: " + tP.name); } 
 
             if (tP.matTool != null && tP.matTool.toolName != co.currentMT.toolName)
             {
@@ -1575,17 +1531,13 @@
                 }
 
                 co.currentMT = tP.matTool;
-                preamble = true;
             }
 
             if (tP.matForm != null && tP.matForm.ToString() != co.currentMF.ToString())
             {
                 co.appendComment(" material: " + tP.matForm.ToString());
                 co.currentMF = tP.matForm;
-                preamble = true;
             }
-
-            if (preamble) { co.appendComment(m.sectionBreak); }
 
             co.append(tP.preCode);
         }

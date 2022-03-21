@@ -260,8 +260,8 @@
         /// <summary>Gets or sets the lead curve.</summary>
         /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category(" General"),
-         Description("Curvature on lead in and out, higher values give a tighter turn, use negatives for the inside and positive for outside the curve."),
-         DisplayName("Lead Curvature"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
+         Description("Instructions for insert and retract on toolpaths"),
+         DisplayName("Lead Command"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string leadCurve
         {
             get => this.Owner?.Value?.leadCurvature ?? ToolPathAdditions.basicDefault.leadCurvature;

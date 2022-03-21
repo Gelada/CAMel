@@ -27,7 +27,7 @@
         [ItemNotNull, NotNull] private List<ToolPath> tPs;
 
         /// <inheritdoc />
-        public ToolPoint firstP => this.FirstOrDefault(a => a?.firstP != null)?.lastP;
+        public ToolPoint firstP => this.FirstOrDefault(a => a?.firstP != null)?.firstP;
         /// <inheritdoc />
         public ToolPoint lastP => this.LastOrDefault(a => a?.lastP != null)?.lastP;
         /// <summary>TODO The remove last point.</summary>
@@ -213,7 +213,7 @@
                 if (first)
                 {
                     List<ToolPath> trP = m.insert(tP);
-                    // separate the last path (tP with possibly alterations by insert)
+                    // separate the last path (tP with possibly alterations by insert, such as activation)
                     frP = trP[trP.Count - 1];
                     trP.RemoveAt(trP.Count - 1);
                     transPaths.AddRange(trP);
@@ -225,12 +225,10 @@
                         // Calculate transition
                         List<ToolPath> trP = m.transition(frP, tP);
 
-                        // separate the last path (tP with possibly alterations by transition)
+                        // separate the last path (tP with possibly alterations by transition, such as activation)
                         frP = trP[trP.Count - 1];
                         trP.RemoveAt(trP.Count - 1);
 
-                        // Remove last point of previous path
-                        if (transPaths.Count > 0) { transPaths[transPaths.Count - 1]?.removeLast(); }
                         transPaths.AddRange(trP);
                     }
                 }

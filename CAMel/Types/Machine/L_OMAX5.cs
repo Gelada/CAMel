@@ -80,23 +80,19 @@
         /// .</returns>
         public List<ToolPath> insert(ToolPath tP)
         {
-            List<ToolPath> iRpath = new List<ToolPath>();
+            bool applyOpen = false;
+            if (tP.additions.leadComm[2] > 0) { applyOpen = true; }
             switch (tP.additions.leadComm.command)
             {
                 case "V":
                 case "":
-                    iRpath = Utility.leadInV(tP, string.Empty, 9);
-                    break;
+                    return Utility.leadInV(tP, string.Empty, applyOpen, 9);
                 case "U":
-                    iRpath = Utility.leadInU(tP, string.Empty, 9);
-                    break;
+                    return Utility.leadInU(tP, string.Empty, applyOpen, 9);
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a V shaped lead."); }
-                    iRpath = Utility.leadInV(tP, string.Empty, 9);
-                    break;
+                    return Utility.leadInV(tP, string.Empty, true, 9);
             }
-
-            return iRpath;
         }
         /// <summary>TODO The retract.</summary>
         /// <param name="tP">TODO The t p.</param>
@@ -106,23 +102,19 @@
         /// .</returns>
         public List<ToolPath> retract(ToolPath tP)
         {
-            List<ToolPath> iRpath = new List<ToolPath>();
+            bool applyOpen = false;
+            if (tP.additions.leadComm[2] > 0) { applyOpen = true; }
             switch (tP.additions.leadComm.command)
             {
                 case "V":
                 case "":
-                    iRpath = Utility.leadOutV(tP, string.Empty, 9);
-                    break;
+                    return Utility.leadOutV(tP, string.Empty, applyOpen, 9);
                 case "U":
-                    iRpath = Utility.leadOutU(tP, string.Empty, 9);
-                    break;
+                    return Utility.leadOutU(tP, string.Empty, applyOpen, 9);
                 default:
                     if (tP.Count > 0) { tP[0].addWarning("Lead type: " + tP.additions.leadComm.command + " not recognised. Using a V shaped lead."); }
-                    iRpath = Utility.leadOutV(tP, string.Empty, 9);
-                    break;
+                    return Utility.leadOutV(tP, string.Empty, true, 9);
             }
-
-            return iRpath;
         }
 
         /// <summary>TODO The step down.</summary>
@@ -349,7 +341,7 @@
                 if (first)
                 {
                     first = false;
-                    continue;
+                    //continue;
                 }
 
                 co.append(ptCode);

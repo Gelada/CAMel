@@ -137,12 +137,12 @@
                     versionS = "_V" + uVersion.ToString();
                 }
 
-                fPath = Path.Combine(filePath, mI.name + versionS +"." + mI.m.extension);
-                if (File.Exists(fPath)) { File.Delete(fPath); }
-
                 if (write)
                 {
-                    if(first) { this.bytesWritten = 0; }
+                    fPath = Path.Combine(filePath, mI.name + versionS + "." + mI.m.extension);
+                    if (File.Exists(fPath)) { File.Delete(fPath); }
+
+                    if (first) { this.bytesWritten = 0; }
                     using (StreamWriter sW = new StreamWriter(fPath))
                     {
                         for (int i = 0; i < saveCode.Length; i += 40000)

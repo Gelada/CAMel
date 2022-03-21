@@ -54,7 +54,7 @@ namespace CAMel.GH
                 this.c = c;
                 this.id = id;
                 this.key = double.NaN;
-                this.side = -1;
+                this.side = 1;
                 this.depth = 0;
             }
         }
@@ -356,7 +356,7 @@ namespace CAMel.GH
                 side = c.side;
                 if (c.c.IsClosed)
                 {
-                    bool cC = c.c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise; 
+                    bool cC = c.c.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise; 
                     gi = getClosed(clicked, cC, c.side, out OptionToggle counterClock, ref depth);
                     while (true)
                     {
@@ -491,35 +491,35 @@ namespace CAMel.GH
                             case 1:
                                 if (c?.c.IsClosed ?? false)
                                 {
-                                    if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis) == CurveOrientation.CounterClockwise)
-                                    { c.side = -1; }
-                                    else { c.side = 1; }
+                                    if (c.c.ClosedCurveOrientation(Vector3d.ZAxis) == CurveOrientation.CounterClockwise)
+                                    { c.side = 1; }
+                                    else { c.side = -1; }
                                 }
 
                                 break;
                             case 2:
                                 if (c?.c.IsClosed ?? false)
                                 {
-                                    if (c.c.ClosedCurveOrientation(-Vector3d.ZAxis) != CurveOrientation.CounterClockwise
-                                    ) { c.side = -1; }
-                                    else { c.side = 1; }
+                                    if (c.c.ClosedCurveOrientation(Vector3d.ZAxis) != CurveOrientation.CounterClockwise
+                                    ) { c.side = 1; }
+                                    else { c.side = -1; }
                                 }
                                 break;
                             case 3:
                                 if (c != null) { c.side = 0; }
                                 break;
                             case 4:
-                                if (c != null) { c.side = -1; }
+                                if (c != null) { c.side = 1; }
                                 break;
                             case 5:
-                                if (c != null) { c.side = 1; }
+                                if (c != null) { c.side = -1; }
                                 break;
                         }
 
                         switch (direction)
                         {
                             case 1:
-                                if ((c?.c.IsClosed ?? false) && c.c.ClosedCurveOrientation(-Vector3d.ZAxis) ==
+                                if ((c?.c.IsClosed ?? false) && c.c.ClosedCurveOrientation(Vector3d.ZAxis) ==
                                     CurveOrientation.Clockwise)
                                 {
                                     c.c.Reverse();
@@ -528,7 +528,7 @@ namespace CAMel.GH
 
                                 break;
                             case 2:
-                                if ((c?.c.IsClosed ?? false) && c.c.ClosedCurveOrientation(-Vector3d.ZAxis) ==
+                                if ((c?.c.IsClosed ?? false) && c.c.ClosedCurveOrientation(Vector3d.ZAxis) ==
                                     CurveOrientation.CounterClockwise)
                                 {
                                     c.c.Reverse();
@@ -719,8 +719,8 @@ namespace CAMel.GH
                     if (co.CurveGeometry.IsClosed && c.c.IsClosed)
                     {
                         // reverse source curve
-                        if (co.CurveGeometry.ClosedCurveOrientation(-Vector3d.ZAxis) !=
-                            c.c.ClosedCurveOrientation(-Vector3d.ZAxis)) { co.CurveGeometry.Reverse(); }
+                        if (co.CurveGeometry.ClosedCurveOrientation(Vector3d.ZAxis) !=
+                            c.c.ClosedCurveOrientation(Vector3d.ZAxis)) { co.CurveGeometry.Reverse(); }
                         double t = c.c.getNewSeam();
                         if (!double.IsNaN(t))
                         {

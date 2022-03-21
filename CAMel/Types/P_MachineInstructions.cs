@@ -156,27 +156,32 @@
 
             // If there is a start path use it.
             MachineOperation pMo;
-            if (valid.startPath.Count > 0)
+            if (valid.startPath.Count == 0) // If no explicit start path is given just use first point.
             {
-                pMo = new MachineOperation { valid.startPath };
-                valid.Add(pMo.processAdditions(this.m, ref validTP));
-                fP = valid.startPath;
+                ToolPoint sPt = this.firstP.deepClone();
+                sPt.feed = 0;
+                valid.startPath.Add(sPt);
             }
+
+            pMo = new MachineOperation { valid.startPath };
+            pMo.name = "Start";
+            valid.Add(pMo.processAdditions(this.m, ref validTP));
+            fP = valid.startPath;
 
             foreach (MachineOperation mO in this)
             {
-                // Always transition between operations (other than start)
+                // Process the machine Operation
                 pMo = mO.processAdditions(this.m, ref validTP);
-                if (fP.Count > 0 && pMo.Count > 0)
+                // Add transition from previous operation
+                // insert and retract are handled within the operation
+                // as they can change toolpaths for example adding activation code
+                if (fP.Count > 0)
                 {
-                    // initial insert and retract are handled in Machine operations
-                    // so just transition from end of previous operation to new 
-                    // operation. 
-                    pMo.InsertRange(0, this.m.transition(fP, pMo[0], false,false)); 
-                    valid.removeLastPoint();
+                    pMo.InsertRange(0, this.m.transition(fP, pMo[0],false, false)); 
                 }
-
-                if (pMo.Count > 0) { fP = pMo[pMo.Count - 1]; }
+                // record last path
+                fP = pMo[pMo.Count - 1]; 
+                // add to the output Instructions.
                 valid.Add(pMo);
             }
 
@@ -184,13 +189,13 @@
             if (valid.endPath.Count > 0)
             {
                 pMo = new MachineOperation { valid.endPath };
+                pMo.name = "End";
                 pMo = pMo.processAdditions(this.m, ref validTP);
                 if (fP.Count > 0 && pMo.Count > 0)
                 {
                     ToolPath pMo0 = pMo[0];
                     pMo.RemoveAt(0); // remove toolpath in case it is changed by the transition.
                     pMo.InsertRange(0, this.m.transition(fP, pMo0, false));
-                    valid.removeLastPoint();
                 }
 
                 valid.Add(pMo);

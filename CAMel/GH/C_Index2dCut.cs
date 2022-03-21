@@ -35,7 +35,7 @@
         {
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddCurveParameter("Cut Path", "C", "Outline of object to cut out.", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Offset", "O", "Offset Curve, 0 for none, -1 for interior, 1 for exterior. Actually uses half tool thickness scaled by this value, so variation by toolpath is possible.", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("Offset", "O", "Offset Curve, 0 for none, negative for left, positive for right. Actually uses half tool thickness scaled by this value, so variation by toolpath is possible.", GH_ParamAccess.item, 0);
             pManager.AddVectorParameter("Direction", "D", "Direction of the tool.", GH_ParamAccess.item, new Vector3d(0, 0, 1));
             GH_ToolPathAdditionsPar tPaPar = new GH_ToolPathAdditionsPar();
             tPaPar.SetPersistentData(new GH_ToolPathAdditions(ToolPathAdditions.basicDefault));

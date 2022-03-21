@@ -34,12 +34,15 @@
             }
 
             double uOS = oS;
-            if (d * p.ZAxis > 0) { uOS = -uOS; }
+            if (d * p.ZAxis < 0) { uOS = -uOS; }
 
             // create Operation
-            MachineOperation mO = new MachineOperation { name = "2d Cut " };
+            MachineOperation mO = new MachineOperation { name = "2d Cut" };
+            string name = "2d Cut path";
+            if (c.IsClosed) { name = "Closed " + name; }
+            else { name = "Open " + name; }
 
-            ToolPath tP = new ToolPath(string.Empty, mT, mF, tPa);
+            ToolPath tP = new ToolPath(name, mT, mF, tPa);
             tP.convertCurve(c, d);
             tP.additions.offset = mT.toolWidth * uOS * p.ZAxis / 2.0;
             if (oS > 0) { tP.side = CutSide.Left; }
