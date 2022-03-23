@@ -178,7 +178,7 @@
         public MachineOperation generateOperation([NotNull] Brep b, double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
             // Just convert to Mesh
-            MeshingParameters mP = MeshingParameters.Smooth;
+            MeshingParameters mP = MeshingParameters.QualityRenderMesh;
             if (mP == null) { Exceptions.nullPanic(); }
             mP.MaximumEdgeLength = this.mT.toolWidth / 2.0;
             mP.ComputeCurvature = true;

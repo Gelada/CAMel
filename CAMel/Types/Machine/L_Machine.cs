@@ -675,7 +675,7 @@
             {
                 Point3d testPt = leadCirc.PointAtEnd + uNorm * i;
                 outP.Add(testPt);
-                if (toolL.Contains(testPt) == incorrectSide) { return null; }
+                if (toolL.Contains(testPt,Plane.WorldXY,0.0001) == incorrectSide) { return null; }
 
                 toolL.ClosestPoint(testPt, out double testDist);
                 testDist = testPt.DistanceTo(toolL.PointAt(testDist));
