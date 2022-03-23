@@ -118,6 +118,8 @@ namespace CAMel.GH
             pManager[0].Optional = true;
             pManager.AddVectorParameter("Depth", "D", "Direction and Depth to cut at (set to 0 to leave paths as read), individual paths will scale this, initially by the red channel of the view colour.", GH_ParamAccess.item, Vector3d.Zero);
             pManager.AddColourParameter("Colour", "C", "Display Colour of paths to select, will only use blue and green channels (as red is depth). Set as white to select all", GH_ParamAccess.item, Color.White);
+            pManager.AddIntegerParameter("Layer", "L", "Layer or Layers to take paths from, -1 for all", GH_ParamAccess.list);
+            pManager[3].Optional = true;
         }
 
         /// <inheritdoc />
@@ -129,6 +131,7 @@ namespace CAMel.GH
             if (pManager == null) { throw new ArgumentNullException(); }
             pManager.AddCurveParameter("Reordered", "R", "Reordered Paths", GH_ParamAccess.list);
             pManager.AddNumberParameter("Offsets", "O", "Offsets for individual curves.", GH_ParamAccess.list);
+            pManager.AddMeshParameter("Material Preview", "MP", "Rough preview of cut result, for closed curves.", GH_ParamAccess.list);
         }
 
         /// <inheritdoc />
@@ -194,6 +197,10 @@ namespace CAMel.GH
             Vector3d depth = new Vector3d();
             da.GetData("Depth", ref depth);
 
+            List<int> layers = new List<int>();
+            da.GetDataList("Layer", layers);
+            if(layers.Count == 0) { layers.Add(-1); }
+
             // Insist on reference curves
             if (paths.Any(p => p?.IsReferencedGeometry == false))
             {
@@ -212,12 +219,15 @@ namespace CAMel.GH
             {
                 if (curve?.Value != null)
                 {
+                    RhinoObject rC = uDoc.Objects.Find(curve.ReferenceID);
+                    Color col = rC.Attributes.ObjectColor;
+                    int layer = rC.Attributes.LayerIndex;
+
                     // select by color
-                    Color col = uDoc.Objects.Find(curve.ReferenceID).Attributes.ObjectColor;
-                    if (sCol.ToArgb() == Color.White.ToArgb() || col.G == sCol.G && col.B == sCol.B)
-                    {
-                        this.curves.Add(new AugCurve(curve.Value, curve.ReferenceID));
-                    }
+                    bool select = sCol.ToArgb() == Color.White.ToArgb() || col.G == sCol.G && col.B == sCol.B;
+                    // select by layer
+                    select = select && layers.Contains(-1) || layers.Contains(layer);
+                    if (select) { this.curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
                 }
             }
 
@@ -292,8 +302,104 @@ namespace CAMel.GH
                 offSets.Add(os);
             }
 
-            da.SetDataList(0, sorted);
-            da.SetDataList(1, offSets);
+            da.SetDataList("Reordered", sorted);
+            da.SetDataList("Offsets", offSets);
+            da.SetDataList("Material Preview", curvePV(depth.Length));
+        }
+
+        private List<Mesh> curvePV(double depth)
+        {
+            List<Mesh> plus = new List<Mesh>();
+            List<Mesh> min = new List<Mesh>();
+            double uDepth = 0.001;
+            if (depth > 0) { uDepth = depth; }
+
+            MeshingParameters mp = MeshingParameters.QualityRenderMesh;
+            mp.ClosedObjectPostProcess = true;
+            mp.JaggedSeams = false;
+
+            List<Mesh> pv = new List<Mesh>();
+
+            foreach (AugCurve ac in this.curves.Reverse<AugCurve>())
+            {
+                if (ac.c.IsClosed)
+                {
+                    CurveOrientation co = ac.c.ClosedCurveOrientation(Vector3d.ZAxis);
+                    if (ac.side < 0 && co == CurveOrientation.Clockwise)
+                    {
+                        Extrusion ex = Extrusion.Create(ac.c, uDepth, true);
+                        Mesh[] meshes = Mesh.CreateFromBrep(ex.ToBrep(false), mp);
+
+                        Mesh brep_mesh = new Mesh();
+                        if (meshes != null && meshes.Length > 0)
+                        {
+                            foreach (var m in meshes) { brep_mesh.Append(m); }
+                        }
+                        pv.Add(brep_mesh);
+                        plus.Add(brep_mesh);
+                    } 
+                    else if (ac.side > 0 && co == CurveOrientation.CounterClockwise)
+                    {
+                        Curve uC = ac.c.DuplicateCurve();
+                        uC.Translate(-uDepth * Vector3d.ZAxis);
+                        Extrusion ex = Extrusion.Create(uC, uDepth, true);
+                        Mesh[] meshes = Mesh.CreateFromBrep(ex.ToBrep(false), mp);
+
+                        Mesh brep_mesh = new Mesh();
+                        if (meshes != null && meshes.Length > 0)
+                        {
+                            foreach (var m in meshes) { brep_mesh.Append(m); }
+                        }
+                        pv.Add(brep_mesh);
+                        plus.Add(brep_mesh);
+                    }
+                    else if (ac.side > 0 && co == CurveOrientation.Clockwise)
+                    {
+                        Curve uC = ac.c.DuplicateCurve();
+                        uC.Translate(uDepth * Vector3d.ZAxis);
+                        Extrusion ex = Extrusion.Create(uC, 3 * uDepth, true);
+                        List<Mesh> meshes = new List<Mesh>();
+                        meshes.AddRange(Mesh.CreateFromBrep(ex.ToBrep(false), mp));
+
+                        Mesh brep_mesh = new Mesh();
+                        if (meshes != null && meshes.Count > 0)
+                        {
+                            foreach (var m in meshes) { brep_mesh.Append(m); }
+                        }
+                        if (brep_mesh != null && pv.Count > 0)
+                        {
+                            min = new List<Mesh>();
+                            meshes = new List<Mesh> { brep_mesh };
+                            min.AddRange(Mesh.CreateBooleanDifference(pv, meshes));
+                            pv = min;
+                        }
+
+                    }
+                    else if(ac.side < 0 && co == CurveOrientation.CounterClockwise)
+                    {
+                        Curve uC = ac.c.DuplicateCurve();
+                        uC.Translate(-uDepth * Vector3d.ZAxis);
+                        Extrusion ex = Extrusion.Create(uC, 3*uDepth, true);
+                        List<Mesh> meshes = new List<Mesh>();
+                        meshes.AddRange(Mesh.CreateFromBrep(ex.ToBrep(false), mp));
+
+                        Mesh brep_mesh = new Mesh();
+                        if (meshes != null && meshes.Count > 0)
+                        {
+                            foreach (var m in meshes) { brep_mesh.Append(m); }
+                        }
+                        if (brep_mesh != null && pv.Count > 0)
+                        {
+                            min = new List<Mesh>();
+                            meshes = new List<Mesh> { brep_mesh };
+                            min.AddRange(Mesh.CreateBooleanDifference(pv, meshes));
+                            pv = min;
+                        }
+                    }
+                }
+            }
+
+            return pv;
         }
 
         /// <inheritdoc />
@@ -743,7 +849,9 @@ namespace CAMel.GH
         public override BoundingBox ClippingBox => BoundingBox.Empty;
 
         /// <inheritdoc />
-        public override void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args) { }
+        public override void DrawViewportMeshes([CanBeNull] IGH_PreviewArgs args)
+        {
+        }
 
         /// <inheritdoc />
         public override void DrawViewportWires([CanBeNull] IGH_PreviewArgs args)
