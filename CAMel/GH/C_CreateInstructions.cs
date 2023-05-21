@@ -87,6 +87,7 @@
                 return;
             }
             da.GetDataList(1, tempMo);
+            da.GetDataList(2, sP);
             da.GetDataList(3, eP);
             if (!da.GetData(4, ref m)) { return; }
 
