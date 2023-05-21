@@ -85,18 +85,24 @@
             if (stepOver < 0) { stepOver = mT.sideLoad; }
             if (stepOver > mT.sideLoad) { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
 
+            Vector3d lineDir = c.PointAtEnd - c.PointAtStart; // get y direction from the input curve
+            lineDir.Transform(Transform.PlaneToPlane(Plane.WorldXY, dir));
+            lineDir.Z = 0;
+
+            Plane uDir = new Plane(dir.Origin, lineDir, Vector3d.CrossProduct(dir.ZAxis, lineDir));
+
             // process the bounding box
             if (!geom.CastTo(out BoundingBox bb))
             {
                 if (geom.CastTo(out Surface s))
-                { bb = s.GetBoundingBox(dir); } // extents of S in the coordinate system
+                { bb = s.GetBoundingBox(uDir); } // extents of S in the coordinate system
                 else if (geom.CastTo(out Brep b))
-                { bb = b.GetBoundingBox(dir); } // extents of B in the coordinate system
+                { bb = b.GetBoundingBox(uDir); } // extents of B in the coordinate system
                 else if (geom.CastTo(out Mesh m))
-                { bb = m.GetBoundingBox(dir); } // extents of M in the coordinate system
+                { bb = m.GetBoundingBox(uDir); } // extents of M in the coordinate system
                 else
                 { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep."); }
-                bb.Inflate(mT.toolWidth);
+                bb.Inflate(mT.toolWidth/2.0);
             }
 
             // set Surfacing direction
@@ -107,7 +113,7 @@
                 return;
             }
 
-            SurfacePath sP = Surfacing.parallel(c, dir, stepOver, zz, sTD, bb, mT);
+            SurfacePath sP = Surfacing.parallel(c, uDir, stepOver, zz, sTD, bb, mT);
             da.SetData(0, new GH_SurfacePath(sP));
         }
 
