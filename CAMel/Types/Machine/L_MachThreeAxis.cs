@@ -420,18 +420,25 @@
             // comes to danger. If its too close add a new
             // point and try again.
             List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
-
-            int i;
-
+            int j = 0;
+            bool tranError = false;
             // loop through intersecting with safe bubble and adding points
-            for (i = 0; i < route.Count - 1 && i < 100;)
+            for (int i = 0; i < route.Count - 1 && i < 100;)
             {
                 if (tP.matForm.intersect(route[i], route[i + 1], tP.matForm.safeDistance, out MFintersects inters))
                 {
                     MFintersects fromMid = tP.matForm.intersect(inters.mid, inters.midOut, tP.matForm.safeDistance * 1.1);
                     route.Insert(i + 1, inters.mid + fromMid.thrDist * inters.midOut);
+                    j++;
                 }
-                else { i++; }
+                else {
+                    j = 0;
+                    i++; 
+                }
+                if(j>1000) { 
+                    tranError = true;
+                    break;
+                }
             }
 
             // get rid of end points that will remain in the to path. 
@@ -449,6 +456,10 @@
                 // add new point at speed 0 to describe rapid move.
                 move.Add(new ToolPoint(pt, new Vector3d(), -1, 0));
             }
+
+            if (tranError) { move.lastP?.addWarning("Transition to next toolpath failed."); }
+
+
 
             return move;
         }
