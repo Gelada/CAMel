@@ -156,11 +156,17 @@
 
             // If there is a start path use it.
             MachineOperation pMo;
-            if (valid.startPath.Count == 0) // If no explicit start path is given just use first point.
+            if (valid.startPath.Count == 0) // If no explicit start path is given use retract of first point
             {
-                ToolPoint sPt = this.firstP.deepClone();
+                List<ToolPoint> fPl = new List<ToolPoint>();
+                fPl.Add(this.firstP);
+                ToolPath SPath = validTP.deepCloneWithNewPoints(fPl);
+                SPath.additions.insert = true;
+                List<ToolPath> temp = this.m.insert(SPath);
+                ToolPoint sPt = this.m.insert(SPath)[0].firstP.deepClone(); // run insert code then take first point.
                 sPt.feed = 0;
                 valid.startPath.Add(sPt);
+
             }
 
             pMo = new MachineOperation { valid.startPath };
