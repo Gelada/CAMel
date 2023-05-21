@@ -276,7 +276,7 @@
 Copy "$(TargetPath)" "C:\Users\eohar\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha"
 Copy "$(TargetPath)" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\$(ProjectName).gha"
 Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eohar\AppData\Roaming\Grasshopper\Libraries\Emgu.CV.World.dll"
-Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eohar\Google Drive\CAMe\CAMel Installl\Emgu.CV.World.dll"
+Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\Emgu.CV.World.dll"
 Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eohar\AppData\Roaming\Grasshopper\Libraries\CsvHelper.dll"
 Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\CsvHelper.dll"</PostBuildEvent>
   </PropertyGroup>
