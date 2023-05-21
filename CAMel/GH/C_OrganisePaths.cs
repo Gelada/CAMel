@@ -224,9 +224,9 @@ namespace CAMel.GH
                     int layer = rC.Attributes.LayerIndex;
 
                     // select by color
-                    bool select = sCol.ToArgb() == Color.White.ToArgb() || col.G == sCol.G && col.B == sCol.B;
+                    bool select = sCol.ToArgb() == Color.White.ToArgb() || (col.G == sCol.G && col.B == sCol.B);
                     // select by layer
-                    select = select && layers.Contains(-1) || layers.Contains(layer);
+                    select = select && (layers.Contains(-1) || layers.Contains(layer));
                     if (select) { this.curves.Add(new AugCurve(curve.Value, curve.ReferenceID)); }
                 }
             }
