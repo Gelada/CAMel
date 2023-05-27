@@ -101,6 +101,7 @@
     <None Include="GH\C_ParallelCylinderSurface.cs" />
     <Compile Include="GH\C_SpiralSurface.cs" />
     <Compile Include="GH\C_OMAX.cs" />
+    <Compile Include="Types\L_Shadows.cs" />
     <Compile Include="Types\L_BasicParser.cs" />
     <Compile Include="Types\L_CAMelData.cs" />
     <Compile Include="Types\L_PathClick.cs" />
@@ -261,6 +262,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\" />
+    <Folder Include="ConcaveHull\" />
     <Folder Include="GH\Parameters\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
