@@ -107,11 +107,25 @@
                 roughO = roughP.generateOperation(m, finalP.mT.finishDepth + finalH, mF, addRough);
                 finishO = finalP.generateOperation(m, finalH, mF, addFinish);
             }
+            else if (geom.GetType() == typeof(Surface))
+            {
+                Surface s = (Surface)geom;
+                Brep b = Brep.CreateFromSurface(s);
+                roughO = roughP.generateOperation(b, finalP.mT.finishDepth + finalH, mF, addRough);
+                finishO = finalP.generateOperation(b, finalH, mF, addFinish);
+            }
+            else if (geom.GetType() == typeof(NurbsSurface))
+            {
+                Surface s = (Surface)geom;
+                Brep b = Brep.CreateFromSurface(s);
+                roughO = roughP.generateOperation(b, finalP.mT.finishDepth + finalH, mF, addRough);
+                finishO = finalP.generateOperation(b, finalH, mF, addFinish);
+            }
             else if (geom.GetType() == typeof(Brep))
             {
                 Brep b = (Brep)geom;
-                roughO = roughP.generateOperation(b, finalP.mT.finishDepth, mF, addRough);
-                finishO = finalP.generateOperation(b, 0.0, mF, addFinish);
+                roughO = roughP.generateOperation(b, finalP.mT.finishDepth + finalH, mF, addRough);
+                finishO = finalP.generateOperation(b, finalH, mF, addFinish);
             }
             else
             {

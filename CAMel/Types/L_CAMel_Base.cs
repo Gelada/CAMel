@@ -82,11 +82,9 @@
             return result;
         }
 
-        /// <summary>TODO The c sv to double.</summary>
-        /// <param name="values">TODO The values.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
+        /// <summary>Convert comma seprated list to list of double</summary>
+        /// <param name="values">Comma separated string of numbers</param>
+        /// <returns> List of numbers
         /// .</returns>
         [NotNull]
         public static List<double> cSvToDouble([CanBeNull] string values)
