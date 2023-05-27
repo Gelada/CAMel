@@ -424,7 +424,8 @@
 
             double finishDepth;
             if (tP.matTool.finishDepth <= 0) { finishDepth = onionSort.First(); }
-            else { finishDepth = tP.matTool.finishDepth + onionSort.First(); }
+            else if (onionSort.Count() > 0) { finishDepth = tP.matTool.finishDepth + onionSort.First(); }
+            else { finishDepth = 0; } // don't use finish path if no layers used
 
             double cutDepth = tP.matTool.cutDepth <= 0 ? double.PositiveInfinity : tP.matTool.cutDepth;
 
@@ -1301,19 +1302,11 @@
                 newTP.name = newTP.name + "Finish at height " + height.ToString("0.###");
                 newTP.label = PathLabel.FinishCut;
                 newTP.additions.stepDown = 0;
-                newTP.additions.onion = new List<double> { 0 };
+                newTP.additions.onion = new List<double> { };
                 fP.Add(newTP);
             }
 
-            // If onion is empty add the ToolPath anyway.
-            if (fP.Count != 0) { return fP; }
-            {
-                ToolPath newTP = tP.deepClone();
-                newTP.additions.stepDown = 0;
-                newTP.additions.onion = new List<double> { 0 };
-                newTP.label = PathLabel.FinishCut;
-                fP.Add(newTP);
-            }
+            // If onion is empty the toolpath will be sorted by stepdown.
 
             return fP;
         }

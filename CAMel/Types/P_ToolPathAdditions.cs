@@ -324,8 +324,8 @@
         /// <summary>Gets or sets the onion.</summary>
         /// <exception cref="NullReferenceException"></exception>
         [CanBeNull, Category(" Step Down"),
-         Description("Height above toolpath to cut the finish path, for onion skinning. Can be a comma separated list. "),
-         DisplayName("Onion Skin"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
+         Description("Height above toolpath to cut the finish path, for onion skinning etc. Can be a comma separated list, blank for no finish path. "),
+         DisplayName("Finish/Onion Skin"), RefreshProperties(RefreshProperties.All), UsedImplicitly]
         public string onion
         {
             get => CAMel_Goo.doubleToCsv(this.Owner?.Value?.onion ?? ToolPathAdditions.basicDefault.onion, "0.####");
