@@ -91,18 +91,22 @@
 
             Plane uDir = new Plane(dir.Origin, lineDir, Vector3d.CrossProduct(dir.ZAxis, lineDir));
 
-            // process the bounding box
-            if (!geom.CastTo(out BoundingBox bb))
+            // process the bounding curve
+            if (!geom.CastTo(out Curve bc))
             {
                 if (geom.CastTo(out Surface s))
-                { bb = s.GetBoundingBox(uDir); } // extents of S in the coordinate system
+                {
+                    Mesh m = Mesh.CreateFromSurface(s, MeshingParameters.FastRenderMesh);
+                    bc = new PolylineCurve(Shadows.MeshShadow(m, dir));
+                } 
                 else if (geom.CastTo(out Brep b))
-                { bb = b.GetBoundingBox(uDir); } // extents of B in the coordinate system
-                else if (geom.CastTo(out Mesh m))
-                { bb = m.GetBoundingBox(uDir); } // extents of M in the coordinate system
+                {
+                    Mesh m = Mesh.CreateFromBrep(b, MeshingParameters.FastRenderMesh)[0];
+                    bc = new PolylineCurve(Shadows.MeshShadow(m, dir));
+                } 
+                else if (geom.CastTo(out Mesh m)) { bc = new PolylineCurve(Shadows.MeshShadow(m, dir)); } 
                 else
-                { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill (BB) must be a bounding box, surface, mesh or brep."); }
-                bb.Inflate(mT.toolWidth/2.0);
+                { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill must be a curve, surface, mesh or brep."); }
             }
 
             // set Surfacing direction
@@ -113,7 +117,7 @@
                 return;
             }
 
-            SurfacePath sP = Surfacing.parallel(c, uDir, stepOver, zz, sTD, bb, mT);
+            SurfacePath sP = Surfacing.parallel(c, uDir, stepOver, zz, sTD, bc, mT);
             da.SetData(0, new GH_SurfacePath(sP));
         }
 

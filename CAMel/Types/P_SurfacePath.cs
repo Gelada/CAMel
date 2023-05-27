@@ -207,7 +207,7 @@
         }
 
         // actual code to generate the operation
-        /// <summary>TODO The generate operation_.</summary>
+        /// <summary>Generate surfacing operation from path data.</summary>
         /// <param name="offset">TODO The offset.</param>
         /// <param name="mF">TODO The m f.</param>
         /// <param name="tPa">TODO The t pa.</param>
