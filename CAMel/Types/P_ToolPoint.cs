@@ -48,6 +48,13 @@
             set => this.tDir = new Plane(this.pt, value);
         }
 
+        /// <summary>Does the toolpoint know the surface normal?</summary>
+        public bool normalSet { get => this.norm != Vector3d.Zero; }
+
+        /// <summary>If applicable, the normal to the surface currently being cut.</summary>
+        [NotNull]
+        public Vector3d norm { get; set; } // Surface normal
+
         /// <inheritdoc />
         [NotNull]
         public ToolPoint firstP => this;
@@ -73,7 +80,7 @@
         public string postCode { get; set; }
 
         // Adding anything here needs significant support:
-        //  Add serialization and deserialization
+        //  Add serialization and deserialization (reader and writer below)
         //  Add to the proxy editor
         //  Add to Constructors
 
@@ -83,6 +90,7 @@
         {
             this.tDir = Plane.WorldXY;
             this.mDir = Plane.WorldXY;
+            this.norm = Vector3d.Zero;
             this.speed = -1;
             this.feed = -1;
             this.error = new List<string>();
@@ -100,6 +108,7 @@
             this.tDir = Plane.WorldXY;
             this.pt = pt;
             this.mDir = Plane.WorldXY;
+            this.norm = Vector3d.Zero;
             this.speed = -1;
             this.feed = -1;
             this.error = new List<string>();
@@ -117,6 +126,7 @@
         {
             this.tDir = new Plane(pt, d);
             this.mDir = Plane.WorldXY;
+            this.norm = Vector3d.Zero;
             this.speed = -1;
             this.feed = -1;
             this.error = new List<string>();
@@ -136,6 +146,7 @@
         {
             this.tDir = new Plane(pt, d);
             this.mDir = Plane.WorldXY;
+            this.norm = Vector3d.Zero;
             this.speed = speed;
             this.feed = feed;
             this.error = new List<string>();
@@ -154,6 +165,7 @@
         {
             this.tDir = new Plane(pt, d);
             this.mDir = mDir;
+            this.norm = Vector3d.Zero;
             this.speed = speed;
             this.feed = feed;
             this.error = new List<string>();
@@ -171,6 +183,7 @@
         {
             this.tDir = pt;
             this.mDir = mD;
+            this.norm = Vector3d.Zero;
             this.speed = speed;
             this.feed = feed;
             this.error = new List<string>();
@@ -192,6 +205,7 @@
         {
             this.tDir = pt;
             this.mDir = mD;
+            this.norm = Vector3d.Zero;
             this.preCode = preCode ?? string.Empty;
             this.postCode = postCode ?? string.Empty;
             this.speed = speed;
@@ -207,6 +221,7 @@
         {
             this.tDir = tP.tDir;
             this.mDir = tP.mDir;
+            this.norm = tP.norm;
             this.preCode = string.Copy(tP.preCode);
             this.postCode = string.Copy(tP.postCode);
             this.speed = tP.speed;
@@ -313,6 +328,7 @@
             writer.SetString("name", this.Value.name);
             writer.SetPlane("tDir", CAMel_Goo.toIO(this.Value.tDir));
             writer.SetPlane("mDir", CAMel_Goo.toIO(this.Value.mDir));
+            writer.SetPoint3D("norm", CAMel_Goo.toIO(this.Value.norm));
             writer.SetDouble("speed", this.Value.speed);
             writer.SetDouble("feed", this.Value.feed);
             writer.SetString("preCode", this.Value.preCode);
@@ -351,6 +367,12 @@
                 {
                     GH_Plane pl = reader.GetPlane("tDir");
                     tPt.tDir = CAMel_Goo.fromIO(pl);
+                }
+
+                if (reader.ItemExists("norm"))
+                {
+                    GH_Point3D v = reader.GetPoint3D("norm");
+                    tPt.norm = (Vector3d)CAMel_Goo.fromIO(v);
                 }
 
                 if (reader.ItemExists("feed")) { tPt.feed = reader.GetDouble("feed"); }
@@ -694,6 +716,8 @@
             if (this.Owner.Value == null) { this.Owner.Value = new ToolPoint(); }
             this.Owner.Value.dir = rDir;
         }
+
+
 
         /// <summary>Gets or sets the speed.</summary>
         /// <exception cref="NullReferenceException"></exception>
