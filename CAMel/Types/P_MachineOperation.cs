@@ -368,6 +368,10 @@
             return oMOs;
         }
 
+        /// <summary>Transform the MachineOperation in place WARNING: for non rigid transforms will lose information beyond tool position and direction.</summary>
+        /// <param name="transform">Transform to apply</param>
+        public void transform(Transform transform) { foreach (ToolPath tP in this) { tP.transform(transform); } }
+
         #region Point extraction and previews
 
         /// <inheritdoc />

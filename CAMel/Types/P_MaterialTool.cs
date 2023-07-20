@@ -1,4 +1,7 @@
-﻿namespace CAMel.Types
+﻿using Emgu.CV.Shape;
+using MathNet.Numerics.LinearAlgebra.Complex;
+
+namespace CAMel.Types
 {
     using System;
 
@@ -10,20 +13,21 @@
     using JetBrains.Annotations;
 
     using Rhino.Geometry;
+    using static Emgu.Util.Platform;
 
     // Different end mill shapes to consider
     /// <summary>TODO The end shape.</summary>
     public enum EndShape
     {
-        /// <summary>TODO The ball.</summary>
+        /// <summary>Ball End Mill</summary>
         Ball,
-        /// <summary>TODO The square.</summary>
+        /// <summary>Square End Mill</summary>
         Square,
-        /// <summary>TODO The v.</summary>
+        /// <summary>V End Mill</summary>
         V,
-        /// <summary>TODO The other.</summary>
+        /// <summary>Unknown shape</summary>
         Other,
-        /// <summary>TODO The error.</summary>
+        /// <summary>Error in shape</summary>
         Error
     }
 
@@ -221,54 +225,52 @@
             if (testD < 0) { norm = -1 * norm; }
 
             ToolPoint osTp = tP.deepClone();
+            osTp.norm = norm;
+            osTp.dir = m.toolDir(tP);
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
-            osTp.pt += this.cutOffset(m.toolDir(tP), norm);
+            osTp.pt += this.cutOffset(osTp);
+            osTp.lifted = true;
 
             return osTp;
         }
-
-        // Find the path offset so the cutting surface of the tool is on the path
-        /// <summary>TODO The cut offset.</summary>
-        /// <param name="dir">TODO The dir.</param>
-        /// <param name="norm">TODO The norm.</param>
+ 
+        /// <summary>Find the path offset so the cutting surface of the tool is on the path</summary>
+        /// <param name="tP">ToolPoint to offset</param>
         /// <returns>The <see cref="Vector3d"/>.</returns>
-        public Vector3d cutOffset(Vector3d dir, Vector3d norm)
+        public Vector3d cutOffset([NotNull] ToolPoint tP)
         {
-            Vector3d uDir = dir;
-            Vector3d uNorm = norm;
-            uDir.Unitize();
-            uNorm.Unitize();
             Vector3d os;
+
             switch (this.shape)
             {
                 case EndShape.Ball: // find correct position of ball centre and then push to tip.
-                    os = this.toolWidth * (uNorm - uDir) / 2;
+                    os = this.toolWidth * (tP.norm - tP.dir) / 2;
                     break;
                 case EndShape.Square: // Cut with corner if the angle is greater than .01 radians
                                       // magic numbers for approx zero and small angles
-                                      // magic number determining small angle
+                                      // magic number determining small angle to avoid jump between centre and edge of tool
                                       // TODO make this more transparent
                     const double sa = 2 * Math.PI / 180.0;
                     const double na = .1 * Math.PI / 180.0;
-                    double a = Vector3d.VectorAngle(uDir, uNorm);
+                    double a = Vector3d.VectorAngle(tP.dir, tP.norm);
                     if (a < na)
                     {
-                        os = new Vector3d(0, 0, 0);
+                        os = new Vector3d();
                     }
                     else
                     {
                         // find the normal to the plane give by the tool direction and the norm
-                        Vector3d plN = Vector3d.CrossProduct(uNorm, uDir);
+                        Vector3d plN = Vector3d.CrossProduct(tP.norm, tP.dir);
                         plN.Unitize();
                         // Now want a vector on that plane orthogonal to tool direction
-                        os = Vector3d.CrossProduct(uDir, plN);
+                        os = Vector3d.CrossProduct(tP.dir, plN);
                         os.Unitize();
-                        // Need the magnitude in that direction. This should be 
-                        // tool radius, but that creates a jump away from the singularity, 
+                        // Need the magnitude in that direction. This should be
+                        // tool radius, but that creates a jump away from the singularity,
                         // so for small angles will scale this down.
                         double ur = this.toolWidth / 2.0;
-                        if(a < sa) { ur = ur * (a-na) / (sa-na); }
+                        if(a < sa) { ur = ur * (a - na) / (sa - na); }
                         os = os * ur;
                     }
 
@@ -276,17 +278,126 @@
                 case EndShape.V:
                     // Just use the tip. Beyond a certain angle this will not work
                     // TODO store angle of V end mill and use that and width
-                    os = new Vector3d(0, 0, 0);
+                    os = new Vector3d();
                     break;
                 case EndShape.Other:
-                    os = new Vector3d(0, 0, 0);
+                    os = new Vector3d();
                     break;
                 default:
-                    os = new Vector3d(0, 0, 0);
+                    os = new Vector3d();
                     break;
             }
 
             return os;
+        }
+        internal double liftOffset(ToolPoint tP, ToolPoint plane)
+        {
+            switch (this.shape)
+            {
+                case EndShape.Ball: // find correct position of ball centre and then push to tip.
+                    double tn = (plane.pt - tP.pt - tP.dir * this.toolWidth / 2.0) * plane.norm;
+                    double dn = tP.dir * plane.norm;
+                    return (tn + this.toolWidth / 2.0) / dn;
+                case EndShape.Square:
+                    double adj = this.toolWidth / 2.0 - (plane.pt - tP.pt).Length;
+                    return adj * Math.Tan(Vector3d.VectorAngle(tP.dir,tP.norm));
+                case EndShape.V:
+                    // Just use the tip. Beyond a certain angle this will not work
+                    // TODO store angle of V end mill and use that and width
+                    return 0;
+                case EndShape.Other:
+                    return 0;
+                default:
+                    return 0;
+            }
+        }
+
+        internal double liftOffset([NotNull] ToolPoint tPt, Point3d touch)
+        {
+            Vector3d p;
+
+            switch (this.shape)
+            {
+                case EndShape.Ball: // Lift until the tool center is tool radius away from the point
+                    p = (Vector3d)tPt.pt + tPt.dir * this.toolWidth / 2.0 - (Vector3d)touch; // vector from touch to centre of ball
+                    double pd = p * tPt.dir;
+                    if (p.SquareLength > this.toolWidth * this.toolWidth / 4.0) { return 0; } // Check for width
+                    // Equation for triangle as edge is lifted along tPt.dir until length is toolWidth/2
+                    return Math.Sqrt(pd * pd - p.SquareLength + this.toolWidth * this.toolWidth / 4.0) - pd;
+
+                case EndShape.Square: // Lift so tooltip plane touches the point
+                    p = (Vector3d)tPt.pt + tPt.dir * this.toolWidth / 2.0 - (Vector3d)touch; // vector from touch tool tip centre
+                    if (p.SquareLength > this.toolWidth * this.toolWidth / 4.0) { return 0; } // Check for width
+                    return p * tPt.dir;
+
+                case EndShape.V:
+                    // Just use the tip. Beyond a certain angle this will not work
+                    // TODO store angle of V end mill and use that and width
+                    return 0;
+
+                case EndShape.Other:
+                    return 0;
+
+                default:
+                    return 0;
+            }
+        }
+
+        internal bool liftOnEdge([NotNull] ToolPoint startTp, [NotNull] ToolPoint endTp, [NotNull] ToolPoint lifted, double faceLift)
+        {
+            switch (this.shape)
+            {
+                case EndShape.Ball: // Lift until the tool center is tool radius away from the point
+                    Vector3d tan = endTp.pt - startTp.pt;
+                    tan.Unitize();
+                    Vector3d tCen = (Vector3d)(lifted.pt + (faceLift + this.toolWidth / 2.0) * lifted.dir); // center of ball
+                    return tCen * tan < (Vector3d)endTp.pt * tan; // if the face touch point comes before the edge
+
+                case EndShape.Square: // Lift so tooltip plane touches the point
+                    Vector3d tBase = (Vector3d)(lifted.pt + faceLift * lifted.dir); // centre of base of tool
+                    return tBase * lifted.dir < (Vector3d)endTp.pt * lifted.dir; // if the face touch point comes before the edge
+
+                case EndShape.V:
+                    // Just use the tip. Beyond a certain angle this will not work
+                    // TODO store angle of V end mill and use that and width
+                    return true;
+
+                case EndShape.Other:
+                    return true;
+
+                default:
+                    return true;
+            }
+        }
+        public bool clearNextFace([NotNull] ToolPoint startTp, [NotNull] ToolPoint endTp, [NotNull] ToolPoint lifted)
+        {
+            Vector3d tan;
+            switch (this.shape)
+            {
+                case EndShape.Ball: // Lift until the tool center is tool radius away from the point
+                    tan = endTp.pt - startTp.pt;
+                    tan.Unitize();
+                    Vector3d tCen = (Vector3d)(lifted.pt + (this.toolWidth / 2.0) * lifted.dir); // center of ball
+                    return (tCen - (Vector3d)startTp.pt) * tan < 0; // if the face touch point comes before the edge
+
+                case EndShape.Square: // Lift so tooltip plane touches the point
+                    tan = endTp.pt - startTp.pt;
+                    tan.Unitize();
+                    return lifted.dir * tan < 0; // if the face touch point comes before the edge
+
+                case EndShape.V:
+                    // Just use the tip. Beyond a certain angle this will not work
+                    // TODO store angle of V end mill and use that and width
+                    return true;
+
+                case EndShape.Other:
+                    return true;
+
+                default:
+                    return true;
+            }
+
+
         }
 
         /// <summary>TODO The get tool shape.</summary>
@@ -308,6 +419,7 @@
                     return EndShape.Error;
             }
         }
+
     }
 
     // Grasshopper Type Wrapper

@@ -14,6 +14,7 @@
     using JetBrains.Annotations;
 
     using Rhino.Geometry;
+    using static Emgu.Util.Platform;
 
     /// <summary>TODO The path label.</summary>
     public enum PathLabel
@@ -171,6 +172,9 @@
             this.postCode = string.Copy(tP.postCode);
             this.additions = tP.additions.deepClone();
         }
+        /// <summary>Transform the toolpath in place, WARNING: for non rigid transforms will lose information beyond tool position and direction.</summary>
+        /// <param name="transform">Transform to apply</param>
+        public void transform(Transform transform) { foreach (ToolPoint tPt in this) { tPt.transform(transform); } }
 
         /// <summary>TODO The deep clone.</summary>
         /// <returns>The <see cref="ToolPath"/>.</returns>
@@ -204,17 +208,17 @@
         public ToolPath deepCloneWithNewPoints([CanBeNull] List<ToolPoint> newPts)
         {
             ToolPath newTP = new ToolPath
-                {
-                    name = string.Copy(this.name),
-                    label = this.label,
-                    side = this.side,
-                    matTool = this.matTool,
-                    matForm = this.matForm,
-                    preCode = string.Copy(this.preCode),
-                    postCode = string.Copy(this.postCode),
-                    additions = this.additions.deepClone(),
-                    pts = newPts ?? new List<ToolPoint>()
-                };
+            {
+                name = string.Copy(this.name),
+                label = this.label,
+                side = this.side,
+                matTool = this.matTool,
+                matForm = this.matForm,
+                preCode = string.Copy(this.preCode),
+                postCode = string.Copy(this.postCode),
+                additions = this.additions.deepClone(),
+                pts = newPts ?? new List<ToolPoint>()
+            };
             return newTP;
         }
 
@@ -295,7 +299,7 @@
             foreach (ToolPath tP in useTP) { tempFp.AddRange(m.finishPaths(tP)); }
 
             // add insert and retract moves
-            
+
             /*List<List<ToolPath>> newRp = new List<List<ToolPath>>();
 
             foreach (List<ToolPath> tPs in roughPaths)
@@ -314,22 +318,25 @@
             return roughPaths;
         }
 
-        // Use a curve and direction vector to create a path of toolpoints
-        /// <summary>TODO The convert curve.</summary>
-        /// <param name="c">TODO The c.</param>
-        /// <param name="d">TODO The d.</param>
-        /// <param name="maxStep">TODO The max step.</param>
-        /// <returns>The <see cref="bool"/>.</returns>
+        /// <summary>Create Toolpath from a curve</summary>
+        /// <param name="c">Curve for toolpath</param>
+        /// <param name="d">Tool direction for toolpath</param>
+        /// <param name="maxStep">Max step between toolpoints as multiple of toolwidth.</param>
+        /// <returns>True on success, False on failure.<see cref="bool"/>.</returns>
         public bool convertCurve([CanBeNull] Curve c, Vector3d d, double maxStep = 20)
         {
             if (c?.IsValid != true) { return false; }
             if (this.matTool == null) { Exceptions.matToolException(); }
 
-            Curve c2 = c.ToPolyline(
-                0, 0, Math.PI, 0, 0, this.matTool.tolerance, this.matTool.minStep,
-                maxStep * this.matTool.toolWidth, true);
-            if (c2 == null) { return false; }
-            c2.TryGetPolyline(out Polyline pL);
+            Polyline pL;
+            if (!c.TryGetPolyline(out pL))
+            {
+                Curve c2 = c.ToPolyline(
+                    0, 0, Math.PI, 0, 0, this.matTool.tolerance, this.matTool.minStep,
+                    maxStep * this.matTool.toolWidth, true);
+                if (c2 == null) { return false; }
+                c2.TryGetPolyline(out pL);
+            }
 
             this.pts = new List<ToolPoint>();
 
@@ -344,6 +351,31 @@
             //}
 
             return true;
+        }
+
+        public double simplify(double tolerance = 1)
+        {
+            if (this.matTool == null) { Exceptions.matToolException(); }
+
+            int ptCount = this.Count;
+            double uTolerance = this.matTool.tolerance * tolerance;
+
+            IList<ToolPoint> pts = this.pts;
+
+            pts = SimplifyCSharp.SimplificationHelpers.Simplify<ToolPoint>(
+                pts,
+                (p1, p2) => p1 == p2,
+                (p) => p.pt.X,
+                (p) => p.pt.Y,
+                (p) => p.pt.Z,
+                (p) => p.dir.X,
+                (p) => p.dir.Y,
+                (p) => p.dir.Z,
+                uTolerance,
+                true
+                );
+            this.pts = new List<ToolPoint>(pts);
+            return (double)this.Count / (double)ptCount;
         }
 
         /// <summary>TODO The acc tol.</summary>
@@ -396,6 +428,149 @@
             }
 
             return oP;
+        }
+
+        /// <summary>Creates new toolpath from longest component without self intersection</summary>
+        /// <param name="tP">ToolPath to clean</param>
+        /// <param name="dir">Plane to project to and clean on</param>
+        /// <param name="toolDir">Tool direction to use in finished closed path (note tooldirection in original path will be lost for closed paths)</param>
+        /// <returns>Offset path</returns>
+        public static ToolPath Clean(ToolPath tP, Vector3d dir, Vector3d toolDir)
+        {
+            // if the path is open just leave it
+            // What to do with self-intersecting cloased paths? 
+            if (!tP.isClosed()) { return tP; }
+
+            PolylineCurve uC = tP.getLine();
+
+            // Shift curve to XY plane
+            Plane p = new Plane(Point3d.Origin, dir);
+            uC.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
+
+            // record the average Z location of the curve
+            BoundingBox bb = uC.GetBoundingBox(true);
+            double useZ = (bb.Max.Z + bb.Min.Z) / 2.0;
+
+            // clean the curve
+            uC = Offsetting.CleanToLongest(uC);
+            // return to original orientation
+            uC.Translate(new Vector3d(0, 0, useZ));
+            uC.Transform(Transform.PlaneToPlane(Plane.WorldXY, p));
+
+            ToolPath clTp = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+            clTp.convertCurve(uC, toolDir);
+
+
+            return clTp;
+
+        }
+
+        /// <summary>Projects a ToolPath to a plane and offsets on the plane</summary>
+        /// <param name="tP">ToolPath (might have unexpected results with self-intersecting path)</param>
+        /// <param name="dir">Plane to offset on</param>
+        /// <param name="toolDir">Tool direction to use in finished closed path (note tooldirection in original path will be lost for closed paths)</param>
+        /// <returns>Offset path</returns>
+        public static List<ToolPath> planeOffset(ToolPath tP, Vector3d dir, Vector3d toolDir, bool offsetOut = false)
+        {
+            // if offset is zero length no work to do (longest is ignored as do not have a plane to offset on)
+            if (dir.Length < CAMel_Goo.Tolerance) { return new List<ToolPath> { tP }; }
+
+            // if the path is open localOffset will do well enough
+            if (!tP.isClosed()) { return localOffset(tP, dir); }
+
+            // Shift curve to XY plane
+            double uOS = dir.Length;
+            Plane p = new Plane(Point3d.Origin, dir);
+
+            PolylineCurve uC = tP.getLine();
+
+            uC.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
+            bool reversed = false;
+
+            // ensure the curve is anticlockwise for inward offsetting or clocwise for outward
+            // note this will just ignore selfintersecting curves
+            CurveOrientation cO = uC.ClosedCurveOrientation(Transform.Identity);
+            if (cO == CurveOrientation.Clockwise && !offsetOut || cO == CurveOrientation.CounterClockwise && offsetOut)
+            {
+                uC.Reverse();
+                reversed = true;
+                uOS = -uOS;
+            }
+
+            // record the average Z location of the curve
+            BoundingBox bb = uC.GetBoundingBox(true);
+            double useZ = (bb.Max.Z + bb.Min.Z) / 2.0;
+
+            // offSet
+            List<PolylineCurve> osC = Offsetting.Offset(uC, uOS);
+
+            if (reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
+
+            // create Operation
+            List<ToolPath> tPs = new List<ToolPath>();
+
+            int i = 1;
+            foreach (PolylineCurve osPl in osC)
+            {
+                // Create and add name, material/tool and material form
+                ToolPath osTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
+
+                // return to original orientation
+                osPl.Translate(new Vector3d(0, 0, useZ));
+                osPl.Transform(Transform.PlaneToPlane(Plane.WorldXY, p));
+
+                // Add to Operation
+                osTP.convertCurve(osPl, toolDir);
+                tPs.Add(osTP);
+            }
+
+            return tPs;
+        }
+
+        /// <summary>Offset a path locally</summary>
+        /// <param name="tP">ToolPath to offset</param>
+        /// <returns>Offset paths.</returns>
+        [NotNull]
+        public static List<ToolPath> localOffset([NotNull] ToolPath tP, Vector3d dir)
+        {
+            List<ToolPoint> oTPts = new List<ToolPoint>();
+            double dirL = dir.Length;
+            Vector3d uDir = dir;
+            uDir.Unitize();
+
+            // Check if there is enough to offset
+            if (dirL < CAMel_Goo.Tolerance || tP.Count < 2 || tP.firstP == null || tP.lastP == null) { return new List<ToolPath> { tP }; }
+
+            // Start with first point unless the ToolPath is closed.
+            ToolPoint lPt = tP.firstP, uTPt;
+            if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { lPt = tP[tP.Count - 2]; }
+            Vector3d osD;
+
+            for (int i = 0; i < tP.Count - 1; i++)
+            {
+                uTPt = tP[i].deepClone();
+
+                // offset direction given by tangent and offset Plane
+                osD = Vector3d.CrossProduct(uDir, tP[i + 1].pt - lPt.pt);
+                osD.Unitize();
+                uTPt.pt += dirL * osD;
+                oTPts.Add(uTPt);
+                lPt = tP[i];
+            }
+
+            // Loop back to start if closed.
+            ToolPoint nP = tP.lastP;
+            if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { nP = tP[2]; }
+
+            uTPt = tP[tP.Count - 1].deepClone();
+            osD = Vector3d.CrossProduct(uDir, nP.pt - lPt.pt);
+            osD.Unitize();
+            uTPt.pt += dirL * osD;
+            oTPts.Add(uTPt);
+
+            ToolPath oTp = tP.deepCloneWithNewPoints(oTPts);
+
+            return new List<ToolPath> { oTp };
         }
 
         #region Point extraction and previews
@@ -483,9 +658,9 @@
             return this.Select(tP => tP.toolLine()).ToList();
         }
 
-        /// <summary>TODO The planar offset.</summary>
-        /// <param name="dir">TODO The dir.</param>
-        /// <returns>The <see cref="bool"/>.</returns>
+        /// <summary>Check if path can be offset on a plane</summary>
+        /// <param name="dir">Tool Direction</param>
+        /// <returns>True if path can be offset.</returns>
         [Pure]
         public bool planarOffset(out Vector3d dir)
         {

@@ -47,47 +47,79 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CsvHelper, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
-      <HintPath>..\packages\CsvHelper.2.16.3.0\lib\net40\CsvHelper.dll</HintPath>
+    <Reference Include="Clipper2Lib, Version=1.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Clipper2.1.2.2\lib\netstandard2.0\Clipper2Lib.dll</HintPath>
     </Reference>
-    <Reference Include="Emgu.CV.UI, Version=3.4.1.2976, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EMGU.CV.3.4.1.2976\lib\net35\Emgu.CV.UI.dll</HintPath>
+    <Reference Include="CsvHelper, Version=30.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
+      <HintPath>..\packages\CsvHelper.30.0.1\lib\net47\CsvHelper.dll</HintPath>
     </Reference>
-    <Reference Include="Emgu.CV.World, Version=3.4.1.2976, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EMGU.CV.3.4.1.2976\lib\net35\Emgu.CV.World.dll</HintPath>
+    <Reference Include="Emgu.CV, Version=4.7.0.5276, Culture=neutral, PublicKeyToken=7281126722ab4438, processorArchitecture=MSIL">
+      <HintPath>..\packages\Emgu.CV.4.7.0.5276\lib\netstandard2.0\Emgu.CV.dll</HintPath>
     </Reference>
-    <Reference Include="Eto, Version=2.6.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
-      <HintPath>..\packages\RhinoCommon.7.16.22067.13001\lib\net48\Eto.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Eto, Version=2.7.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
+      <HintPath>..\packages\RhinoCommon.7.29.23107.3001\lib\net48\Eto.dll</HintPath>
     </Reference>
-    <Reference Include="GH_IO, Version=7.16.22067.13001, Culture=neutral, PublicKeyToken=6a29997d2e6b4f97, processorArchitecture=MSIL">
-      <HintPath>..\packages\Grasshopper.7.16.22067.13001\lib\net48\GH_IO.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="GH_IO, Version=7.29.23107.3001, Culture=neutral, PublicKeyToken=6a29997d2e6b4f97, processorArchitecture=MSIL">
+      <HintPath>..\packages\Grasshopper.7.29.23107.3001\lib\net48\GH_IO.dll</HintPath>
     </Reference>
-    <Reference Include="Grasshopper, Version=7.16.22067.13001, Culture=neutral, PublicKeyToken=dda4f5ec2cd80803, processorArchitecture=MSIL">
-      <HintPath>..\packages\Grasshopper.7.16.22067.13001\lib\net48\Grasshopper.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Grasshopper, Version=7.29.23107.3001, Culture=neutral, PublicKeyToken=dda4f5ec2cd80803, processorArchitecture=MSIL">
+      <HintPath>..\packages\Grasshopper.7.29.23107.3001\lib\net48\Grasshopper.dll</HintPath>
     </Reference>
-    <Reference Include="JetBrains.Annotations, Version=10.2.1.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
-      <HintPath>..\packages\JetBrains.Annotations.10.2.1\lib\net\JetBrains.Annotations.dll</HintPath>
+    <Reference Include="JetBrains.Annotations, Version=4242.42.42.42, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
+      <HintPath>..\packages\JetBrains.Annotations.2022.3.1\lib\net20\JetBrains.Annotations.dll</HintPath>
     </Reference>
-    <Reference Include="MathNet.Numerics, Version=4.7.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MathNet.Numerics.4.7.0\lib\net40\MathNet.Numerics.dll</HintPath>
+    <Reference Include="MathNet.Numerics, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MathNet.Numerics.5.0.0\lib\net48\MathNet.Numerics.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.7.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.HashCode, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.HashCode.1.1.1\lib\net461\Microsoft.Bcl.HashCode.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Rhino.UI, Version=7.16.22067.13001, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
-      <HintPath>..\packages\RhinoCommon.7.16.22067.13001\lib\net48\Rhino.UI.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Rhino.UI, Version=7.29.23107.3001, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
+      <HintPath>..\packages\RhinoCommon.7.29.23107.3001\lib\net48\Rhino.UI.dll</HintPath>
     </Reference>
-    <Reference Include="RhinoCommon, Version=7.16.22067.13001, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
-      <HintPath>..\packages\RhinoCommon.7.16.22067.13001\lib\net48\RhinoCommon.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="RhinoCommon, Version=7.29.23107.3001, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
+      <HintPath>..\packages\RhinoCommon.7.29.23107.3001\lib\net48\RhinoCommon.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Drawing.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Drawing.Primitives.4.3.0\lib\net45\System.Drawing.Primitives.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime, Version=4.1.1.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.4.3.1\lib\net462\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="ZedGraph, Version=5.1.7.430, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL">
@@ -101,6 +133,11 @@
     <None Include="GH\C_ParallelCylinderSurface.cs" />
     <Compile Include="GH\C_SpiralSurface.cs" />
     <Compile Include="GH\C_OMAX.cs" />
+    <Compile Include="Simplify\BaseSimplifier.cs" />
+    <Compile Include="Simplify\SimplificationHelpers.cs" />
+    <Compile Include="Simplify\Simplifier2D.cs" />
+    <Compile Include="Simplify\Simplifier6D.cs" />
+    <Compile Include="Simplify\Simplifier3D.cs" />
     <Compile Include="Types\L_Shadows.cs" />
     <Compile Include="Types\L_BasicParser.cs" />
     <Compile Include="Types\L_CAMelData.cs" />
@@ -130,6 +167,8 @@
     <Compile Include="GH\C_ReadCode.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Types\L_Exceptions.cs" />
+    <None Include="Simplify\LICENSE" />
+    <None Include="Simplify\README.md" />
     <None Include="Types\Machine\L_MachineState.cs" />
     <Compile Include="Types\Machine\L_MachPocketNC.cs" />
     <Compile Include="Types\Machine\L_MachTwoAxis.cs" />
@@ -148,7 +187,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="clipper.cs" />
     <Compile Include="Types\Machine\L_Machine.cs" />
     <Compile Include="Types\P_MachineInstructions.cs" />
     <Compile Include="Types\P_SurfacePath.cs" />
@@ -246,6 +284,7 @@
     <None Include="Resources\surfacingcontour.png" />
     <None Include="Resources\CAMel.png" />
     <None Include="Resources\BW_CAMel.png" />
+    <Content Include="Clipper2.ico" />
     <Content Include="License-LGPL.txt" />
     <None Include="Resources\create2axis.png" />
     <Content Include="Resources\Image1.png" />
@@ -280,7 +319,13 @@ Copy "$(TargetPath)" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\$(ProjectN
 Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eohar\AppData\Roaming\Grasshopper\Libraries\Emgu.CV.World.dll"
 Copy "$(TargetDir)Emgu.CV.World.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\Emgu.CV.World.dll"
 Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eohar\AppData\Roaming\Grasshopper\Libraries\CsvHelper.dll"
-Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\CsvHelper.dll"</PostBuildEvent>
+Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\CsvHelper.dll"
+Copy "$(TargetDir)Clipper2Lib.dll" "C:\Users\eohar\AppData\Roaming\Grasshopper\Libraries\Clipper2Lib.dll"
+Copy "$(TargetDir)Clipper2Lib.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\Clipper2Lib.dll"
+Copy "$(TargetDir)Microsoft.Bcl.AsyncInterfaces.dll" "C:\Users\eohar\AppData\Roaming\Grasshopper\Libraries\Microsoft.Bcl.AsyncInterfaces.dll"
+Copy "$(TargetDir)Microsoft.Bcl.AsyncInterfaces.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\Microsoft.Bcl.AsyncInterfaces.dll"
+Copy "$(TargetDir)Microsoft.Bcl.HashCode.dll" "C:\Users\eohar\AppData\Roaming\Grasshopper\Libraries\Microsoft.Bcl.HashCode.dll"
+Copy "$(TargetDir)Microsoft.Bcl.HashCode.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Install\Microsoft.Bcl.HashCode.dll"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <StartArguments>
@@ -304,15 +349,13 @@ Copy "$(TargetDir)CsvHelper.dll" "C:\Users\eohar\Google Drive\CAMel\CAMel Instal
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Import Project="..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets" Condition="Exists('..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets')" />
+  <Import Project="..\packages\RhinoCommon.7.29.23107.3001\build\net48\RhinoCommon.targets" Condition="Exists('..\packages\RhinoCommon.7.29.23107.3001\build\net48\RhinoCommon.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets'))" />
-    <Error Condition="!Exists('..\packages\RhinoCommon.7.16.22067.13001\build\RhinoCommon.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\RhinoCommon.7.16.22067.13001\build\RhinoCommon.targets'))" />
-    <Error Condition="!Exists('..\packages\Grasshopper.7.16.22067.13001\build\Grasshopper.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Grasshopper.7.16.22067.13001\build\Grasshopper.targets'))" />
+    <Error Condition="!Exists('..\packages\RhinoCommon.7.29.23107.3001\build\net48\RhinoCommon.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\RhinoCommon.7.29.23107.3001\build\net48\RhinoCommon.targets'))" />
+    <Error Condition="!Exists('..\packages\Grasshopper.7.29.23107.3001\build\net48\Grasshopper.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Grasshopper.7.29.23107.3001\build\net48\Grasshopper.targets'))" />
   </Target>
-  <Import Project="..\packages\RhinoCommon.7.16.22067.13001\build\RhinoCommon.targets" Condition="Exists('..\packages\RhinoCommon.7.16.22067.13001\build\RhinoCommon.targets')" />
-  <Import Project="..\packages\Grasshopper.7.16.22067.13001\build\Grasshopper.targets" Condition="Exists('..\packages\Grasshopper.7.16.22067.13001\build\Grasshopper.targets')" />
+  <Import Project="..\packages\Grasshopper.7.29.23107.3001\build\net48\Grasshopper.targets" Condition="Exists('..\packages\Grasshopper.7.29.23107.3001\build\net48\Grasshopper.targets')" />
 </Project>

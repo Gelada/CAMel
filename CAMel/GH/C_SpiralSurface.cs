@@ -47,6 +47,7 @@
             pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal \n 4: Material Normal", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Step over", "SO", "Stepover as a multiple of tool width. Default to Tools side load (for negative values).", GH_ParamAccess.item, -1);
+            pManager.AddIntegerParameter("Style", "St", "Choose features by adding, +1 lift tool to stop gouging rather than offsetting", GH_ParamAccess.item, 0);
         }
 
         /// <inheritdoc />
@@ -75,6 +76,7 @@
             int tD = 0;
             double stepOver = 0;
             double r = 0;
+            int style = 0;
 
             if (!da.GetData(0, ref geom)) { return; }
             da.GetData(1, ref c);
@@ -83,6 +85,10 @@
             if (!da.GetData(4, ref mT)) { return; }
             if (!da.GetData(5, ref tD)) { return; }
             if (!da.GetData(6, ref stepOver)) { return; }
+            if (!da.GetData("Style", ref style)) { return; }
+
+            // extract bits from style
+            bool lift = (style & 1) == 1;
 
             if (stepOver < 0) { stepOver = mT.sideLoad; }
             if (stepOver > mT.sideLoad) { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
@@ -122,7 +128,7 @@
                 return;
             }
 
-            SurfacePath sP = Surfacing.spiral(c, dir, r, stepOver, sTD, bb, mT);
+            SurfacePath sP = Surfacing.spiral(c, dir, r, stepOver, sTD, bb, mT, lift);
             da.SetData(0, new GH_SurfacePath(sP));
         }
 

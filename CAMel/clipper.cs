@@ -1541,6 +1541,7 @@ namespace ClipperLib
                 long botY, topY;
                 if (!PopScanbeam(out botY)) return false;
                 InsertLocalMinimaIntoAEL(botY);
+                int j = 0;
                 while (PopScanbeam(out topY) || LocalMinimaPending())
                 {
                     ProcessHorizontals();
@@ -1549,6 +1550,8 @@ namespace ClipperLib
                     ProcessEdgesAtTopOfScanbeam(topY);
                     botY = topY;
                     InsertLocalMinimaIntoAEL(botY);
+                    if (j > 500) { break; } // TODO remove this
+                    j++;
                 }
 
                 //fix orientations ...

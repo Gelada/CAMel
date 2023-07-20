@@ -39,7 +39,9 @@
             pManager.AddVectorParameter("Direction", "Dir", "Direction for parallel projection or orthogonal direction for cylindrical", GH_ParamAccess.item, new Vector3d(0, 0, -1));
             pManager.AddPointParameter("Centre", "C", "Centre for spherical projection", GH_ParamAccess.item, new Point3d(0, 0, 0));
             pManager.AddNumberParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal, \n 4: Material Normal", GH_ParamAccess.item, 0);
-            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item);
+            pManager.AddParameter(new GH_MaterialToolPar(), "Material/Tool", "MT", "The MaterialTool detailing how the tool should move through the material", GH_ParamAccess.item); 
+            pManager.AddIntegerParameter("Style", "St", "Choose features by adding, +1 lift tool to stop gouging rather than offsetting.", GH_ParamAccess.item, 5);
+
             // ReSharper disable once PossibleNullReferenceException
             pManager[6].WireDisplay = GH_ParamWireDisplay.faint;
         }
@@ -69,6 +71,7 @@
             Vector3d dir = new Vector3d(0, 0, -1);
             Point3d cen = new Point3d(0, 0, 0);
             double tDd = 0;
+            int style = 0;
 
             SurfacePath sP;
 
@@ -84,26 +87,36 @@
                 return;
             }
 
+            if (!da.GetData("Style", ref style)) { return; }
+
+            // extract bits from style
+            bool lift = (style & 1) == 1;
+
             MaterialTool mT = null;
             if (!da.GetData("Material/Tool", ref mT)) { return; }
 
             // find the projection type (will effect the information we wish to use)
             if (!da.GetData("Projection", ref prD)) { return; }
             int prT = (int)prD;
+
+            List<SurfaceCurve> sCs = new List<SurfaceCurve>();
             switch (prT)
             {
                 case 0: // Parallel
                     if (!da.GetData("Direction", ref dir)) { return; }
-                    sP = new SurfacePath(paths, mT, dir, sTD);
+                    foreach (var C in paths) { sCs.Add(new SurfaceCurve(C, lift)); }
+                    sP = new SurfacePath(sCs, mT, dir, sTD);
                     break;
                 case 1: // Cylindrical
                     if (!da.GetData("Centre Curve", ref cc)) { return; }
                     if (!da.GetData("Direction", ref dir)) { return; }
-                    sP = new SurfacePath(paths, mT, dir, cc, sTD);
+                    foreach (var C in paths) { sCs.Add(new SurfaceCurve(C, lift)); }
+                    sP = new SurfacePath(sCs, mT, dir, cc, sTD);
                     break;
                 case 2: // Spherical
                     if (!da.GetData("Centre", ref cen)) { return; }
-                    sP = new SurfacePath(paths, mT, cen, sTD);
+                    foreach (var C in paths) { sCs.Add(new SurfaceCurve(C, lift)); }
+                    sP = new SurfacePath(sCs, mT, cen, sTD);
                     break;
                 default:
                     this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter Pr can only have values 0,1 or 2");

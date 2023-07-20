@@ -34,5 +34,15 @@
         /// <summary>TODO The bad surface path.</summary>
         [ContractAnnotation("=> halt")]
         public static void badSurfacePath() => throw new ArgumentException("Bad SurfacePath.");
+        /// <summary>TODO The bad surface path.</summary>
+        [ContractAnnotation("=> halt")]
+        public static void badSurfacePathMesh() => throw new InvalidOperationException("Errors encountered in the surfacePath mesh");
+        /// <summary>TODO The bad surface path.</summary>
+        [ContractAnnotation("=> halt")]
+        public static void materialDirectionPreciseException() => throw new NotSupportedException("Precise edging cannot be used with materialForm direction methods.");
+        [ContractAnnotation("=> halt")]
+        internal static void noBoundaryPreciseException() => throw new NotSupportedException("Surface or mesh must have boundary.");
+        [ContractAnnotation("=> halt")]
+        internal static void multipleBoundaryPreciseException() => throw new NotImplementedException("Cannot currently process surfaces with holes.");
     }
 }

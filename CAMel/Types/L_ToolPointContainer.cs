@@ -21,17 +21,22 @@
         /// <summary>TODO The get single path.</summary>
         /// <returns>The <see cref="ToolPath"/>.</returns>
         [NotNull]
+        void transform(Transform transform);
+
+        /// <summary>TODO The get single path.</summary>
+        /// <returns>The <see cref="ToolPath"/>.</returns>
+        [NotNull]
         ToolPath getSinglePath();
 
-        /// <summary>TODO The get bounding box.</summary>
+        /// <summary>Gets the bounding box.</summary>
         /// <returns>The <see cref="BoundingBox"/>.</returns>
         [UsedImplicitly]
         BoundingBox getBoundingBox();
 
-        /// <summary>Gets the first p.</summary>
+        /// <summary>Gets the first toolpoint.</summary>
         [CanBeNull, UsedImplicitly]
         ToolPoint firstP { get; }
-        /// <summary>Gets the last p.</summary>
+        /// <summary>Gets the last toolpoint.</summary>
         [CanBeNull, UsedImplicitly]
         ToolPoint lastP { get; }
     }

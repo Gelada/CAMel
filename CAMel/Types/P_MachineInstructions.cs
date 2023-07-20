@@ -276,6 +276,15 @@
             return valid; // if we go through the whole thing without finding all the valid pieces
         }
 
+        /// <summary>Transform the MachineInstruction in place, WARNING: for non rigid transforms will lose information beyond tool position and direction.</summary>
+        /// <param name="transform">Transform to apply</param>
+        public void transform(Transform transform) 
+        { 
+            foreach (MachineOperation mO in this) { mO.transform(transform); }
+            this.startPath.transform(transform);
+            this.endPath.transform(transform);
+        }
+
         #region Point extraction and previews
 
         /// <inheritdoc />

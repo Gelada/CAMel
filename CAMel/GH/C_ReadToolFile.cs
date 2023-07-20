@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Globalization;
 
     using CAMel.Types;
 
@@ -19,27 +20,27 @@
     /// <inheritdoc />
     /// <summary>TODO The material tool map.</summary>
     [UsedImplicitly]
-    public sealed class MaterialToolMap : CsvClassMap<MaterialToolBuilder>
+    public sealed class MaterialToolMap : ClassMap<MaterialToolBuilder>
     {
         /// <summary>Initializes a new instance of the <see cref="MaterialToolMap"/> class.</summary>
         public MaterialToolMap()
         {
             this.Map(m => m.matName)?.Name("Material");
             this.Map(m => m.toolName)?.Name("Tool");
-            this.Map(m => m.toolNumber)?.Name("Tool Number");
-            this.Map(m => m.toolWidth)?.Name("Tool Width");
-            this.Map(m => m.insertWidth)?.Name("Insert Width");
-            this.Map(m => m.toolLength)?.Name("Length");
-            this.Map(m => m.speed)?.Name("Speed");
-            this.Map(m => m.feedCut)?.Name("Feed Rate");
-            this.Map(m => m.feedPlunge)?.Name("Plunge Rate");
-            this.Map(m => m.cutDepth)?.Name("Cut Depth");
-            this.Map(m => m.finishDepth)?.Name("Finish Depth");
-            this.Map(m => m.tolerance)?.Name("Tolerance");
-            this.Map(m => m.minStep)?.Name("Min Step");
-            this.Map(m => m.shape)?.Name("Shape");
-            this.Map(m => m.sideLoad)?.Name("Side Load");
-            this.Map(m => m.pathJump)?.Name("PathJump");
+            this.Map(m => m.toolNumber)?.Name("Tool Number").Optional();
+            this.Map(m => m.toolWidth)?.Name("Tool Width").Optional();
+            this.Map(m => m.insertWidth)?.Name("Insert Width").Optional();
+            this.Map(m => m.toolLength)?.Name("Length").Optional();
+            this.Map(m => m.speed)?.Name("Speed").Optional();
+            this.Map(m => m.feedCut)?.Name("Feed Rate").Optional();
+            this.Map(m => m.feedPlunge)?.Name("Plunge Rate").Optional();
+            this.Map(m => m.cutDepth)?.Name("Cut Depth").Optional();
+            this.Map(m => m.finishDepth)?.Name("Finish Depth").Optional();
+            this.Map(m => m.tolerance)?.Name("Tolerance").Optional();
+            this.Map(m => m.minStep)?.Name("Min Step").Optional();
+            this.Map(m => m.shape)?.Name("Shape").Optional();
+            this.Map(m => m.sideLoad)?.Name("Side Load").Optional();
+            this.Map(m => m.pathJump)?.Name("PathJump").Optional();
         }
     }
 
@@ -97,12 +98,10 @@
 
             using (StreamReader fileReader = new StreamReader(file))
             {
-                CsvReader csv = new CsvReader(fileReader);
+                CsvReader csv = new CsvReader(fileReader, CultureInfo.InvariantCulture);
                 if (csv.Configuration != null)
                 {
-                    csv.Configuration.WillThrowOnMissingField = false;
-                    csv.Configuration.IgnoreReadingExceptions = true;
-                    csv.Configuration.RegisterClassMap<MaterialToolMap>();
+                    csv.Context.RegisterClassMap<MaterialToolMap>();
                     mTbs.UnionWith(csv.GetRecords<MaterialToolBuilder>() ?? new List<MaterialToolBuilder>());
                 }
             }

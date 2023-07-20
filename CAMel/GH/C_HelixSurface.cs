@@ -49,6 +49,8 @@
             pManager.AddNumberParameter("Step over", "SO", "Stepover as a multiple of tool width. Default to Tools side load (for negative values).", GH_ParamAccess.item, -1);
             pManager.AddBooleanParameter("Clockwise", "CW", "Run clockwise as you rise around the piece. For a clockwise bit this gives conventional cutting. ", GH_ParamAccess.item, true);
             pManager.AddIntegerParameter("Split", "Spl", "Split bounding box into pieces to reduce file sizes.", GH_ParamAccess.item, 1);
+            pManager.AddIntegerParameter("Style", "St", "Choose features by adding, +1 lift tool to stop gouging rather than offsetting", GH_ParamAccess.item, 0);
+
         }
 
         /// <inheritdoc />
@@ -78,6 +80,7 @@
             double stepOver = 0;
             bool clockWise = true; // Go up clockwise if true.
             int split = 1; // Number of pieces to split cutting into
+            int style = 0;
 
             if (!da.GetData("Bounding Box", ref geom)) { return; }
             da.GetData("Curve", ref c);
@@ -87,6 +90,10 @@
             if (!da.GetData("Step over", ref stepOver)) { return; }
             if (!da.GetData("Clockwise", ref clockWise)) { return; }
             if (!da.GetData("Split", ref split)) { return; }
+            if (!da.GetData("Style", ref style)) { return; }
+
+            // extract bits from style
+            bool lift = (style & 1) == 1;
 
             if (stepOver < 0) { stepOver = mT.sideLoad; }
             if (stepOver > mT.sideLoad) { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
@@ -145,7 +152,7 @@
                     bb.Max.X, bb.Max.Y,
                     i / (double)split * bb.Min.Z + (split - i) / (double)split * bb.Max.Z);
 
-                SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTD, uBb, mT);
+                SurfacePath sP = Surfacing.helix(c, dir, stepOver, sTD, uBb, mT, lift);
                 sPs.Add(new GH_SurfacePath(sP));
             }
 

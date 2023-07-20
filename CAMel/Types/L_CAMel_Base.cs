@@ -192,5 +192,6 @@
 
         /// <summary>TODO The tolerance.</summary>
         public const double Tolerance = 0.000000001;
+        public const double surfaceEdge = 0.001;
     }
 }

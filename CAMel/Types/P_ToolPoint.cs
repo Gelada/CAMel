@@ -23,7 +23,7 @@
 
     // One position of the machine
     /// <summary>TODO The tool point.</summary>
-    public class ToolPoint : IToolPointContainer
+    public class ToolPoint : IToolPointContainer, IEquatable<ToolPoint>
     {
         /// <summary>The Tool position and Orientation</summary>
         private Plane tDir1;
@@ -40,6 +40,8 @@
             get => this.tDir.Origin;
             set => this.tDir1.Origin = value;
         }
+        
+        public int meshface { get; set; } // the face on a mesh this point corresponds to (not fully implemented)
 
         /// <summary>Gets or sets the dir.</summary>
         public Vector3d dir // Tool Direction (away from position)
@@ -53,7 +55,7 @@
 
         /// <summary>If applicable, the normal to the surface currently being cut.</summary>
         [NotNull]
-        public Vector3d norm { get; set; } // Surface normal
+        public Vector3d norm { get; set; }
 
         /// <inheritdoc />
         [NotNull]
@@ -66,6 +68,8 @@
         public double speed { get; set; }
         /// <summary>Gets or sets the feed for the toolpoint. Considered unset for negative values</summary>
         public double feed { get; set; }
+        /// <summary>Set if the toolpoint has been lifted off surface so does not need to be further offset. </summary>
+        public bool lifted { get; set; }
         /// <summary>Gets the list of errors.</summary>
         [NotNull]
         private List<string> error { get; }
@@ -98,6 +102,8 @@
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
+            this.meshface = -1;
+            this.lifted = false;
         }
 
         // Just a point, set direction to Z vector.
@@ -116,6 +122,8 @@
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
+            this.meshface = -1;
+            this.lifted = false;
         }
 
         // Use point and direction
@@ -134,6 +142,8 @@
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
+            this.meshface = -1;
+            this.lifted = false;
         }
 
         // Use point direction and override speed and feed
@@ -154,6 +164,8 @@
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
+            this.meshface = -1;
+            this.lifted = false;
         }
         /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
         /// <param name="pt">TODO The pt.</param>
@@ -173,7 +185,43 @@
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
+            this.meshface = -1;
+            this.lifted = false;
         }
+
+        /// <summary>Transform the toolpoint in place, WARNING: for non rigid transforms will lose information beyond tool position and direction.</summary>
+        /// <param name="transform">Transform to apply</param>
+        public void transform(Transform transform) 
+        {
+            if(transform.IsRigid(CAMel_Goo.Tolerance) == TransformRigidType.NotRigid) // Just transform position and direction
+            {
+                Point3d nO = this.pt;
+                Vector3d nZ = this.dir;
+                nO.Transform(transform);
+                nZ.Transform(transform);
+                if (nZ.Length < CAMel_Goo.Tolerance) { nZ = this.dir; } // if direction projects to 0, leave it fixed
+                this.tDir = new Plane(nO, nZ);
+
+                nO = this.mDir.Origin;
+                nZ = this.mDir.ZAxis;
+                nO.Transform(transform);
+                nZ.Transform(transform);
+                if (nZ.Length < CAMel_Goo.Tolerance) { nZ = this.dir; } // if direction projects to 0, leave it fixed
+                this.mDir = new Plane(nO, nZ);
+            }
+            else
+            {
+                Plane ntDir = this.tDir.Clone();
+                Plane nmDir = this.mDir.Clone();
+
+                ntDir.Transform(transform);
+                nmDir.Transform(transform);
+
+                this.tDir = ntDir;
+                this.mDir = nmDir;
+            }
+        }
+
         /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
         /// <param name="pt">TODO The pt.</param>
         /// <param name="mD">TODO The m d.</param>
@@ -191,6 +239,8 @@
             this.name = string.Empty;
             this.preCode = string.Empty;
             this.postCode = string.Empty;
+            this.meshface = -1;
+            this.lifted = false;
         }
 
         // Use point direction, override speed and feed and add extra Code
@@ -213,6 +263,8 @@
             this.error = new List<string>();
             this.warning = new List<string>();
             this.name = string.Empty;
+            this.meshface = -1;
+            this.lifted = false;
         }
         // Copy Constructor
         /// <summary>Initializes a new instance of the <see cref="ToolPoint"/> class.</summary>
@@ -231,6 +283,8 @@
             foreach (string s in tP.error) { this.error.Add(string.Copy(s)); }
             this.warning = new List<string>();
             foreach (string s in tP.warning) { this.warning.Add(string.Copy(s)); }
+            this.meshface = tP.meshface;
+            this.lifted = tP.lifted;
         }
 
         /// <summary>Deep Clone the ToolPoint</summary>
@@ -281,6 +335,41 @@
             return outP;
         }
 
+        public void setNorm(Mesh m)
+        {
+            // TODO check for failure on not having or bad number for meshface
+            MeshFace mF = m.Faces[this.meshface];
+            Vector3d bary = barycentric(
+                this.pt,
+                m.Vertices[mF.A], m.Vertices[mF.B], m.Vertices[mF.C]);
+            this.norm = m.NormalAt(this.meshface, bary.Z, bary.X, bary.Y, 0.0);
+        }
+
+        // Transcribed from Christer Ericson's Real-Time Collision Detection
+        // Compute barycentric coordinates (u, v, w) for
+        // point p with respect to triangle (a, b, c)
+        /// <summary>TODO The barycentric.</summary>
+        /// <param name="p">TODO The p.</param>
+        /// <param name="a">TODO The a.</param>
+        /// <param name="b">TODO The b.</param>
+        /// <param name="c">TODO The c.</param>
+        /// <returns>The <see cref="Vector3d"/>.</returns>
+        private static Vector3d barycentric(Point3d p, Point3d a, Point3d b, Point3d c)
+        {
+            Vector3d v0 = b - a, v1 = c - a, v2 = p - a;
+            double d00 = v0 * v0;
+            double d01 = v0 * v1;
+            double d11 = v1 * v1;
+            double d20 = v2 * v0;
+            double d21 = v2 * v1;
+            double denom = d00 * d11 - d01 * d01;
+            if (Math.Abs(denom) < CAMel_Goo.Tolerance) { return new Vector3d(1, 0, 0); }
+            double u = (d11 * d20 - d01 * d21) / denom;
+            double v = (d00 * d21 - d01 * d20) / denom;
+
+            return new Vector3d(u, v, 1.0 - u - v);
+        }
+
         /// <summary>Length of lines for toolpoint preview. </summary>
         private const double PreviewLength = .5;
         /// <summary>A line to represent the toolpoint position and direction. </summary>
@@ -291,6 +380,10 @@
 
         /// <inheritdoc />
         public BoundingBox getBoundingBox() => new BoundingBox(new List<Point3d> { this.pt, this.pt + this.dir * PreviewLength });
+
+        bool IEquatable<ToolPoint>.Equals(ToolPoint other) => this.tDir == other.tDir && this.mDir == other.mDir;
+        public override int GetHashCode() => this.tDir.GetHashCode() ^ this.mDir.GetHashCode();
+
     }
 
     // Grasshopper Type Wrapper
@@ -333,6 +426,7 @@
             writer.SetDouble("feed", this.Value.feed);
             writer.SetString("preCode", this.Value.preCode);
             writer.SetString("postCode", this.Value.postCode);
+            writer.SetBoolean("lifted", this.Value.lifted);
 
             return base.Write(writer);
         }
@@ -365,8 +459,8 @@
 
                 if (reader.ItemExists("mDir"))
                 {
-                    GH_Plane pl = reader.GetPlane("tDir");
-                    tPt.tDir = CAMel_Goo.fromIO(pl);
+                    GH_Plane pl = reader.GetPlane("mDir");
+                    tPt.mDir = CAMel_Goo.fromIO(pl);
                 }
 
                 if (reader.ItemExists("norm"))
@@ -377,8 +471,9 @@
 
                 if (reader.ItemExists("feed")) { tPt.feed = reader.GetDouble("feed"); }
                 if (reader.ItemExists("speed")) { tPt.speed = reader.GetDouble("speed"); }
-                if (reader.ItemExists("preCode")) { tPt.name = reader.GetString("preCode") ?? string.Empty; }
-                if (reader.ItemExists("postCode")) { tPt.name = reader.GetString("postCode") ?? string.Empty; }
+                if (reader.ItemExists("preCode")) { tPt.preCode = reader.GetString("preCode") ?? string.Empty; }
+                if (reader.ItemExists("postCode")) { tPt.postCode = reader.GetString("postCode") ?? string.Empty; }
+                if (reader.ItemExists("lifted")) { tPt.lifted = reader.GetBoolean("lifted"); }
 
                 this.Value = tPt;
                 return base.Read(reader);

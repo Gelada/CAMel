@@ -9,10 +9,11 @@
     using Rhino.Geometry;
     using Rhino.Geometry.Intersect;
 
-    // Functions to generate operations
-    /// <summary>TODO The surfacing.</summary>
+    /// <summary>Functions to generate operations</summary>
     public static class Surfacing
     {
+        public const double GenericOffset = .1;
+
         /// <summary>TODO The parallel.</summary>
         /// <param name="c">TODO The c.</param>
         /// <param name="dir">TODO The dir.</param>
@@ -24,96 +25,180 @@
         /// <returns>The <see cref="SurfacePath"/>.</returns>
         /// <exception cref="NullReferenceException"></exception>
         [NotNull]
-        public static SurfacePath parallel([CanBeNull] Curve c, Plane dir, double stepOver, bool zZ, SurfToolDir sTD, Curve boundary, [CanBeNull] MaterialTool mT)
+        public static SurfacePath parallel([CanBeNull] Curve c, Plane dir, double stepOver, bool zZ, SurfToolDir sTD, Curve boundary, [CanBeNull] MaterialTool mT, bool lift)
         {
             if (mT == null) { Exceptions.matToolException(); }
 
-            BoundingBox bb = boundary.GetBoundingBox(dir);
+            Curve uB = boundary.DuplicateCurve();
+            uB.Transform(Transform.PlanarProjection(dir)); // flatten boundary to plane
+            BoundingBox bb = uB.GetBoundingBox(dir); // boundary bounding box
 
-            Curve uC = c;
+            Curve uC = c.DuplicateCurve();
             if (c == null) // default to curve running along X-direction on Plane.
             {
                 uC = new LineCurve(dir.PointAt(bb.Min.X, bb.Min.Y), dir.PointAt(bb.Max.X, bb.Min.Y));
             }
-
             uC.Transform(Transform.PlanarProjection(dir));
-
             BoundingBox bbc = uC.GetBoundingBox(dir); // bounding box for curve
 
             List<Curve> paths = new List<Curve>(); // Curves to use
             Curve tempC = uC.DuplicateCurve();
             if (tempC == null) { throw new NullReferenceException("Rhino.Geometry.Curve.DuplicateCurve failed."); }
-            tempC.Translate((Vector3d)dir.PointAt(bb.Min.X-bbc.Min.X, bb.Min.Y - bbc.Max.Y, 0));
+            tempC.Translate((Vector3d)dir.PointAt(bb.Min.X - bbc.Min.X, bb.Min.Y - bbc.Max.Y + mT.tolerance, 0));
+
+            double widthT = bb.Max.Y - bb.Min.Y + bbc.Max.Y - bbc.Min.Y - 2.0 * mT.tolerance;
+            double stepW = stepOver * mT.toolWidth;
+
+            stepW = widthT / (Math.Ceiling(widthT / stepW));
+
+            paths.Add(tempC.DuplicateCurve());
 
             // create enough curves to guarantee covering surface
-            for (double width = 0; width <= bb.Max.Y - bb.Min.Y + bbc.Max.Y - bbc.Min.Y; width += stepOver * mT.toolWidth)
+            for (double width = 0; width <= widthT; width += stepW)
             {
-                tempC.Translate((Vector3d)dir.PointAt(0, stepOver * mT.toolWidth, 0));
-                paths.Add(tempC.DuplicateCurve());
                 if (zZ) { tempC.Reverse(); }
+                tempC.Translate((Vector3d)dir.PointAt(0, stepW, 0));
+                paths.Add(tempC.DuplicateCurve());
             }
 
-            // cut curves by boundary
-            (Curve C, double s, double e)[] cutPaths = new (Curve, double, double)[paths.Count];
-            //Parallel.For(0, paths.Count, index =>
-            for(int index = 0; index < paths.Count; index++)
+            // cut curves by boundary (including parameters on boundary curve)
+            List<(Curve C, double s, double e)> cutPaths = new List<(Curve, double, double)>();
+
+            foreach (Curve C in paths)
             {
-                Curve path = paths[index].DuplicateCurve();
-                CurveIntersections cI = Intersection.CurveCurve(path, boundary, mT.tolerance, mT.tolerance);
+                CurveIntersections cI = Intersection.CurveCurve(C, uB, mT.tolerance / 10.0, mT.tolerance / 10.0);
                 if (cI.Count > 1)
                 {
-                    path = path.Trim(cI[0].ParameterA, cI[cI.Count - 1].ParameterA);
-                    cutPaths[index] = (path, cI[0].ParameterB, cI[cI.Count - 1].ParameterB);
+                    for (int j = 0; j < cI.Count - 1; j++)
+                    {
+                        if (cI[j].IsOverlap)
+                        {
+                            Curve pathPiece = C.Trim(cI[j].OverlapA.T0, cI[j].OverlapA.T1);
+                            cutPaths.Add((pathPiece, cI[j].OverlapB.T0, cI[j].OverlapB.T1));
+                        }
+                        else if (cI[j + 1].IsOverlap)
+                        {
+                            Curve pathPiece = C.Trim(cI[j].ParameterA, cI[j + 1].OverlapA.T1);
+                            cutPaths.Add((pathPiece, cI[j].ParameterB, cI[j + 1].OverlapB.T1));
+                            j++;
+                        }
+                        else
+                        {
+                            Curve pathPiece = C.Trim(cI[j].ParameterA, cI[j + 1].ParameterA);
+                            cutPaths.Add((pathPiece, cI[j].ParameterB, cI[j + 1].ParameterB));
+                            j++;
+                        }
+                    }
                 }
-            };
-
-            if (!zZ) 
+            }
+            List<SurfaceCurve> sCs;
+            if (!zZ)
             {
-                paths = new List<Curve>();
-                foreach(var cv in cutPaths) { if (cv.C != null) {
-                        cv.C.Translate((Vector3d)dir.PointAt(0,0,bb.Max.Z - bbc.Min.Z +.1));
-                        paths.Add(cv.C); 
-                    } }
-                return new SurfacePath(paths, mT, -dir.ZAxis, sTD); 
+                sCs = new List<SurfaceCurve>();
+                foreach (var cv in cutPaths)
+                {
+                    if (cv.C != null)
+                    {
+                        cv.C.Translate((Vector3d)dir.PointAt(0, 0, bb.Max.Z - bbc.Min.Z + 0.1));
+                        sCs.Add(new SurfaceCurve(cv.C, lift));
+                    }
+                }
+
+                return new SurfacePath(sCs, mT, -dir.ZAxis, sTD);
             }
 
             // Join paths for zigzag
             PolyCurve joined = new PolyCurve();
             double endv = 0;
-            bool connect = false;
-            var cpaths = new List<Curve>();
-            for (int i = 0; i < paths.Count; i++)
+            bool connect = false; // Avoid trying to connect the first path to previous paths
+
+            for (int i = 0; i < cutPaths.Count; i++)
             {
-                if (cutPaths[i].C != null)
+                if (cutPaths[i].C == null) { continue; }
+                if (connect)
                 {
-                    if(connect)
+                    double len = endv - cutPaths[i].s;
+                    double blen = uB.Domain.Length;
+                    if ((len <= blen / 2.0 && len >= 0) || (-len >= blen / 2.0 && len <= 0))
                     {
-                        double len = (endv - cutPaths[i].s);
-                        double blen = boundary.Domain.Length;
-                        if ((len <= blen/2.0 && len >= 0) || (len >= blen / 2.0 && len <= 0))
-                        {
-                            Curve cb = boundary.Trim(cutPaths[i].s, endv);
-                            cb.Reverse();
-                            joined.Append(cb);
-                        } else
-                        {
-                            Curve cb = boundary.Trim(endv, cutPaths[i].s);
-                            joined.Append(cb);
-
-                        }
+                        Curve cb = uB.Trim(cutPaths[i].s, endv);
+                        cb.Reverse();
+                        joined.Append(cb);
                     }
+                    else
+                    {
+                        Curve cb = uB.Trim(endv, cutPaths[i].s);
+                        joined.Append(cb);
+                    }
+                }
 
-                    joined.Append(cutPaths[i].C);
-                    connect = true;
-                    endv = cutPaths[i].e;
+                joined.Append(cutPaths[i].C);
+                connect = true;
+                endv = cutPaths[i].e;
+            }
+            joined.Translate((Vector3d)dir.PointAt(0, 0, bb.Max.Z - bbc.Min.Z + Surfacing.GenericOffset));
+            sCs = new List<SurfaceCurve> { new SurfaceCurve(joined, lift) };
+
+            return new SurfacePath(sCs, mT, -dir.ZAxis, sTD);
+        }
+        /// <summary>TODO The parallel.</summary>
+        /// <param name="c">TODO The c.</param>
+        /// <param name="dir">TODO The dir.</param>
+        /// <param name="stepOver">TODO The step over.</param>
+        /// <param name="zZ">TODO The z z.</param>
+        /// <param name="sTD">TODO The s td.</param>
+        /// <param name="m">TODO The bb.</param>
+        /// <param name="mT">TODO The m t.</param>
+        /// <returns>The <see cref="SurfacePath"/>.</returns>
+        /// <exception cref="NullReferenceException"></exception>
+        [NotNull]
+        public static SurfacePath PreciseParallel([CanBeNull] Curve c, Plane dir, double stepOver, bool zZ, SurfToolDir sTD, [NotNull] Mesh m, [NotNull] MaterialTool mT, bool lift)
+        {
+            SurfacePath sP = new SurfacePath(new List<SurfaceCurve>(), mT, -dir.ZAxis, sTD);
+            sP.setMesh(m);
+
+            List<ToolPath> ol = sP.outerLoops(true);
+            if (ol.Count == 0) { Exceptions.noBoundaryPreciseException(); }
+            if (ol.Count > 1) { Exceptions.multipleBoundaryPreciseException(); }
+
+            ol[0].transform(Transform.PlanarProjection(dir));
+            ol[0].transform(Transform.Translation((Vector3d)dir.PointAt(0, 0, Surfacing.GenericOffset)));
+
+            ToolPath boundary = ToolPath.Clean(ol[0], dir.ZAxis, dir.ZAxis);
+            boundary.simplify(0.2);
+
+            List<ToolPath> boundaries = ToolPath.planeOffset(boundary, mT.toolWidth * dir.ZAxis / 2.0, dir.ZAxis);
+            boundary = boundaries[0];
+            //Find and use longest component just in case
+            for (int i = 1; i < boundaries.Count; i++) { if (boundaries[i].Count > boundary.Count) { boundary = boundaries[i]; } }
+            sP.Add(new SurfaceCurve(boundary.getLine(), true)); // precise outer path
+            
+            // if not lifted add more lifted paths for the boundary
+            if (!lift)
+            {
+                double uStep = Math.Min(stepOver, 0.5001);
+                int extraOuters = (int)Math.Floor(0.5 / uStep);
+                for (int j = 0; j < extraOuters; j++)
+                {
+                    boundaries = ToolPath.planeOffset(boundary, mT.toolWidth * uStep * dir.ZAxis, dir.ZAxis);
+                    boundary = boundaries[0];
+                    //Find and use longest component just in case
+                    for (int i = 1; i < boundaries.Count; i++) { if (boundaries[i].Count > boundary.Count) { boundary = boundaries[i]; } }
+                    sP.Add(new SurfaceCurve(boundary.getLine(), true)); // extra outer path
                 }
             }
-            joined.Translate((Vector3d)dir.PointAt(0, 0, bb.Max.Z - bbc.Min.Z + .1));
-            paths = new List<Curve> { joined };
+            
+            boundaries = ToolPath.planeOffset(boundary, mT.toolWidth * stepOver * dir.ZAxis, dir.ZAxis);
+            boundary = boundaries[0];
+            //Find and use longest component just in case
+            for (int i = 1; i < boundaries.Count; i++) { if(boundaries[i].Count > boundary.Count) { boundary = boundaries[i]; } }
 
-            return new SurfacePath(paths, mT, -dir.ZAxis, sTD);
+            boundary = ToolPath.Clean(boundary, dir.ZAxis, dir.ZAxis);
+
+            SurfacePath sPp = parallel(c, dir, stepOver, zZ, sTD, boundary.getLine(), mT, lift);
+            sP.AddRange(sPp);
+            return sP;
         }
-
         /// <summary>Create a surface path recipe as zig zag on a cylinder round an object. </summary>
         /// <param name="c">Curve up the cylinder to turn into zigzag.</param>
         /// <param name="dir">Plane for base of cylinder. </param>
@@ -140,9 +225,8 @@
             }
             else { uC = c; }
 
-            List<Curve> paths = new List<Curve>();
-
-
+            List<SurfaceCurve> paths = new List<SurfaceCurve>();
+            // TODO Parallel Cylinder
 
             LineCurve cc = new LineCurve(
                 dir.PointAt(bb.Center.X, bb.Center.Y, bb.Min.Z),
@@ -158,10 +242,11 @@
         /// <param name="sTD">The <see cref="SurfToolDir"/> describing the tool direction. </param>
         /// <param name="bb">The bounding box for the area to mill.</param>
         /// <param name="mT">The <see cref="MaterialTool"/> describing the material and tool used.</param>
+        /// <param name="lift">Lift the tool rather than offsetting (good for roughing).</param>
         /// <returns>The <see cref="SurfacePath"/> generated.</returns>
         /// <exception cref="NullReferenceException"></exception>
         [NotNull]
-        public static SurfacePath helix([CanBeNull] Curve c, Plane dir, double stepOver, SurfToolDir sTD, BoundingBox bb, [CanBeNull] MaterialTool mT)
+        public static SurfacePath helix([CanBeNull] Curve c, Plane dir, double stepOver, SurfToolDir sTD, BoundingBox bb, [CanBeNull] MaterialTool mT, bool lift)
         {
             if (mT == null) { Exceptions.matToolException(); }
 
@@ -274,16 +359,13 @@
                 }
             }
 
-            List<Curve> paths = new List<Curve>
-                {
-                    Curve.CreateInterpolatedCurve(spiralPath, 3)
-                };
+            List<SurfaceCurve> sCs = new List<SurfaceCurve> { new SurfaceCurve(Curve.CreateInterpolatedCurve(spiralPath, 3), lift) };
 
             LineCurve cc = new LineCurve(
                 dir.PointAt(bb.Center.X, bb.Center.Y, bb.Min.Z),
                 dir.PointAt(bb.Center.X, bb.Center.Y, bb.Max.Z));
 
-            return new SurfacePath(paths, mT, dir.ZAxis, cc, sTD);
+            return new SurfacePath(sCs, mT, dir.ZAxis, cc, sTD);
         }
 
         // TODO make work for planes and with a boundary curve to spiral to
@@ -297,7 +379,7 @@
         /// <param name="mT">TODO The m t.</param>
         /// <returns>The <see cref="SurfacePath"/>.</returns>
         [NotNull]
-        public static SurfacePath spiral([CanBeNull] Curve c, Plane dir, double r, double stepOver, SurfToolDir sTd, BoundingBox bb, [NotNull] MaterialTool mT)
+        public static SurfacePath spiral([CanBeNull] Curve c, Plane dir, double r, double stepOver, SurfToolDir sTd, BoundingBox bb, [NotNull] MaterialTool mT, bool lift)
         {
             double raisePer = stepOver * mT.toolWidth;
 
@@ -327,12 +409,9 @@
                 spiralPath.Add(dir.PointAt(temp * Math.Cos(spiralRatio * th + thl), temp * Math.Sin(spiralRatio * th + thl), bb.Min.Z+0.0001));
             }
 
-            List<Curve> paths = new List<Curve>
-                {
-                    Curve.CreateInterpolatedCurve(spiralPath, 3)
-                };
+            List<SurfaceCurve> sCs = new List<SurfaceCurve> { new SurfaceCurve(Curve.CreateInterpolatedCurve(spiralPath, 3), lift) };
 
-            return new SurfacePath(paths, mT, dir.Origin, sTd);
+            return new SurfacePath(sCs, mT, dir.Origin, sTd);
         }
     }
 }

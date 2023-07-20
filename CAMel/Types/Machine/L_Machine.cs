@@ -277,120 +277,40 @@
     /// <summary>Collections of useful functions to create machines.</summary>
     public static class Utility
     {
-        // planeOffset works with self-intersection of a closed curve
-        // It looses possible toolpoint information and uses toolDir
-        // for all points
-        /// <summary>Offset a path on a plane</summary>
+        /// <summary>Process a path with an offset on a plane, note this loses possible toolPoint information</summary>
         /// <param name="tP">Toolpath to offset</param>
-        /// <param name="toolDir">Tool dorection for offset path</param>
+        /// <param name="toolDir">Tool direction for offset path</param>
         /// <returns>Offset Paths</returns>
         [NotNull]
         public static List<ToolPath> planeOffset([NotNull] ToolPath tP, Vector3d toolDir)
         {
-            if (tP.additions.offset.SquareLength < CAMel_Goo.Tolerance) { return new List<ToolPath> { tP }; }
+            List<ToolPath> tPs = ToolPath.planeOffset(tP, tP.additions.offset, toolDir);
 
-            // if the path is open localOffset will do well enough
-            if (!tP.isClosed()) { return localOffset(tP); }
-
-            // Shift curve to XY plane
-            Vector3d d = tP.additions.offset;
-            double uOS = d.Length;
-            Plane p = new Plane(Point3d.Origin, d);
-
-            PolylineCurve uC = tP.getLine();
-
-            uC.Transform(Transform.PlaneToPlane(p, Plane.WorldXY));
-            bool reversed = false;
-
-            // ensure the curve is anticlockwise
-            if (uC.ClosedCurveOrientation(Transform.Identity) == CurveOrientation.Clockwise)
+            for(int i=0; i<tPs.Count; i++)
             {
-                uC.Reverse();
-                reversed = true;
-                uOS = -uOS;
+                tPs[i].additions.offset = Vector3d.Zero;
+                tPs[i].name += " -offset-";
+                if (tPs.Count > 1) { tPs[i].name = tPs[i].name + " " + (i-1); }
             }
-
-            // record the average Z location of the curve
-            BoundingBox bb = uC.GetBoundingBox(true);
-            double useZ = (bb.Max.Z + bb.Min.Z) / 2.0;
-
-            // offSet
-            List<PolylineCurve> osC = Offsetting.offset(uC, uOS);
-
-            if (reversed) { foreach (PolylineCurve osPl in osC) { osPl.Reverse(); } }
-
-            // create Operation
-            List<ToolPath> tPs = new List<ToolPath>();
-
-            int i = 1;
-            foreach (PolylineCurve osPl in osC)
-            {
-                // Create and add name, material/tool and material form
-                ToolPath osTP = tP.deepCloneWithNewPoints(new List<ToolPoint>());
-                osTP.additions.offset = Vector3d.Zero;
-                osTP.name += " -offset-";
-
-                if (osC.Count > 1) { osTP.name = osTP.name + " " + i; }
-                i++;
-
-                // return to original orientation
-                osPl.Translate(new Vector3d(0, 0, useZ));
-                osPl.Transform(Transform.PlaneToPlane(Plane.WorldXY, p));
-
-                // Add to Operation
-                osTP.convertCurve(osPl, toolDir);
-                tPs.Add(osTP);
-            }
-
             return tPs;
         }
 
-        /// <summary>Offset a path locally</summary>
+        /// <summary>Process a path with a local offset</summary>
         /// <param name="tP">ToolPath to offset</param>
         /// <returns>Offset paths.</returns>
         [NotNull]
         public static List<ToolPath> localOffset([NotNull] ToolPath tP)
         {
-            List<ToolPoint> oTPts = new List<ToolPoint>();
-            Vector3d os = tP.additions.offset;
-            double osL = os.Length;
-            os.Unitize();
+            List<ToolPath> tPs = ToolPath.localOffset(tP, tP.additions.offset);
 
-            // Check if there is enough to offset
-            if (osL < CAMel_Goo.Tolerance || tP.Count < 2 || tP.firstP == null || tP.lastP == null) { return new List<ToolPath> { tP }; }
-
-            // Start with first point unless the ToolPath is closed.
-            ToolPoint lPt = tP.firstP, uTPt;
-            if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { lPt = tP[tP.Count - 2]; }
-            Vector3d osD;
-
-            for (int i = 0; i < tP.Count - 1; i++)
+            for (int i = 0; i < tPs.Count; i++)
             {
-                uTPt = tP[i].deepClone();
-
-                // offset direction given by tangent and offset Plane
-                osD = Vector3d.CrossProduct(os, tP[i + 1].pt - lPt.pt);
-                osD.Unitize();
-                uTPt.pt += osL * osD;
-                oTPts.Add(uTPt);
-                lPt = tP[i];
+                tPs[i].additions.offset = Vector3d.Zero;
+                tPs[i].name += " -offset-";
+                if (tPs.Count > 1) { tPs[i].name = tPs[i].name + " " + (i - 1); }
             }
 
-            // Loop back to start if closed.
-            ToolPoint nP = tP.lastP;
-            if (tP.firstP.pt.DistanceTo(tP.lastP.pt) < CAMel_Goo.Tolerance) { nP = tP[2]; }
-
-            uTPt = tP[tP.Count - 1].deepClone();
-            osD = Vector3d.CrossProduct(os, nP.pt - lPt.pt);
-            osD.Unitize();
-            uTPt.pt += osL * osD;
-            oTPts.Add(uTPt);
-
-            ToolPath oTP = tP.deepCloneWithNewPoints(oTPts);
-
-            oTP.additions.offset = Vector3d.Zero;
-
-            return new List<ToolPath> { oTP };
+            return tPs;
         }
 
         // Step down into material

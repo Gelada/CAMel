@@ -2,9 +2,11 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
 
-    using ClipperLib;
+    //using ClipperLib;
+    using Clipper2Lib;
 
     using JetBrains.Annotations;
 
@@ -25,51 +27,97 @@
         ///     </see>
         /// .</returns>
         [NotNull]
-        public static List<PolylineCurve> offset([NotNull] PolylineCurve p, double d)
+        public static List<PolylineCurve> Offset([NotNull] List<PolylineCurve> pLs, double d)
         {
-            // Bring path into clipper, scaling to take advantage of integer arithmetic
-            BoundingBox bb = p.GetBoundingBox(false);
-            double md = bb.Max.X;
-            if (bb.Max.Y > md) { md = bb.Max.Y; }
-            if (-bb.Min.X > md) { md = -bb.Min.X; }
-            if (-bb.Min.Y > md) { md = -bb.Min.Y; }
-            double sc = ScF / md;
-
-            List<List<IntPoint>> iPs = pLtoInt(p, sc);
+            // Convert to Clipper paths
+            PathsD paths = toPathsD(pLs);
 
             // Offset the paths.
-            EndType et = p.IsClosed ? EndType.etClosedPolygon : EndType.etOpenRound;
 
-            ClipperOffset co = new ClipperOffset();
-            co.AddPaths(iPs, JoinType.jtRound, et);
-            List<List<IntPoint>> oPf = new List<List<IntPoint>>();
-            co.Execute(ref oPf, d * sc);
+            PathsD offset = Clipper.InflatePaths(paths, -d, JoinType.Round, EndType.Polygon,2,6);
+            offset = Clipper.SimplifyPaths(offset, CAMel_Goo.Tolerance);
 
-            // Clean the paths.
-            List<List<IntPoint>> oP = oPf.Select(iP => Clipper.CleanPolygon(iP)).ToList();
+            return toPolylineCurves(offset, true);
+        }
 
-            List<PolylineCurve> oPl = intToPl(oP, sc);
+        public static List<Polyline> Offset([NotNull] List<Polyline> pLs, double d)
+        { 
+            List<PolylineCurve> pLc = new List<PolylineCurve>();
+            foreach(Polyline pL in pLs) { pLc.Add(new PolylineCurve(pL)); }
+            List<PolylineCurve> plc = Offset(pLc, d);
+            List<Polyline> pl = new List<Polyline>();
+            foreach(PolylineCurve pc in plc) { pl.Add(pc.ToPolyline()); }
+            return pl;
+        }
 
-            // find point closest to first of original curve
-            int cp = -1;
-            double pos = 0;
-            double dist = 1000000000000000000;
-            for (int i = 0; i < oPl.Count; i++)
+        public static List<PolylineCurve> Offset([NotNull] PolylineCurve pL, double d) => Offset(new List<PolylineCurve> { pL }, d);
+        public static List<Polyline> Offset([NotNull] Polyline pL, double d) => Offset(new List<Polyline> { pL }, d);
+
+        public static List<PolylineCurve> CleanCurve(PolylineCurve pLc)
+        {
+            PathsD path = toPathsD(new List<PolylineCurve> { pLc });
+
+            path = Clipper.Union(path, new PathsD(), FillRule.NonZero,6);
+            path = Clipper.SimplifyPaths(path,CAMel_Goo.Tolerance);
+
+            return toPolylineCurves(path, true);
+        }
+        public static PolylineCurve CleanToLongest(PolylineCurve pLc)
+        {
+            List<PolylineCurve> clean = CleanCurve(pLc);
+            PolylineCurve longest = clean[0];
+            double length = longest.GetLength();
+            for(int i=1; i<clean.Count; i++)
             {
-                if (oPl[i] == null) { continue; }
-                oPl[i].ClosestPoint(p.PointAtStart, out double t, dist);
-                double di = oPl[i].PointAt(t).DistanceTo(p.PointAt(0));
-                if (!(di < dist)) { continue; }
-
-                dist = d;
-                cp = i;
-                pos = t;
+                double newLength = clean[i].GetLength();
+                if (newLength > length)
+                {
+                    length = newLength;
+                    longest = clean[i];
+                }
             }
 
-            if (cp >= 0 && oPl[cp] != null) { oPl[cp].ChangeClosedCurveSeam(pos); }
+            // Find the best start point
+            double dist = 1000000000000000000;
 
-            return oPl;
+
+            longest.ClosestPoint(pLc.PointAtStart, out double t, dist);
+            longest.ChangeClosedCurveSeam(t);
+
+            // Get the correct direction
+            pLc.ClosestPoint(longest.PointAtStart, out t, dist);
+            if(pLc.TangentAt(t)*longest.TangentAtStart < 0) { longest.Reverse(); }
+
+            return longest;
         }
+
+        private static PathsD toPathsD(List<PolylineCurve> pLs)
+        {
+            PathsD paths = new PathsD();
+            foreach(PolylineCurve pLc in pLs)
+            {
+                pLc.TryGetPolyline(out Polyline pL);
+                PathD path = new PathD();
+                foreach (Point3d pt in pL) { path.Add(new PointD(pt.X, pt.Y)); }
+                paths.Add(path);
+            }
+            return paths;
+        }
+
+        private static List<PolylineCurve> toPolylineCurves(PathsD paths, bool close)
+        {
+            List<PolylineCurve> pLs = new List<PolylineCurve>();
+            foreach(PathD path in paths)
+            {
+                Polyline pl = new Polyline();
+                foreach(PointD pt in path) { pl.Add(new Point3d(pt.x, pt.y,0)); }
+                if (close) { pl.Add(pl[0]); }
+                pLs.Add(new PolylineCurve(pl));
+            }
+            return pLs;
+        }
+
+        /*
 
         /// <summary>TODO The d toi.</summary>
         /// <param name="p">TODO The p.</param>
@@ -123,5 +171,6 @@
 
             return pls;
         }
+        */
     }
 }

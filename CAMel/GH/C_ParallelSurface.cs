@@ -45,7 +45,7 @@
             pManager[3].WireDisplay = GH_ParamWireDisplay.faint;
             pManager.AddIntegerParameter("Tool Direction", "TD", "Method used to calculate tool direction for 5-Axis\n 0: Projection\n 1: Path Tangent\n 2: Path Normal\n 3: Normal\n 4: Material Normal", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("Step over", "SO", "Stepover as a multiple of tool width. Default to Tools side load(for negative values).", GH_ParamAccess.item, -1);
-            pManager.AddBooleanParameter("Zig and Zag", "Z", "Go forward and back, or just forward along path", GH_ParamAccess.item, true);
+            pManager.AddIntegerParameter("Style", "St", "Choose features by adding, +4 lift tool to stop gouging rather than offsetting, +2 precise boundary, +1 back and forth.", GH_ParamAccess.item, 5);
         }
 
         /// <inheritdoc />
@@ -72,7 +72,7 @@
             MaterialTool mT = null; // The materialtool, mainly for tool width
             int tD = 0;
             double stepOver = 0;
-            bool zz = true; // ZigZag if true, Zig if false
+            int style = 5; // +4 lift not offset, +2 precise boundary, +1 zig zag not just zig
 
             if (!da.GetData(0, ref geom)) { return; }
             da.GetData(1, ref c);
@@ -80,7 +80,12 @@
             if (!da.GetData(3, ref mT)) { return; }
             if (!da.GetData(4, ref tD)) { return; }
             if (!da.GetData(5, ref stepOver)) { return; }
-            if (!da.GetData(6, ref zz)) { return; }
+            if (!da.GetData(6, ref style)) { return; }
+
+            // extract bits from style
+            bool zz = (style & 1) == 1;
+            bool precise = (style & 2) == 2;
+            bool lift = (style & 4) == 4;
 
             if (stepOver < 0) { stepOver = mT.sideLoad; }
             if (stepOver > mT.sideLoad) { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Stepover exceeds suggested sideLoad for the material/tool."); }
@@ -90,21 +95,32 @@
             lineDir.Z = 0;
 
             Plane uDir = new Plane(dir.Origin, lineDir, Vector3d.CrossProduct(dir.ZAxis, lineDir));
+            PolylineCurve bc;
+            Mesh m = new Mesh();
 
             // process the bounding curve
-            if (!geom.CastTo(out Curve bc))
+            if (!geom.CastTo(out bc))
             {
+                if (geom.CastTo(out Curve cbc))
+                {
+                    if(precise)
+                    {
+                        this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Surface, Brep or mesh must be given for precise boundary surfacing.");
+                        return;
+                    }
+                    bc = cbc.ToPolyline(mT.tolerance, 0.01, mT.minStep, mT.toolWidth * 10);
+                }
                 if (geom.CastTo(out Surface s))
                 {
-                    Mesh m = Mesh.CreateFromSurface(s, MeshingParameters.FastRenderMesh);
+                    m = Mesh.CreateFromSurface(s, MeshingParameters.FastRenderMesh);
                     bc = new PolylineCurve(Shadows.MeshShadow(m, dir));
                 } 
                 else if (geom.CastTo(out Brep b))
                 {
-                    Mesh m = Mesh.CreateFromBrep(b, MeshingParameters.FastRenderMesh)[0];
+                    m = Mesh.CreateFromBrep(b, MeshingParameters.FastRenderMesh)[0];
                     bc = new PolylineCurve(Shadows.MeshShadow(m, dir));
                 } 
-                else if (geom.CastTo(out Mesh m)) { bc = new PolylineCurve(Shadows.MeshShadow(m, dir)); } 
+                else if (geom.CastTo(out m)) { bc = new PolylineCurve(Shadows.MeshShadow(m, dir)); } 
                 else
                 { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill must be a curve, surface, mesh or brep."); }
             }
@@ -113,12 +129,26 @@
             SurfToolDir sTD = SurfacePath.getSurfDir(tD);
             if (sTD == SurfToolDir.Error)
             {
-                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD can only have values 0,1,2 or 3");
+                this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input parameter TD does not correspond to a tool direction");
                 return;
             }
 
-            SurfacePath sP = Surfacing.parallel(c, uDir, stepOver, zz, sTD, bc, mT);
-            da.SetData(0, new GH_SurfacePath(sP));
+            if (precise)
+            {
+                SurfacePath sP = Surfacing.PreciseParallel(c, uDir, stepOver, zz, sTD, m, mT, lift);
+                da.SetData(0, new GH_SurfacePath(sP));
+            }
+            else
+            {
+                // make shadow a little smaller
+                ToolPath bcTp = new ToolPath(mT);
+                bcTp.convertCurve(bc, dir.ZAxis);
+
+                bcTp = ToolPath.planeOffset(bcTp, uDir.ZAxis * mT.toolWidth * CAMel_Goo.surfaceEdge, dir.ZAxis)[0];
+
+                SurfacePath sP = Surfacing.parallel(c, uDir, stepOver, zz, sTD, bcTp.getLine(), mT, lift);
+                da.SetData(0, new GH_SurfacePath(sP));
+            }
         }
 
         /// <inheritdoc />
