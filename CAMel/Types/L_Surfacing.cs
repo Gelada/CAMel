@@ -166,37 +166,54 @@
 
             ToolPath boundary = ToolPath.Clean(ol[0], dir.ZAxis, dir.ZAxis);
             boundary.simplify(0.2);
+            ToolPath osBoundary;
+            double offset = mT.toolWidth / 2.0;
 
-            List<ToolPath> boundaries = ToolPath.planeOffset(boundary, mT.toolWidth * dir.ZAxis / 2.0, dir.ZAxis);
-            boundary = boundaries[0];
-            //Find and use longest component just in case
-            for (int i = 1; i < boundaries.Count; i++) { if (boundaries[i].Count > boundary.Count) { boundary = boundaries[i]; } }
-            sP.Add(new SurfaceCurve(boundary.getLine(), true)); // precise outer path
-            
+            List<ToolPath> boundaries = ToolPath.planeOffset(boundary, offset * dir.ZAxis, dir.ZAxis);
+            foreach(ToolPath tP in boundaries) 
+            {
+                if(tP.Count > 2)
+                { 
+                    sP.Add(new SurfaceCurve(tP.getLine(), true)); // precise outer path
+                }
+            }
             // if not lifted add more lifted paths for the boundary
+            // TODO order the paths more efficiently when there is more than one component
             if (!lift)
             {
-                double uStep = Math.Min(stepOver, 0.5001);
-                int extraOuters = (int)Math.Floor(0.5 / uStep);
-                for (int j = 0; j < extraOuters; j++)
+                // go up to (or just over) the other surfacing pass
+                int extraOuters = (int)Math.Ceiling(0.5 / stepOver); 
+                // unless the stepover is .5 or higher, and so no extraouters are needed
+                if(stepOver >= .5)
                 {
-                    boundaries = ToolPath.planeOffset(boundary, mT.toolWidth * uStep * dir.ZAxis, dir.ZAxis);
-                    boundary = boundaries[0];
-                    //Find and use longest component just in case
-                    for (int i = 1; i < boundaries.Count; i++) { if (boundaries[i].Count > boundary.Count) { boundary = boundaries[i]; } }
-                    sP.Add(new SurfaceCurve(boundary.getLine(), true)); // extra outer path
+                    offset = mT.toolWidth;
+                    extraOuters = 0;
+                }
+                for (int j = 1; j <= extraOuters; j++)
+                {
+                    offset = mT.toolWidth * (stepOver*j + .5);
+                    boundaries = ToolPath.planeOffset(boundary, offset * dir.ZAxis, dir.ZAxis);
+                    foreach(ToolPath tP in boundaries) 
+                    {
+                        if(tP.Count > 2) { sP.Add(new SurfaceCurve(tP.getLine(), true)); } 
+                    }
                 }
             }
             
-            boundaries = ToolPath.planeOffset(boundary, mT.toolWidth * stepOver * dir.ZAxis, dir.ZAxis);
-            boundary = boundaries[0];
-            //Find and use longest component just in case
-            for (int i = 1; i < boundaries.Count; i++) { if(boundaries[i].Count > boundary.Count) { boundary = boundaries[i]; } }
-
-            boundary = ToolPath.Clean(boundary, dir.ZAxis, dir.ZAxis);
-
-            SurfacePath sPp = parallel(c, dir, stepOver, zZ, sTD, boundary.getLine(), mT, lift);
-            sP.AddRange(sPp);
+            // Make the edge of the region the offset of the final outer to remove a gap between zones
+            boundaries = ToolPath.planeOffset(boundary, offset * dir.ZAxis, dir.ZAxis);
+            if(boundaries.Count >0)
+            {                     
+                foreach(ToolPath tP in boundaries) 
+                {
+                    if(tP.Count > 2) 
+                    { 
+                        ToolPath useTp = ToolPath.Clean(tP, dir.ZAxis, dir.ZAxis);
+                        SurfacePath sPp = parallel(c, dir, stepOver, zZ, sTD, useTp.getLine(), mT, lift);
+                        sP.AddRange(sPp);
+                    } 
+                }
+            }
             return sP;
         }
         /// <summary>Create a surface path recipe as zig zag on a cylinder round an object. </summary>
