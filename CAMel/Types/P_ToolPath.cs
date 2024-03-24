@@ -494,7 +494,6 @@
             {
                 uC.Reverse();
                 reversed = true;
-                uOS = -uOS;
             }
 
             // record the average Z location of the curve
