@@ -320,7 +320,9 @@ namespace CAMel.Types
                     else { tP[i].pt += this.mT.cutOffset(tP[i]); }
 
                     // If the whole path is being offset move away from the surface using normal
-                    tP[i].pt += offset * tP[i].norm;
+                    // TODO work out how to make the surface offset be correct (distance from surface) and work with pocketing.
+
+                    tP[i].pt += offset * tP[i].dir;
                 }
             }
 
