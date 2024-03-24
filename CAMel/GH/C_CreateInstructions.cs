@@ -11,7 +11,7 @@
     using JetBrains.Annotations;
 
     /// <inheritdoc />
-    /// <summary>TODO The c_ create instructions.</summary>
+    /// <summary>Grasshopper component to create machine instructions</summary>
     [UsedImplicitly]
     public class C_CreateInstructions : GH_Component
     {
