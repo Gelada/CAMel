@@ -1,7 +1,7 @@
 ﻿namespace CAMel.GH
 {
     using System;
-
+    using System.Collections.Generic;
     using CAMel.Types;
 
     using Grasshopper.Kernel;
@@ -113,14 +113,20 @@
                 if (geom.CastTo(out Surface s))
                 {
                     m = Mesh.CreateFromSurface(s, MeshingParameters.FastRenderMesh);
+                    m.Weld(Math.PI);
                     bc = new PolylineCurve(Shadows.MeshShadow(m, dir));
                 } 
                 else if (geom.CastTo(out Brep b))
                 {
                     m = Mesh.CreateFromBrep(b, MeshingParameters.FastRenderMesh)[0];
+                    m.Weld(Math.PI);
                     bc = new PolylineCurve(Shadows.MeshShadow(m, dir));
                 } 
-                else if (geom.CastTo(out m)) { bc = new PolylineCurve(Shadows.MeshShadow(m, dir)); } 
+                else if (geom.CastTo(out m)) 
+                { 
+                    m.Weld(Math.PI);
+                    bc = new PolylineCurve(Shadows.MeshShadow(m, dir)); 
+                } 
                 else
                 { this.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The region to mill must be a curve, surface, mesh or brep."); }
             }

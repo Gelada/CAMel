@@ -104,6 +104,7 @@
             if (geom.GetType() == typeof(Mesh))
             {
                 Mesh m = (Mesh)geom;
+                m.Weld(Math.PI);
                 roughO = roughP.generateOperation(m, finalP.mT.finishDepth + finalH, mF, addRough);
                 finishO = finalP.generateOperation(m, finalH, mF, addFinish);
             }

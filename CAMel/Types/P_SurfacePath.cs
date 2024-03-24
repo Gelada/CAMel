@@ -203,6 +203,7 @@ namespace CAMel.Types
             mP.MinimumEdgeLength = 0.00001;
             this.m = Mesh.CreateFromBrep(b, mP)?[0];
             this.m?.FaceNormals?.ComputeFaceNormals();
+            this.m?.Weld(Math.PI);
 
             return this.generateOperation_(offset, mF, tPa);
         }
