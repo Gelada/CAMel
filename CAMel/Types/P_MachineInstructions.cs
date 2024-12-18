@@ -43,9 +43,12 @@
         public ToolPoint firstP => this.FirstOrDefault(a => a?.firstP != null)?.firstP;
         /// <inheritdoc />
         public ToolPoint lastP => this.LastOrDefault(a => a?.lastP != null)?.lastP;
-        /// <summary>TODO The remove last point.</summary>
+        /// <summary>Remove the last point.</summary>
         [PublicAPI]
         public void removeLastPoint() { this[this.Count - 1].removeLastPoint(); }
+        /// <summary>Remove the first point.</summary>
+        [PublicAPI]
+        public void removeFirstPoint() { this[0].removeFirstPoint(); }
 
         // Default Constructor
         /// <summary>Initializes a new instance of the <see cref="MachineInstruction"/> class.</summary>
@@ -166,12 +169,9 @@
                 ToolPoint sPt = this.m.insert(SPath)[0].firstP.deepClone(); // run insert code then take first point.
                 sPt.feed = 0;
                 valid.startPath.Add(sPt);
-
             }
+            valid.startPath.name = String.IsNullOrWhiteSpace(valid.startPath.name) ? "Start" : valid.startPath.name;
 
-            pMo = new MachineOperation { valid.startPath };
-            pMo.name = "Start";
-            valid.Add(pMo.processAdditions(this.m, ref validTP));
             fP = valid.startPath;
 
             foreach (MachineOperation mO in this)
@@ -181,13 +181,15 @@
                 // Add transition from previous operation
                 // insert and retract are handled within the operation
                 // as they can change toolpaths for example adding activation code
-                if (fP.Count > 0)
-                {
-                    pMo.InsertRange(0, this.m.transition(fP, pMo[0],false, false)); 
-                }
+
+                ToolPath first = pMo[0];
+                pMo.RemoveAt(0); // remove first path as this will be added back in by transition
+                pMo.InsertRange(0, this.m.transition(fP, first, true)); 
+
                 // record last path
                 fP = pMo[pMo.Count - 1]; 
                 // add to the output Instructions.
+
                 valid.Add(pMo);
             }
 
@@ -201,7 +203,7 @@
                 {
                     ToolPath pMo0 = pMo[0];
                     pMo.RemoveAt(0); // remove toolpath in case it is changed by the transition.
-                    pMo.InsertRange(0, this.m.transition(fP, pMo0, false));
+                    pMo.InsertRange(0, this.m.transition(fP, pMo0, true));
                 }
 
                 valid.Add(pMo);
@@ -222,6 +224,8 @@
             CodeInfo co = new CodeInfo(this.m, fP.matForm, fP.matTool);
 
             this.m.writeFileStart(ref co, this);
+
+            if(this.startPath.Count > 0) {this.m.writeCode(ref co, this.startPath); }
 
             foreach (MachineOperation mO in this)
             {

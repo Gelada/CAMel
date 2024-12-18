@@ -30,12 +30,16 @@
         public ToolPoint firstP => this.FirstOrDefault(a => a?.firstP != null)?.firstP;
         /// <inheritdoc />
         public ToolPoint lastP => this.LastOrDefault(a => a?.lastP != null)?.lastP;
-        /// <summary>TODO The remove last point.</summary>
+        /// <summary>Remove the last point.</summary>
         public void removeLastPoint()
         {
             this[this.Count - 1].removeLast();
         }
-
+        /// <summary> Remove the first point.</summary>
+        public void removeFirstPoint()
+        {
+            this[0].removeFirst();
+        }
         // Default Constructor
         /// <summary>Initializes a new instance of the <see cref="MachineOperation"/> class.</summary>
         public MachineOperation()
@@ -147,7 +151,7 @@
         public MachineOperation processAdditions([NotNull] IMachine m, [NotNull] ref ToolPath validTP)
         {
             // Wow a 3d block of ToolPaths
-            // Each of the stepdown paths can have several pieces (1st level)
+            // Each of the stepdown paths can have several pieces (3rd level)
             // Each ToolPath has several stepdown paths (2nd level)
             // We started with a list of toolpaths (1st level)
             // We create this block and then order it so we do
@@ -161,8 +165,8 @@
             {
                 tP.validate(validTP, m);
                 validTP = tP;
-                newPaths.Add(tP.processAdditions(m, out List<ToolPath> fP));
-                finishPaths.Add(fP);
+                newPaths.Add(tP.processAdditions(m, out List<ToolPath> finP));
+                finishPaths.Add(finP);
             }
 
             // Create the list for the output
@@ -197,8 +201,6 @@
                 foreach (List<ToolPath> lTp in finishPaths.Where(lTp => i < lTp?.Count))
                 {
                     if (lTp?[i] == null) { continue; }
-                    // TODO: Cleanup without insert/retract
-                    //levelPaths.AddRange(m.insertRetract(lTp[i]));
                     levelPaths.Add(lTp[i]);
                 }
 
@@ -206,36 +208,35 @@
             }
 
             List<ToolPath> transPaths = new List<ToolPath>();
-            ToolPath frP = new ToolPath();
+            ToolPath fP = new ToolPath();
+
             bool first = true;
             foreach (ToolPath tP in procPaths.Where(tP => tP?.Count > 0))
             {
                 if (first)
                 {
                     List<ToolPath> trP = m.insert(tP);
-                    // separate the last path (tP with possibly alterations by insert, such as activation)
-                    frP = trP[trP.Count - 1];
+                    // keep last path as it needs to be processed further
+                    fP = trP[trP.Count - 1];
                     trP.RemoveAt(trP.Count - 1);
+
                     transPaths.AddRange(trP);
                     first = false;
                 }
-                 else {
-                    if (frP.Count > 0)
-                    {
-                        // Calculate transition
-                        List<ToolPath> trP = m.transition(frP, tP);
+                else {
+                    // Calculate transition
+                    List<ToolPath> trP = m.transition(fP, tP);
+                    // keep last path as it needs to be processed further
+                    fP = trP[trP.Count - 1];
+                    trP.RemoveAt(trP.Count - 1);
 
-                        // separate the last path (tP with possibly alterations by transition, such as activation)
-                        frP = trP[trP.Count - 1];
-                        trP.RemoveAt(trP.Count - 1);
-
-                        transPaths.AddRange(trP);
-                    }
+                    transPaths.AddRange(trP);
                 }
             }
+            
             // Add last path and retract
-
-            transPaths.AddRange(m.retract(frP));
+           
+            transPaths.AddRange(m.retract(fP));
 
             return this.deepCloneWithNewPaths(transPaths);
         }
@@ -256,8 +257,7 @@
             foreach (ToolPath tP in this.Where(tP => tP?.Count > 0))
             {
                 // Check for jump between paths
-                if (oldPath.Count > 0) { m.jumpCheck(ref co, oldPath, tP); }
-
+                if (oldPath.Count > 0) { m.safeJumpCheck(ref co, oldPath, tP); }
                 // Add Path to Code
                 m.writeCode(ref co, tP);
                 oldPath = tP;

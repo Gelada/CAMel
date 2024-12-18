@@ -2,7 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
-
+    using System.Diagnostics.Contracts;
     using CAMel.Types.MaterialForm;
 
     using JetBrains.Annotations;
@@ -481,18 +481,18 @@
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="double"/>.</returns>
-        public double jumpCheck(ToolPath fP, ToolPath tP) => Utility.jumpCheck(fP, tP);
-        /// <summary>TODO The jump check.</summary>
-        /// <param name="co">TODO The co.</param>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.jumpCheck(ref co, this, fP, tP);
+        
+        double angConnectTol = .0003;
+        public bool pathConnectCheck(ToolPath fP, ToolPath tP) => Utility.pathConnectCheck5Axis(this, this.angConnectTol, fP, tP);
+        public void safeJumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.safeJumpCheck5Axis(this, this.angConnectTol, ref co, fP, tP);
+
+        public bool samePoint(ToolPoint tP1, ToolPoint tP2, MaterialTool mT) => Utility.samePoint5axis(this, tP1, tP2, mT);
 
         /// <summary>TODO The transition.</summary>
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
-        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool retractQ = true, bool insertQ = true) => Utility.transition(this, fP, tP, retractQ, insertQ);
+        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool operation = false) => Utility.transition(this, fP, tP, operation);
 
         // This should call a utility with standard options
         // a good time to move it is when a second 5-axis is added
@@ -508,8 +508,6 @@
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.emptyPathException(); }
-
-            if (this.jumpCheck(fP, tP) > 0) { Exceptions.transitionException(); }
 
             List<ToolPath> trans = new List<ToolPath>();
 
@@ -591,6 +589,9 @@
                     else { move.Add(newTP); }
                 }
             }
+
+            // remove first point to avoid duplicate points
+            move.removeFirst();
 
             return move;
         }

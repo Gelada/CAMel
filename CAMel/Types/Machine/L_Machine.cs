@@ -606,15 +606,11 @@
             return null;
         }
 
-        /// <summary>TODO The lead in u.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="activate">TODO The activate.</param>
-        /// <param name="deActivate">TODO The de activate.</param>
-        /// <param name="irActivate">TODO The ir activate.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <summary>Add a U lead in to the path. </summary>
+        /// <param name="tP">Toolpath to process.</param>
+        /// <param name="activate">Command if tool needs to be activated. </param>
+        /// <param name="irActivate">Activation state for insert path. To use this <paramref name="activate"/> should be <see cref="String.Empty"/>.</param>
+        /// <returns>The toolpath <paramref name="tP"/> preceeded by toolpaths for the insert.</returns>
         [NotNull]
         public static List<ToolPath> leadInU([NotNull] ToolPath tP, [NotNull] string activate = "", bool applyOpen = false,  int irActivate = 0)
         {
@@ -652,7 +648,7 @@
                     }
 
                     ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
-                    iTp.name += " insert";
+                    iTp.name += " U lead in";
                     iTp.label = PathLabel.Insert;
                     if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
                     iTp.additions.retract = false;
@@ -672,15 +668,11 @@
             return irTps;
         }
 
-        /// <summary>TODO The lead out u.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="activate">TODO The activate.</param>
-        /// <param name="deActivate">TODO The de activate.</param>
-        /// <param name="irActivate">TODO The ir activate.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <summary>Add a U lead out to the path. </summary>
+        /// <param name="tP">Toolpath to process.</param>
+        /// <param name="deActivate">Command if tool needs to be deactivated. </param>
+        /// <param name="irActivate">Activation state for retract path. To use this <paramref name="activate"/> should be <see cref="String.Empty"/>.</param>
+        /// <returns>The toolpath <paramref name="tP"/> followed by toolpaths for the retract.</returns>
         [NotNull]
         public static List<ToolPath> leadOutU([NotNull] ToolPath tP, [NotNull] string deActivate = "", bool applyOpen = false, int irActivate = 0)
         {
@@ -711,16 +703,15 @@
                     if (tP.firstP == null) { Exceptions.emptyPathException(); }
                     for (int i = 1; i < leadOut.PointCount; i++)
                     {
-                        ToolPoint tPt = tP.firstP.deepClone();
+                        ToolPoint tPt = tP.lastP.deepClone();
                         tPt.pt = leadOut.Point(i);
                         tPts.Add(tPt);
                     }
 
-                    ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
-                    rTp.name += " retract";
+                    ToolPath rTp = newTP.deepCloneWithNewPoints(tPts);
+                    rTp.name += " U lead out";
                     rTp.label = PathLabel.Retract;
                     if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
-                    rTp.AddRange(tPts);
 
                     if (rTp.Count > 0) { irTps.Add(rTp); }
                 }
@@ -737,15 +728,11 @@
             return irTps;
         }
 
-        /// <summary>TODO The lead in v.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="activate">TODO The activate.</param>
-        /// <param name="deActivate">TODO The de activate.</param>
-        /// <param name="irActivate">TODO The ir activate.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <summary>Add a V lead in to the path. </summary>
+        /// <param name="tP">Toolpath to process.</param>
+        /// <param name="activate">Command if tool needs to be activated. </param>
+        /// <param name="irActivate">Activation state for insert path. To use this <paramref name="activate"/> should be <see cref="String.Empty"/>.</param>
+        /// <returns>The toolpath <paramref name="tP"/> preceeded by toolpaths for the insert.</returns>
         [NotNull]
         public static List<ToolPath> leadInV([NotNull] ToolPath tP, [NotNull] string activate = "", bool applyOpen = false, int irActivate = 0)
         {
@@ -766,7 +753,7 @@
             {
                 PolylineCurve toolL = tP.getLine();
                 ToolPath iTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
-                iTp.name += " insert";
+                iTp.name += " V lead in";
                 iTp.label = PathLabel.Insert;
                 if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
                 iTp.additions.retract = false;
@@ -780,6 +767,10 @@
                 tPt.pt += tan * tP.matTool.insertWidth;
 
                 iTp.Add(tPt);
+                iTp.Add(tP.firstP.deepClone());
+
+                // drop first point of main path
+                irTps[0].removeFirst();
 
                 irTps.Insert(0, iTp);
             }
@@ -794,15 +785,11 @@
             return irTps;
         }
 
-        /// <summary>TODO The lead out v.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="activate">TODO The activate.</param>
-        /// <param name="deActivate">TODO The de activate.</param>
-        /// <param name="irActivate">TODO The ir activate.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <summary>Add a V lead out to the path. </summary>
+        /// <param name="tP">Toolpath to process.</param>
+        /// <param name="deActivate">Command if tool needs to be deactivated. </param>
+        /// <param name="irActivate">Activation state for retract path. To use this <paramref name="activate"/> should be <see cref="String.Empty"/>.</param>
+        /// <returns>The toolpath <paramref name="tP"/> followed by toolpaths for the retract.</returns>
         [NotNull]
         public static List<ToolPath> leadOutV([NotNull] ToolPath tP, [NotNull] string deActivate = "", bool applyOpen = false, int irActivate = 0)
         {
@@ -823,7 +810,7 @@
             {
                 PolylineCurve toolL = tP.getLine();
                 ToolPath rTp = newTP.deepCloneWithNewPoints(new List<ToolPoint>());
-                rTp.name += " retract";
+                rTp.name += " V lead out";
                 rTp.label = PathLabel.Retract;
                 if (tP.additions.activate != 0) { rTp.additions.activate = irActivate; }
 
@@ -833,12 +820,11 @@
                 tan.Rotate(r, Vector3d.ZAxis);
                 if (tP.lastP == null) { Exceptions.emptyPathException(); }
                 ToolPoint tPt = tP.lastP.deepClone();
-                rTp.Add(tPt);
+
                 tPt = tP.lastP.deepClone();
                 tPt.pt += tan * tP.matTool.insertWidth;
 
                 rTp.Add(tPt);
-
 
                 irTps.Add(rTp);
             }
@@ -854,15 +840,11 @@
             return irTps;
         }
 
-        /// <summary>TODO The insert.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="activate">TODO The activate.</param>
-        /// <param name="deActivate">TODO The de activate.</param>
-        /// <param name="irActivate">TODO The ir activate.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <summary>Process any insert commands for the path. </summary>
+        /// <param name="tP">Toolpath to process.</param>
+        /// <param name="activate">Command if tool needs to be activated. </param>
+        /// <param name="irActivate">Activation state for insert path. To use this <paramref name="activate"/> should be <see cref="String.Empty"/>.</param>
+        /// <returns>The toolpath <paramref name="tP"/> preceeded by toolpaths for the insert.</returns>
         [NotNull]
         internal static List<ToolPath> insert([NotNull] ToolPath tP, [NotNull] string activate = "", int irActivate = 0)
         {
@@ -893,24 +875,31 @@
                 // note we do this backwards adding points to the start of the path.
                 if (tP.additions.activate != 0) { iTp.additions.activate = irActivate; }
 
+                // add the point to finish at
+                tempTPt = tP.firstP.deepClone();
+                tempTPt.feed = tP.matTool.feedPlunge;
+                iTp.Add(tempTPt);
+
+                // remove the same point from the actual toolpath
+                iTps[0].removeFirst();
+
                 // get distance to surface and insert direction
-                if (newTP.firstP == null) { Exceptions.emptyPathException(); }
-                inter = tP.matForm.intersect(newTP.firstP, 0).through;
+                if (tP.firstP == null) { Exceptions.emptyPathException(); }
+                inter = tP.matForm.intersect(tP.firstP, 0).through;
 
                 // check to see if there was an intersection
                 if (inter.isSet)
                 {
                     // point on material surface
-                    tempTPt = newTP.firstP.deepClone();
+                    tempTPt = tP.firstP.deepClone();
                     tempTPt.pt = inter.point;
-                    tempTPt.feed = tP.matTool.feedPlunge;
+                    tempTPt.feed = 0; // Moving to surface can use rapid move
                     iTp.Insert(0, tempTPt);
 
                     // point out at safe distance
                     if (iTp.firstP == null) { Exceptions.emptyPathException(); }
                     tempTPt = iTp.firstP.deepClone();
                     tempTPt.pt += inter.away * uTol;
-                    tempTPt.feed = 0; // we can use a rapid move
                     iTp.Insert(0, tempTPt);
                 }
                 else
@@ -920,17 +909,17 @@
                     if (inter.isSet)
                     {
                         // point out at safe distance
-                        tempTPt = newTP.firstP.deepClone();
+                        tempTPt = tP.firstP.deepClone();
                         tempTPt.pt = inter.point;
                         tempTPt.feed = 0; // we can use a rapid move
                         iTp.Insert(0, tempTPt);
                     } // otherwise nothing needs to be added as we do not interact with material
                 }
 
-                if (iTp.Count > 0) { iTps.Insert(0, iTp); }
+                iTps.Insert(0, iTp); 
             }
 
-            // add activation codes
+            // add activation at start of insert
             if (tP.additions.activate != 0 && activate != string.Empty && iTps[0] != null)
             {
                 iTps[0].preCode = activate + "\n" + iTps[0].preCode;
@@ -939,15 +928,11 @@
             return iTps;
         }
 
-        /// <summary>TODO The retract.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="activate">TODO The activate.</param>
-        /// <param name="deActivate">TODO The de activate.</param>
-        /// <param name="irActivate">TODO The ir activate.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <summary>Process any retract commands for the path. </summary>
+        /// <param name="tP">Toolpath to process.</param>
+        /// <param name="deActivate">Command if tool needs to be deactivated. </param>
+        /// <param name="irActivate">Activation state for retract path. To use this <paramref name="activate"/> should be <see cref="String.Empty"/>.</param>
+        /// <returns>The toolpath <paramref name="tP"/> followed by toolpaths for the retract.</returns>
         [NotNull]
         internal static List<ToolPath> retract([NotNull] ToolPath tP, [NotNull] string deActivate = "", int irActivate = 1)
         {
@@ -982,16 +967,11 @@
             inter = tP.matForm.intersect(newTP.lastP, 0).through;
             if (inter.isSet)
             {
-                // Replace last point of toolpath
+                // Take last point of toolpath
                 tempTPt = newTP.lastP.deepClone();
-                newTP.removeLast();
 
                 // set speed to the plunge feed rate.
                 tempTPt.feed = tP.matTool.feedPlunge;
-
-                rTp.Add(tempTPt);
-
-                tempTPt = tempTPt.deepClone();
 
                 // Pull back to surface
                 tempTPt.pt = inter.point;
@@ -1012,17 +992,11 @@
                 inter = tP.matForm.intersect(newTP.lastP, uTol).through;
                 if (!inter.isSet) { return rTps; }
 
-                // Replace last point of toolpath
+                // Take last point of toolpath
                 tempTPt = newTP.lastP.deepClone();
-                newTP.removeLast();
 
-                // set speed to the plunge feed rate.
-                tempTPt.feed = tP.matTool.feedPlunge;
-
-                rTp.Add(tempTPt);
 
                 // point out at safe distance
-                tempTPt = newTP.lastP?.deepClone() ?? new ToolPoint();
                 tempTPt.pt = inter.point;
                 tempTPt.feed = 0; // we can use a rapid move
                 rTp.Add(tempTPt);
@@ -1039,29 +1013,60 @@
             }
             return rTps;
         }
-
-        internal static List<ToolPath> transition([NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool retractQ = true, bool insertQ = true)
+        /// <summary>
+        /// Transition from one path to another, first testing if a transition is necessary. 
+        /// </summary>
+        /// <param name="m">Machine to transition for.</param>
+        /// <param name="fP">Toolpath to transition from. </param>
+        /// <param name="tP">Toolpath to transition to. </param>
+        /// <param name="operation">Whether the transition is between operations</param>
+        /// <returns>List of toolpaths starting with processed <paramref name="fP"/>, followed by retract, a transition and, 
+        /// finishing withprocessed insert for adjusted <paramref name="tP"/>. If <paramref name="operation"/> is true then do not return <paramref name="fP"/> or retracts.</returns>
+        internal static List<ToolPath> transition([NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP, bool operation = false)
         {
             List<ToolPath> trans = new List<ToolPath>();
 
-            List<ToolPath> retr = m.retract(fP);
+            // Transition not necessary
+            if(m.pathConnectCheck(fP,tP)) 
+            {
+                ToolPath newFp = fP.deepClone();
+                ToolPath newTp = tP.deepClone();
+
+                newFp.additions.retract = false;
+                newTp.additions.insert = false;
+
+                if (m.samePoint(newFp.lastP,newTp.firstP, fP.matTool)) { newTp.removeFirst(); }
+                if(!operation) { trans.Add(newFp); }
+                trans.Add(newTp);
+                return trans;
+            }
+
             List<ToolPath> inse = m.insert(tP);
+            ToolPath tr;
 
-            ToolPath tr = m.transitionPath(retr[retr.Count - 1], inse[0]);
+            if (operation)
+            {
+                tr = m.transitionPath(fP, inse[0]);
+                trans.Add(tr);
+                trans.AddRange(inse);
+                return trans;
+            }
 
-            if (retractQ) {trans.AddRange(retr);}
+            List<ToolPath> retr = m.retract(fP);
+            tr = m.transitionPath(retr[retr.Count - 1], inse[0]);
+
+            trans.AddRange(retr);
             trans.Add(tr);
-            if (insertQ) { trans.AddRange(inse); }
+            trans.AddRange(inse);
 
             return trans;
         }
-
-        // Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.
+ 
         // TODO make this guarantee that it does not gouge locally. There is a problem
         // with paths that are steep down, followed by some bottom moves followed by steep out.
-        /// <summary>TODO The three axis height offset.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="m">TODO The m.</param>
+        /// <summary>Adjust the path so it will not be gouged when cut in 3-axis, or indexed 3-axis mode.</summary>
+        /// <param name="tP">Toolpath to adjust.</param>
+        /// <param name="m">Machine to adjust the toolpath for.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
         [NotNull]
         public static ToolPath threeAxisHeightOffset([NotNull] ToolPath tP, [NotNull] IMachine m)
@@ -1249,12 +1254,12 @@
         }
 
         // Check for jumps in material, return
-        // 0 if not in material
-        // positive if in material
+        // 0 if not in material, or safe distance in material
+        // positive if unsafe distance in material
         // -1 if one of the paths has 0 points
-        /// <summary>TODO The jump check.</summary>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
+        /// <summary>Check for safe jump in material. </summary>
+        /// <param name="fP">Path to change from</param>
+        /// <param name="tP">Path to change to</param>
         /// <returns>The <see cref="double"/>.</returns>
         internal static double jumpCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
@@ -1275,10 +1280,10 @@
                 fP.matForm.intersect(tP.firstP, fP.matForm.safeDistance).thrDist > 0.0001
                 && tP.matForm.intersect(tP.firstP, tP.matForm.safeDistance).thrDist > 0.0001)
             {
-                // We trust insert and retract moves and retract to transitions.
+                // We trust insert and retract moves and transitions to inserts.
                 if (fP.label == PathLabel.Insert
                     || tP.label == PathLabel.Retract
-                    || fP.label == PathLabel.Retract && tP.label == PathLabel.Transition
+                    || fP.label == PathLabel.Transition && tP.label == PathLabel.Insert
                     || fP.label == PathLabel.Retract && tP.label == PathLabel.Insert)
                 { return 0; }
 
@@ -1291,13 +1296,28 @@
             return 0;
         }
 
-        // Check travel between toolpaths
-        /// <summary>TODO The jump check.</summary>
+        // Assume all moves are fine
+        /// <summary>TODO The no check.</summary>
         /// <param name="co">TODO The co.</param>
         /// <param name="m">TODO The m.</param>
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
-        internal static void jumpCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP)
+        internal static void noCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP) { }
+
+        internal static bool pathConnectCheck3axis(ToolPath fP, ToolPath tP)
+        {
+            double length = jumpCheck(fP, tP);
+            return length <= fP.matTool?.pathJump;
+        }
+
+        internal static bool pathConnectCheck5Axis(IMachine m, double angConnectTol, ToolPath fP, ToolPath tP)
+        {
+            double length = jumpCheck(fP, tP);
+            double ang = m.angDiff(fP.lastP,tP.firstP, fP.matTool,false);
+            return length <= fP.matTool?.pathJump && ang < angConnectTol;
+        }
+
+        internal static void safeJumpCheck3axis(CodeInfo co, ToolPath fP, ToolPath tP)
         {
             // check if there is a problem moving between paths
             double length = jumpCheck(fP, tP);
@@ -1310,13 +1330,34 @@
             }
         }
 
-        // Assume all moves are fine
-        /// <summary>TODO The no check.</summary>
-        /// <param name="co">TODO The co.</param>
-        /// <param name="m">TODO The m.</param>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        internal static void noCheck(ref CodeInfo co, [NotNull] IMachine m, [NotNull] ToolPath fP, [NotNull] ToolPath tP) { }
+        internal static void safeJumpCheck5Axis(IMachine m, double angConnectTol, ref CodeInfo co, ToolPath fP, ToolPath tP)
+        {
+            // check if there is a problem moving between paths
+            double length = jumpCheck(fP, tP);
+            if (length > fP.matTool?.pathJump)
+            {
+                co.addWarning(
+                    "Long Transition between paths in material. \n"
+                    + "To remove this error, don't use ignore, instead change PathJump for the material/tool from: "
+                    + fP.matTool.pathJump + " to at least: " + (length + .01).ToString("0.00"));
+            }
+            double ang = m.angDiff(fP.lastP,tP.firstP, fP.matTool,false);
+            if (ang > angConnectTol)
+            {
+                co.addWarning("Long Angle Change between paths in material: " + (ang*180.0/Math.PI) + "°");
+            }
+        }
+
+        internal static bool samePoint3axis(ToolPoint tP1, ToolPoint tP2)
+        {
+            return (tP1.pt - tP2.pt).Length < CAMel_Goo.Tolerance;
+        }
+
+        internal static bool samePoint5axis(IMachine m, ToolPoint tP1, ToolPoint tP2, MaterialTool mT)
+        {
+            double ang = m.angDiff(tP1,tP2,mT,false);
+            return (tP1.pt - tP2.pt).Length < CAMel_Goo.Tolerance && ang < CAMel_Goo.Tolerance;
+        }
     }
 
     /// <summary>TODO The g code.</summary>

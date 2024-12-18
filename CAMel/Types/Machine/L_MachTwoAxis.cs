@@ -282,7 +282,12 @@
         /// <param name="lng">TODO The lng.</param>
         /// <returns>The <see cref="double"/>.</returns>
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) => 0;
-
+        /// <inheritdoc />
+        bool IMachine.samePoint(ToolPoint tP1, ToolPoint tP2, MaterialTool mT) => Utility.samePoint3axis(tP1, tP2);
+        /// <inheritdoc />
+        public bool pathConnectCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP) => false;
+        /// <inheritdoc />
+        public void safeJumpCheck(ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP) => Utility.noCheck(ref co, this,fP,tP);
         /// <summary>TODO The read code.</summary>
         /// <param name="code">TODO The code.</param>
         /// <returns>The <see cref="MachineInstruction"/>.</returns>
@@ -449,7 +454,7 @@
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
-        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool retractQ = true, bool insertQ = true) => Utility.transition(this, fP, tP, retractQ, insertQ);
+        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool operation = false) => Utility.transition(this, fP, tP, operation);
         /// <summary>TODO The transitionPath.</summary>
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
@@ -460,13 +465,13 @@
             if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.nullPanic(); }
 
-            List<Point3d> route = new List<Point3d> { fP.lastP.pt, tP.firstP.pt };
-
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = "Transition";
             move.preCode = string.Empty;
             move.postCode = string.Empty;
             move.label = PathLabel.Transition;
+
+            List<Point3d> route = new List<Point3d> {  tP.firstP.pt };
 
             foreach (Point3d pt in route)
             {

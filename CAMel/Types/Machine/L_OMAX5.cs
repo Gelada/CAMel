@@ -168,6 +168,8 @@
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) =>
             Vector3d.VectorAngle(tP1.dir, tP2.dir);
 
+        public bool samePoint(ToolPoint tP1, ToolPoint tP2, MaterialTool mT) => Utility.samePoint5axis(this, tP1, tP2, mT);
+
         /// <summary>TODO The read code.</summary>
         /// <param name="code">TODO The code.</param>
         /// <returns>The <see cref="MachineInstruction"/>.</returns>
@@ -412,18 +414,18 @@
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="double"/>.</returns>
-        public double jumpCheck(ToolPath fP, ToolPath tP) => 0;
+        public bool pathConnectCheck(ToolPath fP, ToolPath tP) => false;
         /// <summary>TODO The jump check.</summary>
         /// <param name="co">TODO The co.</param>
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
-        public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.noCheck(ref co, this, fP, tP);
+        public void safeJumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.noCheck(ref co, this, fP, tP);
 
         /// <summary>TODO The transition.</summary>
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
-        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool retractQ = true, bool insertQ = true) => Utility.transition(this, fP, tP, retractQ, insertQ);
+        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool operation = false) => Utility.transition(this, fP, tP, operation);
 
         /// <summary>TODO The transition.</summary>
         /// <param name="fP">TODO The f p.</param>
@@ -443,7 +445,8 @@
             move.Add(new ToolPoint(fP.lastP.tDir, fP.lastP.mDir, -1, 0));
 
             move.Add(new ToolPoint((2 * fP.lastP.pt + tP.firstP.pt) / 3, new Vector3d(0, 0, 1), fP.lastP.mDir, -1, 0));
-            move.Add(new ToolPoint((fP.lastP.pt + 2 * tP.firstP.pt) / 3, new Vector3d(0, 0, 1), fP.lastP.mDir, - 1, 0));
+            move.Add(new ToolPoint((fP.lastP.pt + 2 * tP.firstP.pt) / 3, new Vector3d(0, 0, 1), fP.lastP.mDir, - 1, 0));  
+            move.Add(new ToolPoint(tP.firstP.tDir, tP.firstP.mDir, -1, 0));
 
             return move;
         }

@@ -78,17 +78,30 @@
         /// <param name="co">TODO The co.</param>
         /// <param name="toolNumber">TODO The tool number.</param>
         void toolChange([NotNull] ref CodeInfo co, int toolNumber);
-        /// <summary>TODO The jump check.</summary>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see cref="double"/>.</returns>
+        /// <summary>Can two paths be connected (removing straight from one to the other, ignoring insert and retract)?</summary>
+        /// <param name="fP">Path moving from</param>
+        /// <param name="tP">Path moving to</param>
+        bool pathConnectCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP);
+        /// <summary>Final check that it is safe to move between paths. </summary>
+        /// <param name="fP">Path moving from</param>
+        /// <param name="tP">Path moving to</param>
         [UsedImplicitly]
-        double jumpCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP);
-        /// <summary>TODO The jump check.</summary>
-        /// <param name="co">TODO The co.</param>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        void jumpCheck([NotNull] ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP);
+        void safeJumpCheck(ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP);
+        /// <summary>
+        /// Angle (radians) to consider for changes of orientation
+        /// </summary>
+        /// <param name="tP1">First ToolPoint</param>
+        /// <param name="tP2">Second ToolPOint</param>
+        /// <param name="mT">Material Tool information (for tool length)</param>
+        /// <param name="lng">Give longer angle on circular axis</param>
+        /// <returns></returns>
+        [UsedImplicitly]
+        double angDiff([NotNull] ToolPoint tP1, [NotNull] ToolPoint tP2, [NotNull] MaterialTool mT, bool lng); 
+        /// <summary>Can two toolpoints be considered the same for this machine.</summary>
+        /// <param name="tP1">First toolpoint</param>
+        /// <param name="tP2">Second toolpoint</param>
+        /// <param name="mT">Tool to check for</param>
+        bool samePoint(ToolPoint tP1, ToolPoint tP2, MaterialTool mT);
 
         /// <summary>TODO The read code.</summary>
         /// <param name="code">TODO The code.</param>
@@ -149,16 +162,18 @@
         /// .</returns>
         [NotNull, ItemNotNull]
         List<ToolPath> finishPaths([NotNull] ToolPath tP);
-        /// <summary>TODO The transition.</summary>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see cref="ToolPath"/>.</returns>
+        /// <summary>Create transitions between toolpaths, processing any retract and insert moves. </summary>
+        /// <param name="fP">Path to start with. </param>
+        /// <param name="tP">Path to finish with. </param>
+        /// <param name="operation">Is the transition between operations</param>
+        /// <returns>A list of <see cref="ToolPath"/>, starting with a processed <paramref name="fP"/>, any retracts, the transition, 
+        /// then any insert and a processed <paramref name="tP"/>. If <paramref name="operation"/> is true, perform checks and don't return first path or retract.</returns>
         [NotNull]
-        List<ToolPath> transition([NotNull] ToolPath fP, [NotNull] ToolPath tP, bool retractQ = true, bool insertQ = true);
-        /// <summary>TODO The transitionPath.</summary>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see cref="ToolPath"/>.</returns>
+        List<ToolPath> transition([NotNull] ToolPath fP, [NotNull] ToolPath tP, bool operation = false);
+        /// <summary>Create a transition path between two paths.</summary>
+        /// <param name="fP">Path to start with. </param>
+        /// <param name="tP">Path to finish with. </param>
+        /// <returns>A list of <see cref="ToolPath"/> starting with the end of <paramref name="fP"/> and finishing with the start of <paramref name="tP"/>.</returns>
         [NotNull]
         ToolPath transitionPath([NotNull] ToolPath fP, [NotNull] ToolPath tP);
 
@@ -181,9 +196,7 @@
         /// <param name="tP2">TODO The t p 2.</param>
         /// <param name="mT">TODO The m t.</param>
         /// <param name="lng">TODO The lng.</param>
-        /// <returns>The <see cref="double"/>.</returns>
-        [UsedImplicitly]
-        double angDiff([NotNull] ToolPoint tP1, [NotNull] ToolPoint tP2, [NotNull] MaterialTool mT, bool lng); // max change for orientation axes
+        /// <returns>The <see cref="double"/>.</returns>        
     }
 
     // Grasshopper Type Wrapper

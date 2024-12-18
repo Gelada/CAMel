@@ -15,7 +15,7 @@
         public static void matFormException() => throw new InvalidOperationException("Attempting to use ToolPath with no MaterialForm information.");
         /// <summary>TODO The additions exception.</summary>
         [ContractAnnotation("=> halt")]
-        public static void additionsException() => throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves.)");
+        public static void additionsException() => throw new InvalidOperationException("Cannot write Code for toolpaths with unprocessed additions (such as step down or insert and retract moves). The start path is not processed, so might be at fault.");
         /// <summary>TODO The transition exception.</summary>
         [ContractAnnotation("=> halt")]
         public static void transitionException() => throw new InvalidOperationException("Transition called between points in material. ");

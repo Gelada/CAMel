@@ -116,19 +116,14 @@
         /// <summary>Gets the file start.</summary>
         public string fileStart { get; }
         /// <inheritdoc />
-        /// <summary>Gets the file end.</summary>
         public string fileEnd { get; }
         /// <inheritdoc />
-        /// <summary>Gets the header.</summary>
         public string header { get; }
         /// <inheritdoc />
-        /// <summary>Gets the footer.</summary>
         public string footer { get; }
         /// <inheritdoc />
-        /// <summary>Gets the comment start.</summary>
         public string commentStart { get; }
         /// <inheritdoc />
-        /// <summary>Gets the comment end.</summary>
         public string commentEnd { get; }
         /// <summary>TODO The terms.</summary>
         [NotNull] private readonly List<char> terms;
@@ -159,80 +154,43 @@
         }
 
         /// <inheritdoc />
-        /// <summary>TODO The type description.</summary>
         public string TypeDescription => @"Instructions for a 3-Axis machine";
-
         /// <inheritdoc />
-        /// <summary>TODO The type name.</summary>
         public string TypeName => @"CAMelThreeAxis";
-
-        /// <summary>TODO The to string.</summary>
-        /// <returns>The <see cref="T:System.String" />.</returns>
+        /// <inheritdoc />
         public override string ToString() => "3Axis: " + this.name;
-
-        /// <summary>TODO The comment.</summary>
-        /// <param name="l">TODO The l.</param>
-        /// <returns>The <see cref="string"/>.</returns>
+        /// <inheritdoc />
         public string comment(string l) => GCode.comment(this, l);
-        /// <summary>TODO The line number.</summary>
-        /// <param name="l">TODO The l.</param>
-        /// <param name="line">TODO The line.</param>
-        /// <returns>The <see cref="string"/>.</returns>
+        /// <inheritdoc />
         public string lineNumber(string l, int line) => GCode.gcLineNumber(l, line);
-        /// <summary>TODO The refine.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see cref="ToolPath"/>.</returns>
+        /// <inheritdoc />
         public ToolPath refine(ToolPath tP) => tP.matForm?.refine(tP, this) ?? tP;
-        /// <summary>TODO The off set.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <inheritdoc />
         public List<ToolPath> offSet(ToolPath tP) => tP.planarOffset(out Vector3d dir) ? Utility.planeOffset(tP, dir) : Utility.localOffset(tP);
-
+        /// <inheritdoc />
         public List<ToolPath> insert(ToolPath tP) => Utility.insert(tP);
+        /// <inheritdoc />
         public List<ToolPath> retract(ToolPath tP) => Utility.retract(tP);
-        /// <summary>TODO The step down.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <inheritdoc />
         public List<List<ToolPath>> stepDown(ToolPath tP) => Utility.stepDown(tP, this);
-        /// <summary>TODO The three axis height offset.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see cref="ToolPath"/>.</returns>
+        /// <inheritdoc />
         public ToolPath threeAxisHeightOffset(ToolPath tP) => Utility.threeAxisHeightOffset(tP, this);
-        /// <summary>TODO The finish paths.</summary>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see>
-        ///         <cref>List</cref>
-        ///     </see>
-        /// .</returns>
+        /// <inheritdoc />
         public List<ToolPath> finishPaths(ToolPath tP) => Utility.finishPaths(tP, this);
 
-        /// <summary>TODO The interpolate.</summary>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        /// <param name="mT">TODO The m t.</param>
-        /// <param name="par">TODO The par.</param>
-        /// <param name="lng">TODO The lng.</param>
-        /// <returns>The <see cref="ToolPoint"/>.</returns>
+        /// <inheritdoc />
         public ToolPoint interpolate(ToolPoint fP, ToolPoint tP, MaterialTool mT, double par, bool lng)
             => Kinematics.interpolateLinear(fP, tP, par);
 
-        /// <summary>TODO The ang diff.</summary>
-        /// <param name="tP1">TODO The t p 1.</param>
-        /// <param name="tP2">TODO The t p 2.</param>
-        /// <param name="mT">TODO The m t.</param>
-        /// <param name="lng">TODO The lng.</param>
-        /// <returns>The <see cref="double"/>.</returns>
+        /// <inheritdoc />
         public double angDiff(ToolPoint tP1, ToolPoint tP2, MaterialTool mT, bool lng) => 0;
-
-        /// <summary>TODO The read code.</summary>
-        /// <param name="code">TODO The code.</param>
-        /// <returns>The <see cref="MachineInstruction"/>.</returns>
+        /// <inheritdoc />
+        bool IMachine.samePoint(ToolPoint tP1, ToolPoint tP2, MaterialTool mT) => Utility.samePoint3axis(tP1, tP2);
+        /// <inheritdoc />
+        public bool pathConnectCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP) => Utility.pathConnectCheck3axis(fP, tP);
+        /// <inheritdoc />
+        public void safeJumpCheck(ref CodeInfo co, [NotNull] ToolPath fP, [NotNull] ToolPath tP) => Utility.safeJumpCheck3axis(co, fP, tP);
+        /// <inheritdoc />
         public MachineInstruction readCode(string code) => GCode.gcRead(this, this.mTs, code, this.terms);
         /// <inheritdoc />
         /// <summary>TODO The read tp.</summary>
@@ -388,23 +346,12 @@
         /// <param name="co">TODO The co.</param>
         /// <param name="toolNumber">TODO The tool number.</param>
         public void toolChange(ref CodeInfo co, int toolNumber) => GCode.toolChange(this, ref co, toolNumber);
-        /// <summary>TODO The jump check.</summary>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        /// <returns>The <see cref="double"/>.</returns>
-        public double jumpCheck(ToolPath fP, ToolPath tP) => Utility.jumpCheck(fP, tP);
-
-        /// <summary>TODO The jump check.</summary>
-        /// <param name="co">TODO The co.</param>
-        /// <param name="fP">TODO The f p.</param>
-        /// <param name="tP">TODO The t p.</param>
-        public void jumpCheck(ref CodeInfo co, ToolPath fP, ToolPath tP) => Utility.jumpCheck(ref co, this, fP, tP);
 
         /// <summary>TODO The transition.</summary>
         /// <param name="fP">TODO The f p.</param>
         /// <param name="tP">TODO The t p.</param>
         /// <returns>The <see cref="ToolPath"/>.</returns>
-        public List<ToolPath> transition(ToolPath fP, ToolPath tP, bool retractQ = true, bool insertQ = true) => Utility.transition(this, fP, tP, retractQ, insertQ);
+        public List<ToolPath> transition(ToolPath fP, ToolPath tP,  bool operation = false) => Utility.transition(this, fP, tP, operation);
 
         /// <summary>TODO The transition.</summary>
         /// <param name="fP">TODO The f p.</param>
@@ -441,9 +388,9 @@
                 }
             }
 
-            // get rid of end points that will remain in the to path. 
+            // Remove start point (last point of previous path).
             
-            route.RemoveAt(route.Count - 1);
+            route.RemoveAt(0);
 
             ToolPath move = tP.deepCloneWithNewPoints(new List<ToolPoint>());
             move.name = "Transition";
@@ -458,8 +405,6 @@
             }
 
             if (tranError) { move.lastP?.addWarning("Transition to next toolpath failed."); }
-
-
 
             return move;
         }
