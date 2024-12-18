@@ -221,6 +221,7 @@ namespace CAMel.Types
             // Rotate 90 degrees, and check we get the one closer to the tool direction
             Vector3d norm = travel;
             norm.Transform(Transform.Rotation(Math.PI / 2, orthogonal, new Point3d(0, 0, 0)));
+            norm.Unitize();
             double testD = norm * m.toolDir(tP);
             if (testD < 0) { norm = -1 * norm; }
 
@@ -229,7 +230,7 @@ namespace CAMel.Types
             osTp.dir = m.toolDir(tP);
 
             // move tool so that it cuts at the toolpoint location and does not gouge.
-            osTp.pt += this.cutOffset(osTp);
+            osTp = this.cutOffset(osTp);
             osTp.lifted = true;
 
             return osTp;
@@ -238,7 +239,7 @@ namespace CAMel.Types
         /// <summary>Find the path offset so the cutting surface of the tool is on the path</summary>
         /// <param name="tP">ToolPoint to offset</param>
         /// <returns>The <see cref="Vector3d"/>.</returns>
-        public Vector3d cutOffset([NotNull] ToolPoint tP)
+        public ToolPoint cutOffset([NotNull] ToolPoint tP)
         {
             Vector3d os;
 
@@ -287,8 +288,15 @@ namespace CAMel.Types
                     os = new Vector3d();
                     break;
             }
+            ToolPoint newTp = tP.deepClone();
+            newTp.pt = tP.pt+os;
 
-            return os;
+            if(newTp.dir*newTp.norm<0) 
+            {
+                newTp.addError("Tool Direction"+newTp.dir.ToString()+"and surface normal"+newTp.norm.ToString()+"incompatible (>90°)."); 
+            }
+
+            return newTp;
         }
         internal double liftOffset(ToolPoint tP, ToolPoint plane)
         {

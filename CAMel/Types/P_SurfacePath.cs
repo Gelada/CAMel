@@ -209,19 +209,16 @@ namespace CAMel.Types
             return this.generateOperation_(offset, mF, tPa);
         }
 
-        /// <summary>TODO The generate operation.</summary>
-        /// <param name="mIn">TODO The m in.</param>
-        /// <param name="offset">TODO The offset.</param>
-        /// <param name="mF">TODO The m f.</param>
-        /// <param name="tPa">TODO The t pa.</param>
-        /// <returns>The <see cref="MachineOperation"/>.</returns>
+        /// <summary>Generate surfacing operation on a mesh</summary>
+        /// <param name="mIn">Mesh to surface</param>
+        /// <param name="offset">Distance to finish awy from surface</param>
+        /// <param name="mF"><see cref="IMaterialForm"/> to surface from</param>
+        /// <param name="tPa"><see cref="ToolPathAdditions"/> for the surfacing operation.</param>
+        /// <returns>The surfacing path as a <see cref="MachineOperation"/>.</returns>
         /// <exception cref="ArgumentNullException"></exception>
         [NotNull]
         public MachineOperation generateOperation([NotNull] Mesh mIn, double offset, [CanBeNull] IMaterialForm mF, [NotNull] ToolPathAdditions tPa)
         {
-            if (mIn.FaceNormals == null) { throw new ArgumentNullException(); }
-            mIn.FaceNormals.ComputeFaceNormals();
-            mIn.Normals.ComputeNormals();
             this.m = mIn;
 
             return this.generateOperation_(offset, mF, tPa);
@@ -239,6 +236,10 @@ namespace CAMel.Types
             if (this.m == null) { throw new NullReferenceException("Trying to generate a surfacing path with no mesh set. "); }
 
             List<ToolPath> newTPs = new List<ToolPath>();
+
+            // Unify mesh and try to pick correct direction
+
+            this.VerifyMeshNormals();
 
             foreach (SurfaceCurve p in this.paths)
             {
@@ -319,18 +320,46 @@ namespace CAMel.Types
                     // so that the cutting surface not the tooltip is at the correct point
 
                     if (tP[i].lifted) { tP[i] = this.liftOff(tP[i]); }
-                    else { tP[i].pt += this.mT.cutOffset(tP[i]); }
+                    else { tP[i] = this.mT.cutOffset(tP[i]); }
 
                     // If the whole path is being offset move away from the surface using normal
                     // TODO work out how to make the surface offset be correct (distance from surface) and work with pocketing.
-
-                    tP[i].pt += offset * tP[i].dir;
+                    if(tP[i].lifted) { tP[i].pt += offset * tP[i].dir; }
+                    else{ tP[i].pt += offset * tP[i].norm; }
                 }
             }
 
             // make the machine operation
             MachineOperation mO = new MachineOperation(this.ToString(), newTPs);
             return mO;
+        }        
+        private bool VerifyMeshNormals()
+        {
+            // Unify the mesh
+            this.m.UnifyNormals();
+            this.m.Normals.ComputeNormals();
+
+            // Check to see if the mesh needs to be flipped depending on projection method.
+
+           int checks = 100;
+           foreach(SurfaceCurve sC in this)
+            {
+                sC.C.DivideByCount(checks, true, out Point3d[] checkPoints);
+                foreach(Point3d pt in checkPoints)
+                {
+                    ToolPoint check = new ToolPoint(pt);
+                    check = this.firstIntersect(check, false);
+                    // the norm will be zero for points without intersection 
+                    // find the first hit and push norm to that side. 
+                    if(check.dir*check.norm > CAMel_Goo.Tolerance) { return true; }
+                    if(check.dir*check.norm < -CAMel_Goo.Tolerance) 
+                    { 
+                        this.m.Flip(true,true,true);
+                        return true; 
+                    }
+                }
+            }
+            return false;
         }
 
         Vector3d ToolDir(ToolPoint tP, Vector3d tangent, IMaterialForm mF)
@@ -397,7 +426,7 @@ namespace CAMel.Types
             tP.meshface = faces[0];
             tP.setNorm(this.m);
 
-            if (tP.norm * rayL.Direction > 0) { tP.norm = -tP.norm; }
+            //if (tP.norm * rayL.Direction > 0) { tP.norm = -tP.norm; }
 
             tP.lifted = lift;
 
@@ -518,10 +547,12 @@ namespace CAMel.Types
                         int ptNmo = boundaries[i][j - 1];
                         ToolPoint tPt = new ToolPoint();
                         tPt.pt = (Point3d)this.m.Vertices[ptN] * 0.9 + (Point3d)this.m.Vertices[ptNmo] * 0.1;
+                        tPt.dir = this.projDir(tPt.pt);
+
                         int edge = this.m.TopologyEdges.GetEdgeIndex(ptN, ptNmo);
                         tPt.meshface = this.m.TopologyEdges.GetConnectedFaces(edge)[0];
                         tPt.setNorm(this.m);
-                        tPt.dir = this.projDir(tPt.pt);
+
                         tP.Add(tPt);
                     }
                     tP.Add(tP[0].deepClone()); // close curve
@@ -617,9 +648,9 @@ namespace CAMel.Types
             ToolPoint newTPt = tPt.deepClone();
 
             newTPt.dir = this.ToolDir(tPt, tangent, mFBlank);
-            Point3d toolPos = newTPt.pt + this.mT.cutOffset(newTPt);
+            ToolPoint toolPos = this.mT.cutOffset(newTPt);
 
-            distance = avoid.DistanceTo(toolPos) - this.mT.toolWidth / 2.0;
+            distance = avoid.DistanceTo(toolPos.pt) - this.mT.toolWidth / 2.0;
 
             double move = distance / (avoid.ZAxis * edge); // Length along path on face that projects to move.
 
