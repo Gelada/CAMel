@@ -53,17 +53,20 @@
     <Reference Include="CsvHelper, Version=30.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
       <HintPath>..\packages\CsvHelper.30.0.1\lib\net47\CsvHelper.dll</HintPath>
     </Reference>
+    <Reference Include="Ed.Eto, Version=1.0.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
+      <HintPath>..\packages\RhinoCommon.8.9.24194.18121\lib\net48\Ed.Eto.dll</HintPath>
+    </Reference>
     <Reference Include="Emgu.CV, Version=4.7.0.5276, Culture=neutral, PublicKeyToken=7281126722ab4438, processorArchitecture=MSIL">
       <HintPath>..\packages\Emgu.CV.4.7.0.5276\lib\netstandard2.0\Emgu.CV.dll</HintPath>
     </Reference>
-    <Reference Include="Eto, Version=2.7.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
-      <HintPath>..\packages\RhinoCommon.7.29.23107.3001\lib\net48\Eto.dll</HintPath>
+    <Reference Include="Eto, Version=2.8.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
+      <HintPath>..\packages\RhinoCommon.8.9.24194.18121\lib\net48\Eto.dll</HintPath>
     </Reference>
-    <Reference Include="GH_IO, Version=7.29.23107.3001, Culture=neutral, PublicKeyToken=6a29997d2e6b4f97, processorArchitecture=MSIL">
-      <HintPath>..\packages\Grasshopper.7.29.23107.3001\lib\net48\GH_IO.dll</HintPath>
+    <Reference Include="GH_IO, Version=8.9.24194.18121, Culture=neutral, PublicKeyToken=6a29997d2e6b4f97, processorArchitecture=MSIL">
+      <HintPath>..\packages\Grasshopper.8.9.24194.18121\lib\net48\GH_IO.dll</HintPath>
     </Reference>
-    <Reference Include="Grasshopper, Version=7.29.23107.3001, Culture=neutral, PublicKeyToken=dda4f5ec2cd80803, processorArchitecture=MSIL">
-      <HintPath>..\packages\Grasshopper.7.29.23107.3001\lib\net48\Grasshopper.dll</HintPath>
+    <Reference Include="Grasshopper, Version=8.9.24194.18121, Culture=neutral, PublicKeyToken=dda4f5ec2cd80803, processorArchitecture=MSIL">
+      <HintPath>..\packages\Grasshopper.8.9.24194.18121\lib\net48\Grasshopper.dll</HintPath>
     </Reference>
     <Reference Include="JetBrains.Annotations, Version=4242.42.42.42, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
       <HintPath>..\packages\JetBrains.Annotations.2022.3.1\lib\net20\JetBrains.Annotations.dll</HintPath>
@@ -78,11 +81,11 @@
       <HintPath>..\packages\Microsoft.Bcl.HashCode.1.1.1\lib\net461\Microsoft.Bcl.HashCode.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Rhino.UI, Version=7.29.23107.3001, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
-      <HintPath>..\packages\RhinoCommon.7.29.23107.3001\lib\net48\Rhino.UI.dll</HintPath>
+    <Reference Include="Rhino.UI, Version=8.9.24194.18121, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
+      <HintPath>..\packages\RhinoCommon.8.9.24194.18121\lib\net48\Rhino.UI.dll</HintPath>
     </Reference>
-    <Reference Include="RhinoCommon, Version=7.29.23107.3001, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
-      <HintPath>..\packages\RhinoCommon.7.29.23107.3001\lib\net48\RhinoCommon.dll</HintPath>
+    <Reference Include="RhinoCommon, Version=8.9.24194.18121, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
+      <HintPath>..\packages\RhinoCommon.8.9.24194.18121\lib\net48\RhinoCommon.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -349,13 +352,13 @@ Copy "$(TargetDir)Microsoft.Bcl.HashCode.dll" "C:\Users\eohar\Google Drive\CAMel
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Import Project="..\packages\RhinoCommon.7.29.23107.3001\build\net48\RhinoCommon.targets" Condition="Exists('..\packages\RhinoCommon.7.29.23107.3001\build\net48\RhinoCommon.targets')" />
+  <Import Project="..\packages\RhinoCommon.8.9.24194.18121\build\net48\RhinoCommon.targets" Condition="Exists('..\packages\RhinoCommon.8.9.24194.18121\build\net48\RhinoCommon.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\RhinoCommon.7.29.23107.3001\build\net48\RhinoCommon.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\RhinoCommon.7.29.23107.3001\build\net48\RhinoCommon.targets'))" />
-    <Error Condition="!Exists('..\packages\Grasshopper.7.29.23107.3001\build\net48\Grasshopper.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Grasshopper.7.29.23107.3001\build\net48\Grasshopper.targets'))" />
+    <Error Condition="!Exists('..\packages\RhinoCommon.8.9.24194.18121\build\net48\RhinoCommon.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\RhinoCommon.8.9.24194.18121\build\net48\RhinoCommon.targets'))" />
+    <Error Condition="!Exists('..\packages\Grasshopper.8.9.24194.18121\build\net48\Grasshopper.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Grasshopper.8.9.24194.18121\build\net48\Grasshopper.targets'))" />
   </Target>
-  <Import Project="..\packages\Grasshopper.7.29.23107.3001\build\net48\Grasshopper.targets" Condition="Exists('..\packages\Grasshopper.7.29.23107.3001\build\net48\Grasshopper.targets')" />
+  <Import Project="..\packages\Grasshopper.8.9.24194.18121\build\net48\Grasshopper.targets" Condition="Exists('..\packages\Grasshopper.8.9.24194.18121\build\net48\Grasshopper.targets')" />
 </Project>
