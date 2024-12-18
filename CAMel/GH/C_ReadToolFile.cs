@@ -40,7 +40,7 @@
             this.Map(m => m.minStep)?.Name("Min Step").Optional();
             this.Map(m => m.shape)?.Name("Shape").Optional();
             this.Map(m => m.sideLoad)?.Name("Side Load").Optional();
-            this.Map(m => m.pathJump)?.Name("PathJump").Optional();
+            this.Map(m => m.pathJump)?.Name("Path Jump").Optional();
         }
     }
 
