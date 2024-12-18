@@ -508,7 +508,6 @@
             // create Operation
             List<ToolPath> tPs = new List<ToolPath>();
 
-            int i = 1;
             foreach (PolylineCurve osPl in osC)
             {
                 // Create and add name, material/tool and material form
@@ -719,6 +718,7 @@
         public void RemoveAt(int index) => this.pts.RemoveAt(index);
         /// <summary>TODO The remove last.</summary>
         public void removeLast() { this.pts.RemoveAt(this.Count - 1); }
+        public void removeFirst() { this.pts.RemoveAt(0); }
         /// <inheritdoc />
         public void Add(ToolPoint item)
         {
