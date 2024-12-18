@@ -319,8 +319,8 @@
         /// <inheritdoc />
         public string TypeName => "ToolPoint";
 
-        /// <summary>To String.</summary>
-        /// <returns>The <see cref="string"/>.</returns>
+        /// <summary>Converts to String.</summary>
+        /// <returns>The <see cref="string"/> with Position and Direction information.</returns>
         public override string ToString()
         {
             string outP = this.name;
@@ -335,6 +335,7 @@
             return outP;
         }
 
+        /// <summary>Set Normal of toolpoint from a mesh.</summary>
         public void setNorm(Mesh m)
         {
             // TODO check for failure on not having or bad number for meshface
@@ -343,8 +344,14 @@
                 this.pt,
                 m.Vertices[mF.A], m.Vertices[mF.B], m.Vertices[mF.C]);
             this.norm = m.NormalAt(this.meshface, bary.Z, bary.X, bary.Y, 0.0);
+            
+            //if(this.norm*this.dir < 0) {this.addError("Normal direction not compatible with tool direction.");}
         }
-
+        /// <summary>Check ToolPoint Normal is compatibel with the tool direction.</summary>
+        public void checkNorm(Mesh m)
+        {            
+            if(this.norm*this.dir < 0) {this.addError("Normal direction not compatible with tool direction.");}
+        }
         // Transcribed from Christer Ericson's Real-Time Collision Detection
         // Compute barycentric coordinates (u, v, w) for
         // point p with respect to triangle (a, b, c)
