@@ -67,6 +67,7 @@ namespace CAMel.Types
         public double minStep { get; [UsedImplicitly] set; } // shortest path permitted
         /// <summary>Gets or sets the path jump.</summary>
         public double pathJump { get; [UsedImplicitly] set; } // maximum jump between toolpaths in material
+        public double verticalJump { get; [UsedImplicitly] set; } // maximum jump between toolpaths in material
     }
 
     // Settings for a particular material and tool
@@ -74,47 +75,50 @@ namespace CAMel.Types
     /// <summary>TODO The material tool.</summary>
     public class MaterialTool : ICAMelBase
     {
-        /// <summary>Gets the mat name.</summary>
+        /// <summary>Name of the material</summary>
         [NotNull]
-        public string matName { get; } // Name of the materialMaterialToolReader
-        /// <summary>Gets the tool name.</summary>
+        public string matName { get; }
+        /// <summary>Name of the tool.</summary>
         [NotNull]
-        public string toolName { get; } // Name of the tool
-        /// <summary>Gets the tool number.</summary>
-        public int toolNumber { get; } // Number of the tool
-        /// <summary>Gets the speed.</summary>
-        public double speed { get; } // speed of spindle (assumed unset for negative values)
-        /// <summary>Gets the feed cut.</summary>
-        public double feedCut { get; } // feed rate for cutting (assumed unset for negative values)
-        /// <summary>Gets the feed plunge.</summary>
-        public double feedPlunge { get; } // feed rate for plunging (assumed unset for negative values)
-        /// <summary>Gets the cut depth.</summary>
-        public double cutDepth { get; } // maximum material to cut away (assumed unset for negative values)
-        /// <summary>Gets the finish depth.</summary>
-        public double finishDepth { get; } // thickness to cut in a finish pass
-        /// <summary>Gets the tool width.</summary>
-        public double toolWidth { get; } // width of tool (assumed unset for negative values)
-        /// <summary>Gets the insert width.</summary>
-        public double insertWidth { get; } // width needed to insert into material
-        /// <summary>Gets the tool length.</summary>
-        public double toolLength { get; } // length from the tip of the tool to the spindle
-        /// <summary>Gets the shape.</summary>
-        private EndShape shape { get; } // End shape of the tool
-        /// <summary>Gets the side load.</summary>
-        public double sideLoad { get; } // Suggested side load for the tool.
-        /// <summary>Gets the path jump.</summary>
-        public double pathJump { get; } // maximum jump between toolpaths in material
+        public string toolName { get; } 
+        /// <summary>Number of the tool</summary>
+        public int toolNumber { get; } 
+        /// <summary>Speed of spindle (assumed unset for negative values)</summary>
+        public double speed { get; }  
+        /// <summary>Feed rate for cutting (assumed unset for negative values)</summary>
+        public double feedCut { get; } 
+        /// <summary>Feed rate for plunging (assumed unset for negative values)</summary>
+        public double feedPlunge { get; } 
+        /// <summary>Maximum material to cut away (assumed unset for negative values)</summary>
+        public double cutDepth { get; }
+        /// <summary>Thickness to cut in a finish pass</summary>
+        public double finishDepth { get; } 
+        /// <summary>Width of tool (assumed unset for negative values)</summary>
+        public double toolWidth { get; } 
+        /// <summary>Width needed to insert into material</summary>
+        public double insertWidth { get; } 
+        /// <summary>Length from the tip of the tool to the spindle</summary>
+        public double toolLength { get; } 
+        /// <summary>End shape of the tool</summary>
+        private EndShape shape { get; } 
+        /// <summary>Suggested side load for the tool.</summary>
+        public double sideLoad { get; } 
+        /// <summary>Maximum jump between toolpaths in material</summary>
+        public double pathJump { get; } 
+        /// <summary>Maximum jump between toolpaths in material in direction of tool.</summary>
+        public double verticalJump { get; } 
 
         // settings for curve approximation
-        /// <summary>Gets the tolerance.</summary>
-        public double tolerance { get; } // The maximum permitted distance of approximation from curve
-        /// <summary>Gets the min step.</summary>
-        public double minStep { get; } // shortest path permitted
+        /// <summary>The maximum permitted distance of approximations from curves/</summary>
+        public double tolerance { get; } 
+        /// <summary>Shortest path permitted</summary>
+        public double minStep { get; }
+ 
 
         // Adding anything here needs significant support:
         //  Add to MaterialToolBuilder
         //  Add to Constructors
-        //  Add to csv mapping
+        //  Add to csv mapping 
         //  Add to create Material Tool
 
         // Everything, with defaults
@@ -137,7 +141,7 @@ namespace CAMel.Types
         /// <param name="pathJump">TODO The path jump.</param>
         public MaterialTool(
             [CanBeNull] string mat, [CanBeNull] string tool, int toolN, double speed, double feedCut, double feedPlunge, double cutDepth, double finishDepth = 0, double width = -1, double iWidth = -1,
-            double tL = 0, EndShape eS = EndShape.Other, double tol = 0, double mS = 0, double sideLoad = 0.7, double pathJump = -1.0)
+            double tL = 0, EndShape eS = EndShape.Other, double tol = 0, double mS = 0, double sideLoad = 0.7, double pathJump = -1.0, double verticalJump = -1.0)
         {
             this.matName = mat ?? string.Empty;
             this.toolName = tool ?? string.Empty;
@@ -155,6 +159,7 @@ namespace CAMel.Types
             this.shape = eS;
             this.sideLoad = sideLoad;
             this.pathJump = pathJump;
+            this.verticalJump = verticalJump;
         }
 
         /// <summary>Initializes a new instance of the <see cref="MaterialTool"/> class.</summary>
@@ -177,6 +182,7 @@ namespace CAMel.Types
             this.shape = getToolShape(mT.shape);
             this.sideLoad = mT.sideLoad;
             this.pathJump = mT.pathJump;
+            this.verticalJump = mT.verticalJump;
         }
 
         /// <summary>TODO The change finish depth.</summary>
@@ -187,10 +193,10 @@ namespace CAMel.Types
         public static MaterialTool changeFinishDepth([NotNull] MaterialTool mT, double fd) => new MaterialTool(
             mT.matName, mT.toolName, mT.toolNumber, mT.speed,
             mT.feedCut, mT.feedPlunge, mT.cutDepth, fd,
-            mT.toolWidth, mT.insertWidth, mT.toolLength, mT.shape, mT.tolerance, mT.minStep, mT.sideLoad, mT.pathJump);
+            mT.toolWidth, mT.insertWidth, mT.toolLength, mT.shape, mT.tolerance, mT.minStep, mT.sideLoad, mT.pathJump, mT.verticalJump);
 
         /// <summary>TODO The empty.</summary>
-        [NotNull] public static readonly MaterialTool Empty = new MaterialTool(null, null, -1, -1, -1, -1, -1, -1);
+        [NotNull] public static readonly MaterialTool Empty = new MaterialTool(null, null, -1, -1, -1, -1, -1, -1, -1);
 
         /// <inheritdoc />
         public string TypeDescription => "Details of a Material and Tool";

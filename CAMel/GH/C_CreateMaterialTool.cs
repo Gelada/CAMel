@@ -46,6 +46,7 @@
             pManager.AddTextParameter("Tool Shape", "TS", "End shape of tool (Ball, Square, V, Other).", GH_ParamAccess.item, "Other");
             pManager.AddNumberParameter("Side Load", "SL", "Fraction of the tool to engage with the material when surfacing.", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("Path Jump", "PJ", "Maximum distance allowed between toolPaths in material.", GH_ParamAccess.item, -1);
+            pManager.AddNumberParameter("Vertical Jump", "VJ", "Maximum distance allowed between toolPaths in material, in direction of tool.", GH_ParamAccess.item, -1);
         }
 
         /// <inheritdoc />
@@ -70,7 +71,7 @@
             string toolName = string.Empty;
 
             int t = 1;
-            double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW = 0, tL = 0, sL = 1, pJ = -1;
+            double s = 0, cf = 0, pf = 0, cd = 0, fd = 0, to = 0, mS = 0, tW = 0, iW = 0, tL = 0, sL = 1, pJ = -1, vJ = -1;
 
             string toolShape = string.Empty;
 
@@ -90,6 +91,7 @@
             if (!da.GetData("Tool Shape", ref toolShape)) { return; }
             if (!da.GetData("Side Load", ref sL)) { return; }
             if (!da.GetData("Path Jump", ref pJ)) { return; }
+            if (!da.GetData("Vertical Jump", ref vJ)) { return; }
 
             EndShape eS = MaterialTool.getToolShape(toolShape);
 

@@ -165,8 +165,8 @@
             ol[0].transform(Transform.Translation((Vector3d)dir.PointAt(0, 0, Surfacing.GenericOffset)));
 
             ToolPath boundary = ToolPath.Clean(ol[0], dir.ZAxis, dir.ZAxis);
-            boundary.simplify(0.2);
-            ToolPath osBoundary;
+            boundary?.simplify(0.2);
+
             double offset = mT.toolWidth / 2.0;
 
             List<ToolPath> boundaries = ToolPath.planeOffset(boundary, offset * dir.ZAxis, dir.ZAxis);

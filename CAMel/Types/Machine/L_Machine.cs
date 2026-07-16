@@ -905,7 +905,7 @@
                 else
                 {
                     // check intersection with material extended to safe distance
-                    inter = tP.matForm.intersect(newTP.firstP, uTol).through;
+                    inter = tP.matForm.intersect(tP.firstP, uTol).through;
                     if (inter.isSet)
                     {
                         // point out at safe distance
@@ -916,7 +916,7 @@
                     } // otherwise nothing needs to be added as we do not interact with material
                 }
 
-                iTps.Insert(0, iTp); 
+                iTps.Insert(0, iTp);
             }
 
             // add activation at start of insert
@@ -1261,14 +1261,14 @@
         /// <param name="fP">Path to change from</param>
         /// <param name="tP">Path to change to</param>
         /// <returns>The <see cref="double"/>.</returns>
-        internal static double jumpCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP)
+        internal static Vector3d jumpCheck([NotNull] ToolPath fP, [NotNull] ToolPath tP)
         {
             if (fP.matForm == null || tP.matForm == null) { Exceptions.matFormException(); }
             if (fP.matTool == null) { Exceptions.matToolException(); }
             if (fP.lastP == null || tP.firstP == null) { Exceptions.emptyPathException(); }
 
             // check there is anything to transition from or to
-            if (fP.Count <= 0 || tP.Count <= 0) { return -1; }
+            if (fP.Count <= 0 || tP.Count <= 0) { return new Vector3d(-1,0,0); }
 
             // See if we lie in the material
             // Check end of this path and start of TP
@@ -1285,15 +1285,17 @@
                     || tP.label == PathLabel.Retract
                     || fP.label == PathLabel.Transition && tP.label == PathLabel.Insert
                     || fP.label == PathLabel.Retract && tP.label == PathLabel.Insert)
-                { return 0; }
+                { return Vector3d.Zero; }
 
                 // return distance in material
                 double length = fP.lastP.pt.DistanceTo(tP.firstP.pt);
+                Vector3d shift = tP.firstP.pt-fP.lastP.pt;
+                double height = shift*tP.firstP.dir;
 
-                return length;
+                return new Vector3d(length, height, 0);
             }
 
-            return 0;
+            return Vector3d.Zero;
         }
 
         // Assume all moves are fine
@@ -1306,40 +1308,54 @@
 
         internal static bool pathConnectCheck3axis(ToolPath fP, ToolPath tP)
         {
-            double length = jumpCheck(fP, tP);
-            return length <= fP.matTool?.pathJump;
+            Vector3d shifts = jumpCheck(fP, tP); // gives total distance (X) and vertical distance (tool direction) (Y).
+            return (shifts.X <= tP.matTool?.pathJump) && (shifts.Y <= tP.matTool?.verticalJump);
         }
 
         internal static bool pathConnectCheck5Axis(IMachine m, double angConnectTol, ToolPath fP, ToolPath tP)
         {
-            double length = jumpCheck(fP, tP);
+            Vector3d shifts = jumpCheck(fP, tP); // gives total distance (X) and vertical distance (tool direction) (Y).
             double ang = m.angDiff(fP.lastP,tP.firstP, fP.matTool,false);
-            return length <= fP.matTool?.pathJump && ang < angConnectTol;
+            return (shifts.X <= tP.matTool?.pathJump) && (shifts.Y <= tP.matTool?.verticalJump) && ang < angConnectTol;
         }
 
         internal static void safeJumpCheck3axis(CodeInfo co, ToolPath fP, ToolPath tP)
         {
             // check if there is a problem moving between paths
-            double length = jumpCheck(fP, tP);
-            if (length > fP.matTool?.pathJump)
+            Vector3d shifts = jumpCheck(fP, tP); // gives total distance (X) and vertical distance (tool direction) (Y).
+            if (shifts.X > fP.matTool?.pathJump)
             {
                 co.addWarning(
-                    "Long Transition between paths in material. \n"
-                    + "To remove this error, don't use ignore, instead change PathJump for the material/tool from: "
-                    + fP.matTool.pathJump + " to at least: " + (length + .01).ToString("0.00"));
+                    "Long Transition between paths in material. "
+                    + "To remove this error, don't use ignore, instead change Path Jump for the material/tool from: "
+                    + fP.matTool.pathJump + " to at least: " + (shifts.X + .01).ToString("0.00"));
+            }
+            if (shifts.Y > fP.matTool?.verticalJump)
+            {
+                co.addWarning(
+                    "Long vertical transition between paths in material. "
+                    + "To remove this error, don't use ignore, instead change Vertical Jump for the material/tool from: "
+                    + fP.matTool.pathJump + " to at least: " + (shifts.Y + .01).ToString("0.00"));
             }
         }
 
         internal static void safeJumpCheck5Axis(IMachine m, double angConnectTol, ref CodeInfo co, ToolPath fP, ToolPath tP)
         {
             // check if there is a problem moving between paths
-            double length = jumpCheck(fP, tP);
-            if (length > fP.matTool?.pathJump)
+            Vector3d shifts = jumpCheck(fP, tP); // gives total distance (X) and vertical distance (tool direction) (Y).
+            if (shifts.X > fP.matTool?.pathJump)
             {
                 co.addWarning(
-                    "Long Transition between paths in material. \n"
-                    + "To remove this error, don't use ignore, instead change PathJump for the material/tool from: "
-                    + fP.matTool.pathJump + " to at least: " + (length + .01).ToString("0.00"));
+                    "Long Transition between paths in material. "
+                    + "To remove this error, don't use ignore, instead change Path Jump for the material/tool from: "
+                    + fP.matTool.pathJump + " to at least: " + (shifts.X + .01).ToString("0.00"));
+            }
+            if (shifts.Y > fP.matTool?.verticalJump)
+            {
+                co.addWarning(
+                    "Long vertical transition between paths in material. "
+                    + "To remove this error, don't use ignore, instead change Vertical Jump for the material/tool from: "
+                    + fP.matTool.pathJump + " to at least: " + (shifts.Y + .01).ToString("0.00"));
             }
             double ang = m.angDiff(fP.lastP,tP.firstP, fP.matTool,false);
             if (ang > angConnectTol)
